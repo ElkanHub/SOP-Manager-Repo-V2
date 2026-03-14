@@ -1,11 +1,8 @@
 "use client"
 
 import * as React from "react"
+import { usePathname } from "next/navigation"
 
-import { NavDocuments } from "@/components/nav-documents"
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
   SidebarContent,
@@ -15,189 +12,117 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings } from "lucide-react"
+import { NavMain } from "@/components/nav-main"
+import { NavUser } from "@/components/nav-user"
+import { Badge } from "@/components/ui/badge"
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user: any;
+  profile: any;
+}
+
+export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
+  const pathname = usePathname()
+
+  const navItems = [
     {
       title: "Dashboard",
-      url: "#",
-      icon: (
-        <LayoutDashboardIcon
-        />
-      ),
+      url: "/dashboard",
+      icon: <LayoutDashboard />,
+      isActive: pathname === "/dashboard",
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: (
-        <ListIcon
-        />
-      ),
+      title: "SOP Library",
+      url: "/sops",
+      icon: <BookOpen />,
+      isActive: pathname.startsWith("/sops"),
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: (
-        <ChartBarIcon
-        />
-      ),
+      title: "Equipment",
+      url: "/equipment",
+      icon: <Wrench />,
+      isActive: pathname.startsWith("/equipment"),
     },
     {
-      title: "Projects",
-      url: "#",
-      icon: (
-        <FolderIcon
-        />
-      ),
+      title: "Calendar",
+      url: "/calendar",
+      icon: <Calendar />,
+      isActive: pathname.startsWith("/calendar"),
     },
     {
-      title: "Team",
-      url: "#",
-      icon: (
-        <UsersIcon
-        />
-      ),
+      title: "Reports",
+      url: "/reports",
+      icon: <FileBarChart />,
+      isActive: pathname.startsWith("/reports"),
     },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: (
-        <CameraIcon
-        />
-      ),
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: (
-        <FileTextIcon
-        />
-      ),
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: (
-        <Settings2Icon
-        />
-      ),
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: (
-        <CircleHelpIcon
-        />
-      ),
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: (
-        <SearchIcon
-        />
-      ),
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: (
-        <DatabaseIcon
-        />
-      ),
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: (
-        <FileChartColumnIcon
-        />
-      ),
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: (
-        <FileIcon
-        />
-      ),
-    },
-  ],
-}
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  ]
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <Sidebar collapsible="offcanvas" className="border-r" {...props}>
+      <SidebarHeader className="bg-slate-50/50 p-4 border-b">
+        <div className="flex flex-col gap-2">
+          <div className="font-semibold text-slate-900 border-b pb-2 mb-1">
+            Workspace
+          </div>
+          {/* User Mini Profile */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-800 line-clamp-1">{profile?.full_name}</span>
+              <div className="flex gap-1 mt-0.5">
+                <Badge variant="secondary" className="px-1.5 text-[10px] bg-brand-teal/10 text-brand-teal uppercase border-0">
+                  {profile?.department}
+                </Badge>
+                {profile?.role === 'manager' && (
+                  <Badge variant="outline" className="px-1.5 text-[10px] text-slate-500 uppercase">Mgr</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </SidebarHeader>
+      <SidebarContent className="p-2 space-y-1 bg-white">
+        <SidebarMenu>
+          {navItems.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
+                asChild
+                isActive={item.isActive}
+                className={`
+                                    flex items-center gap-3 px-3 py-2 rounded-md transition-colors
+                                    ${item.isActive
+                    ? "bg-brand-navy/5 text-brand-navy font-medium border-l-[3px] border-brand-teal"
+                    : "text-slate-600 hover:bg-slate-100 border-l-[3px] border-transparent"
+                  }
+                                `}
+              >
+                <a href={item.url}>
+                  {React.cloneElement(item.icon as React.ReactElement, { className: "w-5 h-5" })}
+                  <span>{item.title}</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter className="border-t p-2 bg-slate-50">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-              render={<a href="#" />}
-            >
-              <CommandIcon className="size-5!" />
-              <span className="text-base font-semibold">Acme Inc.</span>
+            <SidebarMenuButton asChild className="text-slate-600 hover:bg-slate-200">
+              <a href="/settings" className="flex items-center gap-3 px-3 py-2">
+                <Settings className="w-5 h-5" />
+                <span>Settings</span>
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
       </SidebarFooter>
     </Sidebar>
   )
