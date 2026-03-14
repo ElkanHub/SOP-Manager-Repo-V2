@@ -14,6 +14,14 @@ export async function proxy(request: NextRequest) {
 
     const url = request.nextUrl.clone()
 
+    if (request.nextUrl.pathname.startsWith('/setup')) {
+        const { data: hasAdmin } = await supabase.rpc('has_any_admin')
+        if (hasAdmin) {
+            url.pathname = '/login'
+            return NextResponse.redirect(url)
+        }
+    }
+
     if (!user && !isAuthRoute && request.nextUrl.pathname !== '/') {
         url.pathname = '/login'
         return NextResponse.redirect(url)

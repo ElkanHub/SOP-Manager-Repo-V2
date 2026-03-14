@@ -1,0 +1,36 @@
+import { LoginForm } from "@/components/login-form"
+import { GalleryVerticalEndIcon } from "lucide-react"
+import { Suspense } from "react"
+
+export default function LoginPage() {
+    return (
+        <div className="grid min-h-svh lg:grid-cols-2">
+            <div className="flex flex-col gap-4 p-6 md:p-10">
+                <div className="flex justify-center gap-2 md:justify-start">
+                    <a href="#" className="flex items-center gap-2 font-medium">
+                        <div className="flex size-6 items-center justify-center rounded-md bg-brand-navy text-primary-foreground">
+                            <GalleryVerticalEndIcon className="size-4" />
+                        </div>
+                        SOP-Guard Pro
+                    </a>
+                </div>
+                <div className="flex flex-1 items-center justify-center">
+                    <div className="w-full max-w-xs">
+                        <Suspense fallback={<div>Loading form...</div>}>
+                            <LoginForm />
+                        </Suspense>
+                    </div>
+                </div>
+            </div>
+            <div className="relative hidden bg-brand-navy lg:flex items-center justify-center p-12">
+                <div className="max-w-md text-white">
+                    <h2 className="text-3xl font-bold mb-4">Welcome Back</h2>
+                    <p className="text-lg opacity-80">
+                        Log in to your SOP-Guard Pro account to manage standard operating procedures,
+                        approve change controls, and stay updated.
+                    </p>
+                </div>
+            </div>
+        </div>
+    )
+}
