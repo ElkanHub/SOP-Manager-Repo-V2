@@ -136,7 +136,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                                 onBegin={() => setIsDrawingEmpty(false)}
                             />
                             <div className="absolute inset-x-0 bottom-8 flex justify-center pointer-events-none opacity-20">
-                                <span className="text-2xl font-serif text-slate-300 pointer-events-none select-none italic w-3/4 border-b-2 border-slate-300">
+                                <span className="text-2xl font-sans text-slate-300 pointer-events-none select-none w-3/4 border-b-2 border-slate-300">
                                     Sign here
                                 </span>
                             </div>
