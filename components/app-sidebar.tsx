@@ -59,15 +59,15 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
 
   return (
     <Sidebar collapsible="offcanvas" className="border-r pt-14" {...props}>
-      <SidebarHeader className="bg-slate-50/50 p-4 border-b">
+      <SidebarHeader className="bg-muted/50 p-4 border-b">
         <div className="flex flex-col gap-2">
-          <div className="font-semibold text-slate-900 border-b pb-2 mb-1">
+          <div className="font-semibold text-foreground border-b pb-2 mb-1">
             Workspace
           </div>
           
         </div>
       </SidebarHeader>
-      <SidebarContent className="p-2 space-y-1 bg-white">
+      <SidebarContent className="p-2 space-y-1">
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.title}>
@@ -78,7 +78,7 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
                                     flex items-center gap-3 px-3 py-2 rounded-md transition-colors
                                     ${item.isActive
                     ? "bg-brand-navy/5 text-brand-navy font-medium border-l-[3px] border-brand-teal"
-                    : "text-slate-600 hover:bg-slate-100 border-l-[3px] border-transparent"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-l-[3px] border-transparent"
                   }
                                 `}
               >
@@ -89,10 +89,10 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t p-2 bg-slate-50">
+      <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton render={<a href="/settings" className="flex items-center gap-3 px-3 py-2" />} className="text-slate-600 hover:bg-slate-200">
+            <SidebarMenuButton render={<a href="/settings" className="flex items-center gap-3 px-3 py-2" />} className="text-muted-foreground hover:bg-accent hover:text-foreground">
               <Settings className="w-5 h-5" />
               <span>Settings</span>
             </SidebarMenuButton>
@@ -108,13 +108,13 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
               )}
             </div>
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-slate-800 line-clamp-1">{profile?.full_name}</span>
+              <span className="text-sm font-semibold text-foreground line-clamp-1">{profile?.full_name}</span>
               <div className="flex gap-1 mt-0.5">
                 <Badge variant="secondary" className="px-1.5 text-[10px] bg-brand-teal/10 text-brand-teal uppercase border-0">
                   {profile?.department}
                 </Badge>
                 {profile?.role === 'manager' && (
-                  <Badge variant="outline" className="px-1.5 text-[10px] text-slate-500 uppercase">Mgr</Badge>
+                  <Badge variant="outline" className="px-1.5 text-[10px] text-muted-foreground uppercase">Mgr</Badge>
                 )}
               </div>
             </div>

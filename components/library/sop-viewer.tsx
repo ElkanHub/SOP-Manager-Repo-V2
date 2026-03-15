@@ -104,11 +104,11 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
   return (
     <div
       className={cn(
-        "prose prose-slate max-w-none",
-        "prose-headings:font-semibold prose-headings:text-slate-800",
-        "prose-p:text-slate-700 prose-p:leading-relaxed",
+        "prose prose-slate dark:prose-invert max-w-none",
+        "prose-headings:font-semibold prose-headings:text-foreground",
+        "prose-p:text-foreground prose-p:leading-relaxed",
         "prose-table:border prose-td:border prose-td:p-2",
-        "prose-strong:text-slate-800",
+        "prose-strong:text-foreground",
         className
       )}
       dangerouslySetInnerHTML={{ __html: html }}

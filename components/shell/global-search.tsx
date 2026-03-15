@@ -134,15 +134,15 @@ export function GlobalSearch() {
       {isOpen && query.length >= 2 && (
         <div
           ref={dropdownRef}
-          className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-[400px] overflow-y-auto z-50"
+          className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg max-h-[400px] overflow-y-auto z-50"
         >
           {results.length === 0 && !isLoading ? (
-            <div className="px-4 py-8 text-center text-sm text-slate-400">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               No SOPs found
             </div>
           ) : (
             <>
-              <div className="sticky top-0 px-4 py-2 bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wide text-slate-400 font-semibold">
+              <div className="sticky top-0 px-4 py-2 bg-muted border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground font-semibold">
                 Cross-department search
               </div>
               {results.map((result, index) => (
@@ -150,15 +150,15 @@ export function GlobalSearch() {
                   key={result.id}
                   onClick={() => handleSelect(result)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50",
-                    index === selectedIndex && "bg-slate-50"
+                    "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-accent",
+                    index === selectedIndex && "bg-accent"
                   )}
                 >
-                  <FileText className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                  <span className="font-mono text-xs text-slate-500 w-24 truncate">
+                  <FileText className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-mono text-xs text-muted-foreground w-24 truncate">
                     {result.sop_number}
                   </span>
-                  <span className="text-sm text-slate-800 flex-1 truncate">
+                  <span className="text-sm text-foreground flex-1 truncate">
                     {result.title}
                   </span>
                   <DeptBadge

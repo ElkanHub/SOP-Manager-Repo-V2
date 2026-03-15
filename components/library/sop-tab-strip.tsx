@@ -13,7 +13,7 @@ export function SopTabStrip() {
   if (tabs.length === 0) return null
 
   return (
-    <div className="flex items-end gap-1 px-3 py-2 bg-white border border-b-0 border-slate-200 rounded-t-lg">
+    <div className="flex items-end gap-1 px-3 py-2 bg-card border border-b-0 border-border rounded-t-lg">
       {tabs.map((tab) => (
         <div
           key={tab.id}
@@ -24,15 +24,15 @@ export function SopTabStrip() {
           className={cn(
             "flex items-center gap-1.5 h-9 px-3 rounded-t-md border border-b-0 cursor-pointer transition-colors max-w-[160px]",
             activeTabId === tab.id
-              ? "bg-white border-slate-200 font-semibold text-slate-800"
-              : "bg-slate-50/50 border-transparent text-slate-500 hover:bg-slate-100"
+              ? "bg-background border-border font-semibold text-foreground"
+              : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted"
           )}
         >
-          <span className="font-mono text-[11px] text-slate-400 truncate">
+          <span className="font-mono text-[11px] text-muted-foreground truncate">
             {tab.sopNumber}
           </span>
           <span className="text-xs truncate">{tab.title}</span>
-          <button
+            <button
             onClick={(e) => {
               e.stopPropagation()
               removeTab(tab.id)
@@ -44,7 +44,7 @@ export function SopTabStrip() {
                 router.push("/library")
               }
             }}
-            className="ml-1 p-0.5 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-600"
+            className="ml-1 p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
           >
             <X className="h-3 w-3" />
           </button>

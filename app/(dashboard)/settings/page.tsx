@@ -10,8 +10,8 @@ export default async function SettingsPage() {
     }
 
     return (
-        <div className="flex flex-col h-full items-start justify-start text-slate-500 p-6">
-            <h1 className="text-2xl font-bold mb-2 text-slate-800">Settings</h1>
+        <div className="flex flex-col h-full items-start justify-start text-muted-foreground p-6">
+            <h1 className="text-2xl font-bold mb-2 text-foreground">Settings</h1>
             <p>Phase 11 will implement the Settings & Admin section here.</p>
         </div>
     )

@@ -68,9 +68,9 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     const alerts = items.filter(i => i.type !== 'notice' && i.type !== 'todo')
 
     return (
-        <aside className="hidden xl:flex w-80 flex-col border-l bg-white shrink-0 z-20 shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)] relative">
-            <div className="flex items-center justify-between p-4 border-b bg-slate-50">
-                <div className="flex items-center gap-2 font-semibold text-slate-800">
+        <aside className="hidden xl:flex w-80 flex-col border-l bg-card shrink-0 z-20 shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)] relative">
+            <div className="flex items-center justify-between p-4 border-b bg-muted">
+                <div className="flex items-center gap-2 font-semibold text-foreground">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                     The Pulse
                 </div>
@@ -91,7 +91,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
 
                 <ScrollArea className="flex-1">
                     <TabsContent value="all" className="m-0 p-4 space-y-4">
-                        {items.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No recent activity.</p>}
+                        {items.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No recent activity.</p>}
                         {items.map(item => (
                             <PulseItem key={item.id} item={item} currentUser={user} />
                         ))}

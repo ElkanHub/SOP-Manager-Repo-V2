@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "@/components/ui/sidebar"
 import { GlobalSearch } from "./global-search"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 interface TopNavProps {
     user: any;
@@ -47,6 +48,7 @@ export function TopNav({ user, profile }: TopNavProps) {
                 </div>
 
                 <nav className="flex items-center gap-2">
+                    <ThemeToggle />
                     <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
                         <Bell className="h-5 w-5" />
                         <span className="absolute top-1 right-1.5 flex h-2 w-2 rounded-full bg-red-500"></span>

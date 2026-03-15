@@ -81,15 +81,15 @@ export default async function SopViewerPage({ params }: PageProps) {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="bg-white border-b border-slate-200 px-6 py-4">
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-sm">
+            <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-sm">
               {sop.sop_number}
             </span>
-            <h1 className="text-xl font-bold text-slate-800">{sop.title}</h1>
+            <h1 className="text-xl font-bold text-foreground">{sop.title}</h1>
             <DeptBadge department={sop.department} colour={sop.departments?.colour} />
-            <span className="font-mono text-xs text-slate-500">{sop.version}</span>
+            <span className="font-mono text-xs text-muted-foreground">{sop.version}</span>
             <StatusBadge status={sop.status} />
           </div>
 
@@ -130,11 +130,11 @@ export default async function SopViewerPage({ params }: PageProps) {
           </div>
         </div>
 
-        <div className="flex gap-6 mt-3 flex-wrap text-xs text-slate-500">
+        <div className="flex gap-6 mt-3 flex-wrap text-xs text-muted-foreground">
           {sop.date_listed && (
             <div className="flex items-center gap-1.5">
               <span>Date Listed:</span>
-              <span className="text-slate-700">
+              <span className="text-foreground">
                 {format(new Date(sop.date_listed), "dd MMM yyyy")}
               </span>
             </div>
@@ -142,7 +142,7 @@ export default async function SopViewerPage({ params }: PageProps) {
           {sop.date_revised && (
             <div className="flex items-center gap-1.5">
               <span>Last Revised:</span>
-              <span className="text-slate-700">
+              <span className="text-foreground">
                 {format(new Date(sop.date_revised), "dd MMM yyyy")}
               </span>
             </div>
@@ -150,7 +150,7 @@ export default async function SopViewerPage({ params }: PageProps) {
           {sop.due_for_revision && (
             <div className="flex items-center gap-1.5">
               <span>Due for Revision:</span>
-              <span className="text-slate-700">
+              <span className="text-foreground">
                 {format(new Date(sop.due_for_revision), "dd MMM yyyy")}
               </span>
             </div>
@@ -164,7 +164,7 @@ export default async function SopViewerPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-12 py-8 bg-white">
+      <div className="flex-1 overflow-y-auto px-12 py-8 bg-card">
         {sop.file_url ? (
           <SopViewer fileUrl={sop.file_url} className="max-w-3xl mx-auto" />
         ) : (

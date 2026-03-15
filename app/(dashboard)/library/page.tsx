@@ -66,7 +66,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-slate-800">SOP Library</h1>
+        <h1 className="text-3xl font-bold text-foreground">SOP Library</h1>
         {isManager && (
           <Button className="bg-brand-teal hover:bg-teal-600 text-white">
             <Upload className="h-4 w-4 mr-2" />
@@ -132,8 +132,8 @@ function StatusFilterTab({
       href={href}
       className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
         active
-          ? "bg-white shadow-sm border border-slate-200 text-brand-blue"
-          : "text-slate-500 hover:text-slate-800"
+          ? "bg-card shadow-sm border border-border text-brand-blue"
+          : "text-muted-foreground hover:text-foreground"
       }`}
     >
       {label}

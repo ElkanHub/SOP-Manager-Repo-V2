@@ -214,12 +214,12 @@ export function SopLibraryTable({
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white">
-        <div className="h-10 bg-slate-50 border-b border-slate-200" />
+      <div className="rounded-lg border border-border bg-card">
+        <div className="h-10 bg-muted border-b border-border" />
         {Array.from({ length: 6 }).map((_, i) => (
           <div
             key={i}
-            className="flex items-center gap-4 px-4 py-3 border-b border-slate-100"
+            className="flex items-center gap-4 px-4 py-3 border-b border-border/50"
           >
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-48" />
@@ -233,15 +233,15 @@ export function SopLibraryTable({
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
       <table className="w-full">
-        <thead className="bg-slate-50 border-b border-slate-200">
+        <thead className="bg-muted border-b border-border">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold"
+                  className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-muted-foreground font-semibold"
                   style={{ width: header.getSize() }}
                 >
                   {header.isPlaceholder
@@ -269,8 +269,8 @@ export function SopLibraryTable({
                 router.push(`/library/${sop.id}`)
               }}
               className={cn(
-                "cursor-pointer border-b border-slate-100 transition-colors hover:bg-blue-50/30",
-                index % 2 === 1 && "bg-slate-50/50"
+                "cursor-pointer border-b border-border/50 transition-colors hover:bg-accent",
+                index % 2 === 1 && "bg-muted/30 dark:bg-muted/20"
               )}
             >
               {row.getVisibleCells().map((cell) => (

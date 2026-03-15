@@ -33,14 +33,14 @@ export function OnboardingWizard({ user, profile: initialProfile, departments }:
     const prevStep = () => setStep(step - 1)
 
     return (
-        <Card className="w-full shadow-lg border-slate-200">
-            <CardHeader className="bg-slate-50 border-b border-slate-100 rounded-t-xl pb-6">
+        <Card className="w-full shadow-lg border-border">
+            <CardHeader className="bg-muted border-b border-border rounded-t-xl pb-6">
                 <div className="flex items-center justify-between mb-4">
-                    <CardTitle className="text-2xl font-bold text-slate-800">Set up your profile</CardTitle>
+                    <CardTitle className="text-2xl font-bold text-foreground">Set up your profile</CardTitle>
                     <span className="text-sm text-brand-teal font-semibold bg-brand-teal/10 px-3 py-1 rounded-full">Step {step} of 4</span>
                 </div>
-                <Progress value={progress} className="h-2 w-full bg-slate-200" />
-                <CardDescription className="pt-4 text-base text-slate-600">
+                <Progress value={progress} className="h-2 w-full bg-muted-foreground/20" />
+                <CardDescription className="pt-4 text-base text-muted-foreground">
                     {step === 1 && "Start by selecting your department and your role within the organisation."}
                     {step === 2 && "Tell us a bit more about yourself."}
                     {step === 3 && "Provide a digital signature for signing Change Controls and SOPs."}
