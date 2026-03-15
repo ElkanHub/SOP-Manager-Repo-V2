@@ -24,7 +24,7 @@ export function ReviewStep({ initialData }: any) {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 ">
             <div className="text-center">
                 <p className="text-sm text-muted-foreground my-2">
                     Please review your profile details before completing the setup process.
@@ -37,7 +37,7 @@ export function ReviewStep({ initialData }: any) {
                 </div>
             )}
 
-            <div className="border rounded-xl p-6 bg-slate-50 space-y-6">
+            <div className="border rounded-xl p-6 bg-background space-y-6">
                 <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="w-20 h-20 rounded-full bg-white border-4 border-white shadow-sm overflow-hidden flex items-center justify-center">
                         {initialData?.avatar_url ? (
@@ -48,7 +48,7 @@ export function ReviewStep({ initialData }: any) {
                     </div>
                     <div className="text-center">
                         <h3 className="text-xl font-bold">{initialData?.full_name || "Full Name"}</h3>
-                        <p className="text-slate-500 font-medium">{initialData?.job_title || "Job Title"}</p>
+                        <p className="text-foreground font-medium">{initialData?.job_title || "Job Title"}</p>
                     </div>
 
                     <div className="flex gap-2 mt-2">
@@ -65,12 +65,12 @@ export function ReviewStep({ initialData }: any) {
 
                 <div className="border-t border-slate-200 pt-6 mt-6 grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span className="text-slate-500 block mb-1">Employee ID</span>
-                        <span className="font-medium text-slate-900">{initialData?.employee_id || "Not provided"}</span>
+                        <span className="text-foreground block mb-1">Employee ID</span>
+                        <span className="font-medium text-foreground">{initialData?.employee_id || "Not provided"}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500 block mb-1">Phone Number</span>
-                        <span className="font-medium text-slate-900">{initialData?.phone || "Not provided"}</span>
+                        <span className="text-foreground block mb-1">Phone Number</span>
+                        <span className="font-medium text-foreground">{initialData?.phone || "Not provided"}</span>
                     </div>
                 </div>
 

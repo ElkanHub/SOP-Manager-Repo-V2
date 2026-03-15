@@ -59,7 +59,7 @@ export function SignupForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6", className)} {...props}>
+    <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6 border-1 border-brand-gray rounded-2xl rounded-tl-none border-t-8  py-6 px-2 shadow-md", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Create your account</h1>
@@ -96,6 +96,12 @@ export function SignupForm({
             {loading ? "Creating..." : "Create Account"}
           </Button>
         </Field>
+        {/* login */}
+        <div className="flex items-center justify-center">
+          <p className="text-sm text-balance text-muted-foreground">
+            Already have an account? <a href="/login" className="text-brand-teal hover:underline">Login</a>
+          </p>
+        </div>
       </FieldGroup>
     </form>
   )

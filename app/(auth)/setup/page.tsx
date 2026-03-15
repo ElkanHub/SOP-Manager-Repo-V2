@@ -19,8 +19,9 @@ export default function SetupPage() {
                     </div>
                 </div>
             </div>
-            <div className="relative hidden bg-brand-navy lg:flex items-center justify-center p-12">
-                <div className="max-w-md text-white">
+            <div className="relative hidden lg:flex items-center justify-center p-12" style={{ backgroundImage: 'url(/auth-img.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/90 to-brand-navy/40"></div>
+                <div className="relative max-w-md text-white">
                     <h2 className="text-3xl font-bold mb-4">Initialize Your Workspace</h2>
                     <p className="text-lg opacity-80">
                         You are setting up the primary administrator account for SOP-Guard Pro.
