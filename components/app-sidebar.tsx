@@ -58,33 +58,13 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
   ]
 
   return (
-    <Sidebar collapsible="offcanvas" className="border-r" {...props}>
+    <Sidebar collapsible="offcanvas" className="border-r pt-14" {...props}>
       <SidebarHeader className="bg-slate-50/50 p-4 border-b">
         <div className="flex flex-col gap-2">
           <div className="font-semibold text-slate-900 border-b pb-2 mb-1">
             Workspace
           </div>
-          {/* User Mini Profile */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
-              )}
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-slate-800 line-clamp-1">{profile?.full_name}</span>
-              <div className="flex gap-1 mt-0.5">
-                <Badge variant="secondary" className="px-1.5 text-[10px] bg-brand-teal/10 text-brand-teal uppercase border-0">
-                  {profile?.department}
-                </Badge>
-                {profile?.role === 'manager' && (
-                  <Badge variant="outline" className="px-1.5 text-[10px] text-slate-500 uppercase">Mgr</Badge>
-                )}
-              </div>
-            </div>
-          </div>
+          
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2 space-y-1 bg-white">
@@ -118,6 +98,27 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        {/* User Mini Profile */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-slate-800 line-clamp-1">{profile?.full_name}</span>
+              <div className="flex gap-1 mt-0.5">
+                <Badge variant="secondary" className="px-1.5 text-[10px] bg-brand-teal/10 text-brand-teal uppercase border-0">
+                  {profile?.department}
+                </Badge>
+                {profile?.role === 'manager' && (
+                  <Badge variant="outline" className="px-1.5 text-[10px] text-slate-500 uppercase">Mgr</Badge>
+                )}
+              </div>
+            </div>
+          </div>
       </SidebarFooter>
     </Sidebar>
   )
