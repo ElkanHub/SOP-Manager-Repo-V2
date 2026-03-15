@@ -1,0 +1,316 @@
+# SOP-Guard Pro - Project Progress
+
+> **Last Updated:** March 15, 2026
+> **Version:** 2.2 (Star-Centralized Architecture)
+> **Current Phase:** Phase 4 - SOP Library (Read Layer)
+
+---
+
+## Executive Summary
+
+SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Procedures (SOPs) and Preventive Maintenance (PM). The platform is built on a **star-centralized architecture** where the SOP Library and Equipment Registry are the central hubs, with approvals, change control, PM planner, calendar, pulse, reports, and messaging orbiting them.
+
+### Completed Phases
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| Phase 0 | ✅ Complete | Project Bootstrap |
+| Phase 1 | ✅ Complete | Database & Schema |
+| Phase 2 | ✅ Complete | Auth & Onboarding |
+| Phase 3 | ✅ Complete | Shell Layout & Pulse |
+| Phase 4 | ✅ Complete | SOP Library (Read Layer) |
+| Phase 5-13 | 🔜 Not Started | Future Phases |
+
+---
+
+## Phase 0: Project Bootstrap
+
+### Completed Tasks
+
+- **Next.js 15 App Router** project initialized with TypeScript
+- **Shadcn/UI** component system installed and configured
+- **Tailwind CSS v4** with custom theme tokens
+- **Supabase** client configuration (server and browser)
+- **Zustand** for state management
+- **TanStack Table v8** for data tables
+- **Project structure** established following the BUILD.md conventions
+
+### File Structure Created
+
+```
+/app
+  /layout.tsx                 # Root layout with DM Sans/DM Mono fonts
+  /globals.css                # Tailwind v4 with dark mode support
+  /page.tsx                   # Root proxy redirect
+  /(auth)                    # Auth route group
+    /login/page.tsx
+    /signup/page.tsx
+    /setup/page.tsx
+    /onboarding/page.tsx
+  /(dashboard)               # Dashboard route group
+    /layout.tsx              # Dashboard shell layout
+    /dashboard/page.tsx
+    /library/page.tsx
+    /library/[id]/page.tsx
+    /settings/page.tsx
+/components
+  /ui/                       # Shadcn components
+  /shell/                    # TopNav, GlobalSearch
+  /library/                  # SopLibraryTable, SopViewer, etc.
+  /onboarding/               # Onboarding wizard steps
+  /pulse/                   # ThePulse, PulseItem, composers
+/lib
+  /supabase/                 # Server and client clients
+  /utils/                   # Utilities (cn, dates, permissions)
+/actions                     # Server actions
+/hooks                       # Custom React hooks
+/types                       # TypeScript types
+/store                       # Zustand stores
+/public                     # Static assets
+```
+
+---
+
+## Phase 1: Database & Schema
+
+### Completed Tasks
+
+All 14 database migrations executed successfully:
+
+| Migration | File | Description |
+|-----------|------|-------------|
+| 001 | `001_departments.sql` | Departments table |
+| 002 | `002_profiles.sql` | User profiles table |
+| 003 | `003_sops.sql` | SOPs table |
+| 004 | `004_sop_versions.sql` | SOP version history |
+| 005 | `005_sop_approval_requests.sql` | Approval workflow |
+| 006 | `006_sop_approval_comments.sql` | Approval comments |
+| 007 | `007_sop_acknowledgements.sql` | Acknowledgement tracking |
+| 008 | `008_change_control.sql` | Change control records |
+| 009 | `009_signature_certificates.sql` | Digital signatures |
+| 010 | `010_equipment_pm.sql` | Equipment and PM tasks |
+| 011 | `011_rls.sql` | Row Level Security policies |
+| 012 | `012_audit_log.sql` | Audit logging |
+| 013 | `013_setup_guard.sql` | Setup guard |
+| 014 | `014_storage.sql` | Storage buckets (avatars, signatures) |
+
+### Key Schema Features
+
+- **Soft delete** on profiles (`is_active = false`)
+- **Signatory snapshot** on change_controls (stored as JSONB)
+- **Pulse broadcast model** for notifications
+- **SOP locking** during active change control
+- **Version format:** vMAJOR.MINOR (e.g., v1.0, v1.1)
+- **Equipment secondary departments** support
+
+---
+
+## Phase 2: Auth & Onboarding
+
+### Completed Tasks
+
+- **Authentication flows:**
+  - Login (`/login`)
+  - Signup (`/signup`)
+  - Setup (first admin) (`/setup`)
+  - Onboarding wizard (`/onboarding`)
+
+- **Onboarding Wizard (4 steps):**
+  1. Department & Role selection
+  2. Profile details (name, job title, employee ID, phone)
+  3. Digital signature capture (draw or upload)
+  4. Review & completion
+
+- **Auth features:**
+  - Avatar upload to Supabase Storage
+  - Signature upload to Supabase Storage
+  - Profile completion tracking (`onboarding_complete`)
+  - Middleware route protection
+
+### Security Features
+
+- RLS policies for all tables
+- Storage policies for avatars and signatures
+- Session validation via `getUser()` (not `getSession()`)
+- Inactive user blocking in middleware
+
+---
+
+## Phase 3: Shell Layout & Pulse
+
+### Completed Tasks
+
+**Top Navigation:**
+- Brand logo and name
+- Global search component (shell ready for Phase 4)
+- Theme toggle (light/dark/system)
+- Notifications bell
+- User avatar dropdown
+
+**Sidebar:**
+- Fixed left panel (240px)
+- User mini-profile (avatar, name, department, role)
+- Navigation items: Dashboard, SOP Library, Equipment, Calendar, Reports, Settings
+- Active state highlighting
+- Collapsible to icon strip at 1024px
+
+**The Pulse Panel:**
+- Fixed right panel (300px)
+- Real-time subscription via Supabase Realtime
+- Item types: notices, todos, alerts
+- Notice composer with audience selection (self, department, everyone)
+- Thread depth enforcement (max 1 level)
+- Mark all as read functionality
+
+**Components Built:**
+- `TopNav`
+- `AppSidebar`
+- `ThePulse`
+- `PulseItem`
+- `NoticeComposer`
+- `TodoComposer`
+- `ThemeToggle`
+- `ThemeProvider`
+
+---
+
+## Phase 4: SOP Library (Read Layer)
+
+### Completed Tasks
+
+**SOP Library Page (`/library`):**
+- TanStack Table with sorting and filtering
+- Status filter tabs (All, Active, Draft, Pending, Pending CC)
+- Two-layer visibility (own department + secondary departments)
+- Row click opens SOP in new tab
+
+**SOP Viewer Page (`/library/[id]`):**
+- Document viewer with mammoth.js for .docx rendering
+- DOMPurify sanitization
+- Tab strip for multiple open SOPs (max 8 tabs)
+- Zustand store for tab management
+
+**Components Built:**
+- `SopLibraryTable` - Data table with TanStack Table
+- `SopTabStrip` - Tab bar for multiple SOPs
+- `SopViewer` - Document renderer
+- `AcknowledgeButton` - Acknowledgement flow
+- `VersionHistorySheet` - Version history modal
+- `DeptBadge` - Department badge
+- `StatusBadge` - Status indicator
+
+**Global Search:**
+- Full-text search across all active SOPs
+- Keyboard navigation (arrow keys, enter, escape)
+- Debounced search (300ms)
+- Cross-department results with department badges
+
+### Two-Layer Visibility Implementation
+
+1. **Default Library view** - Shows only SOPs where `department = user.department` OR `user.department = ANY(secondary_departments)`
+2. **Search mode** - Shows ALL Active SOPs across the organization
+
+**Cross-department SOPs:**
+- Rendered in read-only mode
+- Teal badge indicates cross-department
+- No Acknowledge button
+- No Submit Edit button
+
+---
+
+## Design System
+
+### Typography
+- **Primary Font:** DM Sans (via Google Fonts)
+- **Monospace Font:** DM Mono
+
+### Color Palette
+
+**Light Mode:**
+- Background: White (#FFFFFF)
+- Card Background: White (#FFFFFF)
+- Border: Light gray (#E5E7EB)
+- Text Primary: Slate 800 (#1E293B)
+- Text Secondary: Slate 500 (#64748B)
+
+**Dark Mode:**
+- Background: Dark gray (#1A1A1A)
+- Card Background: Slightly lighter (#242424)
+- Border: Medium gray (#3D3D3D)
+- Text Primary: Light gray (#EBEBEB)
+- Text Secondary: Medium gray (#A6A6A6)
+- **Brand Colors Preserved:**
+  - Brand Navy: #0D2B55
+  - Brand Blue: #1A5EA8
+  - Brand Teal: #00C2A8
+
+### Features
+
+- **Full Dark Mode Support** - Light, Dark, and System modes
+- **Auth Pages** - Background image with gradient overlay
+- **Responsive Design** - Mobile, tablet, and desktop breakpoints
+
+---
+
+## Known Issues & Fixes Applied
+
+### Signature Upload RLS Issue
+- **Problem:** "new row violates row-level security policy" when uploading signature during onboarding
+- **Root Cause:** Storage policies checked for folder path but signatures were stored as flat paths
+- **Solution:** Updated storage policies in `014_storage.sql` to handle both folder-based and flat paths using `split_part()`
+
+---
+
+## Future Phases (Not Started)
+
+| Phase | Description |
+|-------|-------------|
+| Phase 5 | Change Control (Issue & Sign) |
+| Phase 6 | SOP Submit & Approval Workflow |
+| Phase 7 | Equipment Registry |
+| Phase 8 | PM Task Management |
+| Phase 9 | Dashboard & KPI Reporting |
+| Phase 10 | Calendar & Scheduling |
+| Phase 11 | Settings & Admin |
+| Phase 12 | Audit Log Viewer |
+| Phase 13 | Messaging System |
+
+---
+
+## Technical Stack
+
+- **Framework:** Next.js 15 (App Router)
+- **Language:** TypeScript (strict mode)
+- **Styling:** Tailwind CSS v4 + Shadcn/UI
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** Supabase Auth
+- **State:** Zustand
+- **Tables:** TanStack Table v8
+- **Icons:** Lucide React
+- **Date Handling:** date-fns
+- **Document Rendering:** mammoth.js
+- **HTML Sanitization:** DOMPurify
+
+---
+
+## Build Status
+
+```
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /dashboard
+├ ƒ /library
+├ ƒ /library/[id]
+├ ○ /login
+├ ƒ /onboarding
+├ ƒ /settings
+├ ○ /setup
+└ ○ /signup
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+```
+
+**Build:** ✅ Passing
+**TypeScript:** ✅ No errors
