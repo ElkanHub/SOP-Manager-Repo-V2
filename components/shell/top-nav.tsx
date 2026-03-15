@@ -62,17 +62,15 @@ export function TopNav({ user, profile }: TopNavProps) {
                     </Button>
 
                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/20 ml-2 hover:bg-white/10">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={profile?.avatar_url || ""} alt={profile?.full_name || "User"} />
-                                    <AvatarFallback className="bg-brand-navy text-white text-xs">
-                                        {profile?.full_name?.substring(0, 2).toUpperCase() || "US"}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </Button>
+                        <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/20 ml-2 hover:bg-white/10" />}>
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={profile?.avatar_url || ""} alt={profile?.full_name || "User"} />
+                                <AvatarFallback className="bg-brand-navy text-white text-xs">
+                                    {profile?.full_name?.substring(0, 2).toUpperCase() || "US"}
+                                </AvatarFallback>
+                            </Avatar>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end" forceMount>
+                        <DropdownMenuContent className="w-56" align="end">
                             <DropdownMenuLabel className="font-normal">
                                 <div className="flex flex-col space-y-1">
                                     <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
@@ -82,17 +80,17 @@ export function TopNav({ user, profile }: TopNavProps) {
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <Link href="/settings/profile">Profile Settings</Link>
+                            <DropdownMenuItem render={<Link href="/settings/profile" />}>
+                                Profile Settings
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/settings/preferences">Preferences</Link>
+                            <DropdownMenuItem render={<Link href="/settings/preferences" />}>
+                                Preferences
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <form action="/auth/signout" method="post" className="w-full cursor-pointer">
-                                    <button type="submit" className="w-full text-left">Log out</button>
-                                </form>
+                            <DropdownMenuItem render={
+                                <form action="/auth/signout" method="post" className="w-full cursor-pointer" />
+                            }>
+                                <button type="submit" className="w-full text-left inline-flex min-w-full">Log out</button>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

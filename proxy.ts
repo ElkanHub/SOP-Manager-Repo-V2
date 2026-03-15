@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
     const { supabase, supabaseResponse } = await updateSession(request)
 
     const {
@@ -13,21 +13,18 @@ export async function proxy(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/setup')
 
     const url = request.nextUrl.clone()
+    let redirectUrl: URL | null = null
 
     if (request.nextUrl.pathname.startsWith('/setup')) {
         const { data: hasAdmin } = await supabase.rpc('has_any_admin')
         if (hasAdmin) {
             url.pathname = '/login'
-            return NextResponse.redirect(url)
+            redirectUrl = url
         }
-    }
-
-    if (!user && !isAuthRoute && request.nextUrl.pathname !== '/') {
+    } else if (!user && !isAuthRoute) {
         url.pathname = '/login'
-        return NextResponse.redirect(url)
-    }
-
-    if (user) {
+        redirectUrl = url
+    } else if (user) {
         const { data: profile } = await supabase
             .from('profiles')
             .select('is_active, onboarding_complete')
@@ -38,19 +35,26 @@ export async function proxy(request: NextRequest) {
             if (!profile.is_active && !isAuthRoute) {
                 url.pathname = '/login'
                 url.search = '?reason=inactive'
-                return NextResponse.redirect(url)
-            }
-
-            if (profile.is_active && !profile.onboarding_complete && request.nextUrl.pathname !== '/onboarding' && !isAuthRoute) {
+                redirectUrl = url
+            } else if (profile.is_active && !profile.onboarding_complete && request.nextUrl.pathname !== '/onboarding' && !isAuthRoute) {
                 url.pathname = '/onboarding'
-                return NextResponse.redirect(url)
-            }
-
-            if (profile.is_active && profile.onboarding_complete && (isAuthRoute || request.nextUrl.pathname === '/onboarding')) {
+                redirectUrl = url
+            } else if (profile.is_active && profile.onboarding_complete && (isAuthRoute || request.nextUrl.pathname === '/onboarding')) {
                 url.pathname = '/dashboard'
-                return NextResponse.redirect(url)
+                redirectUrl = url
             }
         }
+    }
+
+    if (redirectUrl) {
+        // We MUST preserve the cookies set by updateSession by copying them into the redirect response
+        const redirectResponse = NextResponse.redirect(redirectUrl)
+        supabaseResponse.headers.forEach((value, key) => {
+            if (key.toLowerCase() === 'set-cookie') {
+                redirectResponse.headers.append(key, value)
+            }
+        })
+        return redirectResponse
     }
 
     return supabaseResponse

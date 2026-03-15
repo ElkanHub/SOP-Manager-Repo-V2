@@ -66,7 +66,7 @@ export function TodoComposer() {
             <Textarea
                 ref={textareaRef}
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="What do you need to do?"
                 className="min-h-[60px] resize-none text-sm border-0 focus-visible:ring-0 px-2 py-1"

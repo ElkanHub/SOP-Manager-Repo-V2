@@ -13,8 +13,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings } from "lucide-react"
-import { NavMain } from "@/components/nav-main"
-import { NavUser } from "@/components/nav-user"
+
 import { Badge } from "@/components/ui/badge"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -29,31 +28,31 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
     {
       title: "Dashboard",
       url: "/dashboard",
-      icon: <LayoutDashboard />,
+      icon: <LayoutDashboard className="w-5 h-5" />,
       isActive: pathname === "/dashboard",
     },
     {
       title: "SOP Library",
       url: "/sops",
-      icon: <BookOpen />,
+      icon: <BookOpen className="w-5 h-5" />,
       isActive: pathname.startsWith("/sops"),
     },
     {
       title: "Equipment",
       url: "/equipment",
-      icon: <Wrench />,
+      icon: <Wrench className="w-5 h-5" />,
       isActive: pathname.startsWith("/equipment"),
     },
     {
       title: "Calendar",
       url: "/calendar",
-      icon: <Calendar />,
+      icon: <Calendar className="w-5 h-5" />,
       isActive: pathname.startsWith("/calendar"),
     },
     {
       title: "Reports",
       url: "/reports",
-      icon: <FileBarChart />,
+      icon: <FileBarChart className="w-5 h-5" />,
       isActive: pathname.startsWith("/reports"),
     },
   ]
@@ -93,7 +92,7 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
           {navItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                asChild
+                render={<a href={item.url} />}
                 isActive={item.isActive}
                 className={`
                                     flex items-center gap-3 px-3 py-2 rounded-md transition-colors
@@ -103,10 +102,8 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
                   }
                                 `}
               >
-                <a href={item.url}>
-                  {React.cloneElement(item.icon as React.ReactElement, { className: "w-5 h-5" })}
-                  <span>{item.title}</span>
-                </a>
+                {item.icon}
+                <span>{item.title}</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
@@ -115,11 +112,9 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
       <SidebarFooter className="border-t p-2 bg-slate-50">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="text-slate-600 hover:bg-slate-200">
-              <a href="/settings" className="flex items-center gap-3 px-3 py-2">
-                <Settings className="w-5 h-5" />
-                <span>Settings</span>
-              </a>
+            <SidebarMenuButton render={<a href="/settings" className="flex items-center gap-3 px-3 py-2" />} className="text-slate-600 hover:bg-slate-200">
+              <Settings className="w-5 h-5" />
+              <span>Settings</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

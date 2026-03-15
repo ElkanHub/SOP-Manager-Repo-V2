@@ -53,10 +53,10 @@ export function NoticeComposer({ profile }: { profile: any }) {
 
     return (
         <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger asChild>
-                <Button className="w-full text-xs h-9 bg-brand-navy hover:bg-brand-navy/90 text-white shadow-sm">
-                    <Megaphone className="w-3.5 h-3.5 mr-2" /> Broadcast Notice
-                </Button>
+            <SheetTrigger render={
+                <Button className="w-full text-xs h-9 bg-brand-navy hover:bg-brand-navy/90 text-white shadow-sm" />
+            }>
+                <Megaphone className="w-3.5 h-3.5 mr-2" /> Broadcast Notice
             </SheetTrigger>
             <SheetContent side="right" className="w-[400px] sm:w-[540px] flex flex-col pt-12">
                 <SheetHeader className="mb-6">
@@ -118,7 +118,7 @@ export function NoticeComposer({ profile }: { profile: any }) {
                             placeholder="Type your message here..."
                             className="min-h-[150px] resize-none"
                             value={content}
-                            onChange={(e) => setContent(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
                         />
                         <div className="text-xs text-right text-slate-400">
                             {content.length}/500 characters
@@ -127,8 +127,8 @@ export function NoticeComposer({ profile }: { profile: any }) {
                 </div>
 
                 <SheetFooter className="mt-auto border-t pt-4">
-                    <SheetClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                    <SheetClose render={<Button variant="outline" />}>
+                        Cancel
                     </SheetClose>
                     <Button onClick={handleSubmit} disabled={loading || !content.trim()}>
                         {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
