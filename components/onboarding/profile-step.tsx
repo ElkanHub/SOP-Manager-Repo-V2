@@ -31,7 +31,7 @@ export function ProfileStep({ initialData, onNext }: any) {
             }
             const file = e.target.files[0]
             const fileExt = file.name.split('.').pop()
-            const filePath = `${initialData.id}.${fileExt}`
+            const filePath = `${initialData.id}/avatar.${fileExt}`
 
             // Upload the file
             const { error: uploadError } = await supabase.storage

@@ -2,6 +2,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
 export default async function proxy(request: NextRequest) {
+
+    console.log('>>> proxy hit:', request.nextUrl.pathname)
+
+
     const { supabase, supabaseResponse } = await updateSession(request)
 
     const {
