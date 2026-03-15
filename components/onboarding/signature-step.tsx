@@ -37,7 +37,7 @@ export function SignatureStep({ initialData, onNext }: any) {
             setUploading(true)
             setError(null)
 
-            const filePath = `${initialData.id}.png` // Always store as PNG
+            const filePath = `${initialData.id}/signature.png` // Store in folder for RLS
 
             // Upload to Supabase Storage
             const { error: uploadError } = await supabase.storage
