@@ -1,9 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { GalleryVerticalEnd, Bell, Search, Menu } from "lucide-react"
+import { GalleryVerticalEnd, Bell, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "@/components/ui/sidebar"
+import { GlobalSearch } from "./global-search"
 
 interface TopNavProps {
     user: any;
@@ -43,15 +43,7 @@ export function TopNav({ user, profile }: TopNavProps) {
 
             <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
                 <div className="w-full flex-1 md:w-auto md:flex-none max-w-sm">
-                    {/* Placeholder for Global Search to be built in Phase 4 */}
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                        <Input
-                            type="search"
-                            placeholder="Search SOPs, equipment..."
-                            className="h-9 w-full bg-white/10 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-brand-teal focus-visible:border-transparent pl-9 sm:w-[300px]"
-                        />
-                    </div>
+                    <GlobalSearch />
                 </div>
 
                 <nav className="flex items-center gap-2">
