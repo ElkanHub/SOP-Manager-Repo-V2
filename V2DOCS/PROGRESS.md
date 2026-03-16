@@ -161,17 +161,25 @@ All 14 database migrations executed successfully:
 - Collapsible to icon strip at 1024px
 
 **The Pulse Panel:**
-- Fixed right panel (300px)
 - Real-time subscription via Supabase Realtime
 - Item types: notices, todos, alerts
 - Notice composer with audience selection (self, department, everyone)
 - Thread depth enforcement (max 1 level)
 - Mark all as read functionality
+- **Collapsible overlay** - Toggle button slides panel in/out without resizing layout
+
+**Pulse Overlay Enhancement:**
+- Toggle button on right edge (visible on all screen sizes)
+- Slides in/out as overlay using CSS transform
+- Does not affect main content width
+- Smooth 300ms transition animation
+- Z-index layering: button at z-50, panel at z-40
 
 **Components Built:**
 - `TopNav`
 - `AppSidebar`
 - `ThePulse`
+- `PulseWrapper` - Collapsible wrapper component
 - `PulseItem`
 - `NoticeComposer`
 - `TodoComposer`
@@ -752,6 +760,7 @@ Route (app)
 ├ ƒ /api/cron/overdue-check
 ├ ƒ /api/cron/pm-alerts
 ├ ƒ /api/gemini/delta-summary
+├ ƒ /api/gemini/risk-insights
 ├ ƒ /api/storage/equipment-photo
 ├ ƒ /api/storage/sop-upload
 ├ ƒ /approvals
@@ -763,6 +772,7 @@ Route (app)
 ├ ƒ /library
 ├ ƒ /library/[id]
 ├ ƒ /calendar
+├ ƒ /reports
 ├ ○ /login
 ├ ƒ /onboarding
 ├ ƒ /settings
