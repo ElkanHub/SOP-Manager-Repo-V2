@@ -76,7 +76,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
 
       <div className="flex gap-6">
         <div className="w-64 shrink-0">
-          <Card>
+          <Card className="rounded-l-none">
             <CardContent className="p-4">
               <div className="space-y-2">
                 <div className="text-sm font-medium text-muted-foreground mb-4">Select Report</div>
@@ -98,7 +98,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
         </div>
 
         <div className="flex-1">
-          <Card>
+          <Card className="rounded-r-none">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-4">
