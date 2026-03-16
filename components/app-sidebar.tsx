@@ -12,16 +12,17 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: any;
   profile: any;
+  isQa?: boolean;
 }
 
-export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
+export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebarProps) {
   const pathname = usePathname()
 
   const navItems = [
@@ -33,10 +34,16 @@ export function AppSidebar({ user, profile, ...props }: AppSidebarProps) {
     },
     {
       title: "SOP Library",
-      url: "/sops",
+      url: "/library",
       icon: <BookOpen className="w-5 h-5" />,
-      isActive: pathname.startsWith("/sops"),
+      isActive: pathname.startsWith("/library"),
     },
+    ...(isQa ? [{
+      title: "Approvals",
+      url: "/approvals",
+      icon: <ClipboardCheck className="w-5 h-5" />,
+      isActive: pathname.startsWith("/approvals"),
+    }] : []),
     {
       title: "Equipment",
       url: "/equipment",

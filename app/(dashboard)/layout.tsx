@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TopNav } from "@/components/shell/top-nav"
@@ -31,13 +31,16 @@ export default async function DashboardLayout({
         redirect('/onboarding')
     }
 
+    const serviceClient = await createServiceClient()
+    const { data: isQa } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
+
     return (
         <SidebarProvider>
             <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
                 <TopNav user={user} profile={profile} />
 
                 <div className="flex flex-1 overflow-hidden">
-                    <AppSidebar user={user} profile={profile} />
+                    <AppSidebar user={user} profile={profile} isQa={isQa || false} />
 
                     {/* Main Content Area */}
                     <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 relative z-10 bg-background">

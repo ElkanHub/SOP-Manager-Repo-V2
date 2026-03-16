@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
+import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
 import { Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SopRecord } from "@/types/app.types"
+import { SopRecord, Profile, Department } from "@/types/app.types"
+import { LibraryPageClient } from "./library-client"
 
 export const dynamic = "force-dynamic"
 
@@ -14,6 +16,7 @@ interface PageProps {
 
 export default async function LibraryPage({ searchParams }: PageProps) {
   const supabase = await createClient()
+  const serviceClient = await createServiceClient()
 
   const {
     data: { user },
@@ -61,82 +64,20 @@ export default async function LibraryPage({ searchParams }: PageProps) {
     console.error("Error fetching SOPs:", error)
   }
 
+  const { data: departments } = await serviceClient
+    .from("departments")
+    .select("*")
+    .order("name")
+
   const isManager = profile.role === "manager"
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-foreground">SOP Library</h1>
-        {isManager && (
-          <Button className="bg-brand-teal hover:bg-teal-600 text-white">
-            <Upload className="h-4 w-4 mr-2" />
-            Upload SOP
-          </Button>
-        )}
-      </div>
-
-      <div className="flex items-center gap-3 mb-4">
-        <StatusFilterTab
-          label="All"
-          active={!statusFilter}
-          href="/library"
-        />
-        <StatusFilterTab
-          label="Active"
-          active={statusFilter === "active"}
-          href="/library?status=active"
-        />
-        {isManager && (
-          <>
-            <StatusFilterTab
-              label="Draft"
-              active={statusFilter === "draft"}
-              href="/library?status=draft"
-            />
-            <StatusFilterTab
-              label="Pending"
-              active={statusFilter === "pending_qa"}
-              href="/library?status=pending_qa"
-            />
-            <StatusFilterTab
-              label="Pending CC"
-              active={statusFilter === "pending_cc"}
-              href="/library?status=pending_cc"
-            />
-          </>
-        )}
-      </div>
-
-      <SopTabStrip />
-
-      <SopLibraryTable
-        sops={(sops as SopRecord[]) || []}
-        userDepartment={profile.department}
-        userRole={profile.role}
-      />
-    </div>
-  )
-}
-
-function StatusFilterTab({
-  label,
-  active,
-  href,
-}: {
-  label: string
-  active: boolean
-  href: string
-}) {
-  return (
-    <a
-      href={href}
-      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-        active
-          ? "bg-card shadow-sm border border-border text-brand-blue"
-          : "text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      {label}
-    </a>
+    <LibraryPageClient
+      sops={(sops as SopRecord[]) || []}
+      profile={profile as Profile}
+      departments={(departments as Department[]) || []}
+      isManager={isManager}
+      statusFilter={statusFilter}
+    />
   )
 }

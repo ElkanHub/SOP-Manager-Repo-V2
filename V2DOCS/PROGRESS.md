@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** March 15, 2026
+> **Last Updated:** March 16, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 4 - SOP Library (Read Layer)
+> **Current Phase:** Phase 5 - SOP Submission & QA Approval Flow
 
 ---
 
@@ -19,7 +19,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 2 | ✅ Complete | Auth & Onboarding |
 | Phase 3 | ✅ Complete | Shell Layout & Pulse |
 | Phase 4 | ✅ Complete | SOP Library (Read Layer) |
-| Phase 5-13 | 🔜 Not Started | Future Phases |
+| Phase 5 | ✅ Complete | SOP Submission & QA Approval Flow |
+| Phase 6-13 | 🔜 Not Started | Future Phases |
 
 ---
 
@@ -215,6 +216,49 @@ All 14 database migrations executed successfully:
 - Teal badge indicates cross-department
 - No Acknowledge button
 - No Submit Edit button
+
+---
+
+## Phase 5: SOP Submission & QA Approval Flow
+
+### Completed Tasks
+
+**SOP Upload Modal (`SopUploadModal`):**
+- 3-step modal: File → Metadata → Notes
+- Drag-and-drop .docx upload (max 25MB)
+- Client + server-side validation
+- Upload to Supabase Storage via `/api/storage/sop-upload`
+- New SOP or Update to Existing flow
+- Primary + Secondary department selection
+
+**API Routes:**
+- `/api/storage/sop-upload` - Handles .docx upload with MIME type and size validation
+
+**Server Actions (`/actions/sop.ts`):**
+- `submitSopForApproval()` - Creates SOP + approval request, sends pulse notification
+- `resubmitSop()` - Handles resubmissions with version tracking
+- `approveSopRequest()` - QA approval with self-approval block
+- `requestChangesSop()` - QA can request changes with comments
+
+**Approvals Page (`/approvals`):**
+- QA Manager only (middleware redirect for non-QA)
+- Filter by status: All, Pending, Changes Requested, Approved, Rejected
+- Grouped by SOP with latest submission visible
+
+**Approval Detail Page (`/approvals/[id]`):**
+- Left: SopViewer rendering submitted file
+- Right: Submitter details, submission history, action buttons
+- Self-approval guard (UI + server)
+- Request Changes with comment thread
+
+**Sidebar Integration:**
+- Approvals nav item (visible to QA only)
+- Uses `is_qa_manager` RPC to determine visibility
+
+**Components Built:**
+- `SopUploadModal` - 3-step upload modal
+- `ApprovalQueueTable` - Approval queue with filtering
+- `ApprovalDetailClient` - Approval review page
 
 ---
 

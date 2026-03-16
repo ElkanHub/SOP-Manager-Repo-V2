@@ -1,0 +1,82 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient, createClient } from '@/lib/supabase/server'
+
+export async function POST(request: NextRequest) {
+    const client = await createClient()
+    
+    const { data: { user }, error: authError } = await client.auth.getUser()
+    if (authError || !user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const supabase = await createServiceClient()
+    
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_active, role')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_active) {
+        return NextResponse.json({ error: 'User is inactive' }, { status: 403 })
+    }
+
+    if (profile.role !== 'manager') {
+        return NextResponse.json({ error: 'Only managers can upload SOPs' }, { status: 403 })
+    }
+
+    const formData = await request.formData()
+    const file = formData.get('file') as File | null
+
+    if (!file) {
+        return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+    }
+
+    const allowedMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    if (file.type !== allowedMimeType) {
+        return NextResponse.json({ 
+            error: 'Invalid file type. Only .docx files are allowed.' 
+        }, { status: 415 })
+    }
+
+    const maxSize = 25 * 1024 * 1024 // 25MB
+    if (file.size > maxSize) {
+        return NextResponse.json({ 
+            error: 'File too large. Maximum size is 25MB.' 
+        }, { status: 413 })
+    }
+
+    const extension = file.name.split('.').pop()?.toLowerCase()
+    if (extension !== 'docx') {
+        return NextResponse.json({ 
+            error: 'Invalid file extension. Only .docx files are allowed.' 
+        }, { status: 415 })
+    }
+
+    const fileId = crypto.randomUUID()
+    const filePath = `sop-uploads/${fileId}.docx`
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, buffer, {
+            contentType: allowedMimeType,
+            upsert: false,
+        })
+
+    if (uploadError) {
+        console.error('Upload error:', uploadError)
+        return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath)
+
+    return NextResponse.json({ 
+        success: true, 
+        fileUrl: publicUrl 
+    })
+}
