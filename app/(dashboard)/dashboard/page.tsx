@@ -1,10 +1,120 @@
-import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
+import { addDays } from "date-fns"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
+import { DashboardClient } from "@/components/dashboard/dashboard-client"
+import { Profile } from "@/types/app.types"
+
+export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
-    return (
-        <div className="flex flex-col h-full items-center justify-center text-muted-foreground">
-            <h1 className="text-2xl font-bold mb-2 text-foreground">Welcome to your Dashboard</h1>
-            <p>Phase 9 will implement the KPI and reporting dashboard here.</p>
-        </div>
-    )
+  const supabase = await createClient()
+  const serviceClient = await createServiceClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single()
+
+  if (!profile || !profile.onboarding_complete) {
+    redirect("/onboarding")
+  }
+
+  const today = new Date().toISOString().split('T')[0]
+  const thirtyDaysFromNow = addDays(new Date(), 30).toISOString().split('T')[0]
+
+  let activeSopsCount = 0
+  let pendingApprovalsCount = 0
+  let sopsDueForRevisionCount = 0
+
+  if (profile.role === 'manager' || profile.is_admin || profile.department === 'QA') {
+    const { count: sops } = await serviceClient
+      .from('sops')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active')
+    
+    activeSopsCount = sops || 0
+
+    const { count: approvals } = await serviceClient
+      .from('sop_approval_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
+    
+    pendingApprovalsCount = approvals || 0
+
+    const { count: revisions } = await serviceClient
+      .from('sops')
+      .select('*', { count: 'exact', head: true })
+      .lte('due_for_revision', thirtyDaysFromNow)
+      .gte('due_for_revision', today)
+    
+    sopsDueForRevisionCount = revisions || 0
+  } else {
+    const { count: sops } = await serviceClient
+      .from('sops')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active')
+      .or(`department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`)
+    
+    activeSopsCount = sops || 0
+
+    const { count: approvals } = await serviceClient
+      .from('sop_approval_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'pending')
+      .eq('submitted_by', user.id)
+    
+    pendingApprovalsCount = approvals || 0
+
+    const { count: revisions } = await serviceClient
+      .from('sops')
+      .select('*', { count: 'exact', head: true })
+      .eq('department', profile.department)
+      .lte('due_for_revision', thirtyDaysFromNow)
+      .gte('due_for_revision', today)
+    
+    sopsDueForRevisionCount = revisions || 0
+  }
+
+  const { data: pmCompliance } = await serviceClient.rpc('get_pm_compliance', {
+    p_dept: profile.department
+  })
+
+  const { data: auditEntries } = await serviceClient
+    .from('audit_log')
+    .select('*, actor:profiles!actor_id(full_name)')
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  const { data: upcomingPmTasks } = await serviceClient
+    .from('pm_tasks')
+    .select(`
+      id,
+      due_date,
+      status,
+      equipment:equipment_id(name, asset_id)
+    `)
+    .eq('status', 'pending')
+    .order('due_date', { ascending: true })
+    .limit(5)
+
+  return (
+    <DashboardClient
+      profile={profile as Profile}
+      kpiData={{
+        activeSops: activeSopsCount,
+        pendingApprovals: pendingApprovalsCount,
+        pmCompliance: pmCompliance || 0,
+        sopsDueForRevision: sopsDueForRevisionCount,
+      }}
+      auditEntries={auditEntries || []}
+      upcomingPmTasks={upcomingPmTasks as any[] || []}
+    />
+  )
 }

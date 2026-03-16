@@ -2,7 +2,7 @@
 
 > **Last Updated:** March 16, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 8 - Company Calendar
+> **Current Phase:** Phase 9 - Dashboard & KPIs
 
 ---
 
@@ -23,7 +23,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 6 | ✅ Complete | Change Control Center |
 | Phase 7 | ✅ Complete | Equipment Registry & PM Planner |
 | Phase 8 | ✅ Complete | Company Calendar |
-| Phase 9-13 | 🔜 Not Started | Future Phases |
+| Phase 9 | ✅ Complete | Dashboard & KPIs |
+| Phase 10-13 | 🔜 Not Started | Future Phases |
 
 ---
 
@@ -512,6 +513,63 @@ actions/
 
 ---
 
+## Phase 9: Dashboard & KPIs
+
+### Completed Tasks
+
+**Dashboard Page (`/dashboard`):**
+- 4 KPI cards with NumberTicker animations (600ms duration)
+- Clickable cards navigate to relevant filtered pages
+- Real-time data from database
+
+**KPI Cards:**
+| Card | Data Source | Colour Logic |
+|------|-------------|-------------|
+| Active SOPs | COUNT sops WHERE status='active' | Blue |
+| Pending Approvals | COUNT sop_approval_requests WHERE status='pending' | Red if >0, green if 0 |
+| PM Compliance | get_pm_compliance() RPC | <70% red, 70-89% amber, ≥90% green |
+| SOPs Due for Revision | COUNT sops due within 30 days | Amber if >0, green if 0 |
+
+**Activity Feed:**
+- Last 10 audit_log entries
+- Supabase Realtime subscription for live updates
+- Shows actor, action, entity type, timestamp
+- Formatted action labels for readability
+
+**Upcoming PM Section:**
+- Next 5 pending PM tasks
+- Urgency colors: overdue (red), ≤7 days (amber), OK (green)
+- Shows equipment name, asset ID, due date
+
+**Data Scoping:**
+- Managers/Admins see cross-department KPIs
+- Employees scoped to own department
+- Pending Approvals shows own submissions for non-QA
+
+**Components Built:**
+- `dashboard-client` - Main dashboard client component
+- `NumberTicker` - Custom animated counter component
+
+**Dark Mode Implementation:**
+- All components use semantic Tailwind tokens
+- Color-coded KPIs adapt to dark mode
+- Proper contrast ratios maintained
+
+### Files Created
+
+```
+app/(dashboard)/dashboard/
+└── page.tsx                          # Server component
+
+components/
+├── dashboard/
+│   └── dashboard-client.tsx           # Main dashboard client
+└── ui/
+    └── number-ticker.tsx             # Animated number counter
+```
+
+---
+
 ## Design System
 
 ### Typography
@@ -576,9 +634,8 @@ All components use semantic Tailwind tokens for proper dark mode support:
 
 | Phase | Description |
 |-------|-------------|
-| Phase 9 | Dashboard & KPI Reporting |
-| Phase 10 | Settings & Admin |
-| Phase 11 | Audit Log Viewer |
+| Phase 10 | Reports & Audit Log |
+| Phase 11 | Settings & Admin |
 | Phase 12 | Messaging System |
 | Phase 13 | (Reserved for future expansion) |
 
