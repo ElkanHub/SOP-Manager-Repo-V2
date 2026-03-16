@@ -127,7 +127,7 @@ export function DashboardClient({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/library?status=active">
-          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer rounded-t-none">
             <CardContent className="pt-6">
               <div className="text-sm font-medium text-muted-foreground">Active SOPs</div>
               <div className="mt-2">
@@ -142,7 +142,7 @@ export function DashboardClient({
         </Link>
 
         <Link href={profile.role === 'manager' || profile.is_admin ? "/approvals" : "/library"}>
-          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer rounded-t-none">
             <CardContent className="pt-6">
               <div className="text-sm font-medium text-muted-foreground">Pending Approvals</div>
               <div className="mt-2">
@@ -161,7 +161,7 @@ export function DashboardClient({
         </Link>
 
         <Link href="/equipment">
-          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer rounded-t-none">
             <CardContent className="pt-6">
               <div className="text-sm font-medium text-muted-foreground">PM Compliance</div>
               <div className="mt-2">
@@ -177,7 +177,7 @@ export function DashboardClient({
         </Link>
 
         <Link href="/library?filter=due">
-          <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+          <Card className="hover:bg-muted/50 transition-colors cursor-pointer rounded-t-none">
             <CardContent className="pt-6">
               <div className="text-sm font-medium text-muted-foreground">SOPs Due for Revision</div>
               <div className="mt-2">
