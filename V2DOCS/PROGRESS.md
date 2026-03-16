@@ -2,7 +2,7 @@
 
 > **Last Updated:** March 16, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 7 - Equipment Registry & PM Planner
+> **Current Phase:** Phase 8 - Company Calendar
 
 ---
 
@@ -22,7 +22,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 5 | ✅ Complete | SOP Submission & QA Approval Flow |
 | Phase 6 | ✅ Complete | Change Control Center |
 | Phase 7 | ✅ Complete | Equipment Registry & PM Planner |
-| Phase 8-13 | 🔜 Not Started | Future Phases |
+| Phase 8 | ✅ Complete | Company Calendar |
+| Phase 9-13 | 🔜 Not Started | Future Phases |
 
 ---
 
@@ -447,6 +448,70 @@ vercel.json                           # Cron schedule config
 
 ---
 
+## Phase 8: Company Calendar
+
+### Completed Tasks
+
+**Calendar Page (`/calendar`):**
+- Monthly grid using date-fns (no external calendar library)
+- Today cell highlighted with teal background
+- Previous/Next month navigation arrows
+- "Today" button to jump to current month
+- PM auto-events from equipment table (next 60 days)
+- Manual event creation
+
+**Components Built:**
+- `calendar-client` - Main calendar page client component
+- `calendar-grid` - Monthly grid with day cells
+- `calendar-cell` - Individual day cell with event chips
+- `calendar-chip` - Color-coded chips (teal=PM, blue=public, slate=dept)
+- `new-event-modal` - Create manual events
+- `event-detail-popover` - View event details and delete
+- `upcoming-panel` - Right sidebar with next 14 days
+
+**Server Actions (`/actions/events.ts`):**
+- `createEvent()` - Create manual event
+- `deleteEvent()` - Delete own event (validates ownership)
+
+**PM Auto-Events:**
+- Queries equipment where status='active' and dept matches (including secondary)
+- Renders as teal chips with 🔧 prefix
+- Not stored as events - read directly from equipment table
+
+**Event Visibility:**
+- Public events visible to all active users
+- Department events visible only to user's department
+
+**Upcoming Panel:**
+- Shows next 14 days of events and PM due dates
+- Chronologically ordered
+- Shows PM tasks and manual events separately
+
+**Dark Mode Implementation:**
+- All calendar components use semantic Tailwind tokens
+- `bg-background`, `bg-card`, `text-foreground`, `text-muted-foreground`
+
+### Files Created
+
+```
+app/(dashboard)/calendar/
+└── page.tsx                          # Server component
+
+components/calendar/
+├── calendar-client.tsx               # Main client
+├── calendar-grid.tsx                # Monthly grid
+├── calendar-cell.tsx                # Day cell
+├── calendar-chip.tsx                # Event chip
+├── new-event-modal.tsx              # Create event modal
+├── event-detail-popover.tsx          # Event detail popover
+└── upcoming-panel.tsx               # 14-day sidebar
+
+actions/
+└── events.ts                        # Event server actions
+```
+
+---
+
 ## Design System
 
 ### Typography
@@ -511,12 +576,11 @@ All components use semantic Tailwind tokens for proper dark mode support:
 
 | Phase | Description |
 |-------|-------------|
-| Phase 8 | PM Task Management |
 | Phase 9 | Dashboard & KPI Reporting |
-| Phase 10 | Calendar & Scheduling |
-| Phase 11 | Settings & Admin |
-| Phase 12 | Audit Log Viewer |
-| Phase 13 | Messaging System |
+| Phase 10 | Settings & Admin |
+| Phase 11 | Audit Log Viewer |
+| Phase 12 | Messaging System |
+| Phase 13 | (Reserved for future expansion) |
 
 ---
 
@@ -555,6 +619,7 @@ Route (app)
 ├ ƒ /equipment/[id]
 ├ ƒ /library
 ├ ƒ /library/[id]
+├ ƒ /calendar
 ├ ○ /login
 ├ ƒ /onboarding
 ├ ƒ /settings
