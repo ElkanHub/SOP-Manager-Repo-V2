@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TopNav } from "@/components/shell/top-nav"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { ThePulse } from "@/components/pulse/the-pulse"
+import { PulseWrapper } from "@/components/pulse/pulse-wrapper"
 
 export default async function DashboardLayout({
     children,
@@ -48,7 +48,7 @@ export default async function DashboardLayout({
                     </main>
 
                     {/* The Pulse Right Sidebar */}
-                    <ThePulse profile={profile} user={user} />
+                    <PulseWrapper profile={profile} user={user} />
                 </div>
             </div>
         </SidebarProvider>
