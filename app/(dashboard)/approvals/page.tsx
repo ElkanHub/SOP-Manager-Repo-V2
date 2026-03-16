@@ -44,8 +44,8 @@ export default async function ApprovalsPage() {
     return (
         <div className="container mx-auto py-6 space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Approval Queue</h1>
-                <p className="text-slate-500">Review and approve SOP submissions</p>
+                <h1 className="text-2xl font-bold text-foreground">Approval Queue</h1>
+                <p className="text-muted-foreground">Review and approve SOP submissions</p>
             </div>
 
             <ApprovalQueueTable 

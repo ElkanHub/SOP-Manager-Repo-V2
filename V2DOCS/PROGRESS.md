@@ -224,7 +224,8 @@ All 14 database migrations executed successfully:
 ### Completed Tasks
 
 **SOP Upload Modal (`SopUploadModal`):**
-- 3-step modal: File → Metadata → Notes
+- 3-step modal using Shadcn Dialog component
+- Full dark mode support with semantic color tokens
 - Drag-and-drop .docx upload (max 25MB)
 - Client + server-side validation
 - Upload to Supabase Storage via `/api/storage/sop-upload`
@@ -244,19 +245,27 @@ All 14 database migrations executed successfully:
 - QA Manager only (middleware redirect for non-QA)
 - Filter by status: All, Pending, Changes Requested, Approved, Rejected
 - Grouped by SOP with latest submission visible
+- Full dark mode support
 
 **Approval Detail Page (`/approvals/[id]`):**
 - Left: SopViewer rendering submitted file
 - Right: Submitter details, submission history, action buttons
 - Self-approval guard (UI + server)
 - Request Changes with comment thread
+- Full dark mode support
 
 **Sidebar Integration:**
 - Approvals nav item (visible to QA only)
 - Uses `is_qa_manager` RPC to determine visibility
 
+**Dark Mode Fixes Applied:**
+- Replaced hardcoded `bg-white` with `bg-background` / `bg-card`
+- Replaced `text-slate-*` with `text-muted-foreground` / `text-foreground`
+- Replaced `border-slate-*` with `border-input` / `border-border`
+- Added dark mode variants where needed (e.g., `dark:bg-green-950/50`)
+
 **Components Built:**
-- `SopUploadModal` - 3-step upload modal
+- `SopUploadModal` - 3-step upload modal with Shadcn Dialog
 - `ApprovalQueueTable` - Approval queue with filtering
 - `ApprovalDetailClient` - Approval review page
 
@@ -294,6 +303,23 @@ All 14 database migrations executed successfully:
 - **Auth Pages** - Background image with gradient overlay
 - **Responsive Design** - Mobile, tablet, and desktop breakpoints
 
+### Dark Mode Implementation
+
+All components use semantic Tailwind tokens for proper dark mode support:
+
+| Token | Light Mode | Dark Mode | Usage |
+|-------|------------|-----------|-------|
+| `bg-background` | oklch(1 0 0) | #1a1a1a | Page backgrounds |
+| `bg-card` | oklch(1 0 0) | #242424 | Card backgrounds |
+| `text-foreground` | oklch(0.145 0 0) | oklch(0.92 0 0) | Primary text |
+| `text-muted-foreground` | oklch(0.556 0 0) | oklch(0.65 0 0) | Secondary text |
+| `border-input` | oklch(0.922 0 0) | #3d3d3d | Input borders |
+| `border-border` | oklch(0.922 0 0) | #3d3d3d | General borders |
+| `bg-muted` | oklch(0.97 0 0) | #2d2d2d | Muted backgrounds |
+| `bg-destructive` | oklch(0.577...) | oklch(0.577...) | Error/destructive |
+
+**Rule:** Never use hardcoded colors like `bg-white`, `text-slate-500`, `border-slate-300`. Always use semantic tokens.
+
 ---
 
 ## Known Issues & Fixes Applied
@@ -309,8 +335,7 @@ All 14 database migrations executed successfully:
 
 | Phase | Description |
 |-------|-------------|
-| Phase 5 | Change Control (Issue & Sign) |
-| Phase 6 | SOP Submit & Approval Workflow |
+| Phase 6 | Change Control (Issue & Sign) |
 | Phase 7 | Equipment Registry |
 | Phase 8 | PM Task Management |
 | Phase 9 | Dashboard & KPI Reporting |
@@ -343,6 +368,9 @@ All 14 database migrations executed successfully:
 Route (app)
 ┌ ○ /
 ├ ○ /_not-found
+├ ƒ /api/storage/sop-upload
+├ ƒ /approvals
+├ ƒ /approvals/[id]
 ├ ƒ /dashboard
 ├ ƒ /library
 ├ ƒ /library/[id]
@@ -353,7 +381,7 @@ Route (app)
 └ ○ /signup
 
 ○  (Static)   prerendered as static content
-ƒ  (Dynamic)  server-rendered on demand
+ƒ  (Dynamic)   server-rendered on demand
 ```
 
 **Build:** ✅ Passing

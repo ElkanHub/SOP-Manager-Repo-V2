@@ -58,7 +58,7 @@ export function SopLibraryTable({
         accessorKey: "sop_number",
         header: "SOP No.",
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-muted-foreground">
             {row.getValue("sop_number")}
           </span>
         ),
@@ -74,7 +74,7 @@ export function SopLibraryTable({
               <span
                 className={cn(
                   "truncate",
-                  isLocked && "text-slate-400"
+                  isLocked && "text-muted-foreground"
                 )}
               >
                 {row.getValue("title")}
@@ -100,7 +100,7 @@ export function SopLibraryTable({
         accessorKey: "version",
         header: "Version",
         cell: ({ row }) => (
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-muted-foreground">
             {row.getValue("version")}
           </span>
         ),
@@ -145,9 +145,9 @@ export function SopLibraryTable({
             <span
               className={cn(
                 "text-xs",
-                isOverdue && "text-red-600 font-semibold",
-                isDueSoon && "text-amber-600 font-semibold",
-                !isOverdue && !isDueSoon && "text-slate-500"
+                isOverdue && "text-red-600 dark:text-red-400 font-semibold",
+                isDueSoon && "text-amber-600 dark:text-amber-400 font-semibold",
+                !isOverdue && !isDueSoon && "text-muted-foreground"
               )}
             >
               {format(dueDate, "dd MMM yyyy")}

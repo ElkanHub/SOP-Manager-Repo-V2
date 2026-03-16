@@ -9,8 +9,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { submitSopForApproval, SubmitSopResult } from "@/actions/sop"
-import { createClient } from "@/lib/supabase/client"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { submitSopForApproval } from "@/actions/sop"
 import { Profile, Department, SopRecord } from "@/types/app.types"
 
 interface SopUploadModalProps {
@@ -50,7 +50,6 @@ export function SopUploadModal({
     const [submitSuccess, setSubmitSuccess] = useState(false)
 
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const supabase = createClient()
 
     useEffect(() => {
         if (!open) {
@@ -199,39 +198,38 @@ export function SopUploadModal({
 
     if (submitSuccess) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center">
-                <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-                <div className="relative bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4 text-center">
-                    <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">Submitted for QA Review</h3>
-                    <p className="text-slate-600">
-                        You&apos;ll be notified when QA responds.
-                    </p>
-                </div>
-            </div>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-center">Submitted for QA Review</DialogTitle>
+                        <DialogDescription className="text-center">
+                            You&apos;ll be notified when QA responds.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex justify-center py-4">
+                        <CheckCircle2 className="h-16 w-16 text-green-500" />
+                    </div>
+                </DialogContent>
+            </Dialog>
         )
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-            <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between p-4 border-b">
-                    <div>
-                        <h2 className="text-lg font-semibold">Submit SOP</h2>
-                        <p className="text-sm text-slate-500">Step {step} of 3</p>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-                        <X className="h-4 w-4" />
-                    </Button>
-                </div>
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
+                <DialogHeader>
+                    <DialogTitle>Submit SOP</DialogTitle>
+                    <DialogDescription>
+                        Step {step} of 3
+                    </DialogDescription>
+                </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="flex-1 overflow-y-auto py-4">
                     {step === 1 && (
                         <div className="space-y-4">
                             <div>
                                 <Label className="text-base">Upload SOP Document</Label>
-                                <p className="text-sm text-slate-500 mb-4">
+                                <p className="text-sm text-muted-foreground mb-4">
                                     Upload a .docx file (max 25MB)
                                 </p>
                             </div>
@@ -240,7 +238,9 @@ export function SopUploadModal({
                                 className={`
                                     border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                                     transition-colors
-                                    ${file ? 'border-green-300 bg-green-50' : 'border-slate-300 hover:border-slate-400'}
+                                    ${file 
+                                        ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-950/30' 
+                                        : 'border-input hover:border-muted-foreground dark:hover:border-muted-foreground'}
                                 `}
                                 onClick={() => fileInputRef.current?.click()}
                                 onDrop={handleDrop}
@@ -256,20 +256,20 @@ export function SopUploadModal({
                                 
                                 {uploading ? (
                                     <div className="flex flex-col items-center">
-                                        <Loader2 className="h-10 w-10 animate-spin text-slate-400 mb-2" />
-                                        <p className="text-sm text-slate-600">Uploading...</p>
+                                        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-2" />
+                                        <p className="text-sm text-muted-foreground">Uploading...</p>
                                     </div>
                                 ) : file ? (
                                     <div className="flex flex-col items-center">
                                         <FileText className="h-10 w-10 text-green-500 mb-2" />
-                                        <p className="font-medium text-slate-800">{file.name}</p>
-                                        <p className="text-sm text-slate-500">
+                                        <p className="font-medium">{file.name}</p>
+                                        <p className="text-sm text-muted-foreground">
                                             {(file.size / 1024 / 1024).toFixed(2)} MB
                                         </p>
                                         <Button 
                                             variant="link" 
                                             size="sm" 
-                                            className="mt-2 text-slate-500"
+                                            className="mt-2 text-muted-foreground"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 setFile(null)
@@ -281,8 +281,8 @@ export function SopUploadModal({
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center">
-                                        <Upload className="h-10 w-10 text-slate-400 mb-2" />
-                                        <p className="text-sm text-slate-600">
+                                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+                                        <p className="text-sm text-muted-foreground">
                                             Click to upload or drag and drop
                                         </p>
                                     </div>
@@ -290,7 +290,7 @@ export function SopUploadModal({
                             </div>
 
                             {uploadError && (
-                                <div className="flex items-center gap-2 text-red-600 text-sm">
+                                <div className="flex items-center gap-2 text-destructive text-sm">
                                     <AlertCircle className="h-4 w-4" />
                                     {uploadError}
                                 </div>
@@ -356,7 +356,7 @@ export function SopUploadModal({
                                                     <SelectItem key={sop.id} value={sop.id}>
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-mono">{sop.sop_number}</span>
-                                                            <span className="text-slate-500">- {sop.title}</span>
+                                                            <span className="text-muted-foreground">- {sop.title}</span>
                                                         </div>
                                                     </SelectItem>
                                                 ))}
@@ -365,14 +365,14 @@ export function SopUploadModal({
                                     
                                     {selectedSopId && (
                                         <div className="mt-2 text-sm">
-                                            <span className="text-slate-500">Updating: </span>
+                                            <span className="text-muted-foreground">Updating: </span>
                                             <Badge variant="outline">{sopNumber}</Badge>
                                             <span className="ml-2">{title}</span>
                                         </div>
                                     )}
 
                                     {lockedError && (
-                                        <div className="flex items-center gap-2 text-amber-600 text-sm mt-2">
+                                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mt-2">
                                             <AlertCircle className="h-4 w-4" />
                                             {lockedError}
                                         </div>
@@ -434,29 +434,29 @@ export function SopUploadModal({
                                     maxLength={500}
                                     className="mt-1"
                                 />
-                                <p className="text-xs text-slate-500 mt-1 text-right">
+                                <p className="text-xs text-muted-foreground mt-1 text-right">
                                     {notesToQa.length}/500
                                 </p>
                             </div>
 
-                            <div className="bg-slate-50 rounded-lg p-4 space-y-2">
-                                <h4 className="font-medium text-sm text-slate-700">Summary</h4>
+                            <div className="bg-muted dark:bg-card rounded-lg p-4 space-y-2">
+                                <h4 className="font-medium text-sm">Summary</h4>
                                 <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <span className="text-slate-500">Type:</span>
+                                    <span className="text-muted-foreground">Type:</span>
                                     <span>{sopType === 'new' ? 'New SOP' : 'Update'}</span>
                                     
-                                    <span className="text-slate-500">SOP Number:</span>
+                                    <span className="text-muted-foreground">SOP Number:</span>
                                     <span className="font-mono">{sopNumber}</span>
                                     
-                                    <span className="text-slate-500">Title:</span>
+                                    <span className="text-muted-foreground">Title:</span>
                                     <span>{title}</span>
                                     
-                                    <span className="text-slate-500">Department:</span>
+                                    <span className="text-muted-foreground">Department:</span>
                                     <span>{primaryDept}</span>
                                     
                                     {secondaryDepts.length > 0 && (
                                         <>
-                                            <span className="text-slate-500">Also for:</span>
+                                            <span className="text-muted-foreground">Also for:</span>
                                             <span>{secondaryDepts.join(', ')}</span>
                                         </>
                                     )}
@@ -464,7 +464,7 @@ export function SopUploadModal({
                             </div>
 
                             {submitError && (
-                                <div className="flex items-center gap-2 text-red-600 text-sm">
+                                <div className="flex items-center gap-2 text-destructive text-sm">
                                     <AlertCircle className="h-4 w-4" />
                                     {submitError}
                                 </div>
@@ -473,7 +473,7 @@ export function SopUploadModal({
                     )}
                 </div>
 
-                <div className="flex items-center justify-between p-4 border-t bg-slate-50">
+                <DialogFooter className="sm:justify-between">
                     <div>
                         {step > 1 && (
                             <Button variant="outline" onClick={() => setStep(step - 1)}>
@@ -506,8 +506,8 @@ export function SopUploadModal({
                             </Button>
                         )}
                     </div>
-                </div>
-            </div>
-        </div>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     )
 }

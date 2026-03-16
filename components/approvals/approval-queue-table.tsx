@@ -9,7 +9,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SopApprovalRequest, Profile, SopRecord } from "@/types/app.types"
 import Link from "next/link"
-import { createClient } from "@/lib/supabase/client"
 
 interface ApprovalQueueTableProps {
     requests: (SopApprovalRequest & {
@@ -39,13 +38,13 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'pending':
-                return <Badge variant="outline" className="border-blue-500 text-blue-600"><Clock className="h-3 w-3 mr-1" />Pending</Badge>
+                return <Badge variant="outline" className="border-blue-500 text-blue-600 dark:text-blue-400"><Clock className="h-3 w-3 mr-1" />Pending</Badge>
             case 'changes_requested':
-                return <Badge variant="outline" className="border-amber-500 text-amber-600"><AlertCircle className="h-3 w-3 mr-1" />Changes Requested</Badge>
+                return <Badge variant="outline" className="border-amber-500 text-amber-600 dark:text-amber-400"><AlertCircle className="h-3 w-3 mr-1" />Changes Requested</Badge>
             case 'approved':
-                return <Badge variant="outline" className="border-green-500 text-green-600"><CheckCircle2 className="h-3 w-3 mr-1" />Approved</Badge>
+                return <Badge variant="outline" className="border-green-500 text-green-600 dark:text-green-400"><CheckCircle2 className="h-3 w-3 mr-1" />Approved</Badge>
             case 'rejected':
-                return <Badge variant="outline" className="border-red-500 text-red-600">Rejected</Badge>
+                return <Badge variant="outline" className="border-red-500 text-red-600 dark:text-red-400">Rejected</Badge>
             default:
                 return <Badge variant="outline">{status}</Badge>
         }
@@ -55,10 +54,15 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
         return submittedById === currentUserId
     }
 
+    const getInitials = (name: string | undefined) => {
+        if (!name) return '?'
+        return name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
+    }
+
     if (requests.length === 0) {
         return (
-            <div className="text-center py-12 text-slate-500">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-slate-300" />
+            <div className="text-center py-12 text-muted-foreground">
+                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                 <p>No approval requests yet.</p>
             </div>
         )
@@ -66,7 +70,7 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
 
     return (
         <div className="space-y-6">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
                 {(['all', 'pending', 'changes_requested', 'approved', 'rejected'] as const).map((status) => (
                     <Button
                         key={status}
@@ -97,7 +101,7 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
                                     <Avatar className="h-10 w-10">
                                         <AvatarImage src={submitter?.avatar_url} />
                                         <AvatarFallback>
-                                            {submitter?.full_name?.split(' ').map(n => n[0]).join('') || '?'}
+                                            {getInitials(submitter?.full_name)}
                                         </AvatarFallback>
                                     </Avatar>
                                     
@@ -107,15 +111,15 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
                                             <Badge variant="secondary">{latestRequest.type === 'new' ? 'New' : 'Update'}</Badge>
                                         </div>
                                         <p className="text-sm font-medium truncate">{sop?.title}</p>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-muted-foreground">
                                             Submitted by {submitter?.full_name} • {formatDistanceToNow(new Date(latestRequest.created_at), { addSuffix: true })}
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 flex-wrap justify-end">
                                         {getStatusBadge(latestRequest.status)}
                                         {latestRequest.status === 'pending' && isSelfSubmission(latestRequest.submitted_by) && (
-                                            <Badge variant="outline" className="border-slate-300 text-slate-500">
+                                            <Badge variant="outline" className="border-border text-muted-foreground">
                                                 You submitted this
                                             </Badge>
                                         )}
@@ -128,8 +132,8 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
                                 </div>
 
                                 {sopRequests.length > 1 && (
-                                    <div className="border-t px-4 py-2 bg-slate-50">
-                                        <Button variant="ghost" size="sm" className="text-xs text-slate-500">
+                                    <div className="border-t px-4 py-2 bg-muted/50 dark:bg-muted/30">
+                                        <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
                                             <RefreshCw className="h-3 w-3 mr-1" />
                                             View {sopRequests.length - 1} previous submission(s)
                                         </Button>
