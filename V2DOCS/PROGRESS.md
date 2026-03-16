@@ -2,7 +2,7 @@
 
 > **Last Updated:** March 16, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 9 - Dashboard & KPIs
+> **Current Phase:** Phase 10 - Reports & Audit Log
 
 ---
 
@@ -24,7 +24,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 7 | ✅ Complete | Equipment Registry & PM Planner |
 | Phase 8 | ✅ Complete | Company Calendar |
 | Phase 9 | ✅ Complete | Dashboard & KPIs |
-| Phase 10-13 | 🔜 Not Started | Future Phases |
+| Phase 10 | ✅ Complete | Reports & Audit Log |
+| Phase 11-13 | 🔜 Not Started | Future Phases |
 
 ---
 
@@ -570,6 +571,92 @@ components/
 
 ---
 
+## Phase 10: Reports & Audit Log
+
+### Completed Tasks
+
+**Reports Page (`/reports`):**
+- Two-panel layout: report selector on left, content on right
+- Date range filtering with from/to inputs
+- CSV export for all reports (client-side)
+
+**Report 1 — SOP Change History:**
+- Source: `audit_log` filtered to SOP + Change Control events
+- Columns: SOP No., Action, Actor Name, Dept, Timestamp
+- Access: QA, Manager (own dept)
+
+**Report 2 — Worker Acknowledgement Log:**
+- Source: `sop_acknowledgements` joined with profiles and sops
+- Columns: SOP No., SOP Title, Employee Name, Dept, Version, Acknowledged At
+- Access: QA, Manager (own dept)
+
+**Report 3 — PM Completion Log:**
+- Source: `pm_tasks` (complete) joined with equipment and profiles
+- Columns: Asset ID, Asset Name, Dept, Assigned To, Completed By, Date, Notes
+- Access: QA, Manager (own dept)
+
+**Report 4 — Pulse / Notice Log:**
+- Source: `pulse_items` where type='notice'
+- Columns: Sender, Audience, Target Dept, Subject, Body, Sent At
+- Access: Admin only (403 for non-admins)
+
+**Report 5 — AI Risk Insights:**
+- Trigger: "Generate Insights" button
+- POST to `/api/gemini/risk-insights`
+- Fetches last 30 days of audit_log for scope
+- Calls Gemini Flash API
+- Returns risk level (low/medium/high) + insights list
+- Risk badge with color coding (green/amber/red)
+- Access: QA Manager + Admin only
+
+**Components Built:**
+- `reports-client` - Main reports page
+- `sop-change-history-report` - Report 1
+- `acknowledgement-log-report` - Report 2
+- `pm-completion-report` - Report 3
+- `pulse-notice-report` - Report 4
+- `risk-insights-report` - Report 5
+
+**API Routes:**
+- `/api/gemini/risk-insights` - AI risk analysis
+
+**State Management:**
+- Zustand store for report date filters
+
+**CSV Export:**
+- Client-side CSV builder (no library)
+- Proper escaping and formatting
+
+**Access Control:**
+- Role-based visibility for each report
+- Server-side 403 for unauthorized access
+
+**Dark Mode Implementation:**
+- All report components use semantic Tailwind tokens
+
+### Files Created
+
+```
+app/(dashboard)/reports/
+└── page.tsx                          # Server component
+
+components/reports/
+├── reports-client.tsx                # Main reports page
+├── sop-change-history-report.tsx    # Report 1
+├── acknowledgement-log-report.tsx     # Report 2
+├── pm-completion-report.tsx         # Report 3
+├── pulse-notice-report.tsx          # Report 4
+└── risk-insights-report.tsx         # Report 5
+
+store/
+└── report-store.ts                 # Zustand filter store
+
+app/api/gemini/risk-insights/
+└── route.ts                        # AI insights API
+```
+
+---
+
 ## Design System
 
 ### Typography
@@ -634,7 +721,6 @@ All components use semantic Tailwind tokens for proper dark mode support:
 
 | Phase | Description |
 |-------|-------------|
-| Phase 10 | Reports & Audit Log |
 | Phase 11 | Settings & Admin |
 | Phase 12 | Messaging System |
 | Phase 13 | (Reserved for future expansion) |
