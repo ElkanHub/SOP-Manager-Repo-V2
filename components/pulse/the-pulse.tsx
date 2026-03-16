@@ -68,8 +68,8 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     const alerts = items.filter(i => i.type !== 'notice' && i.type !== 'todo')
 
     return (
-        <aside className="flex flex-col w-80 h-full border-l bg-card shrink-0 z-20 shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)]">
-            <div className="flex items-center justify-between p-4 border-b bg-muted">
+        <aside className="flex flex-col w-80 h-full border-l bg-card shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)]">
+            <div className="flex items-center justify-between p-4 border-b bg-muted rounded-t-lg">
                 <div className="flex items-center gap-2 font-semibold text-foreground">
                     <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
                     The Pulse

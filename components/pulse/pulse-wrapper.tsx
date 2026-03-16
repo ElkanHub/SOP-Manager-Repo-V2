@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { PanelLeftClose, PanelRightClose, PanelRightOpen, X } from "lucide-react"
+import { PanelRightClose, PanelRightOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThePulse } from "./the-pulse"
 
@@ -15,13 +15,13 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
 
     return (
         <>
-            {/* Toggle Button - Visible on all breakpoints */}
+            {/* Toggle Button - Fixed position, always visible */}
             <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsOpen(!isOpen)}
                 className={`
-                    fixed right-0 top-1/2 -translate-y-1/2 z-30 h-12 w-6 rounded-l-md border-l border-t border-b
+                    fixed right-0 top-1/2 -translate-y-1/2 z-50 h-12 w-6 rounded-l-md border-l border-t border-b
                     bg-card shadow-md hover:bg-muted
                     transition-all duration-300 ease-in-out
                     ${isOpen ? 'right-80' : 'right-0'}
@@ -35,16 +35,16 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
                 )}
             </Button>
 
-            {/* Collapsible Pulse Panel */}
+            {/* Overlay Pulse Panel - Fixed position, slides over content */}
             <div
                 className={`
-                    transition-all duration-300 ease-in-out overflow-hidden shrink-0
-                    ${isOpen ? 'w-80' : 'w-0'}
+                    fixed right-0 top-0 h-full z-40
+                    transition-transform duration-300 ease-in-out
+                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 `}
+                style={{ paddingTop: '56px' }}
             >
-                {isOpen && (
-                    <ThePulse user={user} profile={profile} />
-                )}
+                <ThePulse user={user} profile={profile} />
             </div>
         </>
     )
