@@ -2,7 +2,7 @@
 
 > **Last Updated:** March 16, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 6 - Change Control Center
+> **Current Phase:** Phase 7 - Equipment Registry & PM Planner
 
 ---
 
@@ -21,7 +21,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 4 | ✅ Complete | SOP Library (Read Layer) |
 | Phase 5 | ✅ Complete | SOP Submission & QA Approval Flow |
 | Phase 6 | ✅ Complete | Change Control Center |
-| Phase 7-13 | 🔜 Not Started | Future Phases |
+| Phase 7 | ✅ Complete | Equipment Registry & PM Planner |
+| Phase 8-13 | 🔜 Not Started | Future Phases |
 
 ---
 
@@ -334,6 +335,83 @@ All 14 database migrations executed successfully:
 
 ---
 
+## Phase 7: Equipment Registry & PM Planner
+
+### Completed Tasks
+
+**Equipment List Page (`/equipment`):**
+- TanStack Table with sorting by name, department, status
+- Status filter tabs (All, Active, Pending QA, Inactive)
+- Row click navigates to detail page
+- Department-based filtering (own + secondary)
+- Manager-only "Add Equipment" button
+
+**Add Equipment Modal (`AddEquipmentModal`):**
+- 3-step dialog using Shadcn Dialog component
+- Full dark mode support with semantic color tokens
+- Step 1: Basic info (name, tag, serial, manufacturer, model)
+- Step 2: Department assignment (primary + secondary)
+- Step 3: Photo upload with drag-and-drop
+- Client + server-side validation
+
+**Equipment Detail Page (`/equipment/[id]`):**
+- Displays equipment info, photo, department assignment
+- PM Task list with due dates, status, assigned users
+- PM Task actions: Mark Complete, Reassign, Skip
+- Manager-only task creation
+- QA-only status change (Pending QA → Active/Inactive)
+
+**API Routes:**
+- `/api/storage/equipment-photo` - Handles equipment photo upload
+
+**Server Actions (`/actions/equipment.ts`):**
+- `createEquipment()` - Creates new equipment record
+- `updateEquipment()` - Updates equipment details
+- `updateEquipmentStatus()` - QA-only status changes
+- `createPmTask()` - Creates PM task
+- `updatePmTaskStatus()` - Complete/skip tasks
+- `reassignPmTask()` - Reassign task to another user
+
+**Components Built:**
+- `equipment-client` - Equipment list page client
+- `equipment-table` - TanStack Table with filtering
+- `add-equipment-modal` - 3-step equipment creation
+- `equipment-detail-client` - Equipment detail page client
+- `PmTaskCard` - PM task display with actions
+
+**Sidebar Integration:**
+- Equipment nav item (visible to all users)
+- Active state highlighting
+
+**Dark Mode Implementation:**
+- All Phase 7 components use semantic Tailwind tokens
+- `bg-background` / `bg-card` instead of hardcoded colors
+- `text-muted-foreground` / `text-foreground` for text
+- Status badges properly styled for dark mode
+
+### Files Created
+
+```
+app/(dashboard)/equipment/
+├── page.tsx                          # Server component
+├── equipment-client.tsx              # Client component
+└── [id]/
+    ├── page.tsx                      # Detail server component
+    └── equipment-detail-client.tsx  # Detail client component
+
+components/equipment/
+├── equipment-table.tsx              # TanStack table
+└── add-equipment-modal.tsx           # 3-step modal
+
+actions/
+└── equipment.ts                      # Server actions
+
+app/api/storage/equipment-photo/
+└── route.ts                          # Photo upload API
+```
+
+---
+
 ## Design System
 
 ### Typography
@@ -398,7 +476,6 @@ All components use semantic Tailwind tokens for proper dark mode support:
 
 | Phase | Description |
 |-------|-------------|
-| Phase 7 | Equipment Registry |
 | Phase 8 | PM Task Management |
 | Phase 9 | Dashboard & KPI Reporting |
 | Phase 10 | Calendar & Scheduling |
@@ -431,11 +508,14 @@ Route (app)
 ┌ ○ /
 ├ ○ /_not-found
 ├ ƒ /api/gemini/delta-summary
+├ ƒ /api/storage/equipment-photo
 ├ ƒ /api/storage/sop-upload
 ├ ƒ /approvals
 ├ ƒ /approvals/[id]
 ├ ƒ /change-control/[id]
 ├ ƒ /dashboard
+├ ƒ /equipment
+├ ƒ /equipment/[id]
 ├ ƒ /library
 ├ ƒ /library/[id]
 ├ ○ /login
