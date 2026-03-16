@@ -20,7 +20,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 3 | ✅ Complete | Shell Layout & Pulse |
 | Phase 4 | ✅ Complete | SOP Library (Read Layer) |
 | Phase 5 | ✅ Complete | SOP Submission & QA Approval Flow |
-| Phase 6-13 | 🔜 Not Started | Future Phases |
+| Phase 6 | ✅ Complete | Change Control Center |
+| Phase 7-13 | 🔜 Not Started | Future Phases |
 
 ---
 
@@ -271,6 +272,61 @@ All 14 database migrations executed successfully:
 
 ---
 
+## Phase 6: Change Control Center
+
+### Completed Tasks
+
+**Change Control Page (`/change-control/[id]`):**
+- Full dark mode support with semantic color tokens
+- Displays CC reference, SOP info, deadline, status
+- Progress indicator showing signatures collected
+- BorderBeam effect on pending CCs
+
+**DiffViewer Component:**
+- Two-column layout (old version left/red, new version right/green)
+- "Show All" / "Changes Only" toggle
+- Renders from `diff_json` in change_controls table
+
+**DeltaSummaryCard Component:**
+- Shows AI-generated summary of changes
+- Regenerate button to call Gemini API
+- Disclaimer always visible
+
+**SignatureGrid Component:**
+- Built from `required_signatories` snapshot (not live query)
+- Shows status: Signed (green), Pending (gray), Waived (admin)
+- Sign button for current user (if signatory and not signed)
+- Waive button for admins
+
+**SignatureConfirmModal:**
+- Shows SOP title, version, CC reference
+- Displays user's stored signature image
+- IP address capture on sign
+
+**WaiveModal (Admin Only):**
+- Requires reason text
+- Calls `waive_cc_signature()` DB function
+- Writes audit log entry
+
+**API Routes:**
+- `/api/gemini/delta-summary` - Generates AI summary using Gemini Flash
+
+**Server Actions (`/actions/sop.ts`):**
+- `signChangeControl()` - Insert signature certificate, write audit log
+- `waiveSignature()` - Call DB function to waive
+- `generateDeltaSummary()` - Call Gemini API
+
+**Components Built:**
+- `ChangeControlHeader` - CC reference, status, deadline, progress
+- `DiffViewer` - Document comparison view
+- `DeltaSummaryCard` - AI summary display
+- `SignatureGrid` - Signatory status grid
+- `SignatureConfirmModal` - Sign confirmation dialog
+- `WaiveModal` - Admin waive dialog
+- `change-control-client` - Main page client component
+
+---
+
 ## Design System
 
 ### Typography
@@ -335,7 +391,6 @@ All components use semantic Tailwind tokens for proper dark mode support:
 
 | Phase | Description |
 |-------|-------------|
-| Phase 6 | Change Control (Issue & Sign) |
 | Phase 7 | Equipment Registry |
 | Phase 8 | PM Task Management |
 | Phase 9 | Dashboard & KPI Reporting |
@@ -368,9 +423,11 @@ All components use semantic Tailwind tokens for proper dark mode support:
 Route (app)
 ┌ ○ /
 ├ ○ /_not-found
+├ ƒ /api/gemini/delta-summary
 ├ ƒ /api/storage/sop-upload
 ├ ƒ /approvals
 ├ ƒ /approvals/[id]
+├ ƒ /change-control/[id]
 ├ ƒ /dashboard
 ├ ƒ /library
 ├ ƒ /library/[id]

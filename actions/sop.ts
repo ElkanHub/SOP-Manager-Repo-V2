@@ -430,3 +430,178 @@ export async function requestChangesSop(
     revalidatePath('/approvals')
     return { success: true }
 }
+
+export type SignResult = 
+    | { success: true }
+    | { success: false; error: string }
+
+export async function signChangeControl(changeControlId: string): Promise<SignResult> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+    
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) {
+        return { success: false, error: 'Not authenticated' }
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || !profile.is_active) {
+        return { success: false, error: 'User is not active' }
+    }
+
+    if (!profile.signature_url) {
+        return { success: false, error: 'No signature on file. Please upload your signature in Settings.' }
+    }
+
+    const { data: existingCert } = await supabase
+        .from('signature_certificates')
+        .select('id')
+        .eq('change_control_id', changeControlId)
+        .eq('user_id', user.id)
+        .single()
+
+    if (existingCert) {
+        return { success: false, error: 'You have already signed this Change Control' }
+    }
+
+    const forwardedFor = (await client.auth.getSession()).data.session?.access_token
+    const ipAddress = forwardedFor || undefined
+
+    const { error: insertError } = await supabase
+        .from('signature_certificates')
+        .insert({
+            change_control_id: changeControlId,
+            user_id: user.id,
+            signature_url: profile.signature_url,
+            ip_address: ipAddress,
+        })
+
+    if (insertError) {
+        return { success: false, error: insertError.message }
+    }
+
+    const { data: changeControl } = await supabase
+        .from('change_controls')
+        .select('sop_id, required_signatories')
+        .eq('id', changeControlId)
+        .single()
+
+    await supabase
+        .from('pulse_items')
+        .insert({
+            sender_id: user.id,
+            type: 'cc_signature',
+            title: 'Change Control Signed',
+            body: `${profile.full_name} has signed the Change Control`,
+            entity_type: 'change_control',
+            entity_id: changeControlId,
+            audience: 'department',
+            target_department: profile.department,
+        })
+
+    await supabase
+        .from('audit_log')
+        .insert({
+            actor_id: user.id,
+            action: 'cc_signed',
+            entity_type: 'change_control',
+            entity_id: changeControlId,
+            metadata: { user_id: user.id, full_name: profile.full_name },
+        })
+
+    revalidatePath('/change-control')
+    return { success: true }
+}
+
+export async function waiveSignature(
+    changeControlId: string,
+    targetUserId: string,
+    reason: string
+): Promise<SignResult> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+    
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) {
+        return { success: false, error: 'Not authenticated' }
+    }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || !profile.is_active) {
+        return { success: false, error: 'User is not active' }
+    }
+
+    if (!profile.is_admin) {
+        return { success: false, error: 'Only admins can waive signatures' }
+    }
+
+    try {
+        await supabase.rpc('waive_cc_signature', {
+            p_cc_id: changeControlId,
+            p_target_user_id: targetUserId,
+            p_admin_id: user.id,
+            p_reason: reason,
+        })
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to waive signature' }
+    }
+
+    revalidatePath('/change-control')
+    return { success: true }
+}
+
+export async function generateDeltaSummary(changeControlId: string): Promise<SignResult> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+    
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) {
+        return { success: false, error: 'Not authenticated' }
+    }
+
+    const { data: changeControl } = await supabase
+        .from('change_controls')
+        .select('diff_json, sops(title)')
+        .eq('id', changeControlId)
+        .single()
+
+    if (!changeControl?.diff_json) {
+        return { success: false, error: 'No diff available to generate summary' }
+    }
+
+    try {
+        const response = await fetch('/api/gemini/delta-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ diff_json: changeControl.diff_json }),
+        })
+
+        if (!response.ok) {
+            const error = await response.json()
+            return { success: false, error: error.message || 'Failed to generate summary' }
+        }
+
+        const data = await response.json()
+        
+        await supabase
+            .from('change_controls')
+            .update({ delta_summary: data.summary })
+            .eq('id', changeControlId)
+
+    } catch (error: any) {
+        return { success: false, error: error.message || 'Failed to generate summary' }
+    }
+
+    revalidatePath('/change-control')
+    return { success: true }
+}
