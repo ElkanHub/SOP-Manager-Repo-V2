@@ -273,6 +273,7 @@ export async function completePmTask(
             p_task_id: taskId,
             p_user_id: user.id,
             p_notes: notes || null,
+            p_photo_url: photoUrl || null,
         })
     } catch (error: any) {
         return { success: false, error: error.message }

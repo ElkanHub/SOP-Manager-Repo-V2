@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { differenceInDays, format } from "date-fns"
-import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Loader2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Loader2, Upload, X } from "lucide-react"
 import Link from "next/link"
+import { QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -43,9 +44,13 @@ export function EquipmentDetailClient({
     const [action, setAction] = useState<'approve' | 'reject' | 'complete' | 'reassign' | null>(null)
     const [rejectReason, setRejectReason] = useState('')
     const [completionNotes, setCompletionNotes] = useState('')
+    const [completionPhoto, setCompletionPhoto] = useState<string | null>(null)
+    const [photoUploading, setPhotoUploading] = useState(false)
     const [reassignUserId, setReassignUserId] = useState('')
     const [taskToReassign, setTaskToReassign] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+
+    const photoInputRef = useRef<HTMLInputElement>(null)
 
     const isManager = currentUserProfile.role === 'manager'
     const isOwnDept = currentUserProfile.department === equipment.department
@@ -87,14 +92,50 @@ export function EquipmentDetailClient({
     const handleCompleteTask = async (taskId: string) => {
         setLoading(true)
         try {
-            const result = await completePmTask(taskId, completionNotes)
+            const result = await completePmTask(taskId, completionNotes, completionPhoto || undefined)
             if (result.success) {
                 setSuccess('PM task completed!')
                 setAction(null)
                 setCompletionNotes('')
+                setCompletionPhoto(null)
             }
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        if (!file.type.startsWith('image/')) {
+            return
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            return
+        }
+
+        setPhotoUploading(true)
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const response = await fetch('/api/storage/equipment-photo', {
+                method: 'POST',
+                body: formData,
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                return
+            }
+
+            setCompletionPhoto(data.fileUrl)
+        } catch (err) {
+        } finally {
+            setPhotoUploading(false)
         }
     }
 
@@ -250,7 +291,7 @@ export function EquipmentDetailClient({
                                     <Button 
                                         onClick={handleApprove}
                                         disabled={loading}
-                                        className="w-full bg-green-600 hover:bg-green-700"
+                                        className="w-full bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800"
                                     >
                                         {loading && action === 'approve' ? (
                                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -262,7 +303,7 @@ export function EquipmentDetailClient({
                                     <Button 
                                         variant="outline"
                                         onClick={() => setAction('reject')}
-                                        className="w-full border-red-500 text-red-600 hover:bg-red-50"
+                                        className="w-full border-red-500 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                                     >
                                         Reject
                                     </Button>
@@ -310,6 +351,24 @@ export function EquipmentDetailClient({
                             </CardContent>
                         </Card>
                     )}
+
+                    <Card>
+                        <CardContent className="p-4 space-y-4">
+                            <h3 className="font-medium">QR Code</h3>
+                            <div className="flex justify-center">
+                                <div className="p-2 bg-white rounded-lg">
+                                    <QRCodeSVG
+                                        value={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/equipment/${equipment.id}`}
+                                        size={128}
+                                        level="M"
+                                    />
+                                </div>
+                            </div>
+                            <p className="text-xs text-center text-muted-foreground">
+                                Scan to open equipment
+                            </p>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
@@ -352,7 +411,7 @@ export function EquipmentDetailClient({
                         </DialogHeader>
                         <div className="space-y-4">
                             <div>
-                                <Label>Notes (optional)</Label>
+                                <Label>Notes <span className="text-destructive">*</span></Label>
                                 <Textarea 
                                     value={completionNotes}
                                     onChange={(e) => setCompletionNotes(e.target.value)}
@@ -360,14 +419,56 @@ export function EquipmentDetailClient({
                                     rows={3}
                                 />
                             </div>
+                            <div>
+                                <Label>Photo (optional)</Label>
+                                <div className="mt-1">
+                                    <input
+                                        ref={photoInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={handlePhotoUpload}
+                                    />
+                                    {completionPhoto ? (
+                                        <div className="relative inline-block">
+                                            <img 
+                                                src={completionPhoto} 
+                                                alt="PM Completion" 
+                                                className="h-32 w-32 object-cover rounded-lg border"
+                                            />
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="absolute -top-2 -right-2 h-6 w-6 p-0"
+                                                onClick={() => setCompletionPhoto(null)}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => photoInputRef.current?.click()}
+                                            disabled={photoUploading}
+                                        >
+                                            {photoUploading ? (
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <Upload className="h-4 w-4 mr-2" />
+                                            )}
+                                            Upload Photo
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
                             <DialogFooter>
-                                <Button variant="outline" onClick={() => setAction(null)}>Cancel</Button>
+                                <Button variant="outline" onClick={() => { setAction(null); setCompletionNotes(''); setCompletionPhoto(null); }}>Cancel</Button>
                                 <Button 
                                     onClick={() => {
                                         const pendingTask = pmTasks.find(t => t.status !== 'complete')
                                         if (pendingTask) handleCompleteTask(pendingTask.id)
                                     }}
-                                    disabled={loading}
+                                    disabled={loading || !completionNotes.trim()}
                                     className="bg-brand-teal hover:bg-teal-600"
                                 >
                                     Mark Complete

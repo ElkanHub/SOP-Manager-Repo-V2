@@ -163,7 +163,7 @@ export function AddEquipmentModal({
                         </DialogDescription>
                     </DialogHeader>
                     <div className="flex justify-center py-4">
-                        <CheckCircle2 className="h-16 w-16 text-green-500" />
+                        <CheckCircle2 className="h-16 w-16 text-green-500 dark:text-green-400" />
                     </div>
                 </DialogContent>
             </Dialog>

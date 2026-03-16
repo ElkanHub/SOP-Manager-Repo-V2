@@ -345,39 +345,61 @@ All 14 database migrations executed successfully:
 - Row click navigates to detail page
 - Department-based filtering (own + secondary)
 - Manager-only "Add Equipment" button
+- Overdue PM tasks highlighted in red, due soon in amber
 
 **Add Equipment Modal (`AddEquipmentModal`):**
 - 3-step dialog using Shadcn Dialog component
 - Full dark mode support with semantic color tokens
-- Step 1: Basic info (name, tag, serial, manufacturer, model)
-- Step 2: Department assignment (primary + secondary)
-- Step 3: Photo upload with drag-and-drop
-- Client + server-side validation
+- Step 1: Basic info (Asset ID, name, serial, model, photo)
+- Step 2: Department assignment (primary + secondary), maintenance frequency, initial assignee (required)
+- Step 3: Review + Submit
+- Creates `equipment` row with `status = 'pending_qa'` and `initial_assignee_id`
 
 **Equipment Detail Page (`/equipment/[id]`):**
 - Displays equipment info, photo, department assignment
+- QR code for easy scanning (encodes equipment URL)
 - PM Task list with due dates, status, assigned users
-- PM Task actions: Mark Complete, Reassign, Skip
-- Manager-only task creation
-- QA-only status change (Pending QA → Active/Inactive)
+- PM Task actions: Mark Complete (with photo upload, required notes), Reassign
+- QA-only approval/rejection flow
+- Service history table
+
+**PM Completion Modal:**
+- Notes (required per spec)
+- Photo upload (optional)
+- Updates `last_serviced`, `next_due` on equipment
+- Creates next PM task with same assignee
+
+**Reassign Task (Manager only):**
+- Dropdown of active users in primary department
+- Updates `assigned_to`, writes audit_log entry
+
+**Cron Routes:**
+- `/api/cron/pm-alerts` - Sends pulse items for tasks due in 7 days
+- `/api/cron/overdue-check` - Marks overdue tasks, sends alerts to assignees and managers
+- Both require CRON_SECRET for authentication
+
+**Database Migrations:**
+- `015_pm_task_photo.sql` - Updates `complete_pm_task` function to accept photo_url
+- `016_initial_assignee.sql` - Adds `initial_assignee_id` column to equipment table
+
+**Vercel Config:**
+- `vercel.json` - Cron schedules for pm-alerts (7am) and overdue-check (6am)
 
 **API Routes:**
 - `/api/storage/equipment-photo` - Handles equipment photo upload
 
 **Server Actions (`/actions/equipment.ts`):**
-- `createEquipment()` - Creates new equipment record
-- `updateEquipment()` - Updates equipment details
-- `updateEquipmentStatus()` - QA-only status changes
-- `createPmTask()` - Creates PM task
-- `updatePmTaskStatus()` - Complete/skip tasks
-- `reassignPmTask()` - Reassign task to another user
+- `submitEquipment()` - Creates new equipment with initial assignee
+- `approveEquipment()` - QA approval via RPC
+- `rejectEquipment()` - QA rejection with reason
+- `completePmTask()` - Complete with notes and photo
+- `reassignPmTask()` - Reassign with audit log
 
 **Components Built:**
 - `equipment-client` - Equipment list page client
 - `equipment-table` - TanStack Table with filtering
 - `add-equipment-modal` - 3-step equipment creation
-- `equipment-detail-client` - Equipment detail page client
-- `PmTaskCard` - PM task display with actions
+- `equipment-detail-client` - Equipment detail page with QR code
 
 **Sidebar Integration:**
 - Equipment nav item (visible to all users)
@@ -387,9 +409,10 @@ All 14 database migrations executed successfully:
 - All Phase 7 components use semantic Tailwind tokens
 - `bg-background` / `bg-card` instead of hardcoded colors
 - `text-muted-foreground` / `text-foreground` for text
+- Dark mode variants: `dark:bg-green-700`, `dark:hover:bg-green-800`, etc.
 - Status badges properly styled for dark mode
 
-### Files Created
+### Files Created/Modified
 
 ```
 app/(dashboard)/equipment/
@@ -406,8 +429,20 @@ components/equipment/
 actions/
 └── equipment.ts                      # Server actions
 
-app/api/storage/equipment-photo/
-└── route.ts                          # Photo upload API
+app/api/
+├── storage/equipment-photo/
+│   └── route.ts                      # Photo upload API
+└── cron/
+    ├── pm-alerts/
+    │   └── route.ts                  # PM due alerts
+    └── overdue-check/
+        └── route.ts                  # Overdue check
+
+supabase/migrations/
+├── 015_pm_task_photo.sql             # PM photo support
+└── 016_initial_assignee.sql         # Initial assignee column
+
+vercel.json                           # Cron schedule config
 ```
 
 ---
@@ -507,6 +542,8 @@ All components use semantic Tailwind tokens for proper dark mode support:
 Route (app)
 ┌ ○ /
 ├ ○ /_not-found
+├ ƒ /api/cron/overdue-check
+├ ƒ /api/cron/pm-alerts
 ├ ƒ /api/gemini/delta-summary
 ├ ƒ /api/storage/equipment-photo
 ├ ƒ /api/storage/sop-upload
