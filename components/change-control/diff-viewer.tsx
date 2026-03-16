@@ -56,7 +56,7 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
                                 {changeControl.old_version}
                             </span>
                         </div>
-                        <div className="p-4 bg-white dark:bg-card max-h-[400px] overflow-y-auto">
+                        <div className="p-4 bg-background dark:bg-card max-h-[400px] overflow-y-auto">
                             {hasDiff ? (
                                 <div className="space-y-2">
                                     {diffJson.map((item: any, idx: number) => {
@@ -105,7 +105,7 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
                                 {changeControl.new_version}
                             </span>
                         </div>
-                        <div className="p-4 bg-white dark:bg-card max-h-[400px] overflow-y-auto">
+                        <div className="p-4 bg-background dark:bg-card max-h-[400px] overflow-y-auto">
                             {hasDiff ? (
                                 <div className="space-y-2">
                                     {diffJson.map((item: any, idx: number) => {

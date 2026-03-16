@@ -83,7 +83,7 @@ export function SignatureConfirmModal({
                     {signatureUrl ? (
                         <div className="space-y-2">
                             <p className="text-sm text-muted-foreground">Your signature:</p>
-                            <div className="border rounded-lg p-4 bg-white dark:bg-card">
+                            <div className="border rounded-lg p-4 bg-background dark:bg-card">
                                 <img 
                                     src={signatureUrl} 
                                     alt="Your signature" 

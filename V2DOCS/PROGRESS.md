@@ -2,7 +2,7 @@
 
 > **Last Updated:** March 16, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 5 - SOP Submission & QA Approval Flow
+> **Current Phase:** Phase 6 - Change Control Center
 
 ---
 
@@ -324,6 +324,13 @@ All 14 database migrations executed successfully:
 - `SignatureConfirmModal` - Sign confirmation dialog
 - `WaiveModal` - Admin waive dialog
 - `change-control-client` - Main page client component
+
+**Dark Mode Implementation:**
+- All Phase 6 components use semantic Tailwind tokens
+- `bg-background` / `bg-card` instead of hardcoded colors
+- `text-muted-foreground` / `text-foreground` for text
+- Dark variants: `dark:bg-card`, `dark:text-green-400`, etc.
+- Status colors properly adapted for dark mode
 
 ---
 
