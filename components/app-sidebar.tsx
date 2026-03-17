@@ -71,7 +71,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           <div className="font-semibold text-foreground border-b pb-2 mb-1">
             Workspace
           </div>
-          
+
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2 space-y-1">
@@ -82,12 +82,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
                 render={<a href={item.url} />}
                 isActive={item.isActive}
                 className={`
-                                    flex items-center gap-3 px-3 py-2 rounded-md transition-colors
-                                    ${item.isActive
-                    ? "bg-brand-navy/5 text-brand-navy font-medium border-l-[3px] border-brand-teal"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-l-[3px] border-transparent"
+                    flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out
+                    ${item.isActive
+                    ? "bg-brand-navy/5 text-brand-navy font-semibold border-l-4 border-brand-teal shadow-soft dark:bg-brand-teal/10 dark:text-brand-teal"
+                    : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground border-l-4 border-transparent hover:translate-x-1"
                   }
-                                `}
+                  `}
               >
                 {item.icon}
                 <span>{item.title}</span>
@@ -106,26 +106,26 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           </SidebarMenuItem>
         </SidebarMenu>
         {/* User Mini Profile */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
-              {profile?.avatar_url ? (
-                <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
+            )}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-foreground line-clamp-1">{profile?.full_name}</span>
+            <div className="flex gap-1 mt-0.5">
+              <Badge variant="secondary" className="px-1.5 text-[10px] bg-brand-teal/10 text-brand-teal uppercase border-0">
+                {profile?.department}
+              </Badge>
+              {profile?.role === 'manager' && (
+                <Badge variant="outline" className="px-1.5 text-[10px] text-muted-foreground uppercase">Mgr</Badge>
               )}
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground line-clamp-1">{profile?.full_name}</span>
-              <div className="flex gap-1 mt-0.5">
-                <Badge variant="secondary" className="px-1.5 text-[10px] bg-brand-teal/10 text-brand-teal uppercase border-0">
-                  {profile?.department}
-                </Badge>
-                {profile?.role === 'manager' && (
-                  <Badge variant="outline" className="px-1.5 text-[10px] text-muted-foreground uppercase">Mgr</Badge>
-                )}
-              </div>
-            </div>
           </div>
+        </div>
       </SidebarFooter>
     </Sidebar>
   )

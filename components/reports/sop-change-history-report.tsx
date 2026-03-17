@@ -98,31 +98,33 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
       {data.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No data found</p>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium">SOP No.</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Action</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Actor Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Dept</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((entry) => (
-                <tr key={entry.id} className="border-t">
-                  <td className="px-4 py-2 text-sm font-mono">{entry.sop?.sop_number || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{getActionLabel(entry.action)}</td>
-                  <td className="px-4 py-2 text-sm">{entry.actor?.full_name || 'Unknown'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.actor?.department || '-'}</td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground">
-                    {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
-                  </td>
+        <div className="border rounded-lg overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px]">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">SOP No.</th>
+                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Action</th>
+                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Actor Name</th>
+                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Dept</th>
+                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Timestamp</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((entry) => (
+                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <td className="px-4 py-3 text-sm font-mono text-brand-teal font-medium">{entry.sop?.sop_number || '-'}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{getActionLabel(entry.action)}</td>
+                    <td className="px-4 py-3 text-sm">{entry.actor?.full_name || 'Unknown'}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.actor?.department || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

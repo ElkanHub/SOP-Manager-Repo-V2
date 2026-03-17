@@ -240,55 +240,57 @@ export function SopLibraryTable({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-muted border-b border-border">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-muted-foreground font-semibold"
-                  style={{ width: header.getSize() }}
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row, index) => (
-            <tr
-              key={row.id}
-              onClick={() => {
-                const sop = row.original
-                addTab({
-                  id: sop.id,
-                  sopNumber: sop.sop_number,
-                  title: sop.title,
-                })
-                router.push(`/library/${sop.id}`)
-              }}
-              className={cn(
-                "cursor-pointer border-b border-border/50 transition-colors hover:bg-accent",
-                index % 2 === 1 && "bg-muted/30 dark:bg-muted/20"
-              )}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-3">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[800px]">
+          <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-border">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold"
+                    style={{ width: header.getSize() }}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {table.getRowModel().rows.map((row, index) => (
+              <tr
+                key={row.id}
+                onClick={() => {
+                  const sop = row.original
+                  addTab({
+                    id: sop.id,
+                    sopNumber: sop.sop_number,
+                    title: sop.title,
+                  })
+                  router.push(`/library/${sop.id}`)
+                }}
+                className={cn(
+                  "cursor-pointer border-b border-border/50 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 group",
+                  index % 2 === 1 && "bg-slate-50/50 dark:bg-slate-800/20"
+                )}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td key={cell.id} className="px-4 py-3">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

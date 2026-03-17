@@ -8,15 +8,15 @@ interface StatusBadgeProps {
 }
 
 const statusStyles: Record<string, { class: string; label: string }> = {
-  active: { class: "bg-green-50 border-green-200 text-green-700", label: "Active" },
-  draft: { class: "bg-amber-50 border-amber-200 text-amber-700", label: "Draft" },
-  pending_qa: { class: "bg-blue-50 border-blue-200 text-blue-700", label: "Pending QA" },
-  pending_cc: { class: "bg-blue-50 border-blue-200 text-blue-700", label: "Pending CC" },
-  superseded: { class: "bg-slate-50 border-slate-200 text-slate-600", label: "Superseded" },
-  overdue: { class: "bg-red-50 border-red-200 text-red-700", label: "Overdue" },
-  pending: { class: "bg-amber-50 border-amber-200 text-amber-700", label: "Pending" },
-  complete: { class: "bg-green-50 border-green-200 text-green-700", label: "Complete" },
-  inactive: { class: "bg-slate-50 border-slate-200 text-slate-600", label: "Inactive" },
+  active: { class: "bg-brand-teal/10 border-brand-teal/20 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal dark:border-brand-teal/30", label: "Active" },
+  draft: { class: "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700/50 dark:text-amber-400", label: "Draft" },
+  pending_qa: { class: "bg-brand-navy/10 border-brand-navy/20 text-brand-navy dark:bg-brand-blue/20 dark:border-brand-blue/30 dark:text-brand-blue", label: "Pending QA" },
+  pending_cc: { class: "bg-brand-navy/10 border-brand-navy/20 text-brand-navy dark:bg-brand-blue/20 dark:border-brand-blue/30 dark:text-brand-blue", label: "Pending CC" },
+  superseded: { class: "bg-slate-100 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400", label: "Superseded" },
+  overdue: { class: "bg-red-50 border-red-200 text-red-700 dark:bg-red-900/30 dark:border-red-800/50 dark:text-red-400", label: "Overdue" },
+  pending: { class: "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/30 dark:border-amber-700/50 dark:text-amber-400", label: "Pending" },
+  complete: { class: "bg-brand-teal/10 border-brand-teal/20 text-brand-teal dark:bg-brand-teal/20 dark:text-brand-teal dark:border-brand-teal/30", label: "Complete" },
+  inactive: { class: "bg-slate-100 border-slate-200 text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400", label: "Inactive" },
 }
 
 const sizeStyles = {

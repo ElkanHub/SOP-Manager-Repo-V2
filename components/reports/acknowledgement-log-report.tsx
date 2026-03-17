@@ -84,33 +84,35 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
       {data.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No data found</p>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium">SOP No.</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">SOP Title</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Employee Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Dept</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Version</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Acknowledged At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((entry: any) => (
-                <tr key={entry.id} className="border-t">
-                  <td className="px-4 py-2 text-sm font-mono">{entry.sop?.sop_number || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.sop?.title || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.user?.full_name || 'Unknown'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.user?.department || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.version}</td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground">
-                    {format(new Date(entry.acknowledged_at), 'MMM d, yyyy HH:mm')}
-                  </td>
+        <div className="border rounded-lg overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px]">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">SOP No.</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">SOP Title</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Employee Name</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Dept</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Version</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Acknowledged At</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((entry: any) => (
+                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <td className="px-4 py-3 text-sm font-mono text-brand-teal font-medium">{entry.sop?.sop_number || '-'}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{entry.sop?.title || '-'}</td>
+                    <td className="px-4 py-3 text-sm">{entry.user?.full_name || 'Unknown'}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.user?.department || '-'}</td>
+                    <td className="px-4 py-3 text-sm">{entry.version}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {format(new Date(entry.acknowledged_at), 'MMM d, yyyy HH:mm')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -87,37 +87,39 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
       {data.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No data found</p>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium">Asset ID</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Asset Name</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Dept</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Assigned To</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Completed By</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Completion Date</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((entry: any) => (
-                <tr key={entry.id} className="border-t">
-                  <td className="px-4 py-2 text-sm font-mono">{entry.equipment?.asset_id || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.equipment?.name || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.equipment?.department || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.assigned_to_user?.full_name || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.completed_by_user?.full_name || '-'}</td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground">
-                    {entry.completed_at ? format(new Date(entry.completed_at), 'MMM d, yyyy HH:mm') : '-'}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground max-w-xs truncate">
-                    {entry.notes || '-'}
-                  </td>
+        <div className="border rounded-lg overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px]">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Asset ID</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Asset Name</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Dept</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Assigned To</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Completed By</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Completion Date</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Notes</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((entry: any) => (
+                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <td className="px-4 py-3 text-sm font-mono text-brand-teal font-medium">{entry.equipment?.asset_id || '-'}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{entry.equipment?.name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.equipment?.department || '-'}</td>
+                    <td className="px-4 py-3 text-sm">{entry.assigned_to_user?.full_name || '-'}</td>
+                    <td className="px-4 py-3 text-sm">{entry.completed_by_user?.full_name || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {entry.completed_at ? format(new Date(entry.completed_at), 'MMM d, yyyy HH:mm') : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
+                      {entry.notes || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -86,35 +86,37 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
       {data.length === 0 ? (
         <p className="text-center py-8 text-muted-foreground">No data found</p>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-sm font-medium">Sender</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Audience</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Target Dept</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Subject</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Body</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Sent At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((entry) => (
-                <tr key={entry.id} className="border-t">
-                  <td className="px-4 py-2 text-sm">{entry.sender?.full_name || '-'}</td>
-                  <td className="px-4 py-2 text-sm capitalize">{entry.audience}</td>
-                  <td className="px-4 py-2 text-sm">{entry.target_department || '-'}</td>
-                  <td className="px-4 py-2 text-sm">{entry.title}</td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground max-w-xs truncate">
-                    {entry.body ? entry.body.substring(0, 100) : '-'}
-                  </td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground">
-                    {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
-                  </td>
+        <div className="border rounded-lg overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1000px]">
+              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Sender</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Audience</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Target Dept</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Subject</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Body</th>
+                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Sent At</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {data.map((entry) => (
+                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                    <td className="px-4 py-3 text-sm font-medium">{entry.sender?.full_name || '-'}</td>
+                    <td className="px-4 py-3 text-sm capitalize">{entry.audience}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.target_department || '-'}</td>
+                    <td className="px-4 py-3 text-sm font-medium">{entry.title}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
+                      {entry.body ? entry.body.substring(0, 100) : '-'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

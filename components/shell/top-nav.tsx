@@ -55,7 +55,7 @@ export function TopNav({ user, profile }: TopNavProps) {
     }, [user, profile])
 
     return (
-        <header className="sticky top-0 z-50 flex h-14 w-full shrink-0 items-center gap-4 border-b bg-brand-navy px-4 shadow-sm">
+        <header className="sticky top-0 z-50 flex h-14 w-full shrink-0 items-center gap-4 bg-gradient-to-r from-brand-navy to-brand-blue border-b border-white/10 px-4 shadow-sm">
             <div className="flex items-center gap-4 lg:hidden">
                 <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={toggleSidebar}>
                     <Menu className="h-5 w-5" />
