@@ -3,14 +3,14 @@ import { createServiceClient, createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
-    
+
     const { data: { user }, error: authError } = await client.auth.getUser()
     if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = await createServiceClient()
-    
+
     const { data: profile } = await supabase
         .from('profiles')
         .select('is_active, role')
@@ -60,12 +60,20 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    // Generate a signed URL (1 hour) for immediate display.
+    // Store filePath in the DB — generate signed URLs server-side on viewing.
+    const { data: signedData, error: signedError } = await supabase.storage
         .from('documents')
-        .getPublicUrl(filePath)
+        .createSignedUrl(filePath, 3600)
 
-    return NextResponse.json({ 
-        success: true, 
-        fileUrl: publicUrl 
+    if (signedError || !signedData?.signedUrl) {
+        console.error('Signed URL error:', signedError)
+        return NextResponse.json({ error: 'Failed to generate file URL' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+        success: true,
+        fileUrl: signedData.signedUrl,
+        filePath,
     })
 }

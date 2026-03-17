@@ -3,14 +3,14 @@ import { createServiceClient, createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
-    
+
     const { data: { user }, error: authError } = await client.auth.getUser()
     if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = await createServiceClient()
-    
+
     const { data: profile } = await supabase
         .from('profiles')
         .select('is_active, role')
@@ -34,22 +34,22 @@ export async function POST(request: NextRequest) {
 
     const allowedMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     if (file.type !== allowedMimeType) {
-        return NextResponse.json({ 
-            error: 'Invalid file type. Only .docx files are allowed.' 
+        return NextResponse.json({
+            error: 'Invalid file type. Only .docx files are allowed.'
         }, { status: 415 })
     }
 
     const maxSize = 25 * 1024 * 1024 // 25MB
     if (file.size > maxSize) {
-        return NextResponse.json({ 
-            error: 'File too large. Maximum size is 25MB.' 
+        return NextResponse.json({
+            error: 'File too large. Maximum size is 25MB.'
         }, { status: 413 })
     }
 
     const extension = file.name.split('.').pop()?.toLowerCase()
     if (extension !== 'docx') {
-        return NextResponse.json({ 
-            error: 'Invalid file extension. Only .docx files are allowed.' 
+        return NextResponse.json({
+            error: 'Invalid file extension. Only .docx files are allowed.'
         }, { status: 415 })
     }
 
@@ -71,12 +71,22 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
     }
 
-    const { data: { publicUrl } } = supabase.storage
+    // Generate a short-lived signed URL (1 hour) for immediate use in the upload wizard.
+    // The stored file_url is the raw storage PATH — signed URLs are generated server-side on read.
+    const { data: signedData, error: signedError } = await supabase.storage
         .from('documents')
-        .getPublicUrl(filePath)
+        .createSignedUrl(filePath, 3600)
 
-    return NextResponse.json({ 
-        success: true, 
-        fileUrl: publicUrl 
+    if (signedError || !signedData?.signedUrl) {
+        console.error('Signed URL error:', signedError)
+        return NextResponse.json({ error: 'Failed to generate file URL' }, { status: 500 })
+    }
+
+    return NextResponse.json({
+        success: true,
+        // signedUrl: use for immediate preview only (1 hr).
+        // filePath: the canonical storage key — save this as file_url in the DB.
+        fileUrl: signedData.signedUrl,
+        filePath,
     })
 }

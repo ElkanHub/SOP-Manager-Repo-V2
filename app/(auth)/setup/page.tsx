@@ -1,7 +1,16 @@
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import { SetupForm } from "@/components/setup-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
 
-export default function SetupPage() {
+export default async function SetupPage() {
+    const supabase = await createClient()
+    const { data: hasAdmin } = await supabase.rpc('has_any_admin')
+
+    if (hasAdmin) {
+        redirect('/login')
+    }
+
     return (
         <div className="grid min-h-svh lg:grid-cols-2">
             <div className="flex flex-col gap-4 p-6 md:p-10 bg-background">

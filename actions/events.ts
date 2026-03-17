@@ -28,6 +28,10 @@ export async function createEvent(formData: {
         return { success: false, error: 'User is not active' }
     }
 
+    if (profile.role !== 'manager' && !profile.is_admin) {
+        return { success: false, error: 'Only managers and admins can create events' }
+    }
+
     if (formData.endDate && formData.endDate < formData.startDate) {
         return { success: false, error: 'End date must be on or after start date' }
     }

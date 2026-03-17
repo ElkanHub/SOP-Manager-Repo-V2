@@ -86,3 +86,58 @@ export async function createTodo(formData: FormData) {
 
     return { success: true }
 }
+
+export async function replyToNotice(parentId: string, content: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    if (!content) {
+        return { error: 'Content is required' }
+    }
+
+    // Verify parent exists and is top-level
+    const { data: parentNode } = await supabase
+        .from('pulse_items')
+        .select('thread_depth, audience')
+        .eq('id', parentId)
+        .single()
+
+    if (!parentNode) {
+        return { error: 'Parent notice not found' }
+    }
+
+    if (parentNode.thread_depth > 0) {
+        return { error: 'Cannot reply to a reply. Maximum thread depth reached.' }
+    }
+
+    // Get sender profile
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single()
+
+    const { error } = await supabase
+        .from('pulse_items')
+        .insert({
+            sender_id: user.id,
+            type: 'notice',
+            content,
+            audience: parentNode.audience, // inherit audience
+            sender_name: profile?.full_name || 'User',
+            parent_id: parentId,
+            thread_depth: 1
+        })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+
+    return { success: true }
+}

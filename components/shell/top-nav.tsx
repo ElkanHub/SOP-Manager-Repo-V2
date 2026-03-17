@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { GalleryVerticalEnd, Bell, Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "@/components/ui/sidebar"
 import { GlobalSearch } from "./global-search"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { createClient } from "@/lib/supabase/client"
 
 interface TopNavProps {
     user: any;
@@ -23,6 +25,34 @@ interface TopNavProps {
 
 export function TopNav({ user, profile }: TopNavProps) {
     const { toggleSidebar } = useSidebar()
+    const [newNotifs, setNewNotifs] = useState(0)
+
+    useEffect(() => {
+        if (!user) return
+
+        const supabase = createClient()
+        const channel = supabase.channel('topnav_notifications')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'pulse_items' },
+                (payload) => {
+                    const newItem = payload.new
+                    const isForMe =
+                        newItem.audience === 'everyone' ||
+                        (newItem.audience === 'department' && profile.department) ||
+                        newItem.recipient_id === user.id
+
+                    if (isForMe && newItem.sender_id !== user.id) {
+                        setNewNotifs(prev => prev + 1)
+                    }
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [user, profile])
 
     return (
         <header className="sticky top-0 z-50 flex h-14 w-full shrink-0 items-center gap-4 border-b bg-brand-navy px-4 shadow-sm">
@@ -49,9 +79,13 @@ export function TopNav({ user, profile }: TopNavProps) {
 
                 <nav className="flex items-center gap-2">
                     <ThemeToggle />
-                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative" onClick={() => setNewNotifs(0)}>
                         <Bell className="h-5 w-5" />
-                        <span className="absolute top-1 right-1.5 flex h-2 w-2 rounded-full bg-red-500"></span>
+                        {newNotifs > 0 && (
+                            <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
+                                {newNotifs > 9 ? '9+' : newNotifs}
+                            </span>
+                        )}
                         <span className="sr-only">Toggle notifications</span>
                     </Button>
 

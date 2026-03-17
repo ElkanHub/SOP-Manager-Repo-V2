@@ -49,6 +49,18 @@ export default async function SopViewerPage({ params }: PageProps) {
     redirect("/library")
   }
 
+  // Generate a server-side signed URL (1 hour) from the stored storage path.
+  // file_url stores the raw storage path (sop-uploads/uuid.docx).
+  let signedFileUrl: string | null = null
+  if (sop.file_url) {
+    const { createServiceClient: createSvc } = await import('@/lib/supabase/server')
+    const svcClient = await createSvc()
+    const { data: signed } = await svcClient.storage
+      .from('documents')
+      .createSignedUrl(sop.file_url, 3600)
+    signedFileUrl = signed?.signedUrl ?? null
+  }
+
   const isOwnDept =
     sop.department === profile.department ||
     (sop.secondary_departments || []).includes(profile.department)
@@ -69,10 +81,10 @@ export default async function SopViewerPage({ params }: PageProps) {
 
   const { data: approverProfile } = sop.approved_by
     ? await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", sop.approved_by)
-        .single()
+      .from("profiles")
+      .select("full_name")
+      .eq("id", sop.approved_by)
+      .single()
     : { data: null }
 
   const isManager = profile.role === "manager"
@@ -99,7 +111,6 @@ export default async function SopViewerPage({ params }: PageProps) {
                 <AcknowledgeButton
                   sopId={sop.id}
                   sopVersion={sop.version}
-                  userId={user.id}
                   hasAcknowledged={!!acknowledgement}
                   acknowledgedAt={acknowledgement?.acknowledged_at}
                 />
@@ -165,8 +176,8 @@ export default async function SopViewerPage({ params }: PageProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-12 py-8 bg-card">
-        {sop.file_url ? (
-          <SopViewer fileUrl={sop.file_url} className="max-w-3xl mx-auto" />
+        {signedFileUrl ? (
+          <SopViewer fileUrl={signedFileUrl} className="max-w-3xl mx-auto" />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400">
             No document available

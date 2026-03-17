@@ -187,8 +187,15 @@ export function SopLibraryTable({
                 </DropdownMenuItem>
                 <DropdownMenuItem>Version History</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                {userRole === "manager" && !sop.locked && (
-                  <DropdownMenuItem>Submit Edit</DropdownMenuItem>
+                {userRole === "manager" && (
+                  <DropdownMenuItem disabled={sop.locked}>
+                    Submit Edit
+                    {sop.locked && (
+                      <span className="ml-2 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                        Locked
+                      </span>
+                    )}
+                  </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Copy SOP Number</DropdownMenuItem>
@@ -247,9 +254,9 @@ export function SopLibraryTable({
                   {header.isPlaceholder
                     ? null
                     : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                 </th>
               ))}
             </tr>

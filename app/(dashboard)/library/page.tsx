@@ -52,7 +52,9 @@ export default async function LibraryPage({ searchParams }: PageProps) {
     query = query.in("status", ["draft", "pending_qa", "pending_cc", "active"])
   }
 
-  if (!profile.is_admin && profile.department !== "QA") {
+  const { data: isQaManager } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
+
+  if (!profile.is_admin && !isQaManager) {
     query = query.or(
       `department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`
     )

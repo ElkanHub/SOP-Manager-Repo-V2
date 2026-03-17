@@ -4,7 +4,7 @@ import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-export type SubmitSopResult = 
+export type SubmitSopResult =
     | { success: true; requestId: string }
     | { success: false; error: string }
 
@@ -22,7 +22,7 @@ export async function submitSopForApproval(
 ): Promise<SubmitSopResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -168,7 +168,7 @@ export async function resubmitSop(
 ): Promise<SubmitSopResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -262,14 +262,14 @@ export async function resubmitSop(
     return { success: true, requestId: approvalRequest.id }
 }
 
-export type ApproveResult = 
+export type ApproveResult =
     | { success: true; result: 'activated' | 'change_control_issued'; changeControlId?: string }
     | { success: false; error: string }
 
 export async function approveSopRequest(requestId: string): Promise<ApproveResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -339,10 +339,10 @@ export async function approveSopRequest(requestId: string): Promise<ApproveResul
         revalidatePath('/library')
         revalidatePath('/approvals')
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             result: resultData.result as 'activated' | 'change_control_issued',
-            changeControlId: resultData.change_control_id 
+            changeControlId: resultData.change_control_id
         }
     } catch (error: any) {
         return { success: false, error: error.message || 'Failed to approve SOP request' }
@@ -355,7 +355,7 @@ export async function requestChangesSop(
 ): Promise<{ success: boolean; error?: string }> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -431,14 +431,14 @@ export async function requestChangesSop(
     return { success: true }
 }
 
-export type SignResult = 
+export type SignResult =
     | { success: true }
     | { success: false; error: string }
 
 export async function signChangeControl(changeControlId: string): Promise<SignResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -525,7 +525,7 @@ export async function waiveSignature(
 ): Promise<SignResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -563,7 +563,7 @@ export async function waiveSignature(
 export async function generateDeltaSummary(changeControlId: string): Promise<SignResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
-    
+
     const { data: { user } } = await client.auth.getUser()
     if (!user) {
         return { success: false, error: 'Not authenticated' }
@@ -592,7 +592,7 @@ export async function generateDeltaSummary(changeControlId: string): Promise<Sig
         }
 
         const data = await response.json()
-        
+
         await supabase
             .from('change_controls')
             .update({ delta_summary: data.summary })
@@ -603,5 +603,58 @@ export async function generateDeltaSummary(changeControlId: string): Promise<Sig
     }
 
     revalidatePath('/change-control')
+    return { success: true }
+}
+
+// ─── Acknowledge SOP ────────────────────────────────────────────────────────
+// Server-side action so we can verify department membership before inserting.
+
+export async function acknowledgeSop(
+    sopId: string,
+    sopVersion: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('department, is_active')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_active) return { success: false, error: 'User is inactive' }
+
+    // Verify user belongs to this SOP's department (primary or secondary)
+    const { data: sop } = await supabase
+        .from('sops')
+        .select('department, secondary_departments')
+        .eq('id', sopId)
+        .single()
+
+    if (!sop) return { success: false, error: 'SOP not found' }
+
+    const isOwnDept =
+        sop.department === profile.department ||
+        (sop.secondary_departments || []).includes(profile.department)
+
+    if (!isOwnDept) {
+        return { success: false, error: 'You can only acknowledge SOPs from your own department' }
+    }
+
+    // Idempotent — ignore duplicate key
+    const { error } = await supabase.from('sop_acknowledgements').insert({
+        sop_id: sopId,
+        user_id: user.id,
+        version: sopVersion,
+    })
+
+    if (error && !error.message.includes('duplicate')) {
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/library')
     return { success: true }
 }

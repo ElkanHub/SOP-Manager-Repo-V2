@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET
-  
+
   const authHeader = request.headers.get('authorization')
   const token = authHeader?.replace('Bearer ', '')
 
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
 
         const taskAny = task as any
         const deptName = taskAny.equipment?.department
-        
+
         await supabase.from('pulse_items').insert({
           recipient_id: task.assigned_to,
           sender_id: null,
@@ -121,7 +121,7 @@ export async function GET(request: Request) {
       for (const cc of overdueCCs as any[]) {
         const ccAny = cc as any
         const deptName = ccAny.sops?.department
-        
+
         if (deptName) {
           const { data: managers } = await supabase
             .from('profiles')
@@ -144,13 +144,47 @@ export async function GET(request: Request) {
             }))
             await supabase.from('pulse_items').insert(managerPulseItems)
           }
+
+          // 3-Day Escalation specifically to QA Managers
+          const deadlineDate = new Date(cc.deadline)
+          const currDate = new Date(today)
+          const daysOverdue = Math.floor((currDate.getTime() - deadlineDate.getTime()) / (1000 * 60 * 60 * 24))
+
+          if (daysOverdue >= 3) {
+            // Find QA departments
+            const { data: qaDepts } = await supabase.from('departments').select('name').eq('is_qa', true)
+            if (qaDepts && qaDepts.length > 0) {
+              const qaDeptNames = qaDepts.map(d => d.name)
+              const { data: qaManagers } = await supabase
+                .from('profiles')
+                .select('id')
+                .in('department', qaDeptNames)
+                .eq('role', 'manager')
+                .eq('is_active', true)
+
+              if (qaManagers && qaManagers.length > 0) {
+                const ccAny = cc as any
+                const escalationItems = qaManagers.map(qm => ({
+                  recipient_id: qm.id,
+                  sender_id: null,
+                  type: 'cc_deadline',
+                  title: `ESCALATION: CC Overdue > 3 Days (${ccAny.sops?.title || 'SOP'})`,
+                  body: `This Change Control is ${daysOverdue} days past deadline.`,
+                  entity_type: 'change_control',
+                  entity_id: cc.id,
+                  audience: 'self',
+                }))
+                await supabase.from('pulse_items').insert(escalationItems)
+              }
+            }
+          }
         }
       }
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Marked ${overdueCount} PM tasks overdue, sent ${ccOverdueCount} CC deadline alerts` 
+    return NextResponse.json({
+      success: true,
+      message: `Marked ${overdueCount} PM tasks overdue, sent ${ccOverdueCount} CC deadline alerts`
     })
   } catch (error) {
     console.error('Overdue check cron error:', error)

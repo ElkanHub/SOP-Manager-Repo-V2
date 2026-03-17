@@ -38,14 +38,14 @@ export default async function DashboardPage() {
       .from('sops')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active')
-    
+
     activeSopsCount = sops || 0
 
     const { count: approvals } = await serviceClient
       .from('sop_approval_requests')
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
-    
+
     pendingApprovalsCount = approvals || 0
 
     const { count: revisions } = await serviceClient
@@ -53,7 +53,7 @@ export default async function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .lte('due_for_revision', thirtyDaysFromNow)
       .gte('due_for_revision', today)
-    
+
     sopsDueForRevisionCount = revisions || 0
   } else {
     const { count: sops } = await serviceClient
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'active')
       .or(`department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`)
-    
+
     activeSopsCount = sops || 0
 
     const { count: approvals } = await serviceClient
@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('status', 'pending')
       .eq('submitted_by', user.id)
-    
+
     pendingApprovalsCount = approvals || 0
 
     const { count: revisions } = await serviceClient
@@ -78,7 +78,7 @@ export default async function DashboardPage() {
       .eq('department', profile.department)
       .lte('due_for_revision', thirtyDaysFromNow)
       .gte('due_for_revision', today)
-    
+
     sopsDueForRevisionCount = revisions || 0
   }
 
@@ -86,23 +86,42 @@ export default async function DashboardPage() {
     p_dept: profile.department
   })
 
-  const { data: auditEntries } = await serviceClient
+  const isPrivileged = profile.is_admin || profile.role === 'manager'
+
+  // Audit log — scoped to user's own department activity for employees
+  let auditQuery = serviceClient
     .from('audit_log')
-    .select('*, actor:profiles!actor_id(full_name)')
+    .select('*, actor:profiles!actor_id(full_name, department)')
     .order('created_at', { ascending: false })
     .limit(10)
 
-  const { data: upcomingPmTasks } = await serviceClient
+  if (!isPrivileged) {
+    // Show only entries from actors in the same department
+    auditQuery = auditQuery.eq('actor.department', profile.department)
+  }
+
+  const { data: auditEntries } = await auditQuery
+
+  // Upcoming PM tasks — scoped to department for employees
+  let pmQuery = serviceClient
     .from('pm_tasks')
     .select(`
       id,
       due_date,
       status,
-      equipment:equipment_id(name, asset_id)
+      equipment:equipment_id(name, asset_id, department, secondary_departments)
     `)
     .eq('status', 'pending')
     .order('due_date', { ascending: true })
     .limit(5)
+
+  if (!isPrivileged) {
+    pmQuery = pmQuery.or(
+      `equipment.department.eq.${profile.department},equipment.secondary_departments.cs.{${profile.department}}`
+    )
+  }
+
+  const { data: upcomingPmTasks } = await pmQuery
 
   return (
     <DashboardClient

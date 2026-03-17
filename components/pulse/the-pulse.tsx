@@ -63,9 +63,16 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     }, [user.id, profile.department, supabase])
 
 
-    const notices = items.filter(i => i.type === 'notice')
-    const todos = items.filter(i => i.type === 'todo')
-    const alerts = items.filter(i => i.type !== 'notice' && i.type !== 'todo')
+    const topLevelItems = items.filter(i => !i.parent_id)
+    const notices = topLevelItems.filter(i => i.type === 'notice')
+    const todos = topLevelItems.filter(i => i.type === 'todo')
+
+    // Sort replies chronologically (oldest first) for readable conversation flow
+    const getReplies = (parentId: string) => {
+        return items
+            .filter(i => i.parent_id === parentId)
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    }
 
     return (
         <aside className="flex flex-col w-80 h-full border-l bg-card shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)]">
@@ -91,16 +98,16 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
 
                 <ScrollArea className="flex-1">
                     <TabsContent value="all" className="m-0 p-4 space-y-4">
-                        {items.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No recent activity.</p>}
-                        {items.map(item => (
-                            <PulseItem key={item.id} item={item} currentUser={user} />
+                        {topLevelItems.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No recent activity.</p>}
+                        {topLevelItems.map(item => (
+                            <PulseItem key={item.id} item={item} currentUser={user} replies={getReplies(item.id)} />
                         ))}
                     </TabsContent>
 
                     <TabsContent value="notices" className="m-0 p-4 space-y-4">
                         {notices.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No notices.</p>}
                         {notices.map(item => (
-                            <PulseItem key={item.id} item={item} currentUser={user} />
+                            <PulseItem key={item.id} item={item} currentUser={user} replies={getReplies(item.id)} />
                         ))}
                     </TabsContent>
 

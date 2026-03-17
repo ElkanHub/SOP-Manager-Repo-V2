@@ -32,10 +32,11 @@ export function SopUploadModal({
 }: SopUploadModalProps) {
     const [step, setStep] = useState(1)
     const [file, setFile] = useState<File | null>(null)
-    const [fileUrl, setFileUrl] = useState<string | null>(null)
+    const [fileUrl, setFileUrl] = useState<string | null>(null)   // signed URL for preview only
+    const [filePath, setFilePath] = useState<string | null>(null) // canonical storage path → saved to DB
     const [uploading, setUploading] = useState(false)
     const [uploadError, setUploadError] = useState<string | null>(null)
-    
+
     const [sopType, setSopType] = useState<'new' | 'update'>('new')
     const [sopNumber, setSopNumber] = useState('')
     const [title, setTitle] = useState('')
@@ -43,7 +44,7 @@ export function SopUploadModal({
     const [secondaryDepts, setSecondaryDepts] = useState<string[]>([])
     const [selectedSopId, setSelectedSopId] = useState<string>('')
     const [lockedError, setLockedError] = useState<string | null>(null)
-    
+
     const [notesToQa, setNotesToQa] = useState('')
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
@@ -56,6 +57,7 @@ export function SopUploadModal({
             setStep(1)
             setFile(null)
             setFileUrl(null)
+            setFilePath(null)
             setUploadError(null)
             setSopType('new')
             setSopNumber('')
@@ -98,7 +100,7 @@ export function SopUploadModal({
 
         setUploadError(null)
         setFile(selectedFile)
-        
+
         setUploading(true)
         try {
             const formData = new FormData()
@@ -115,7 +117,8 @@ export function SopUploadModal({
                 throw new Error(data.error || 'Failed to upload file')
             }
 
-            setFileUrl(data.fileUrl)
+            setFileUrl(data.fileUrl)   // signed URL — for preview only
+            setFilePath(data.filePath) // storage path — stored in DB
         } catch (err: any) {
             setUploadError(err.message)
             setFile(null)
@@ -141,7 +144,7 @@ export function SopUploadModal({
         const sopId = value || ''
         setSelectedSopId(sopId)
         setLockedError(null)
-        
+
         if (sopId) {
             const sop = existingSops.find(s => s.id === sopId)
             if (sop) {
@@ -169,7 +172,7 @@ export function SopUploadModal({
 
         try {
             const result = await submitSopForApproval({
-                fileUrl: fileUrl!,
+                fileUrl: filePath!,
                 type: sopType,
                 sopId: sopType === 'update' ? selectedSopId : undefined,
                 sopNumber: sopNumber.trim(),
@@ -238,8 +241,8 @@ export function SopUploadModal({
                                 className={`
                                     border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
                                     transition-colors
-                                    ${file 
-                                        ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-950/30' 
+                                    ${file
+                                        ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-950/30'
                                         : 'border-input hover:border-muted-foreground dark:hover:border-muted-foreground'}
                                 `}
                                 onClick={() => fileInputRef.current?.click()}
@@ -253,7 +256,7 @@ export function SopUploadModal({
                                     className="hidden"
                                     onChange={handleFileChange}
                                 />
-                                
+
                                 {uploading ? (
                                     <div className="flex flex-col items-center">
                                         <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-2" />
@@ -266,9 +269,9 @@ export function SopUploadModal({
                                         <p className="text-sm text-muted-foreground">
                                             {(file.size / 1024 / 1024).toFixed(2)} MB
                                         </p>
-                                        <Button 
-                                            variant="link" 
-                                            size="sm" 
+                                        <Button
+                                            variant="link"
+                                            size="sm"
                                             className="mt-2 text-muted-foreground"
                                             onClick={(e) => {
                                                 e.stopPropagation()
@@ -362,7 +365,7 @@ export function SopUploadModal({
                                                 ))}
                                         </SelectContent>
                                     </Select>
-                                    
+
                                     {selectedSopId && (
                                         <div className="mt-2 text-sm">
                                             <span className="text-muted-foreground">Updating: </span>
@@ -444,16 +447,16 @@ export function SopUploadModal({
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <span className="text-muted-foreground">Type:</span>
                                     <span>{sopType === 'new' ? 'New SOP' : 'Update'}</span>
-                                    
+
                                     <span className="text-muted-foreground">SOP Number:</span>
                                     <span className="font-mono">{sopNumber}</span>
-                                    
+
                                     <span className="text-muted-foreground">Title:</span>
                                     <span>{title}</span>
-                                    
+
                                     <span className="text-muted-foreground">Department:</span>
                                     <span>{primaryDept}</span>
-                                    
+
                                     {secondaryDepts.length > 0 && (
                                         <>
                                             <span className="text-muted-foreground">Also for:</span>
@@ -483,14 +486,14 @@ export function SopUploadModal({
                     </div>
                     <div className="flex gap-2">
                         {step < 3 ? (
-                            <Button 
+                            <Button
                                 onClick={() => setStep(step + 1)}
                                 disabled={step === 1 ? !fileUrl : !canProceedStep2()}
                             >
                                 Next
                             </Button>
                         ) : (
-                            <Button 
+                            <Button
                                 onClick={handleSubmit}
                                 disabled={submitting}
                                 className="bg-brand-teal hover:bg-teal-600"

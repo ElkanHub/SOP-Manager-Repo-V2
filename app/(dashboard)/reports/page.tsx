@@ -30,6 +30,11 @@ export default async function ReportsPage() {
 
   const canAccessReports = isQa || isAdmin
 
+  // Server-side access gate — redirect unauthorized users before rendering
+  if (!canAccessReports) {
+    redirect('/dashboard')
+  }
+
   return (
     <ReportsClient
       profile={profile as Profile}
