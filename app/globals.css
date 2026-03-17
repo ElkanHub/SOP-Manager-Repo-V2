@@ -58,7 +58,7 @@
 }
 
 :root {
-  --background: oklch(0.99 0 0);
+  --background: oklch(0.95 0 0);
   /* Slightly softer white */
   --foreground: oklch(0.2 0 0);
   /* Softer black */

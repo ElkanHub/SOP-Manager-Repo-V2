@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
 import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
-import { Upload } from "lucide-react"
+import { Upload, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SopRecord, Profile, Department } from "@/types/app.types"
 
@@ -28,7 +28,7 @@ export function LibraryPageClient({
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-foreground">SOP Library</h1>
         {isManager && (
           <Button 
@@ -39,9 +39,27 @@ export function LibraryPageClient({
             Upload SOP
           </Button>
         )}
+      </div> */}
+      {/* Page Header */}
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <BookOpen className="h-4 w-4" />
+          </div>
+          <h1 className="text-lg font-bold text-foreground">SOP Library</h1>
+        </div>
+        {isManager && (
+          <Button
+            className="bg-brand-teal hover:bg-teal-600 text-white"
+            onClick={() => setUploadModalOpen(true)}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload SOP
+          </Button>
+        )}
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="mt-6 flex items-center gap-3 mb-4">
         <StatusFilterTab
           label="All"
           active={!statusFilter}
@@ -106,11 +124,10 @@ function StatusFilterTab({
   return (
     <a
       href={href}
-      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-        active
-          ? "bg-card shadow-sm border border-border text-brand-blue"
-          : "text-muted-foreground hover:text-foreground"
-      }`}
+      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${active
+        ? "bg-card shadow-sm border border-border text-brand-blue"
+        : "text-muted-foreground hover:text-foreground"
+        }`}
     >
       {label}
     </a>

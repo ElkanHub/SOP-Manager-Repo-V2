@@ -1,13 +1,14 @@
 import { redirect } from 'next/navigation'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { ApprovalQueueTable } from '@/components/approvals/approval-queue-table'
+import { ClipboardCheck } from 'lucide-react'
 
 export default async function ApprovalsPage() {
     const supabase = await createClient()
     const serviceClient = await createServiceClient()
-    
+
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
         redirect('/login')
     }
@@ -43,13 +44,25 @@ export default async function ApprovalsPage() {
 
     return (
         <div className="container mx-auto py-6 space-y-6">
-            <div>
+            {/* <div>
                 <h1 className="text-2xl font-bold text-foreground">Approval Queue</h1>
                 <p className="text-muted-foreground">Review and approve SOP submissions</p>
+            </div> */}
+            {/* Page Header */}
+            <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+                <div className="flex items-start gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                        <ClipboardCheck className="h-4 w-4" />
+                    </div>
+                    <div>
+                        <h1 className="text-lg font-bold text-foreground">Approval Queue</h1>
+                        <p className="text-muted-foreground">Review and approve SOP submissions</p>
+                    </div>
+                </div>
             </div>
 
-            <ApprovalQueueTable 
-                requests={approvalRequests || []} 
+            <ApprovalQueueTable
+                requests={approvalRequests || []}
                 currentUserId={user.id}
             />
         </div>

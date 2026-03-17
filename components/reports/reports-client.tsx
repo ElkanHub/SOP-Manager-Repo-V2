@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, subDays } from "date-fns"
-import { FileText, Users, Wrench, Bell, Sparkles, Download } from "lucide-react"
+import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -70,11 +70,23 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-foreground">Reports</h1>
+      </div> */}
+      {/* Page Header */}
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+        <div className="flex items-start gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <FileBarChart className="h-4 w-4" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-foreground">Reports</h1>
+            <p className="text-muted-foreground">Review and approve SOP submissions</p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="mt-6 flex gap-6">
         <div className="w-64 shrink-0">
           <Card className="rounded-l-none">
             <CardContent className="p-4">

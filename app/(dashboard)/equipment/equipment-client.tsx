@@ -4,7 +4,7 @@ import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { EquipmentTable } from "@/components/equipment/equipment-table"
 import { AddEquipmentModal } from "@/components/equipment/add-equipment-modal"
-import { Plus } from "lucide-react"
+import { Wrench, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Equipment, Profile, Department } from "@/types/app.types"
 
@@ -29,8 +29,29 @@ export function EquipmentPageClient({
 
   return (
     <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
+      {/* <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-foreground">Equipment Registry</h1>
+        {isManager && (
+          <Button
+            className="bg-brand-teal hover:bg-teal-600"
+            onClick={() => setAddModalOpen(true)}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Equipment
+          </Button>
+        )}
+      </div> */}
+      {/* Page Header */}
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+        <div className="flex items-start gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Wrench className="h-4 w-4" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-foreground">Equipment Registry</h1>
+            <p className="text-muted-foreground">Manage equipment and maintenance schedules</p>
+          </div>
+        </div>
         {isManager && (
           <Button
             className="bg-brand-teal hover:bg-teal-600"
@@ -42,7 +63,7 @@ export function EquipmentPageClient({
         )}
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
+      <div className="mt-6 flex items-center gap-3 mb-4">
         <StatusFilterTab
           label="All"
           active={!statusFilter}

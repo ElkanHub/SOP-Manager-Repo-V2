@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { Card, CardContent } from "@/components/ui/card"
 import { Profile } from "@/types/app.types"
+import { FileText } from "lucide-react"
 
 interface KpiData {
   activeSops: number
@@ -120,9 +121,19 @@ export function DashboardClient({
 
   return (
     <div className="px-6 py-2 space-y-6">
-      <div>
+      {/* <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Welcome back, {profile.full_name}</p>
+      </div> */}
+      {/* Page Header */}
+      <div className="flex items-start gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <FileText className="h-4 w-4" />
+        </div>
+        <div>
+          <h1 className="text-lg font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Welcome back, {profile.full_name}</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
