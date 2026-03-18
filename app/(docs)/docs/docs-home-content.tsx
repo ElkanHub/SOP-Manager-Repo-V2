@@ -1,7 +1,9 @@
 "use client"
-import React, { useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { Search, Rocket, BookOpen, Shield, BookmarkCheck, ClipboardCheck, GitBranch, Cog, CalendarDays, BarChart2, MessageSquare, Settings } from 'lucide-react'
+import { Rocket, BookOpen, Shield, BookmarkCheck, ClipboardCheck, GitBranch, Cog, CalendarDays, BarChart2, MessageSquare, Settings, Search as SearchIcon } from 'lucide-react'
+import { Search as DocsSearch } from '@/components/docs'
+import { cn } from '@/lib/utils/cn'
 
 const FEATURES = [
   { id: 'the-pulse', icon: BookmarkCheck, title: 'The Pulse', description: 'Real-time notifications, notices, and personal to-dos.', href: '/docs/the-pulse/overview', badge: null },
@@ -16,99 +18,94 @@ const FEATURES = [
 ]
 
 export function DocsHomeContent() {
-  const [searchQuery, setSearchQuery] = useState('')
-
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <section className="bg-[#0D2B55] py-16 px-8">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="font-[var(--font-dm-sans)] text-[38px] font-medium text-white">
+          <h1 className="font-[var(--font-dm-sans)] text-[38px] font-medium text-white leading-tight">
             SOP-Guard Pro Documentation
           </h1>
-          <p className="text-18 text-white/70 mt-3 max-w-xl mx-auto">
+          <p className="text-18 text-white/70 mt-4 max-w-xl mx-auto leading-relaxed">
             Everything you need to use SOP-Guard Pro confidently — from your first day to advanced admin setup.
           </p>
 
           {/* Search Bar */}
-          <div className="mt-10 max-w-lg mx-auto relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-slate-400" />
-            <input 
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search the documentation..."
-              className="w-full h-12 bg-white rounded-xl pl-12 pr-4 text-15 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00C2A8]/30"
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-100 text-slate-500 text-[11px] px-1.5 py-0.5 rounded border border-slate-200">
-              ⌘K
-            </div>
+          <div className="mt-12 max-w-lg mx-auto">
+            <DocsSearch variant="large" />
           </div>
 
           {/* Quick Start Cards */}
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
             <Link 
               href="/docs/getting-started/quickstart"
-              className="bg-white/10 border border-white/20 rounded-xl p-6 hover:bg-white/15 cursor-pointer transition-colors text-left group"
+              className="bg-white/10 border border-white/20 rounded-xl p-6 hover:bg-white/15 cursor-pointer transition-all text-left group shadow-sm"
             >
               <Rocket className="h-6 w-6 text-[#00C2A8]" />
-              <p className="text-16 font-medium text-white mt-3 group-hover:text-[#00C2A8] transition-colors">Quickstart guide</p>
-              <p className="text-13 text-white/70 mt-1">Up and running in 10 minutes.</p>
+              <p className="text-16 font-semibold text-white mt-4 group-hover:text-[#00C2A8] transition-colors tracking-tight">Quickstart guide</p>
+              <p className="text-13 text-white/70 mt-1 leading-snug">Up and running in 10 minutes.</p>
             </Link>
             <Link 
               href="#features"
-              className="bg-white/10 border border-white/20 rounded-xl p-6 hover:bg-white/15 cursor-pointer transition-colors text-left group"
+              className="bg-white/10 border border-white/20 rounded-xl p-6 hover:bg-white/15 cursor-pointer transition-all text-left group shadow-sm"
             >
               <BookOpen className="h-6 w-6 text-[#00C2A8]" />
-              <p className="text-16 font-medium text-white mt-3 group-hover:text-[#00C2A8] transition-colors">Feature guides</p>
-              <p className="text-13 text-white/70 mt-1">Find the module you need.</p>
+              <p className="text-16 font-semibold text-white mt-4 group-hover:text-[#00C2A8] transition-colors tracking-tight">Feature guides</p>
+              <p className="text-13 text-white/70 mt-1 leading-snug">Find the module you need.</p>
             </Link>
             <Link 
               href="/docs/admin/first-setup"
-              className="bg-white/10 border border-white/20 rounded-xl p-6 hover:bg-white/15 cursor-pointer transition-colors text-left group"
+              className="bg-white/10 border border-white/20 rounded-xl p-6 hover:bg-white/15 cursor-pointer transition-all text-left group shadow-sm"
             >
               <Shield className="h-6 w-6 text-[#00C2A8]" />
-              <p className="text-16 font-medium text-white mt-3 group-hover:text-[#00C2A8] transition-colors">Admin setup guide</p>
-              <p className="text-13 text-white/70 mt-1">Configure your organisation from scratch.</p>
+              <p className="text-16 font-semibold text-white mt-4 group-hover:text-[#00C2A8] transition-colors tracking-tight">Admin setup guide</p>
+              <p className="text-13 text-white/70 mt-1 leading-snug">Configure your organisation from scratch.</p>
             </Link>
           </div>
         </div>
       </section>
 
       {/* Feature Grid */}
-      <section id="features" className="py-16 px-8 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-24 font-medium text-slate-900 text-center mb-3">
-            Documentation by feature
-          </h2>
-          <p className="text-16 text-slate-500 text-center mb-10">
-            Select a topic to jump directly to what you need.
-          </p>
+      <section id="features" className="py-20 px-8 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-32 font-bold text-[#0D2B55] tracking-tight mb-4">
+              Documentation by feature
+            </h2>
+            <p className="text-18 text-slate-500 max-w-2xl mx-auto">
+              Select a topic to jump directly to what you need.
+            </p>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {FEATURES.map(feature => (
               <Link
                 key={feature.id}
                 href={feature.href}
-                className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-[#00C2A8] transition-all duration-200 cursor-pointer group"
+                className="bg-white border border-slate-200/80 rounded-2xl p-6 hover:shadow-soft hover:border-indigo-400/50 transition-all duration-300 cursor-pointer group"
               >
-                <div className="flex items-center justify-between">
-                  <feature.icon className="h-5 w-5 text-[#1A5EA8]" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-[#1A5EA8] group-hover:bg-indigo-50 transition-colors">
+                    <feature.icon size={20} />
+                  </div>
                   {feature.badge && (
-                    <span className={feature.badge === 'QA' ? 'bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold' : 'bg-purple-50 text-purple-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold'}>
+                    <span className={cn(
+                      "text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-widest",
+                      feature.badge === 'QA' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'
+                    )}>
                       {feature.badge}
                     </span>
                   )}
                 </div>
-                <p className="text-15 font-medium text-slate-900 mt-4 group-hover:text-[#00C2A8] transition-colors">
+                <h3 className="text-[17px] font-bold text-[#0D2B55] group-hover:text-[#1A5EA8] transition-colors tracking-tight">
                   {feature.title}
-                </p>
-                <p className="text-13 text-slate-500 mt-1.5 leading-relaxed">
+                </h3>
+                <p className="text-[14px] text-slate-500 mt-2 leading-relaxed group-hover:text-slate-600 transition-colors">
                   {feature.description}
                 </p>
-                <span className="text-12 text-[#1A5EA8] mt-4 block group-hover:underline">
-                  Learn more →
-                </span>
+                <div className="text-13 font-bold text-[#1A5EA8] mt-6 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                  Learn more <ChevronRight size={14} />
+                </div>
               </Link>
             ))}
           </div>
@@ -116,14 +113,35 @@ export function DocsHomeContent() {
       </section>
 
       {/* Help Footer */}
-      <section className="bg-slate-50 border-t border-slate-200 py-10 text-center">
-        <p className="text-15 text-slate-600">
-          Can&apos;t find what you&apos;re looking for?
-          <a href="mailto:support@sopguard.com" className="text-[#1A5EA8] hover:underline ml-2">
+      <section className="bg-slate-50/50 border-t border-slate-100 py-16 text-center">
+        <div className="max-w-2xl mx-auto px-6">
+          <h4 className="text-[20px] font-bold text-[#0D2B55] mb-2 tracking-tight">Can&apos;t find what you&apos;re looking for?</h4>
+          <p className="text-slate-500 mb-8 text-16">Our team is ready to help you with any questions about SOP-Guard Pro.</p>
+          <a 
+            href="mailto:support@sopguard.com" 
+            className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#0D2B55] text-white font-bold hover:bg-[#1A5EA8] transition-colors shadow-soft"
+          >
             Contact support
           </a>
-        </p>
+        </div>
       </section>
     </div>
+  )
+}
+
+function ChevronRight({ size }: { size: number }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2.5" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+    >
+      <path d="m9 18 6-6-6-6"/>
+    </svg>
   )
 }
