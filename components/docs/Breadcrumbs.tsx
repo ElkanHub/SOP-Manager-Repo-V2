@@ -18,10 +18,10 @@ export function Breadcrumbs({ section, title }: BreadcrumbsProps) {
   }
 
   return (
-    <nav className="flex items-center gap-2 text-[12px] font-medium text-slate-400 mb-8" aria-label="Breadcrumb">
+    <nav className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground mb-8" aria-label="Breadcrumb">
       <Link 
         href="/docs" 
-        className="flex items-center gap-1 hover:text-[#1A5EA8] transition-colors"
+        className="flex items-center gap-1 hover:text-brand-blue transition-colors"
       >
         <Home size={14} />
         <span>Docs</span>
@@ -29,8 +29,8 @@ export function Breadcrumbs({ section, title }: BreadcrumbsProps) {
       
       {section && (
         <>
-          <ChevronRight size={14} className="text-slate-300" />
-          <span className="hover:text-[#1A5EA8] transition-colors cursor-default">
+          <ChevronRight size={14} className="text-muted-foreground/30" />
+          <span className="hover:text-brand-blue transition-colors cursor-default">
             {formatSection(section)}
           </span>
         </>
@@ -38,8 +38,8 @@ export function Breadcrumbs({ section, title }: BreadcrumbsProps) {
       
       {title && (
         <>
-          <ChevronRight size={14} className="text-slate-300" />
-          <span className="text-slate-900 font-semibold truncate max-w-[200px]">
+          <ChevronRight size={14} className="text-muted-foreground/30" />
+          <span className="text-foreground font-semibold truncate max-w-[200px]">
             {title}
           </span>
         </>

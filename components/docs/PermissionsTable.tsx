@@ -29,10 +29,10 @@ const permissions: PermissionRow[] = [
 
 export function PermissionsTable() {
   return (
-    <div className="my-8 overflow-hidden rounded-lg border border-slate-200">
+    <div className="my-8 overflow-hidden rounded-2xl border border-border shadow-sm">
       <table className="w-full border-collapse text-left text-13">
         <thead>
-          <tr className="bg-[#0D2B55] text-white">
+          <tr className="bg-brand-navy text-white">
             <th className="px-4 py-3 font-semibold border-r border-white/10">Action</th>
             <th className="px-4 py-3 font-semibold border-r border-white/10 text-center">Employee</th>
             <th className="px-4 py-3 font-semibold border-r border-white/10 text-center">Manager</th>
@@ -40,17 +40,17 @@ export function PermissionsTable() {
             <th className="px-4 py-3 font-semibold text-center">Admin</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-200">
+        <tbody className="divide-y divide-border/40">
           {permissions.map((row, i) => (
-            <tr key={row.action} className={i % 2 === 0 ? 'bg-white' : 'bg-slate-50'}>
-              <td className="px-4 py-3 text-slate-700 font-medium border-r border-slate-200">{row.action}</td>
-              <td className="px-4 py-3 border-r border-slate-200 text-center align-middle">
+            <tr key={row.action} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
+              <td className="px-4 py-3 text-foreground font-medium border-r border-border/40">{row.action}</td>
+              <td className="px-4 py-3 border-r border-border/40 text-center align-middle">
                 {renderCell(row.employee)}
               </td>
-              <td className="px-4 py-3 border-r border-slate-200 text-center align-middle">
+              <td className="px-4 py-3 border-r border-border/40 text-center align-middle">
                 {renderCell(row.manager)}
               </td>
-              <td className="px-4 py-3 border-r border-slate-200 text-center align-middle">
+              <td className="px-4 py-3 border-r border-border/40 text-center align-middle">
                 {renderCell(row.qa)}
               </td>
               <td className="px-4 py-3 text-center align-middle">

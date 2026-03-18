@@ -32,11 +32,11 @@ export function KeyboardShortcut({ keys }: KeyboardShortcutProps) {
 
         return (
           <React.Fragment key={key + index}>
-            <kbd className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-11 font-mono text-slate-700 shadow-[0_1px_0_rgba(0,0,0,0.2)] inline-block">
+            <kbd className="bg-muted border border-border/50 rounded px-1.5 py-0.5 text-[10px] font-mono text-foreground shadow-sm inline-block">
               {displayOne}
             </kbd>
             {index < keys.length - 1 && (
-              <span className="text-slate-400 text-11 mx-1">+</span>
+              <span className="text-muted-foreground/40 text-[10px] mx-1">+</span>
             )}
           </React.Fragment>
         )

@@ -102,15 +102,15 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="flex flex-col h-screen bg-slate-50/30">
+    <div className="flex flex-col h-screen bg-background text-foreground transition-colors duration-300">
       {/* TopBar */}
-      <header className="h-[60px] fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 flex items-center justify-between shadow-sm">
+      <header className="h-[60px] fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border/60 px-6 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-4">
           <Link href="/docs" className="group flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#0D2B55] rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-soft group-hover:bg-[#1A5EA8] transition-colors">S</div>
+            <div className="w-8 h-8 bg-brand-navy rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-soft group-hover:bg-brand-blue transition-colors">S</div>
             <div>
-              <span className="text-14 font-bold text-[#0D2B55] tracking-tight block leading-none">SOP-GUARD PRO</span>
-              <span className="text-[10px] text-slate-400 font-medium tracking-[0.05em] uppercase">Knowledge Base</span>
+              <span className="text-14 font-bold text-foreground tracking-tight block leading-none">SOP-GUARD PRO</span>
+              <span className="text-[10px] text-muted-foreground font-medium tracking-[0.05em] uppercase">Knowledge Base</span>
             </div>
           </Link>
         </div>
@@ -120,11 +120,11 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="hidden sm:flex items-center text-sm font-medium text-[#1A5EA8] hover:text-[#0D2B55] transition-colors gap-1.5">
+          <Link href="/dashboard" className="hidden sm:flex items-center text-sm font-medium text-brand-blue hover:text-brand-navy dark:hover:text-brand-teal transition-colors gap-1.5">
             Back to Application <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
           <button 
-            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="md:hidden p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
@@ -136,11 +136,11 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         {/* Sidebar */}
         {!isHome && (
           <aside className={cn(
-            "fixed inset-0 top-[60px] z-40 md:sticky md:block w-[280px] bg-white border-r border-slate-200/60 h-[calc(100vh-60px)] overflow-y-auto px-5 py-8 transition-transform md:translate-x-0 shadow-sm",
+            "fixed inset-0 top-[60px] z-40 md:sticky md:block w-[280px] bg-background border-r border-border/60 h-[calc(100vh-60px)] overflow-y-auto px-5 py-8 transition-transform md:translate-x-0 shadow-sm",
             isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           )}>
-            <div className="mb-10 bg-slate-50/50 rounded-2xl p-4 border border-slate-200/40">
-              <span className="text-[10px] uppercase text-slate-400 font-bold tracking-widest block mb-3 pl-1">Target Persona</span>
+            <div className="mb-10 bg-muted/30 rounded-2xl p-4 border border-border/40">
+              <span className="text-[10px] uppercase text-muted-foreground font-bold tracking-widest block mb-3 pl-1">Target Persona</span>
               <div className="flex flex-wrap gap-1.5 font-sans">
                 {ROLES.map(role => (
                   <button
@@ -149,8 +149,8 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
                     className={cn(
                       "text-[10px] px-3 py-1.5 rounded-lg border font-semibold transition-all shadow-sm",
                       selectedRole === role 
-                        ? "bg-[#0D2B55] text-white border-[#0D2B55]" 
-                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                        ? "bg-brand-navy text-white border-brand-navy dark:bg-brand-teal dark:border-brand-teal" 
+                        : "bg-background text-muted-foreground border-border hover:border-slate-300 dark:hover:border-slate-700 hover:bg-muted"
                     )}
                   >
                     {role}
@@ -162,13 +162,13 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
             <nav className="space-y-9">
               {visibleSections.map(section => (
                 <div key={section.id}>
-                  <h3 className="flex items-center gap-2 px-1 mb-3 text-[10px] uppercase font-bold text-slate-400 tracking-[0.15em]">
+                  <h3 className="flex items-center gap-2 px-1 mb-3 text-[10px] uppercase font-bold text-muted-foreground tracking-[0.15em]">
                     {section.label}
                     {section.badge === 'QA' && (
-                      <span className="bg-blue-50 text-blue-700 text-[9px] px-1.5 py-0.5 rounded border border-blue-100 font-bold ml-1 uppercase leading-none">QA</span>
+                      <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9px] px-1.5 py-0.5 rounded border border-blue-200/20 font-bold ml-1 uppercase leading-none">QA</span>
                     )}
                     {section.badge === 'Admin' && (
-                      <span className="bg-purple-50 text-purple-700 text-[9px] px-1.5 py-0.5 rounded border border-purple-100 font-bold ml-1 uppercase leading-none">Admin</span>
+                      <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[9px] px-1.5 py-0.5 rounded border border-purple-200/20 font-bold ml-1 uppercase leading-none">Admin</span>
                     )}
                   </h3>
                   <div className="space-y-1">
@@ -182,12 +182,12 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
                           className={cn(
                             "flex items-center h-[34px] px-3 rounded-xl text-sm transition-all group relative",
                             pathname === `/docs/${page.slug}` 
-                              ? "bg-[#EFF6FF] text-[#1A5EA8] font-semibold border border-blue-100 shadow-sm" 
-                              : "text-slate-600 hover:text-slate-900 border border-transparent hover:bg-slate-100/50"
+                              ? "bg-brand-blue/10 text-brand-blue font-semibold border border-brand-blue/20 shadow-sm" 
+                              : "text-muted-foreground hover:text-foreground border border-transparent hover:bg-muted/50"
                           )}
                         >
                           {pathname === `/docs/${page.slug}` && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-[#00C2A8] rounded-r-full" />
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-brand-teal rounded-r-full" />
                           )}
                           <span className={cn(
                             "transition-transform",
@@ -205,7 +205,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         )}
 
         <main className={cn(
-          "flex-1 overflow-y-auto bg-white/40",
+          "flex-1 overflow-y-auto bg-background/50",
           isHome ? "w-full" : "max-w-4xl mx-auto px-10 md:px-16 py-12 lg:py-16"
         )}>
           {children}
@@ -214,8 +214,8 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         {/* On-page nav (ToC) */}
         {!isHome && (
           <aside className="hidden xl:block w-[240px] sticky top-[80px] h-fit px-6 pt-2">
-            <span className="text-[10px] uppercase tracking-[0.15em] text-slate-400 font-bold mb-5 block">On this page</span>
-            <div id="table-of-contents" className="space-y-1">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-bold mb-5 block">On this page</span>
+            <div id="table-of-contents" className="space-y-1 text-muted-foreground">
               {/* This is populated dynamically by TableOfHeaders */}
             </div>
           </aside>

@@ -8,10 +8,10 @@ interface RoleBadgeProps {
 }
 
 const styles: Record<Role, string> = {
-  employee: 'bg-slate-100 text-slate-700',
-  manager: 'bg-blue-50 text-blue-700',
-  qa: 'bg-indigo-50 text-indigo-700',
-  admin: 'bg-purple-50 text-purple-700'
+  employee: 'bg-muted text-muted-foreground border-border/50',
+  manager: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200/20',
+  qa: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200/20',
+  admin: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200/20'
 }
 
 export function RoleBadge({ role }: RoleBadgeProps) {

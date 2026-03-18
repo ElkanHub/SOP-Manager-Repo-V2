@@ -25,39 +25,39 @@ const components = {
   h2: (props: any) => (
     <h2 
       id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
-      className="text-22 font-bold text-[#0D2B55] mt-12 mb-5 pb-3 border-b border-slate-200/60 tracking-tight leading-tight" 
+      className="text-22 font-bold text-foreground mt-12 mb-5 pb-3 border-b border-border/60 tracking-tight leading-tight" 
       {...props} 
     />
   ),
   h3: (props: any) => (
     <h3 
       id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
-      className="text-18 font-bold text-slate-800 mt-8 mb-3 tracking-tight" 
+      className="text-18 font-bold text-foreground/90 mt-8 mb-3 tracking-tight" 
       {...props} 
     />
   ),
-  p: (props: any) => <p className="text-[16px] text-slate-600 leading-[1.8] mb-6 font-sans" {...props} />,
-  a: (props: any) => <a className="text-[#1A5EA8] font-medium decoration-[#1A5EA8]/30 underline-offset-4 hover:underline hover:decoration-[#1A5EA8]" {...props} />,
-  ul: (props: any) => <ul className="text-[16px] text-slate-600 leading-[1.8] mb-6 list-disc pl-5 space-y-2" {...props} />,
-  ol: (props: any) => <ol className="text-[16px] text-slate-600 leading-[1.8] mb-6 list-decimal pl-5 space-y-2" {...props} />,
+  p: (props: any) => <p className="text-[16px] text-muted-foreground leading-[1.8] mb-6 font-sans" {...props} />,
+  a: (props: any) => <a className="text-brand-blue font-medium decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue" {...props} />,
+  ul: (props: any) => <ul className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-disc pl-5 space-y-2" {...props} />,
+  ol: (props: any) => <ol className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-decimal pl-5 space-y-2" {...props} />,
   li: (props: any) => <li className="pl-1" {...props} />,
-  strong: (props: any) => <strong className="font-semibold text-[#0D2B55]" {...props} />,
+  strong: (props: any) => <strong className="font-semibold text-foreground" {...props} />,
   code: (props: any) => (
-    <code className="bg-slate-100/80 text-[#0D2B55] px-1.5 py-0.5 rounded-md text-[0.9em] font-mono border border-slate-200/50" {...props} />
+    <code className="bg-muted/80 text-foreground px-1.5 py-0.5 rounded-md text-[0.9em] font-mono border border-border/50" {...props} />
   ),
   pre: (props: any) => (
-    <pre className="bg-[#0f172a] text-slate-100 rounded-2xl p-6 overflow-x-auto text-[13px] mb-8 shadow-soft border border-slate-800/50" {...props} />
+    <pre className="bg-brand-navy text-slate-100 rounded-2xl p-6 overflow-x-auto text-[13px] mb-8 shadow-soft border border-slate-800/50" {...props} />
   ),
   table: (props: any) => (
-    <div className="overflow-x-auto mb-8 rounded-2xl border border-slate-200 shadow-sm bg-white">
+    <div className="overflow-x-auto mb-8 rounded-2xl border border-border shadow-sm bg-card">
       <table className="w-full border-collapse" {...props} />
     </div>
   ),
   th: (props: any) => (
-    <th className="bg-slate-50/80 px-4 py-3 text-left text-[12px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200" {...props} />
+    <th className="bg-muted/50 px-4 py-3 text-left text-[12px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border" {...props} />
   ),
   td: (props: any) => (
-    <td className="px-4 py-3.5 text-sm text-slate-600 border-b border-slate-100 last:border-0" {...props} />
+    <td className="px-4 py-3.5 text-[14px] text-muted-foreground border-b border-border/40 last:border-0" {...props} />
   ),
 }
 
@@ -99,15 +99,15 @@ export async function DocPageContent({ frontmatter, content }: DocPageContentPro
           </span>
         )}
         
-        <h1 className="text-[36px] md:text-[44px] font-bold text-[#0D2B55] tracking-tight leading-[1.15] mb-6">
+        <h1 className="text-[36px] md:text-[44px] font-bold text-foreground tracking-tight leading-[1.15] mb-6">
           {frontmatter.title}
         </h1>
-        <p className="text-18 md:text-20 text-slate-500 leading-relaxed max-w-2xl">
+        <p className="text-18 md:text-20 text-muted-foreground leading-relaxed max-w-2xl font-medium">
           {frontmatter.description}
         </p>
       </div>
 
-      <div className="h-px w-full bg-gradient-to-r from-slate-200/60 via-slate-200/40 to-transparent mb-12" />
+      <div className="h-px w-full bg-gradient-to-r from-border/60 via-border/40 to-transparent mb-12" />
 
       {/* MDX Content */}
       <div className="prose-slate max-w-none">
@@ -115,10 +115,10 @@ export async function DocPageContent({ frontmatter, content }: DocPageContentPro
       </div>
 
       {/* Page Footer */}
-      <div className="mt-20 pt-10 border-t border-slate-200 flex justify-between items-center group">
+      <div className="mt-20 pt-10 border-t border-border flex justify-between items-center group">
         <Link 
           href="/docs" 
-          className="text-14 font-semibold text-[#1A5EA8] hover:text-[#0D2B55] flex items-center transition-all group-hover:-translate-x-1"
+          className="text-14 font-semibold text-brand-blue hover:text-foreground flex items-center transition-all group-hover:-translate-x-1"
         >
           <ChevronLeft className="h-4 w-4 mr-2" /> 
           <span>Return to Documentation Library</span>
