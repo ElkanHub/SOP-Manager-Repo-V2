@@ -1,0 +1,57 @@
+---
+title: "Equipment Registry Overview"
+description: "The central register for all maintained assets."
+section: "equipment"
+order: 1
+role: "all"
+---
+
+The **Equipment Registry** is where all maintained assets are tracked. Think of it as your organisation's asset database.
+
+---
+
+## Default View
+
+When you open Equipment, you see assets from your department (plus any secondary departments you belong to).
+
+The table shows:
+- **Asset ID** — Unique identifier (e.g., EQ-001)
+- **Name** — Asset name
+- **Department** — Owning department
+- **Status** — Current state
+- **Frequency** — PM schedule
+- **Last Serviced** — Most recent PM
+- **Next Due** — Upcoming PM date
+
+---
+
+## Statuses
+
+<StatusBadge status="active" /> **Active** — In service, PM schedule active
+
+<StatusBadge status="pending_qa" /> **Pending QA** — Added, waiting for QA approval
+
+<StatusBadge status="inactive" /> **Inactive** — Decommissioned or out of service
+
+---
+
+## Next Due Colours
+
+The Next Due column uses urgency colours:
+
+- **Normal** — More than 7 days away
+- **Amber** — 7 days or less
+- **Red** — Overdue
+
+---
+
+## QA Approval Requirement
+
+Like SOPs, equipment requires QA approval before going active. Managers submit equipment for review, and QA Managers approve it.
+
+<QuickNav links={[
+  { label: 'Adding Equipment', href: '/docs/equipment/adding-equipment', description: 'Register new assets' },
+  { label: 'Asset Detail', href: '/docs/equipment/asset-detail', description: 'View asset information' },
+  { label: 'Logging PM', href: '/docs/equipment/logging-pm-completion', description: 'Record maintenance' },
+  { label: 'Reassigning Tasks', href: '/docs/equipment/reassigning-tasks', description: 'Change task assignment' }
+]} />

@@ -1,0 +1,40 @@
+---
+title: "Logging PM Completion"
+description: "Recording that preventive maintenance was performed."
+section: "equipment"
+order: 4
+role: "all"
+---
+
+When preventive maintenance is performed, it must be logged in the system. This creates the audit trail and schedules the next PM.
+
+---
+
+## Who Can Log
+
+**Anyone** in the primary or secondary department can log PM completion. You do not need to be the assigned person.
+
+---
+
+## How to Log
+
+1. Open the equipment detail page
+2. Click **Log PM Completion**
+3. Fill in:
+   - **Notes** — Required. Describe what was done.
+   - **Photo** — Optional. Upload a photo of completed work.
+4. Click **Complete**
+
+---
+
+## What Happens After
+
+1. The PM task is marked complete
+2. Equipment **Last Serviced** updates to today
+3. **Next Due** recalculates based on frequency
+4. A **new PM task** is automatically created for the next cycle
+5. Service history table updates
+
+<Callout type="info">
+  You do not need to be the assigned person to log a completion. If someone else completes the work, they can log it — the completed_by field records who actually did the work.
+</Callout>

@@ -1,0 +1,61 @@
+---
+title: "First-Time Organisation Setup"
+description: "Setting up SOP-Guard Pro for a new organisation."
+section: "admin"
+order: 1
+role: "admin"
+---
+
+<RoleAccess roles={["admin"]} />
+
+Setting up SOP-Guard Pro for the first time involves several steps.
+
+<StepList>
+<Step number={1} title="Create the first admin account">
+
+Navigate to `/setup`. This page is only accessible before any admin exists.
+
+Fill in:
+- Full name
+- Email
+- Password
+
+Complete the onboarding wizard. The first admin is placed in QA by default.
+
+<Callout type="warning">
+  The /setup route is permanently inaccessible after the first admin account is created. If you need to access it again (e.g. testing a fresh installation), all admin accounts must first be removed from the database.
+</Callout>
+
+</Step>
+<Step number={2} title="Set up departments">
+
+Go to **Settings** → **Departments**.
+
+QA already exists. Add your other teams with descriptive names and colours.
+
+</Step>
+<Step number={3} title="Invite your team">
+
+Share the signup URL. New users complete onboarding themselves.
+
+Review them in **Settings** → **Users** for correct department and role.
+
+</Step>
+<Step number={4} title="Assign admin access">
+
+Go to **Settings** → **Users** → **Grant Admin** for appropriate people.
+
+Requires password confirmation.
+
+</Step>
+<Step number={5} title="Add SOPs">
+
+QA Managers begin uploading .docx files. Each goes through the approval flow.
+
+</Step>
+<Step number={6} title="Register equipment">
+
+Managers add equipment records. Each requires QA approval before becoming active.
+
+</Step>
+</StepList>

@@ -1,0 +1,55 @@
+---
+title: "Adding New Equipment"
+description: "How to register new equipment in the registry."
+section: "equipment"
+order: 2
+role: "manager"
+---
+
+<RoleAccess roles={["manager", "qa"]} />
+
+Managers can add equipment to the registry. Equipment requires QA approval before becoming active.
+
+---
+
+## Who Can Add
+
+**Managers** can add equipment. Employees can view and log PM but cannot add new equipment.
+
+---
+
+## The Add Equipment Form
+
+The form has three steps:
+
+### Step 1: Basic Information
+
+- **Asset ID** — Unique identifier (format: EQ-XXX)
+- **Name** — Descriptive name
+- **Serial Number** — Manufacturer serial (optional)
+- **Model** — Equipment model (optional)
+- **Photo** — Upload an image (optional)
+
+### Step 2: Maintenance
+
+- **Frequency** — How often PM is required
+  - Daily, Weekly, Monthly, Quarterly, or Custom
+- **Custom Interval** — If Custom, enter days between PM
+- **Last Serviced** — Date of most recent service (important!)
+
+<Callout type="tip">
+  The Last Serviced date seeds the entire maintenance schedule. If equipment was recently serviced, enter the actual date. If never serviced, enter today as the start date.
+</Callout>
+
+### Step 3: Assignment
+
+- **Initial Assignee** — Who is responsible for PM tasks (required)
+
+---
+
+## After Submission
+
+After you submit:
+- Equipment status becomes **Pending QA**
+- A QA Manager reviews and approves or requests changes
+- When approved, the first PM task is automatically created

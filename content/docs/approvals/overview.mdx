@@ -1,0 +1,59 @@
+---
+title: "QA Approvals Overview"
+description: "Review and approve SOP submissions from Managers."
+section: "approvals"
+order: 1
+role: "qa"
+---
+
+<RoleAccess roles={["qa"]} />
+
+The **Approvals** module is where QA Managers review and approve SOP submissions. This is the gateway that ensures every Active SOP in the organisation meets quality standards.
+
+---
+
+## Who Can Access Approvals
+
+The Approvals page is **only visible to QA Managers**. It is hidden from Employees and non-QA Managers.
+
+When you have pending approvals, the page appears in your sidebar navigation with a badge showing the count.
+
+---
+
+## The Approval Queue
+
+The main Approvals page shows:
+
+- **Pending** — Submissions waiting for your review
+- **Changes Requested** — Your feedback has been sent, awaiting resubmission
+- **Approved** — Submissions you have approved
+- **Rejected** — Submissions that were rejected
+
+Each submission appears as a card showing:
+- The SOP number and title
+- Who submitted it
+- When it was submitted
+- Type (New or Update)
+- Current status
+
+---
+
+## Submission History
+
+All submissions are tracked:
+
+- Every resubmission after "changes requested" creates a new entry
+- The full history is preserved
+- You can see the entire thread of comments and responses
+
+This creates a clear audit trail of the review process.
+
+---
+
+## Self-Approval Block
+
+<Callout type="danger">
+  You cannot approve a SOP you submitted yourself. The system rejects self-approval automatically.
+</Callout>
+
+If you submitted an SOP yourself, you will see it in the queue but you cannot approve it. Another QA Manager must handle it.

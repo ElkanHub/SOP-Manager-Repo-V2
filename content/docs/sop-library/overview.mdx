@@ -1,0 +1,67 @@
+---
+title: "SOP Library Overview"
+description: "The central repository for all Standard Operating Procedures."
+section: "sop-library"
+order: 1
+role: "all"
+---
+
+The **SOP Library** is the heart of SOP-Guard Pro — it is where all Standard Operating Procedures live. Think of it as your organisation's procedure manual, always up-to-date and accessible to everyone who needs it.
+
+---
+
+## Default View
+
+When you open the SOP Library, you see **Active SOPs from your department** by default. This focused view ensures you see only the procedures relevant to your work, without noise from other departments.
+
+The table shows:
+- **SOP Number** — Unique identifier (e.g., SOP-001)
+- **Title** — Procedure name
+- **Department** — Which team owns it
+- **Version** — Current version (e.g., v1.0)
+- **Status** — Current state
+- **Date Listed** — When it went active
+- **Due for Revision** — When it needs review
+
+---
+
+## Status Badges
+
+Each SOP has a status that tells you its lifecycle stage:
+
+<StatusBadge status="active" /> **Active** — The current operative version. Everyone in the department can read and acknowledge it.
+
+<StatusBadge status="draft" /> **Draft** — Created but not yet submitted for QA review. Only visible to Managers in the owning department.
+
+<StatusBadge status="pending_qa" /> **Pending QA** — Submitted for review, waiting for QA Manager approval. Only visible to Managers in the owning department and QA.
+
+<StatusBadge status="pending_cc" /> **Pending CC** — QA approved, Change Control in progress. The SOP is locked and awaiting manager signatures.
+
+<StatusBadge status="superseded" /> **Superseded** — Replaced by a newer version. Accessible via Version History.
+
+---
+
+## The Two-Layer Visibility Rule
+
+SOP-Guard Pro has a deliberate two-layer approach to visibility:
+
+1. **Default view** — Shows only SOPs from your department (plus any secondary departments you belong to)
+2. **Search** — Searches across **all Active SOPs** in the organisation
+
+This means:
+- Your day-to-day view is focused on your department
+- You can still find procedures from other teams when you need them
+- Cross-department SOPs are read-only (you can read them but not acknowledge them)
+
+---
+
+## Tab Viewer
+
+When you open an SOP, it opens in a tab within the Library. You can have multiple SOPs open at once, each in its own tab. This makes it easy to reference one procedure while reading another.
+
+<QuickNav links={[
+  { label: 'Reading SOPs', href: '/docs/sop-library/reading-sops', description: 'How to open and read procedures' },
+  { label: 'Acknowledging SOPs', href: '/docs/sop-library/acknowledging-sops', description: 'Confirm you have read a procedure' },
+  { label: 'Searching cross-department', href: '/docs/sop-library/searching-cross-department', description: 'Find SOPs from other teams' },
+  { label: 'Submitting SOPs', href: '/docs/sop-library/submitting-sops', description: 'Upload a new or updated procedure' }
+]} />

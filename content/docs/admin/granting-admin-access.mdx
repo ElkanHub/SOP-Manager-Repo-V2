@@ -1,0 +1,45 @@
+---
+title: "Granting and Revoking Admin Access"
+description: "Managing admin privileges safely."
+section: "admin"
+order: 3
+role: "admin"
+---
+
+<RoleAccess roles={["admin"]} />
+
+Admin access is a high-privilege action. Manage it carefully.
+
+---
+
+## Granting Admin
+
+1. Go to **Settings** → **Users**
+2. Click **Grant Admin** on a user
+3. Enter your password to confirm
+4. Admin is granted
+
+The action is logged in the audit log.
+
+---
+
+## Revoking Admin
+
+1. Go to **Settings** → **Users**
+2. Click **Revoke Admin** on a user
+3. Enter your password to confirm
+4. Admin is revoked
+
+---
+
+## Why Password Confirmation
+
+This is intentional friction. Granting/revoking admin is an irreversible-feeling action with significant impact. Requiring your password prevents accidental changes.
+
+---
+
+## Best Practices
+
+- Limit admin access to those who need it
+- Review admin list periodically
+- Revoke admin before someone leaves the organisation

@@ -1,0 +1,84 @@
+---
+title: "Understanding Your Role and Permissions"
+description: "Learn what you can and cannot do based on your role."
+section: "getting-started"
+order: 4
+role: "all"
+---
+
+Every user in SOP-Guard Pro has three attributes that determine what they can see and do:
+
+1. **Department** — The team you belong to
+2. **Role** — Either Employee or Manager
+3. **Admin flag** — Whether you have administrative access
+
+These attributes combine to define your effective permissions.
+
+---
+
+## The Three Attributes
+
+### Department
+
+Your department determines which SOPs and equipment you see by default. When you view the SOP Library, you initially see only SOPs from your department. Cross-department search lets you find SOPs from other teams, but you can only acknowledge SOPs from your own department.
+
+### Role
+
+- **Employee** — Read SOPs, acknowledge them, complete PM tasks, send notices and messages. The platform shows you what is relevant to your work.
+
+- **Manager** — Everything an Employee can do, plus:
+  - Submit SOPs for QA approval
+  - Sign Change Controls when SOPs are updated
+  - Add equipment to the registry
+  - Reassign PM tasks to other team members
+
+### Admin Flag
+
+The Admin flag is an **additional layer** of capability that can be added to either Employee or Manager accounts. It adds:
+
+- User management (invite, edit, deactivate users)
+- Department management (add, edit departments)
+- Full audit log access
+
+<Callout type="info">
+  Admin does **not** override your operational role. An Admin+Employee still cannot sign a Change Control — that requires the Manager role. Admin simply adds administrative capabilities on top of what your role already allows.
+</Callout>
+
+---
+
+## QA Managers
+
+**QA is a department designation, not a separate role.**
+
+A **QA Manager** is a user who:
+1. Is in the QA department
+2. Has the Manager role
+3. Therefore can approve SOPs and equipment
+
+QA Managers have unique visibility:
+- They can see **all SOPs** across all departments
+- They can see **all equipment** across all departments
+- They are the **sole approvers** of SOP submissions and equipment additions
+
+---
+
+## Role Combinations
+
+| You Are... | You Can... |
+|------------|------------|
+| Employee | Read own-dept SOPs, acknowledge, complete PM tasks, send messages |
+| Manager | Everything Employee + submit SOPs, sign CCs, add equipment, reassign PM |
+| Admin+Employee | Employee + manage users, departments, view audit logs |
+| Admin+Manager | Manager + admin capabilities |
+| QA Manager (QA dept + Manager) | See all SOPs/equipment, approve submissions |
+| QA Admin+Manager | Everything — superuser access |
+
+<Callout type="info">
+  You cannot change your own role. If your role is incorrect, contact your administrator.
+</Callout>
+
+---
+
+## Complete Permissions Matrix
+
+<PermissionsTable />

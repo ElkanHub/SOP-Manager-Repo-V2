@@ -1,0 +1,50 @@
+---
+title: "The Audit Log"
+description: "Understanding the permanent activity record."
+section: "admin"
+order: 4
+role: "qa"
+---
+
+<RoleAccess roles={["qa", "admin"]} />
+
+The audit log is an **append-only** record of all significant actions.
+
+---
+
+## What Is Recorded
+
+- SOP submissions and approvals
+- Equipment additions and approvals
+- Change Control issuances and signatures
+- User account changes
+- Admin grants and revocations
+- Department changes
+
+---
+
+## What Is NOT Recorded
+
+- Messages and to-dos
+- Calendar events
+- Session activity (login/logout)
+- View actions
+
+---
+
+## Access
+
+- **QA Managers** — Full access
+- **Admins** — Full access
+
+---
+
+## Using for Audits
+
+Export via **Reports** for external analysis. The data is in CSV format for easy import.
+
+---
+
+## Append-Only Guarantee
+
+The audit log is enforced at the database level — no UPDATE or DELETE policies exist. Records cannot be modified or removed.

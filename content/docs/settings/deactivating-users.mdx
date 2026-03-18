@@ -1,0 +1,53 @@
+---
+title: "Deactivating and Reactivating Users"
+description: "Offboarding users while preserving data."
+section: "settings"
+order: 6
+role: "admin"
+---
+
+<RoleAccess roles={["admin"]} />
+
+Deactivate users when they leave the organisation.
+
+---
+
+## What Deactivation Does
+
+- `is_active` is set to `false`
+- User cannot log in
+- Current session is terminated immediately
+- User sees a "deactivated" message on login
+
+---
+
+## What It Does NOT Do
+
+- Does NOT delete the user
+- Does NOT remove historical data
+- All acknowledgements, signatures, and audit logs are preserved
+
+---
+
+## How to Deactivate
+
+1. Go to **Settings** → **Users**
+2. Find the user
+3. Click **Deactivate**
+4. Confirm
+
+---
+
+## Reactivation
+
+1. Find the (inactive) user
+2. Click **Reactivate**
+3. User can log in again
+
+---
+
+## Compliance
+
+<Callout type="info">
+  SOP-Guard Pro uses soft-delete for users — nobody is ever permanently removed. This is intentional: regulatory compliance requires that records of who signed what and who performed which maintenance tasks are preserved indefinitely, even after someone leaves the organisation.
+</Callout>

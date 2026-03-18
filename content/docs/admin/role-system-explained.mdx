@@ -1,0 +1,31 @@
+---
+title: "The Role System Explained"
+description: "Understanding the three-attribute identity model."
+section: "admin"
+order: 2
+role: "admin"
+---
+
+<RoleAccess roles={["admin"]} />
+
+Every user has three profile attributes:
+
+1. **Department** — Team they belong to
+2. **Role** — Employee or Manager
+3. **is_admin** — true or false
+
+These combine to create the effective tiers.
+
+---
+
+## Key Points
+
+- **Admin is a flag** — not a role. It adds admin capabilities but does not change operational permissions.
+- **QA is a department** — a QA Manager is simply someone in the QA department with Manager role.
+- **Admin does not override role** — An Admin+Employee still cannot sign Change Controls.
+
+---
+
+## Permissions Table
+
+<PermissionsTable />

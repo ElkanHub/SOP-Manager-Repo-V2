@@ -1,0 +1,46 @@
+---
+title: "Reports Overview"
+description: "Historical data views for compliance and auditing."
+section: "reports"
+order: 1
+role: "all"
+---
+
+The **Reports** module provides historical data views. Unlike the live dashboard, reports show what happened in the past.
+
+---
+
+## Report Types
+
+1. **SOP Change History** — All SOP version changes
+2. **Acknowledgement Log** — Who acknowledged what
+3. **PM Completion Log** — All maintenance records
+4. **Notice Log** — All notices sent (Admin only)
+5. **AI Risk Insights** — AI-generated risk analysis (QA/Admin only)
+
+---
+
+## Common Features
+
+- **Date range filter** — Select a time period
+- **CSV export** — Download data for external analysis
+
+---
+
+## Access Levels
+
+| Report | Employee | Manager | QA | Admin |
+|--------|----------|---------|-----|-------|
+| SOP Change History | ✓ | ✓ | ✓ | ✓ |
+| Acknowledgement Log | Own dept | Own dept | ✓ | ✓ |
+| PM Completion Log | Own dept | Own dept | ✓ | ✓ |
+| Notice Log | — | — | — | ✓ |
+| AI Risk Insights | — | — | ✓ | ✓ |
+
+<QuickNav links={[
+  { label: 'SOP Change History', href: '/docs/reports/sop-change-history', description: 'Version change records' },
+  { label: 'Acknowledgement Log', href: '/docs/reports/acknowledgement-log', description: 'Who acknowledged what' },
+  { label: 'PM Completion Log', href: '/docs/reports/pm-completion-log', description: 'Maintenance records' },
+  { label: 'Notice Log', href: '/docs/reports/notice-log', description: 'Notice history (Admin)' },
+  { label: 'AI Risk Insights', href: '/docs/reports/ai-risk-insights', description: 'AI analysis (QA/Admin)' }
+]} />
