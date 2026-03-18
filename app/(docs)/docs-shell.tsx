@@ -101,6 +101,23 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
     filteredPages.some(page => page.section === section.id)
   )
 
+  const [user, setUser] = useState<any>(null)
+  
+  useEffect(() => {
+    // Check session on mount
+    const checkUser = async () => {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data } = await supabase.auth.getUser()
+        setUser(data.user)
+      } catch (err) {
+        console.error('Error checking auth:', err)
+      }
+    }
+    checkUser()
+  }, [])
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground transition-colors duration-300">
       {/* TopBar */}
@@ -120,8 +137,8 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center gap-6">
-          <Link href="/dashboard" className="hidden sm:flex items-center text-sm font-medium text-brand-blue hover:text-brand-navy dark:hover:text-brand-teal transition-colors gap-1.5">
-            Back to Application <ArrowUpRight className="h-3.5 w-3.5" />
+          <Link href="/" className="hidden sm:flex items-center text-sm font-medium text-brand-blue hover:text-brand-navy dark:hover:text-brand-teal transition-colors gap-1.5">
+            {user ? 'Go to Dashboard' : 'Sign In'} <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
           <button 
             className="md:hidden p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"

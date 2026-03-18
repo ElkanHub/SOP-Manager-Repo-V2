@@ -35,18 +35,25 @@ export default async function proxy(request: NextRequest) {
             .eq('id', user.id)
             .single()
 
+        console.log('>>> proxy profile check:', { id: user.id, active: profile?.is_active, onboarding: profile?.onboarding_complete })
+
         if (profile) {
             if (!profile.is_active && !isAuthRoute) {
+                console.log('>>> proxy: deactivating user redirect to login')
                 url.pathname = '/login'
                 url.search = '?reason=inactive'
                 redirectUrl = url
             } else if (profile.is_active && !profile.onboarding_complete && request.nextUrl.pathname !== '/onboarding' && !isAuthRoute) {
+                console.log('>>> proxy: onboarding incomplete redirect')
                 url.pathname = '/onboarding'
                 redirectUrl = url
-            } else if (profile.is_active && profile.onboarding_complete && (isAuthRoute || request.nextUrl.pathname === '/onboarding')) {
+            } else if (profile.is_active && profile.onboarding_complete && (isAuthRoute || request.nextUrl.pathname === '/onboarding' || request.nextUrl.pathname === '/')) {
+                console.log('>>> proxy: active user redirect to dashboard from', request.nextUrl.pathname)
                 url.pathname = '/dashboard'
                 redirectUrl = url
             }
+        } else {
+            console.log('>>> proxy: NO PROFILE FOUND for user', user.id)
         }
     }
 
