@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils/cn'
 
 // Internal Client Component to handle heading extraction without breaking SSR
 import { TableOfHeaders } from './table-of-headers' 
+import { Breadcrumbs } from '@/components/docs/Breadcrumbs'
 
 // MDX Components
 import { Callout, RoleBadge, RoleAccess, StepList, Step, KeyboardShortcut, StatusBadge, ScreenCaption, QuickNav, PermissionsTable } from '@/components/docs'
@@ -21,19 +22,43 @@ const components = {
   ScreenCaption,
   QuickNav,
   PermissionsTable,
-  h2: (props: any) => <h2 id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} className="text-xl font-semibold text-slate-800 mt-10 mb-3 pb-2 border-b border-slate-200" {...props} />,
-  h3: (props: any) => <h3 id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} className="text-base font-semibold text-slate-700 mt-6 mb-2" {...props} />,
-  p: (props: any) => <p className="text-[15px] text-slate-700 leading-[1.75] mb-4" {...props} />,
-  a: (props: any) => <a className="text-[#1A5EA8] hover:underline" {...props} />,
-  ul: (props: any) => <ul className="text-[15px] text-slate-700 leading-[1.75] mb-4 list-disc list-inside" {...props} />,
-  ol: (props: any) => <ol className="text-[15px] text-slate-700 leading-[1.75] mb-4 list-decimal list-inside" {...props} />,
-  li: (props: any) => <li className="mb-1" {...props} />,
-  strong: (props: any) => <strong className="font-medium text-slate-900" {...props} />,
-  code: (props: any) => <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded text-[13px] font-mono" {...props} />,
-  pre: (props: any) => <pre className="bg-slate-900 text-slate-100 rounded-xl p-5 overflow-x-auto text-[13px] mb-4" {...props} />,
-  table: (props: any) => <div className="overflow-x-auto mb-4"><table className="w-full border-collapse" {...props} /></div>,
-  th: (props: any) => <th className="border border-slate-200 bg-slate-50 px-4 py-2 text-left text-sm font-medium text-slate-700" {...props} />,
-  td: (props: any) => <td className="border border-slate-200 px-4 py-2 text-sm text-slate-700" {...props} />,
+  h2: (props: any) => (
+    <h2 
+      id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
+      className="text-22 font-bold text-[#0D2B55] mt-12 mb-5 pb-3 border-b border-slate-200/60 tracking-tight leading-tight" 
+      {...props} 
+    />
+  ),
+  h3: (props: any) => (
+    <h3 
+      id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
+      className="text-18 font-bold text-slate-800 mt-8 mb-3 tracking-tight" 
+      {...props} 
+    />
+  ),
+  p: (props: any) => <p className="text-[16px] text-slate-600 leading-[1.8] mb-6 font-sans" {...props} />,
+  a: (props: any) => <a className="text-[#1A5EA8] font-medium decoration-[#1A5EA8]/30 underline-offset-4 hover:underline hover:decoration-[#1A5EA8]" {...props} />,
+  ul: (props: any) => <ul className="text-[16px] text-slate-600 leading-[1.8] mb-6 list-disc pl-5 space-y-2" {...props} />,
+  ol: (props: any) => <ol className="text-[16px] text-slate-600 leading-[1.8] mb-6 list-decimal pl-5 space-y-2" {...props} />,
+  li: (props: any) => <li className="pl-1" {...props} />,
+  strong: (props: any) => <strong className="font-semibold text-[#0D2B55]" {...props} />,
+  code: (props: any) => (
+    <code className="bg-slate-100/80 text-[#0D2B55] px-1.5 py-0.5 rounded-md text-[0.9em] font-mono border border-slate-200/50" {...props} />
+  ),
+  pre: (props: any) => (
+    <pre className="bg-[#0f172a] text-slate-100 rounded-2xl p-6 overflow-x-auto text-[13px] mb-8 shadow-soft border border-slate-800/50" {...props} />
+  ),
+  table: (props: any) => (
+    <div className="overflow-x-auto mb-8 rounded-2xl border border-slate-200 shadow-sm bg-white">
+      <table className="w-full border-collapse" {...props} />
+    </div>
+  ),
+  th: (props: any) => (
+    <th className="bg-slate-50/80 px-4 py-3 text-left text-[12px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200" {...props} />
+  ),
+  td: (props: any) => (
+    <td className="px-4 py-3.5 text-sm text-slate-600 border-b border-slate-100 last:border-0" {...props} />
+  ),
 }
 
 interface DocPageContentProps {
@@ -49,43 +74,54 @@ interface DocPageContentProps {
 
 export async function DocPageContent({ frontmatter, content }: DocPageContentProps) {
   const roleBadgeColors: Record<string, string> = {
-    employee: 'bg-slate-100 text-slate-700',
-    manager: 'bg-blue-50 text-blue-700',
-    qa: 'bg-indigo-50 text-indigo-700',
-    admin: 'bg-purple-50 text-purple-700',
+    employee: 'bg-slate-100 text-slate-600 border-slate-200',
+    manager: 'bg-blue-50 text-blue-700 border-blue-100',
+    qa: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+    admin: 'bg-purple-50 text-purple-700 border-purple-100',
   }
 
   return (
-    <article className="prose prose-slate max-w-none">
+    <article className="max-w-none font-sans">
       {/* This invisible component handles the DOM side-effects for your TOC */}
       <TableOfHeaders content={content} />
 
+      {/* Breadcrumbs */}
+      <Breadcrumbs section={frontmatter.section} title={frontmatter.title} />
+
       {/* Page Header */}
-      {frontmatter.role && frontmatter.role !== 'all' && (
-        <span className={cn(
-          'text-12 px-3 py-1 rounded-full font-medium inline-block mb-3',
-          roleBadgeColors[frontmatter.role] || roleBadgeColors.employee
-        )}>
-          {frontmatter.role.charAt(0).toUpperCase() + frontmatter.role.slice(1)}
-        </span>
-      )}
-      
-      <h1 className="font-[var(--font-dm-sans)] text-[30px] font-medium text-slate-900 leading-tight mb-2">
-        {frontmatter.title}
-      </h1>
-      <p className="text-16 text-slate-500 mt-2 mb-8 pb-8 border-b border-slate-200">
-        {frontmatter.description}
-      </p>
+      <div className="mb-12">
+        {frontmatter.role && frontmatter.role !== 'all' && (
+          <span className={cn(
+            'text-[10px] px-2.5 py-1 rounded-lg font-bold inline-block mb-4 uppercase tracking-widest border shadow-sm',
+            roleBadgeColors[frontmatter.role] || roleBadgeColors.employee
+          )}>
+            Permission Level: {frontmatter.role}
+          </span>
+        )}
+        
+        <h1 className="text-[36px] md:text-[44px] font-bold text-[#0D2B55] tracking-tight leading-[1.15] mb-6">
+          {frontmatter.title}
+        </h1>
+        <p className="text-18 md:text-20 text-slate-500 leading-relaxed max-w-2xl">
+          {frontmatter.description}
+        </p>
+      </div>
+
+      <div className="h-px w-full bg-gradient-to-r from-slate-200/60 via-slate-200/40 to-transparent mb-12" />
 
       {/* MDX Content */}
-      <div className="prose">
+      <div className="prose-slate max-w-none">
         <MDXRemote source={content} components={components} />
       </div>
 
       {/* Page Footer */}
-      <div className="mt-12 pt-8 border-t border-slate-200 flex justify-between items-center">
-        <Link href="/docs" className="text-13 text-[#1A5EA8] hover:underline flex items-center">
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back to docs
+      <div className="mt-20 pt-10 border-t border-slate-200 flex justify-between items-center group">
+        <Link 
+          href="/docs" 
+          className="text-14 font-semibold text-[#1A5EA8] hover:text-[#0D2B55] flex items-center transition-all group-hover:-translate-x-1"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" /> 
+          <span>Return to Documentation Library</span>
         </Link>
       </div>
     </article>

@@ -9,28 +9,32 @@ interface CalloutProps {
 
 const styles = {
   info: {
-    container: 'bg-blue-50 border-blue-400',
+    container: 'bg-indigo-50/50 border-indigo-200/60',
     icon: Info,
-    iconColor: 'text-blue-600',
-    strong: 'text-blue-800'
+    iconColor: 'text-indigo-600',
+    strong: 'text-indigo-900',
+    title: 'Note'
   },
   warning: {
-    container: 'bg-amber-50 border-amber-400',
+    container: 'bg-amber-50/50 border-amber-200/60',
     icon: AlertTriangle,
     iconColor: 'text-amber-600',
-    strong: 'text-amber-800'
+    strong: 'text-amber-900',
+    title: 'Caution'
   },
   tip: {
-    container: 'bg-teal-50 border-[#00C2A8]',
+    container: 'bg-emerald-50/50 border-emerald-200/60',
     icon: Lightbulb,
-    iconColor: 'text-[#00C2A8]',
-    strong: 'text-teal-800'
+    iconColor: 'text-emerald-600',
+    strong: 'text-emerald-900',
+    title: 'Pro Tip'
   },
   danger: {
-    container: 'bg-red-50 border-red-400',
+    container: 'bg-rose-50/50 border-rose-200/60',
     icon: AlertOctagon,
-    iconColor: 'text-red-600',
-    strong: 'text-red-800'
+    iconColor: 'text-rose-600',
+    strong: 'text-rose-900',
+    title: 'Important'
   }
 }
 
@@ -40,16 +44,24 @@ export function Callout({ type, children }: CalloutProps) {
 
   return (
     <div className={cn(
-      'flex gap-3 p-4 rounded-r-lg my-6 border-l-4',
+      'flex gap-4 p-5 rounded-2xl my-8 border shadow-sm',
       style.container
     )}>
-      <Icon className={cn('flex-shrink-0 mt-0.5 h-4 w-4', style.iconColor)} />
-      <div className={cn(
-        'text-14 leading-relaxed text-slate-700 [&>strong]:font-semibold',
-        `[&>strong]:${style.strong}`
-      )}>
-        {children}
+      <div className={cn('flex-shrink-0 mt-0.5 w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-soft', style.iconColor)}>
+        <Icon size={20} />
+      </div>
+      <div className="flex-1">
+        <span className={cn('text-[11px] font-bold uppercase tracking-widest block mb-1.5', style.iconColor)}>
+          {style.title}
+        </span>
+        <div className={cn(
+          'text-[15px] leading-relaxed text-slate-600 font-sans',
+          `[&>strong]:font-bold [&>strong]:${style.strong}`
+        )}>
+          {children}
+        </div>
       </div>
     </div>
   )
 }
+

@@ -101,57 +101,63 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
   )
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-slate-50/30">
       {/* TopBar */}
-      <header className="h-[56px] fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-6 flex items-center justify-between">
-        <div className="flex items-center">
-          <Link href="/docs" className="text-13 font-bold text-[#0D2B55] tracking-[0.08em]">SOP-GUARD PRO</Link>
-          <span className="mx-3 text-slate-300">/</span>
-          <span className="text-13 text-slate-500">Documentation</span>
+      <header className="h-[60px] fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 flex items-center justify-between shadow-sm">
+        <div className="flex items-center gap-4">
+          <Link href="/docs" className="group flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#0D2B55] rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-soft group-hover:bg-[#1A5EA8] transition-colors">S</div>
+            <div>
+              <span className="text-14 font-bold text-[#0D2B55] tracking-tight block leading-none">SOP-GUARD PRO</span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-[0.05em] uppercase">Knowledge Base</span>
+            </div>
+          </Link>
         </div>
 
-        <div className="hidden md:flex flex-1 max-w-sm mx-8 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+        <div className="hidden md:flex flex-1 max-w-md mx-12 relative group">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#00C2A8] transition-colors" />
           <input 
             type="text" 
-            placeholder="Search docs..." 
-            className="w-full h-8 bg-[#F8FAFC] border border-slate-200 rounded-md pl-9 pr-12 text-13 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#00C2A8]/20 focus:border-[#00C2A8]"
+            placeholder="Search documentation..." 
+            className="w-full h-10 bg-slate-100/50 border border-slate-200/80 rounded-xl pl-10 pr-12 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#00C2A8]/10 focus:border-[#00C2A8] focus:bg-white transition-all shadow-sm"
           />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-100 text-slate-500 text-[11px] px-1.5 py-0.5 rounded border border-slate-200">
-            ⌘K
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-400 text-[10px] font-medium shadow-sm">
+            <span className="text-11">⌘</span>K
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="hidden sm:flex items-center text-13 text-[#1A5EA8] hover:underline">
-            Back to app <ArrowUpRight className="ml-1 h-3.5 w-3.5" />
+        <div className="flex items-center gap-6">
+          <Link href="/dashboard" className="hidden sm:flex items-center text-sm font-medium text-[#1A5EA8] hover:text-[#0D2B55] transition-colors gap-1.5">
+            Back to Application <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
           <button 
-            className="md:hidden p-2 text-slate-600"
+            className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <X /> : <Menu />}
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </header>
 
-      <div className="flex flex-1 pt-[56px]">
+      <div className="flex flex-1 pt-[60px]">
         {/* Sidebar */}
         {!isHome && (
           <aside className={cn(
-            "fixed inset-0 top-[56px] z-40 md:sticky md:block w-[260px] bg-white border-r border-slate-200 h-[calc(100vh-56px)] overflow-y-auto px-4 py-6 transition-transform md:translate-x-0",
+            "fixed inset-0 top-[60px] z-40 md:sticky md:block w-[280px] bg-white border-r border-slate-200/60 h-[calc(100vh-60px)] overflow-y-auto px-5 py-8 transition-transform md:translate-x-0 shadow-sm",
             isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           )}>
-            <div className="mb-6">
-              <span className="text-[11px] uppercase text-slate-400 font-semibold tracking-wide block mb-2">Show content for:</span>
-              <div className="flex flex-wrap gap-1.5">
+            <div className="mb-10 bg-slate-50/50 rounded-2xl p-4 border border-slate-200/40">
+              <span className="text-[10px] uppercase text-slate-400 font-bold tracking-widest block mb-3 pl-1">Target Persona</span>
+              <div className="flex flex-wrap gap-1.5 font-sans">
                 {ROLES.map(role => (
                   <button
                     key={role}
                     onClick={() => setSelectedRole(role)}
                     className={cn(
-                      "text-[11px] px-2.5 py-1 rounded-full cursor-pointer transition-colors",
-                      selectedRole === role ? "bg-[#0D2B55] text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      "text-[10px] px-3 py-1.5 rounded-lg border font-semibold transition-all shadow-sm",
+                      selectedRole === role 
+                        ? "bg-[#0D2B55] text-white border-[#0D2B55]" 
+                        : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
                     )}
                   >
                     {role}
@@ -160,19 +166,19 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <nav className="space-y-6">
+            <nav className="space-y-9">
               {visibleSections.map(section => (
                 <div key={section.id}>
-                  <div className="flex items-center gap-2 px-2 py-1 mt-5 mb-1 text-[11px] uppercase font-semibold text-slate-400 tracking-wide">
+                  <h3 className="flex items-center gap-2 px-1 mb-3 text-[10px] uppercase font-bold text-slate-400 tracking-[0.15em]">
                     {section.label}
                     {section.badge === 'QA' && (
-                      <span className="bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">QA</span>
+                      <span className="bg-blue-50 text-blue-700 text-[9px] px-1.5 py-0.5 rounded border border-blue-100 font-bold ml-1 uppercase leading-none">QA</span>
                     )}
                     {section.badge === 'Admin' && (
-                      <span className="bg-purple-50 text-purple-700 text-[10px] px-1.5 py-0.5 rounded-full font-bold">ADMIN</span>
+                      <span className="bg-purple-50 text-purple-700 text-[9px] px-1.5 py-0.5 rounded border border-purple-100 font-bold ml-1 uppercase leading-none">Admin</span>
                     )}
-                  </div>
-                  <div className="space-y-0.5">
+                  </h3>
+                  <div className="space-y-1">
                     {filteredPages
                       .filter(p => p.section === section.id)
                       .sort((a, b) => a.order - b.order)
@@ -181,13 +187,21 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
                           key={page.slug}
                           href={`/docs/${page.slug}`}
                           className={cn(
-                            "flex items-center justify-between h-[30px] px-3 py-1.5 rounded-md text-13 transition-all",
+                            "flex items-center h-[34px] px-3 rounded-xl text-sm transition-all group relative",
                             pathname === `/docs/${page.slug}` 
-                              ? "bg-[#EFF6FF] text-[#1A5EA8] font-medium border-l-2 border-[#00C2A8]" 
-                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                              ? "bg-[#EFF6FF] text-[#1A5EA8] font-semibold border border-blue-100 shadow-sm" 
+                              : "text-slate-600 hover:text-slate-900 border border-transparent hover:bg-slate-100/50"
                           )}
                         >
-                          {page.title}
+                          {pathname === `/docs/${page.slug}` && (
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-[#00C2A8] rounded-r-full" />
+                          )}
+                          <span className={cn(
+                            "transition-transform",
+                            pathname === `/docs/${page.slug}` ? "translate-x-1" : "group-hover:translate-x-0.5"
+                          )}>
+                            {page.title}
+                          </span>
                         </Link>
                       ))}
                   </div>
@@ -198,18 +212,18 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
         )}
 
         <main className={cn(
-          "flex-1 overflow-y-auto",
-          isHome ? "w-full" : "max-w-3xl mx-auto px-8 py-10"
+          "flex-1 overflow-y-auto bg-white/40",
+          isHome ? "w-full" : "max-w-4xl mx-auto px-10 md:px-16 py-12 lg:py-16"
         )}>
           {children}
         </main>
 
         {/* On-page nav (ToC) */}
         {!isHome && (
-          <aside className="hidden xl:block w-[200px] sticky top-[80px] h-fit px-4 border-l border-slate-100">
-            <span className="text-[11px] uppercase tracking-wide text-slate-400 font-semibold mb-3 block px-2">On this page</span>
+          <aside className="hidden xl:block w-[240px] sticky top-[80px] h-fit px-6 pt-2">
+            <span className="text-[10px] uppercase tracking-[0.15em] text-slate-400 font-bold mb-5 block">On this page</span>
             <div id="table-of-contents" className="space-y-1">
-              {/* This would be populated dynamically */}
+              {/* This is populated dynamically by TableOfHeaders */}
             </div>
           </aside>
         )}
