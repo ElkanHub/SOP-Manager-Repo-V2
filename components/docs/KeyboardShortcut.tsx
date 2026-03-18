@@ -22,18 +22,18 @@ export function KeyboardShortcut({ keys }: KeyboardShortcutProps) {
 
   return (
     <span className="inline-flex items-center mx-1">
-      {keys.map((key, index) => {
-        let displayKey = key
-        if (key === 'Cmd' && !platform.includes('mac')) {
-          displayKey = 'Ctrl'
+      {Array.isArray(keys) && keys.map((key, index) => {
+        let displayOne = key
+        if (key === 'Cmd') {
+          displayOne = platform.includes('mac') ? (keyMap[key] || '⌘') : 'Ctrl'
         } else if (keyMap[key]) {
-          displayKey = keyMap[key]
+          displayOne = keyMap[key]
         }
 
         return (
-          <React.Fragment key={key}>
+          <React.Fragment key={key + index}>
             <kbd className="bg-white border border-slate-300 rounded px-1.5 py-0.5 text-11 font-mono text-slate-700 shadow-[0_1px_0_rgba(0,0,0,0.2)] inline-block">
-              {displayKey}
+              {displayOne}
             </kbd>
             {index < keys.length - 1 && (
               <span className="text-slate-400 text-11 mx-1">+</span>
