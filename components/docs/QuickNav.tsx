@@ -9,10 +9,16 @@ interface QuickNavLink {
 }
 
 interface QuickNavProps {
-  links: QuickNavLink[]
+  // Marked as optional (?) so TypeScript doesn't complain when the prop is missing
+  links?: QuickNavLink[] 
 }
 
-export function QuickNav({ links }: QuickNavProps) {
+export function QuickNav({ links = [] }: QuickNavProps) {
+  // Safety check: verify links is an array and has items
+  if (!Array.isArray(links) || links.length === 0) {
+    return null
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-8">
       {links.map((link) => (
@@ -21,13 +27,13 @@ export function QuickNav({ links }: QuickNavProps) {
           href={link.href}
           className="bg-white border border-slate-200 rounded-xl p-4 hover:border-[#00C2A8] hover:shadow-sm transition-all duration-150 group cursor-pointer"
         >
-          <div className="flex items-start justify-between">
+          <div className="flex items-start justify-between text-left">
             <div>
-              <h5 className="text-14 font-semibold text-slate-900 group-hover:text-[#00C2A8] transition-colors">
+              <h5 className="text-[14px] font-semibold text-slate-900 group-hover:text-[#00C2A8] transition-colors">
                 {link.label}
               </h5>
               {link.description && (
-                <p className="text-12 text-slate-500 mt-1">{link.description}</p>
+                <p className="text-[12px] text-slate-500 mt-1">{link.description}</p>
               )}
             </div>
             <ArrowRight className="h-3.5 w-3.5 text-slate-400 flex-shrink-0 mt-1 group-hover:text-[#00C2A8] transition-colors" />

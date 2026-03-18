@@ -1,9 +1,11 @@
-"use client"
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft } from 'lucide-react'
 import { MDXRemote } from 'next-mdx-remote/rsc'
 import { cn } from '@/lib/utils/cn'
+
+// Internal Client Component to handle heading extraction without breaking SSR
+import { TableOfHeaders } from './table-of-headers' 
 
 // MDX Components
 import { Callout, RoleBadge, RoleAccess, StepList, Step, KeyboardShortcut, StatusBadge, ScreenCaption, QuickNav, PermissionsTable } from '@/components/docs'
@@ -19,8 +21,8 @@ const components = {
   ScreenCaption,
   QuickNav,
   PermissionsTable,
-  h2: (props: any) => <h2 className="text-xl font-semibold text-slate-800 mt-10 mb-3 pb-2 border-b border-slate-200" {...props} />,
-  h3: (props: any) => <h3 className="text-base font-semibold text-slate-700 mt-6 mb-2" {...props} />,
+  h2: (props: any) => <h2 id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} className="text-xl font-semibold text-slate-800 mt-10 mb-3 pb-2 border-b border-slate-200" {...props} />,
+  h3: (props: any) => <h3 id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} className="text-base font-semibold text-slate-700 mt-6 mb-2" {...props} />,
   p: (props: any) => <p className="text-[15px] text-slate-700 leading-[1.75] mb-4" {...props} />,
   a: (props: any) => <a className="text-[#1A5EA8] hover:underline" {...props} />,
   ul: (props: any) => <ul className="text-[15px] text-slate-700 leading-[1.75] mb-4 list-disc list-inside" {...props} />,
@@ -45,20 +47,7 @@ interface DocPageContentProps {
   content: string
 }
 
-export function DocPageContent({ frontmatter, content }: DocPageContentProps) {
-  const [headings, setHeadings] = useState<{ id: string; text: string; level: number }[]>([])
-
-  useEffect(() => {
-    // Extract headings from the content for table of contents
-    const headingElements = document.querySelectorAll('.prose h2, .prose h3')
-    const extractedHeadings = Array.from(headingElements).map((el) => ({
-      id: el.id || el.textContent?.toLowerCase().replace(/\s+/g, '-') || '',
-      text: el.textContent || '',
-      level: el.tagName === 'H2' ? 2 : 3,
-    }))
-    setHeadings(extractedHeadings)
-  }, [content])
-
+export async function DocPageContent({ frontmatter, content }: DocPageContentProps) {
   const roleBadgeColors: Record<string, string> = {
     employee: 'bg-slate-100 text-slate-700',
     manager: 'bg-blue-50 text-blue-700',
@@ -68,6 +57,9 @@ export function DocPageContent({ frontmatter, content }: DocPageContentProps) {
 
   return (
     <article className="prose prose-slate max-w-none">
+      {/* This invisible component handles the DOM side-effects for your TOC */}
+      <TableOfHeaders content={content} />
+
       {/* Page Header */}
       {frontmatter.role && frontmatter.role !== 'all' && (
         <span className={cn(

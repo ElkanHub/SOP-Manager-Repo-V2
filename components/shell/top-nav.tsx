@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { GalleryVerticalEnd, Bell, Menu } from "lucide-react"
+import { GalleryVerticalEnd, Bell, Menu, Book } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -88,6 +88,12 @@ export function TopNav({ user, profile }: TopNavProps) {
                         )}
                         <span className="sr-only">Toggle notifications</span>
                     </Button>
+                    {/* docsPage */}
+                    <Link href="/docs">
+                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+                            <Book className="h-5 w-5" />
+                        </Button>
+                    </Link>
 
                     <DropdownMenu>
                         <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/20 ml-2 hover:bg-white/10" />}>
