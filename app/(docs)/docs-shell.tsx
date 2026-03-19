@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Search as SearchIcon, ArrowUpRight, Menu, X, ChevronRight, Circle } from 'lucide-react'
 import { Search } from '@/components/docs'
 import { cn } from '@/lib/utils/cn'
+import { ThemeToggle } from "@/components/theme-toggle"
 
 const SECTIONS = [
   { id: 'getting-started', label: 'GETTING STARTED' },
@@ -97,12 +98,12 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
     return page.role.toLowerCase() === selectedRole.toLowerCase()
   })
 
-  const visibleSections = SECTIONS.filter(section => 
+  const visibleSections = SECTIONS.filter(section =>
     filteredPages.some(page => page.section === section.id)
   )
 
   const [user, setUser] = useState<any>(null)
-  
+
   useEffect(() => {
     // Check session on mount
     const checkUser = async () => {
@@ -140,12 +141,14 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
           <Link href="/" className="hidden sm:flex items-center text-sm font-medium text-brand-blue hover:text-brand-navy dark:hover:text-brand-teal transition-colors gap-1.5">
             {user ? 'Go to Dashboard' : 'Sign In'} <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
-          <button 
+          <button
             className="md:hidden p-2 text-muted-foreground hover:bg-muted rounded-lg transition-colors"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+        {/* theme toggle */}
+        <ThemeToggle />
         </div>
       </header>
 
@@ -165,8 +168,8 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
                     onClick={() => setSelectedRole(role)}
                     className={cn(
                       "text-[10px] px-3 py-1.5 rounded-lg border font-semibold transition-all shadow-sm",
-                      selectedRole === role 
-                        ? "bg-brand-navy text-white border-brand-navy dark:bg-brand-teal dark:border-brand-teal" 
+                      selectedRole === role
+                        ? "bg-brand-navy text-white border-brand-navy dark:bg-brand-teal dark:border-brand-teal"
                         : "bg-background text-muted-foreground border-border hover:border-slate-300 dark:hover:border-slate-700 hover:bg-muted"
                     )}
                   >
@@ -198,8 +201,8 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
                           href={`/docs/${page.slug}`}
                           className={cn(
                             "flex items-center h-[34px] px-3 rounded-xl text-sm transition-all group relative",
-                            pathname === `/docs/${page.slug}` 
-                              ? "bg-brand-blue/10 text-brand-blue font-semibold border border-brand-blue/20 shadow-sm" 
+                            pathname === `/docs/${page.slug}`
+                              ? "bg-brand-blue/10 text-brand-blue font-semibold border border-brand-blue/20 shadow-sm"
                               : "text-muted-foreground hover:text-foreground border border-transparent hover:bg-muted/50"
                           )}
                         >

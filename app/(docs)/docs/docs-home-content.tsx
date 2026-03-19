@@ -49,7 +49,7 @@ export function DocsHomeContent() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <Link
               href="/docs/getting-started/quickstart"
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
+              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tr-none p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-teal/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-brand-teal mb-6 shadow-inner ring-1 ring-white/20 group-hover:bg-brand-teal group-hover:text-white transition-colors duration-300">
@@ -61,7 +61,7 @@ export function DocsHomeContent() {
 
             <Link
               href="#features"
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
+              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tr-none p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-blue/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-brand-teal mb-6 shadow-inner ring-1 ring-white/20 group-hover:bg-brand-teal group-hover:text-white transition-colors duration-300">
@@ -73,7 +73,7 @@ export function DocsHomeContent() {
 
             <Link
               href="/docs/admin/first-setup"
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
+              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tr-none p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
             >
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-teal/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
               <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-brand-teal mb-6 shadow-inner ring-1 ring-white/20 group-hover:bg-brand-teal group-hover:text-white transition-colors duration-300">
@@ -103,7 +103,7 @@ export function DocsHomeContent() {
               <Link
                 key={feature.id}
                 href={feature.href}
-                className="group relative bg-card border border-border/60 rounded-3xl p-8 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] hover:border-brand-blue/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full"
+                className="group relative bg-card border border-border/60 rounded-none p-8 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] hover:border-brand-blue/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full overflow-hidden"
               >
                 <div className="flex items-center justify-between mb-8">
                   <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center text-brand-blue group-hover:bg-brand-blue/10 group-hover:text-brand-blue transition-colors duration-300">
@@ -118,6 +118,7 @@ export function DocsHomeContent() {
                     </span>
                   )}
                 </div>
+                <div className="absolute top-10 right-20 w-50 h-5 bg-gradient-to-br from-brand-teal/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
                 <h3 className="text-20 font-bold text-foreground group-hover:text-brand-blue transition-colors tracking-tight mb-3">
                   {feature.title}
                 </h3>
