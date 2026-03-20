@@ -14,7 +14,12 @@ export default async function proxy(request: NextRequest) {
 
     const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
         request.nextUrl.pathname.startsWith('/signup') ||
-        request.nextUrl.pathname.startsWith('/setup')
+        request.nextUrl.pathname.startsWith('/setup') ||
+        request.nextUrl.pathname.startsWith('/forgot-password') ||
+        request.nextUrl.pathname.startsWith('/reset-password') ||
+        request.nextUrl.pathname.startsWith('/auth')
+
+    console.log('>>> proxy auth check:', { pathname: request.nextUrl.pathname, isAuthRoute })
 
     const url = request.nextUrl.clone()
     let redirectUrl: URL | null = null
