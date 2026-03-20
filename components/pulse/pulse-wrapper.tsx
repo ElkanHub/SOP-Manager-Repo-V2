@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PanelRightClose, PanelRightOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThePulse } from "./the-pulse"
@@ -12,6 +12,23 @@ interface PulseWrapperProps {
 
 export function PulseWrapper({ user, profile }: PulseWrapperProps) {
     const [isOpen, setIsOpen] = useState(true)
+    const [isMounted, setIsMounted] = useState(false)
+
+    useEffect(() => {
+        const saved = localStorage.getItem("pulse-sidebar-open")
+        if (saved !== null) {
+            setIsOpen(saved === "true")
+        }
+        setIsMounted(true)
+    }, [])
+
+    const togglePulse = () => {
+        const newState = !isOpen
+        setIsOpen(newState)
+        localStorage.setItem("pulse-sidebar-open", String(newState))
+    }
+
+    if (!isMounted) return null
 
     return (
         <>
@@ -19,7 +36,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={togglePulse}
                 className={`
                     fixed right-0 top-1/2 -translate-y-1/2 z-50 h-12 w-6 rounded-l-md border-l border-t border-b
                     bg-card shadow-md hover:bg-muted
