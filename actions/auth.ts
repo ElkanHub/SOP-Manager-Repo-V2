@@ -151,7 +151,7 @@ export async function forgotPassword(formData: FormData) {
     const { headers } = await import('next/headers')
     const headerList = await headers()
     const origin = headerList.get('origin')
-    const appUrl = origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const appUrl = origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' || 'http://127.0.0.1:3000'
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
