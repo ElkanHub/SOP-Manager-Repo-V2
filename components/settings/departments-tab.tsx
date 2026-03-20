@@ -101,19 +101,20 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                 <div>
                     <h3 className="font-semibold text-foreground">Departments</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{depts.length} department(s) configured</p>
                 </div>
-                <Button size="sm" onClick={handleAddOpen}>
+                <Button size="sm" onClick={handleAddOpen} className="self-start sm:self-auto">
                     <Plus className="w-4 h-4 mr-1" /> Add Department
                 </Button>
             </div>
 
             <div className="rounded-xl border border-border overflow-hidden">
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto">
+                <table className="w-full text-sm min-w-[560px]">
                     <thead className="bg-muted/50 text-muted-foreground">
                         <tr>
                             <th className="text-left px-4 py-3 font-medium">Name</th>
@@ -190,6 +191,7 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                         ))}
                     </tbody>
                 </table>
+                </div>
                 {depts.length === 0 && (
                     <div className="py-10 text-center text-muted-foreground text-sm">No departments configured.</div>
                 )}

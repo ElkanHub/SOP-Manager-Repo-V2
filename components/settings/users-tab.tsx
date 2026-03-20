@@ -299,6 +299,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
             </div>
 
             <div className="rounded-xl border border-border overflow-hidden">
+                <div className="overflow-x-auto">
                 <table className="w-full text-sm min-w-[840px]">
                     {tableHeaders}
                     <tbody className="divide-y divide-border">
@@ -307,6 +308,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                         ))}
                     </tbody>
                 </table>
+                </div>
                 {active.length === 0 && (
                     <div className="py-8 text-center text-muted-foreground text-sm">No active users.</div>
                 )}
@@ -322,6 +324,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-3">
                         <div className="rounded-xl border border-border overflow-hidden opacity-80">
+                            <div className="overflow-x-auto">
                             <table className="w-full text-sm min-w-[840px]">
                                 {tableHeaders}
                                 <tbody className="divide-y divide-border">
@@ -330,6 +333,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     </CollapsibleContent>
                 </Collapsible>

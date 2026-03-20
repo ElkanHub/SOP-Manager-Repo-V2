@@ -66,9 +66,9 @@ export function ProfileTab({ profile }: ProfileTabProps) {
     }
 
     return (
-        <div className="space-y-8 max-w-2xl">
+        <div className="space-y-6 sm:space-y-8 max-w-2xl">
             {/* Avatar */}
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
                 <div className="relative group w-20 h-20 rounded-full border-2 border-border overflow-hidden bg-muted flex items-center justify-center shrink-0">
                     {avatarUrl ? (
                         <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
@@ -80,14 +80,14 @@ export function ProfileTab({ profile }: ProfileTabProps) {
                     </label>
                     <input id="avatar-upload-settings" type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={uploading} />
                 </div>
-                <div>
+                <div className="text-center sm:text-left">
                     <p className="font-medium text-foreground">Profile Photo</p>
                     <p className="text-xs text-muted-foreground mt-0.5">Click the photo to upload a new one. Max 5MB.</p>
                 </div>
             </div>
 
             {/* Form */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="settings-full-name">Full Name <span className="text-red-500">*</span></Label>
                     <Input id="settings-full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" />
@@ -107,13 +107,13 @@ export function ProfileTab({ profile }: ProfileTabProps) {
             </div>
 
             {/* Signature */}
-            <div className="border rounded-lg p-4 space-y-3 bg-muted/30">
-                <div className="flex items-center justify-between">
+            <div className="border rounded-lg p-3 sm:p-4 space-y-3 bg-muted/30">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                     <div>
                         <p className="font-medium text-foreground">Digital Signature</p>
                         <p className="text-xs text-muted-foreground mt-0.5">Used to sign Change Controls. Stored securely.</p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setRedrawOpen(true)}>
+                    <Button variant="outline" size="sm" onClick={() => setRedrawOpen(true)} className="self-start sm:self-auto">
                         <PenLine className="w-4 h-4 mr-2" /> Re-draw Signature
                     </Button>
                 </div>
