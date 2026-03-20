@@ -33,6 +33,27 @@ export default async function SettingsPage() {
         redirect('/login?reason=inactive')
     }
 
+    // Generate signed URL for signature if it exists
+    let signatureUrl = ""
+    if (profile.signature_url) {
+        // signature_url as stored is the public URL or partial path. 
+        // In this project, it seems we store the public URL, but if the bucket is private, we need to extract the path.
+        // Let's assume the stored URL contains the path or we can derive it.
+        // Actually, if we look at redrawSignature, it stores data.publicUrl.
+        // If data.publicUrl is https://.../storage/v1/object/public/signatures/USER_ID/signature.png
+        // We need the path: USER_ID/signature.png
+        const pathMatch = profile.signature_url.match(/signatures\/(.+)$/)
+        const sigPath = pathMatch ? pathMatch[1] : `${user.id}/signature.png`
+        
+        const { data: signed } = await service.storage
+            .from('signatures')
+            .createSignedUrl(sigPath, 3600)
+        
+        if (signed?.signedUrl) {
+            signatureUrl = signed.signedUrl
+        }
+    }
+
     const isAdmin = profile.is_admin === true
 
     // Always fetch departments (needed for non-admin dropdowns too... but mainly for admin tab)
@@ -69,6 +90,7 @@ export default async function SettingsPage() {
         <SettingsClient
             profile={{
                 ...profile,
+                signature_url: signatureUrl, // Pass the signed URL instead of the stored one
                 notification_prefs: profile.notification_prefs ?? { email: true, pulse: true },
             }}
             isAdmin={isAdmin}

@@ -49,18 +49,24 @@ export function SignatureStep({ initialData, onNext }: any) {
 
             if (uploadError) throw uploadError
 
-            // Get public URL
-            const { data } = supabase.storage.from('signatures').getPublicUrl(filePath)
+            // Use createSignedUrl instead of getPublicUrl because the bucket is private
+            const { data, error: signedError } = await supabase.storage
+                .from('signatures')
+                .createSignedUrl(filePath, 3600)
+
+            if (signedError || !data?.signedUrl) throw new Error("Failed to generate preview URL")
+
+            const bustedUrl = `${data.signedUrl}&t=${Date.now()}`
 
             // Update profile
             const { error: updateError } = await supabase
                 .from('profiles')
-                .update({ signature_url: data.publicUrl })
+                .update({ signature_url: data.signedUrl.split('?')[0] })
                 .eq('id', initialData.id)
 
             if (updateError) throw updateError
 
-            setSignatureUrl(data.publicUrl)
+            setSignatureUrl(bustedUrl)
             setCaptured(true)
 
         } catch (error: any) {
@@ -181,7 +187,12 @@ export function SignatureStep({ initialData, onNext }: any) {
                     </div>
                     <h3 className="text-lg font-semibold text-green-800">Signature Captured</h3>
 
-                    <div className="bg-white border rounded p-4 inline-block mx-auto">
+                    <div 
+                        className="bg-white border rounded p-4 inline-block mx-auto"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23e5e7eb'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23e5e7eb'/%3E%3C/svg%3E")`,
+                        }}
+                    >
                         {signatureUrl && <img src={signatureUrl} alt="Your Signature" className="max-w-[200px] max-h-[80px] object-contain" />}
                     </div>
 

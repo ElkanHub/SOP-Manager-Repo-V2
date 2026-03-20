@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,13 +20,27 @@ export function ProfileTab({ profile }: ProfileTabProps) {
     const [employeeId, setEmployeeId] = useState(profile.employee_id || "")
     const [phone, setPhone] = useState(profile.phone || "")
     const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "")
-    const [signatureUrl, setSignatureUrl] = useState(profile.signature_url || "")
+    // Strip any stale cache-busting params from the stored URL, then add a fresh one so
+    // the browser doesn't serve a cached copy of a previous signature.
+    const cleanSigUrl = profile.signature_url
+        ? profile.signature_url.split('?')[0] + `?t=${Date.now()}`
+        : ""
+    const [signatureUrl, setSignatureUrl] = useState(cleanSigUrl)
+    const [sigImgError, setSigImgError] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
     const [redrawOpen, setRedrawOpen] = useState(false)
     const supabase = createClient()
+
+    // Sync state with props when server-side profile changes (e.g. after revalidation)
+    useEffect(() => {
+        if (profile.signature_url) {
+            setSignatureUrl(profile.signature_url)
+            setSigImgError(false)
+        }
+    }, [profile.signature_url])
 
     async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
         if (!e.target.files || e.target.files.length === 0) return
@@ -117,14 +131,30 @@ export function ProfileTab({ profile }: ProfileTabProps) {
                         <PenLine className="w-4 h-4 mr-2" /> Re-draw Signature
                     </Button>
                 </div>
-                {signatureUrl ? (
-                    <div className="flex items-center gap-3">
-                        <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
-                        <span className="text-xs text-green-600 dark:text-green-400">Signature on file</span>
-                        <div className="ml-auto border rounded px-3 py-1 bg-white">
-                            <img src={signatureUrl} alt="Signature preview" className="h-10 object-contain max-w-[180px]" />
+                {signatureUrl && !sigImgError ? (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                            <span className="text-xs text-green-600 dark:text-green-400">Signature on file</span>
+                        </div>
+                        {/* Checkerboard background makes transparent PNG visible in both themes */}
+                        <div
+                            className="sm:ml-auto border rounded px-3 py-2 flex items-center justify-center"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23e5e7eb'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23e5e7eb'/%3E%3C/svg%3E")`,
+                                minWidth: '120px',
+                            }}
+                        >
+                            <img
+                                src={signatureUrl}
+                                alt="Signature preview"
+                                className="h-12 max-w-[200px] object-contain"
+                                onError={() => setSigImgError(true)}
+                            />
                         </div>
                     </div>
+                ) : signatureUrl && sigImgError ? (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">Signature on file but could not load preview. It will still be used for signing.</p>
                 ) : (
                     <p className="text-xs text-amber-600 dark:text-amber-400">No signature on file. Please draw one to sign Change Controls.</p>
                 )}

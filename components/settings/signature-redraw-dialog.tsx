@@ -47,13 +47,19 @@ export function SignatureRedrawDialog({
 
             if (uploadError) throw uploadError
 
-            const { data } = supabase.storage.from("signatures").getPublicUrl(filePath)
-            const newUrl = data.publicUrl + `?t=${Date.now()}`
+            // Use createSignedUrl instead of getPublicUrl because the bucket is private
+            const { data, error: signedError } = await supabase.storage
+                .from("signatures")
+                .createSignedUrl(filePath, 3600)
 
-            const result = await redrawSignature(data.publicUrl)
+            if (signedError || !data?.signedUrl) throw new Error("Failed to generate preview URL")
+            
+            const signedUrl = data.signedUrl + `&t=${Date.now()}` // for cache busting
+
+            const result = await redrawSignature(signedUrl.split('?')[0]) // Store the base URL in profile
             if (!result.success) throw new Error(result.error)
 
-            onSaved(newUrl)
+            onSaved(signedUrl)
             onClose()
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to save signature")
@@ -135,7 +141,14 @@ export function SignatureRedrawDialog({
                     <div className="flex items-center gap-2 text-xs text-muted-foreground border rounded p-2">
                         <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
                         <span>Current signature on file</span>
-                        <img src={currentSignatureUrl} alt="Current signature" className="h-8 object-contain ml-auto border rounded px-2 bg-white" />
+                        <div 
+                            className="ml-auto border rounded px-2 flex items-center justify-center bg-white"
+                            style={{
+                                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23e5e7eb'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23e5e7eb'/%3E%3C/svg%3E")`,
+                            }}
+                        >
+                            <img src={currentSignatureUrl} alt="Current signature" className="h-8 object-contain" />
+                        </div>
                     </div>
                 )}
             </DialogContent>
