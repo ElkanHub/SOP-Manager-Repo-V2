@@ -244,8 +244,12 @@ export function DashboardClient({
                     key={entry.id}
                     className="flex items-start gap-4 p-3 group hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
                   >
-                    <div className="w-10 h-10 shrink-0 rounded-full bg-gradient-to-br from-brand-navy to-brand-blue shadow-sm flex items-center justify-center text-white text-xs font-semibold ring-2 ring-white dark:ring-slate-900 mt-0.5">
-                      {entry.actor?.full_name?.substring(0, 2).toUpperCase() || '??'}
+                    <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm leading-tight mb-1">
