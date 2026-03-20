@@ -132,3 +132,52 @@ export async function signupUser(formData: FormData) {
 
     return { success: true }
 }
+
+export async function forgotPassword(formData: FormData) {
+    const supabase = await createClient()
+    const email = formData.get('email') as string
+
+    if (!email) {
+        return { error: 'Email is required.' }
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${appUrl}/reset-password`,
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return { success: true }
+}
+
+export async function updatePassword(formData: FormData) {
+    const supabase = await createClient()
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirm-password') as string
+
+    if (!password || !confirmPassword) {
+        return { error: 'Both password fields are required.' }
+    }
+
+    if (password.length < 12) {
+        return { error: 'Password must be at least 12 characters.' }
+    }
+
+    if (password !== confirmPassword) {
+        return { error: 'Passwords do not match.' }
+    }
+
+    const { error } = await supabase.auth.updateUser({
+        password: password
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    return { success: true }
+}
