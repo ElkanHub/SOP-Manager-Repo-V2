@@ -43,6 +43,10 @@ export default async function proxy(request: NextRequest) {
         console.log('>>> proxy profile check:', { id: user.id, active: profile?.is_active, onboarding: profile?.onboarding_complete })
 
         if (profile) {
+            const isRestrictedAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
+                                         request.nextUrl.pathname.startsWith('/signup') ||
+                                         request.nextUrl.pathname.startsWith('/setup')
+
             if (!profile.is_active && !isAuthRoute) {
                 console.log('>>> proxy: deactivating user redirect to login')
                 url.pathname = '/login'
@@ -52,7 +56,7 @@ export default async function proxy(request: NextRequest) {
                 console.log('>>> proxy: onboarding incomplete redirect')
                 url.pathname = '/onboarding'
                 redirectUrl = url
-            } else if (profile.is_active && profile.onboarding_complete && (isAuthRoute || request.nextUrl.pathname === '/onboarding' || request.nextUrl.pathname === '/')) {
+            } else if (profile.is_active && profile.onboarding_complete && (isRestrictedAuthRoute || request.nextUrl.pathname === '/onboarding' || request.nextUrl.pathname === '/')) {
                 console.log('>>> proxy: active user redirect to dashboard from', request.nextUrl.pathname)
                 url.pathname = '/dashboard'
                 redirectUrl = url
