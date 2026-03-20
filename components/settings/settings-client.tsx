@@ -1,7 +1,7 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Bell, Building2, Users } from "lucide-react"
+import { User, Bell, Building2, Users, Settings } from "lucide-react"
 import { ProfileTab } from "./profile-tab"
 import { NotificationsTab } from "./notifications-tab"
 import { DepartmentsTab } from "./departments-tab"
@@ -40,9 +40,19 @@ export function SettingsClient({
 
     return (
         <div className="flex flex-col min-h-full p-4 sm:p-6 max-w-5xl mx-auto w-full">
-            <div className="mb-5">
+            {/* <div className="mb-5">
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">Settings</h1>
                 <p className="text-sm text-muted-foreground mt-1">Manage your profile, notifications, and account preferences.</p>
+            </div> */}
+            {/* Page Header */}
+            <div className="mb-6 flex items-start gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Settings className="h-4 w-4" />
+                </div>
+                <div>
+                    <h1 className="text-lg font-bold text-foreground">Settings</h1>
+                    <p className="text-muted-foreground mt-1">Manage your profile, notifications, and account preferences.</p>
+                </div>
             </div>
 
             <Tabs defaultValue="profile" className="flex-1">
