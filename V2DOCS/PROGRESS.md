@@ -852,3 +852,39 @@ components/docs/
 api/docs/list/route.ts
 proxy.ts
 ```
+
+---
+
+## Phase 11: Settings & Admin
+
+**Status:** ✅ Complete
+**Date Completed:** 2026-03-20
+
+### What Was Built
+
+**Server Actions** (`actions/settings.ts` — 12 new actions):
+- `updateProfile`, `redrawSignature`, `updateNotificationPrefs` (all users)
+- `addDepartment`, `updateDepartmentColour`, `deleteDepartment` (admin: QA dept blocked; deletion guarded by user/SOP counts)
+- `changeUserRole`, `changeUserDepartment` (admin + audit_log)
+- `grantAdmin`, `revokeAdmin` (admin: password re-entry via `signInWithPassword` + audit_log: `admin_granted` / `admin_revoked`)
+- `deactivateUser` (admin: `is_active=false` + `auth.admin.signOut()` + audit_log), `reactivateUser`
+
+**Components** (`components/settings/`):
+- `settings-client.tsx` — tabs; admin tabs never rendered or hydrated for non-admins
+- `profile-tab.tsx` — avatar upload, profile form, signature re-draw dialog
+- `notifications-tab.tsx` — email/pulse Switch toggles, immediate persist
+- `departments-tab.tsx` — add/edit-colour/delete table with deletion guard messaging
+- `users-tab.tsx` — active users table + inactive collapsible; role/dept selects, grant/revoke admin with password confirm, deactivate/reactivate
+- `password-confirm-modal.tsx` — reusable password re-entry dialog for admin actions
+- `signature-redraw-dialog.tsx` — draw + upload tabs, Supabase storage upload
+
+**Page** (`app/(dashboard)/settings/page.tsx`):
+- Full server component; non-admin users never receive user list data
+- Redirects inactive users to `/login?reason=inactive`
+
+**Type Fix** (`types/app.types.ts`):
+- `notification_prefs: any` → `NotificationPrefs { email: boolean; pulse: boolean }`
+
+**Shadcn Added:** `switch`, `collapsible`, `alert-dialog`
+
+**Verification:** `npm run build` — Exit code 0, 76 routes clean ✅

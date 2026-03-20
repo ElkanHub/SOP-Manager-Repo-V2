@@ -1,3 +1,8 @@
+export interface NotificationPrefs {
+    email: boolean;
+    pulse: boolean;
+}
+
 export interface Profile {
     id: string;
     full_name: string;
@@ -11,7 +16,7 @@ export interface Profile {
     avatar_url?: string;
     signature_url?: string;
     onboarding_complete: boolean;
-    notification_prefs: any;
+    notification_prefs: NotificationPrefs;
     created_at: string;
     updated_at: string;
 }
