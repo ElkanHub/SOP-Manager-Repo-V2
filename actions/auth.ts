@@ -147,10 +147,14 @@ export async function forgotPassword(formData: FormData) {
         return { error: 'Email is required.' }
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    // Try to get origin from headers for better port handling on localhost
+    const { headers } = await import('next/headers')
+    const headerList = await headers()
+    const origin = headerList.get('origin')
+    const appUrl = origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${appUrl}/reset-password`,
+        redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
     })
 
     if (error) {
