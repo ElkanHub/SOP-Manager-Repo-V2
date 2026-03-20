@@ -113,13 +113,17 @@ export async function signupUser(formData: FormData) {
         return { error: 'Full name, email, and password are required.' }
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const { headers: getHeaders } = await import('next/headers')
+    const headerList = await getHeaders()
+    const host = headerList.get('host')
+    const protocol = headerList.get('x-forwarded-proto') || 'http'
+    const appUrl = `${protocol}://${host}`
 
     const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-            emailRedirectTo: `${appUrl}/onboarding`,
+            emailRedirectTo: `${appUrl}/auth/callback?next=/onboarding`,
             data: {
                 full_name: fullName,
             }
@@ -147,11 +151,12 @@ export async function forgotPassword(formData: FormData) {
         return { error: 'Email is required.' }
     }
 
-    // Try to get origin from headers for better port handling on localhost
-    const { headers } = await import('next/headers')
-    const headerList = await headers()
-    const origin = headerList.get('origin')
-    const appUrl = origin || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000' || 'http://127.0.0.1:3000'
+    // Use headers for better port and origin handling across all environments
+    const { headers: getHeaders } = await import('next/headers')
+    const headerList = await getHeaders()
+    const host = headerList.get('host')
+    const protocol = headerList.get('x-forwarded-proto') || 'http'
+    const appUrl = `${protocol}://${host}`
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${appUrl}/auth/callback?next=/reset-password`,

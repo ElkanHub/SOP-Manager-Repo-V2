@@ -92,7 +92,7 @@ export function LoginForm({
         {/* create account */}
         <div className="flex items-center justify-center">
           <p className="text-sm text-balance text-muted-foreground">
-            Don't have an account? <a href="/signup" className="text-brand-teal hover:underline">Create an account</a>
+            Don't have an account? <Link href="/signup" className="text-brand-teal hover:underline">Create an account</Link>
           </p>
         </div>
       </FieldGroup>

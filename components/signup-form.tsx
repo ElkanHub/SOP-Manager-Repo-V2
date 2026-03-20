@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -99,7 +100,7 @@ export function SignupForm({
         {/* login */}
         <div className="flex items-center justify-center">
           <p className="text-sm text-balance text-muted-foreground">
-            Already have an account? <a href="/login" className="text-brand-teal hover:underline">Login</a>
+            Already have an account? <Link href="/login" className="text-brand-teal hover:underline">Login</Link>
           </p>
         </div>
       </FieldGroup>
