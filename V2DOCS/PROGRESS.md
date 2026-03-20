@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** March 18, 2026
+> **Last Updated:** March 20, 2026
 > **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 14 - Documentation Hub
+> **Current Phase:** Phase 12 ✅ Complete — Phase 13 Next
 
 ---
 
@@ -25,8 +25,10 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 8 | ✅ Complete | Company Calendar |
 | Phase 9 | ✅ Complete | Dashboard & KPIs |
 | Phase 10 | ✅ Complete | Reports & Audit Log |
+| Phase 11 | ✅ Complete | Settings & Admin |
+| Phase 12 | ✅ Complete | Polish, Performance & Launch |
 | Phase 14 | ✅ Complete | Documentation Hub |
-| Phase 11-13 | 🔜 Not Started | Future Phases |
+| Phase 13 | 🔜 Not Started | Messaging System |
 
 ---
 
@@ -888,3 +890,99 @@ proxy.ts
 **Shadcn Added:** `switch`, `collapsible`, `alert-dialog`
 
 **Verification:** `npm run build` — Exit code 0, 76 routes clean ✅
+
+---
+
+## Phase 12: Polish, Performance & Launch
+
+**Status:** ✅ Complete
+**Date Completed:** 2026-03-20
+
+### What Was Built
+
+**Loading States (11 new `loading.tsx` files):**
+- `app/(dashboard)/dashboard/loading.tsx` — 4 KPI card skeletons + activity feed + upcoming PM rows
+- `app/(dashboard)/library/loading.tsx` — table skeleton with status tabs and column headers
+- `app/(dashboard)/library/[id]/loading.tsx` — tab strip + document body skeleton
+- `app/(dashboard)/approvals/loading.tsx` — approval card list skeleton
+- `app/(dashboard)/approvals/[id]/loading.tsx` — two-panel skeleton (viewer left, detail right)
+- `app/(dashboard)/change-control/[id]/loading.tsx` — CC header + diff viewer + signature grid skeleton
+- `app/(dashboard)/equipment/loading.tsx` — equipment table with photo thumbnails skeleton
+- `app/(dashboard)/equipment/[id]/loading.tsx` — detail page with photo area, info cards, PM task list skeleton
+- `app/(dashboard)/calendar/loading.tsx` — monthly 7-column grid skeleton
+- `app/(dashboard)/reports/loading.tsx` — two-panel (selector + table) skeleton
+- `app/(dashboard)/settings/loading.tsx` — tab strip + form fields + signature preview skeleton
+
+**Error Boundaries:**
+- `app/(dashboard)/error.tsx` — top-level dashboard shell boundary
+- `app/(dashboard)/dashboard/error.tsx`
+- `app/(dashboard)/library/error.tsx`
+- `app/(dashboard)/approvals/error.tsx`
+- `app/(dashboard)/equipment/error.tsx`
+- `app/(dashboard)/calendar/error.tsx`
+- `app/(dashboard)/reports/error.tsx`
+- `app/(dashboard)/settings/error.tsx`
+- `components/ui/error-page.tsx` — shared full-page error component: logs raw errors to console only, shows generic message + digest reference code (first 8 chars)
+- `components/ui/error-card.tsx` — reusable inline error card for client component data errors
+
+**Performance:**
+- `components/library/sop-viewer-lazy.tsx` — `next/dynamic` wrapper for `SopViewer` with `ssr: false`, prevents heavy `docx-preview` (~600KB) from blocking initial page load
+- `app/(dashboard)/library/[id]/page.tsx` — updated to import `SopViewerLazy` instead of `SopViewer`
+
+**Security Headers (`next.config.ts`):**
+- `X-DNS-Prefetch-Control: on`
+- `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
+- `X-Frame-Options: SAMEORIGIN`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- `Content-Security-Policy` — covering self, fonts.googleapis.com, Supabase storage/realtime (wss), Gemini API
+- `images.remotePatterns` — allows `*.supabase.co` storage images via `next/image`
+
+### Files Created/Modified:
+
+```
+app/(dashboard)/
+├── error.tsx                           # Top-level boundary
+├── dashboard/
+│   ├── loading.tsx                     # NEW
+│   └── error.tsx                       # NEW
+├── library/
+│   ├── loading.tsx                     # NEW
+│   ├── error.tsx                       # NEW
+│   └── [id]/
+│       └── loading.tsx                 # NEW
+├── approvals/
+│   ├── loading.tsx                     # NEW
+│   ├── error.tsx                       # NEW
+│   └── [id]/
+│       └── loading.tsx                 # NEW
+├── change-control/
+│   └── [id]/
+│       └── loading.tsx                 # NEW
+├── equipment/
+│   ├── loading.tsx                     # NEW
+│   ├── error.tsx                       # NEW
+│   └── [id]/
+│       └── loading.tsx                 # NEW
+├── calendar/
+│   ├── loading.tsx                     # NEW
+│   └── error.tsx                       # NEW
+├── reports/
+│   ├── loading.tsx                     # NEW
+│   └── error.tsx                       # NEW
+└── settings/
+    ├── loading.tsx                     # NEW
+    └── error.tsx                       # NEW
+
+components/ui/
+├── error-page.tsx                      # NEW — shared error boundary page
+└── error-card.tsx                      # NEW — inline error card
+
+components/library/
+└── sop-viewer-lazy.tsx                 # NEW — dynamic() wrapper for SopViewer
+
+next.config.ts                          # MODIFIED — security headers + image domains
+```
+
+**Verification:** `npm run build` — Exit code 0, 79 routes clean ✅

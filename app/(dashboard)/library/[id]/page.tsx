@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/server"
-import { SopViewer } from "@/components/library/sop-viewer"
+import { SopViewerLazy as SopViewer } from "@/components/library/sop-viewer-lazy"
 import { AcknowledgeButton } from "@/components/library/acknowledge-button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { DeptBadge } from "@/components/ui/dept-badge"
