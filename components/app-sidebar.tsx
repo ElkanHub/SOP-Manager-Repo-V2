@@ -12,9 +12,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut } from "lucide-react"
+import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: any;
@@ -96,10 +98,10 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t p-2">
+      <SidebarFooter className="border-t p-2 space-y-4">
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton render={<a href="/settings" className="flex items-center gap-3 px-3 py-2" />} className="text-muted-foreground hover:bg-accent hover:text-foreground">
+          <SidebarMenuItem className="flex items-center justify-between">
+            <SidebarMenuButton render={<a href="/settings" className="flex items-center gap-3 px-3 py-2 flex-1" />} className="text-muted-foreground hover:bg-accent hover:text-foreground">
               <Settings className="w-5 h-5" />
               <span>Settings</span>
             </SidebarMenuButton>

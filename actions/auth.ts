@@ -133,6 +133,12 @@ export async function signupUser(formData: FormData) {
     return { success: true }
 }
 
+export async function logoutUser() {
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    redirect('/login')
+}
+
 export async function forgotPassword(formData: FormData) {
     const supabase = await createClient()
     const email = formData.get('email') as string

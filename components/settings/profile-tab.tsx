@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, Camera, User, PenLine, CheckCircle2 } from "lucide-react"
+import { Loader2, Camera, User, PenLine, CheckCircle2, LogOut } from "lucide-react"
 import { updateProfile } from "@/actions/settings"
+import { logoutUser } from "@/actions/auth"
 import { createClient } from "@/lib/supabase/client"
 import type { Profile } from "@/types/app.types"
 import { SignatureRedrawDialog } from "./signature-redraw-dialog"
@@ -168,6 +169,26 @@ export function ProfileTab({ profile }: ProfileTabProps) {
                     {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                     {saving ? "Saving…" : "Save Changes"}
                 </Button>
+            </div>
+
+            {/* Danger Zone / Sign Out */}
+            <div className="pt-8 border-t border-destructive/20">
+                <div className="bg-destructive/5 dark:bg-red-950/20 rounded-lg p-4 border border-destructive/20">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+                        <div>
+                            <p className="font-semibold text-destructive dark:text-red-400">Sign Out</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Logout from your account on this device.</p>
+                        </div>
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => logoutUser()}
+                            className="bg-red-200 hover:bg-red-300"
+                        >
+                            <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             <SignatureRedrawDialog
