@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import mammoth from "mammoth"
-import DOMPurify from "dompurify"
+import { useEffect, useState, useRef } from "react"
+import * as docx from "docx-preview"
 import { FileText, Loader2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 
@@ -11,36 +10,10 @@ interface SopViewerProps {
   className?: string
 }
 
-const ALLOWED_TAGS = [
-  "p",
-  "h1",
-  "h2",
-  "h3",
-  "h4",
-  "h5",
-  "h6",
-  "ul",
-  "ol",
-  "li",
-  "table",
-  "thead",
-  "tbody",
-  "tr",
-  "td",
-  "th",
-  "strong",
-  "em",
-  "br",
-  "b",
-  "i",
-  "u",
-  "span",
-]
-
 export function SopViewer({ fileUrl, className }: SopViewerProps) {
-  const [html, setHtml] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const fetchAndRender = async () => {
@@ -60,14 +33,27 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
         }
 
         const arrayBuffer = await response.arrayBuffer()
-        const result = await mammoth.convertToHtml({ arrayBuffer })
-
-        const sanitized = DOMPurify.sanitize(result.value, {
-          ALLOWED_TAGS,
-          ALLOWED_ATTR: [],
-        })
-
-        setHtml(sanitized)
+        
+        if (containerRef.current) {
+          // Clear previous content
+          containerRef.current.innerHTML = ""
+          
+          await docx.renderAsync(arrayBuffer, containerRef.current, undefined, {
+            className: "docx-preview",
+            inWrapper: false,
+            ignoreWidth: false,
+            ignoreHeight: false,
+            ignoreFonts: false,
+            breakPages: true,
+            ignoreLastRenderedPageBreak: false,
+            experimental: false,
+            trimXmlDeclaration: true,
+            useBase64URL: false,
+            useMathMLPolyfill: false,
+            showChanges: false,
+            debug: false
+          })
+        }
       } catch (err) {
         console.error("Error rendering SOP:", err)
         setError("Failed to load document")
@@ -102,16 +88,30 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "prose prose-slate dark:prose-invert max-w-none",
-        "prose-headings:font-semibold prose-headings:text-foreground",
-        "prose-p:text-foreground prose-p:leading-relaxed",
-        "prose-table:border prose-td:border prose-td:p-2",
-        "prose-strong:text-foreground",
-        className
-      )}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className={cn("w-full bg-white shadow-inner rounded-md overflow-hidden", className)}>
+      <div 
+        ref={containerRef} 
+        className="docx-container"
+      />
+      <style jsx global>{`
+        .docx-container {
+          padding: 2rem;
+          background-color: #f8fafc;
+          min-height: 100%;
+        }
+        .docx-preview {
+          background-color: white !important;
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+          margin: 0 auto !important;
+          padding: 2rem !important;
+          width: 210mm !important;
+          min-height: 297mm !important;
+        }
+        /* Dark mode overrides for docx-preview if needed */
+        .dark .docx-container {
+          background-color: #1e293b;
+        }
+      `}</style>
+    </div>
   )
 }
