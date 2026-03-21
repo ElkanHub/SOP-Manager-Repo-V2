@@ -122,7 +122,7 @@ export function SignatureRedrawDialog({
                             <Button type="button" variant="ghost" size="sm" onClick={clearCanvas} disabled={isDrawingEmpty || uploading} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors">
                                 <Eraser className="w-3.5 h-3.5 mr-1.5" /> Clear Canvas
                             </Button>
-                            <Button type="button" onClick={handleConfirmDrawing} disabled={isDrawingEmpty || uploading} className="bg-brand-navy hover:bg-brand-navy/90 shadow-md font-bold px-6">
+                            <Button type="button" onClick={handleConfirmDrawing} disabled={isDrawingEmpty || uploading} className="bg-brand-navy hover:bg-brand-navy/90 text-white shadow-xl font-bold px-8 rounded-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale">
                                 {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                                 {uploading ? "SAVING…" : "CONFIRM SIGNATURE"}
                             </Button>

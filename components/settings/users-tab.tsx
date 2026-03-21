@@ -267,7 +267,7 @@ function UserRow({
                             <AlertDialogAction
                                 onClick={handleDeactivate}
                                 disabled={deactivating}
-                                className="bg-red-600 hover:bg-red-700 text-white shadow-lg font-bold px-8 rounded-lg"
+                                className="bg-red-600 hover:bg-red-700 text-white shadow-xl font-bold px-8 rounded-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
                             >
                                 {deactivating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                                 CONFIRM DEACTIVATION
@@ -303,7 +303,6 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 <th className="px-6 py-4" />
             </tr>
         </thead>
-    )
     )
 
     return (

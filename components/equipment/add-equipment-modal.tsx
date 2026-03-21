@@ -493,7 +493,7 @@ export function AddEquipmentModal({
                             <Button 
                                 onClick={() => setStep(step + 1)}
                                 disabled={step === 1 ? !canProceedStep2() : !canProceedStep3()}
-                                className="bg-brand-navy hover:bg-brand-navy/90 px-8 rounded-lg shadow-md"
+                                className="bg-brand-navy hover:bg-brand-navy/90 px-8 rounded-lg shadow-xl font-bold text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
                             >
                                 Continue
                             </Button>
@@ -501,7 +501,7 @@ export function AddEquipmentModal({
                             <Button 
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="bg-brand-teal hover:bg-teal-600 px-8 rounded-lg shadow-lg font-bold"
+                                className="bg-brand-teal hover:bg-teal-600 px-8 rounded-lg shadow-xl font-bold text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
                             >
                                 {submitting ? (
                                     <>

@@ -128,7 +128,7 @@ export function SignatureConfirmModal({
                     <Button 
                         onClick={handleSign}
                         disabled={loading || !signatureUrl}
-                        className="bg-brand-navy hover:bg-brand-navy/90 shadow-lg font-bold px-8 rounded-lg"
+                        className="bg-brand-navy hover:bg-brand-navy/90 shadow-xl font-bold px-8 rounded-lg text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
                     >
                         {loading ? (
                             <>

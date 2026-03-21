@@ -122,7 +122,7 @@ export function WaiveModal({
                     <Button 
                         onClick={handleWaive}
                         disabled={loading || !reason.trim()}
-                        className="bg-destructive hover:bg-destructive/90 shadow-lg font-bold px-8 rounded-lg"
+                        className="bg-destructive hover:bg-destructive/90 shadow-xl font-bold px-8 rounded-lg text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
                     >
                         {loading ? (
                             <>

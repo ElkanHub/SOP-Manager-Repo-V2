@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MessageSquare, Users, Search, X } from "lucide-react"
+import { MessageSquare, Users, Search, X, Plus, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { createConversation } from "@/actions/messages"
 import { useMessagesStore } from "@/store/messages-store"
@@ -200,7 +200,7 @@ export function NewConversationModal({ isOpen, onClose, userId }: { isOpen: bool
         <DialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/10 flex flex-col-reverse sm:flex-row gap-3">
             <Button variant="ghost" onClick={onClose} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">Discard</Button>
             <Button 
-              className={`font-bold px-8 rounded-lg shadow-lg transition-all ${type === 'group' ? 'bg-brand-navy hover:bg-brand-navy/90 text-white' : 'bg-brand-teal hover:bg-teal-600'}`} 
+              className={`font-bold px-8 rounded-lg shadow-xl text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale ${type === 'group' ? 'bg-brand-navy hover:bg-brand-navy/90' : 'bg-brand-teal hover:bg-teal-600'}`} 
               disabled={
                   (type === 'direct' && selectedMembers.length !== 1) ||
                   (type === 'group' && (selectedMembers.length < 2 || !groupName.trim())) ||

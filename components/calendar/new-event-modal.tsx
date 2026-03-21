@@ -176,7 +176,7 @@ export function NewEventModal({ open, onOpenChange, initialDate }: NewEventModal
           <Button
             onClick={handleSubmit}
             disabled={submitting || !title.trim() || !startDate}
-            className="bg-brand-navy hover:bg-brand-navy/90 text-white shadow-lg font-bold px-8 rounded-lg"
+            className="bg-brand-navy hover:bg-brand-navy/90 text-white shadow-xl font-bold px-8 rounded-lg transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
           >
             {submitting ? (
               <>

@@ -117,7 +117,7 @@ export function SignatureGrid({
                                     <Button 
                                         size="sm" 
                                         onClick={onSign}
-                                        className="h-9 px-4 bg-brand-navy hover:bg-brand-navy/90 text-white shadow-lg font-bold text-[10px] uppercase tracking-widest rounded-xl transition-all hover:scale-105 active:scale-95"
+                                        className="h-9 px-4 bg-brand-navy hover:bg-brand-navy/90 text-white shadow-xl font-bold text-[10px] uppercase tracking-widest rounded-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:grayscale"
                                     >
                                         <PenTool className="h-3.5 w-3.5 mr-2" />
                                         Execute Signature

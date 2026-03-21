@@ -88,7 +88,7 @@ export function PasswordConfirmModal({
                     <Button 
                         onClick={handleConfirm} 
                         disabled={loading || !password}
-                        className="bg-brand-navy hover:bg-brand-navy/90 shadow-md font-bold px-6"
+                        className="bg-brand-navy hover:bg-brand-navy/90 shadow-xl font-bold px-8 rounded-lg text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
                     >
                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                         {loading ? "AUTHENTICATING…" : (confirmLabel || "Confirm Identity")}
