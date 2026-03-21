@@ -164,8 +164,8 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         edited_at: null,
         deleted_at: null,
         created_at: new Date().toISOString(),
-        sender: conversation?.members?.find(m => m.user_id === userId)?.profile || { id: userId, full_name: "Me", avatar_url: null },
-        reply_to: replyTo ? { id: replyTo.id, body: replyTo.body, sender_id: replyTo.sender_id } : null
+        sender: (conversation?.members?.find(m => m.user_id === userId)?.profile as any) || { id: userId, full_name: "Me", avatar_url: undefined },
+        reply_to: replyTo ? { id: replyTo.id, body: replyTo.body, sender_id: replyTo.sender_id } : undefined
       }
 
       // Optimistically add to UI immediately
