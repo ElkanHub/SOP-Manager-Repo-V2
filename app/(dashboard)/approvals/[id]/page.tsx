@@ -48,6 +48,23 @@ export default async function ApprovalDetailPage({ params }: Props) {
         notFound()
     }
 
+    // Convert the raw DB storage path into a secure Microsoft Web Viewer compatible 1-hour signed URL.
+    let signedFileUrl = approvalRequest.file_url
+    if (signedFileUrl) {
+        const { data: signed } = await serviceClient.storage
+            .from('documents')
+            .createSignedUrl(signedFileUrl, 3600)
+        
+        if (signed?.signedUrl) {
+            signedFileUrl = signed.signedUrl
+        }
+    }
+
+    const clientApprovalRequest = {
+        ...approvalRequest,
+        file_url: signedFileUrl
+    }
+
     const isSelfSubmission = approvalRequest.profiles?.id === user.id
 
     const { data: allRequestsForSop } = await serviceClient
@@ -70,7 +87,7 @@ export default async function ApprovalDetailPage({ params }: Props) {
 
     return (
         <ApprovalDetailClient 
-            approvalRequest={approvalRequest}
+            approvalRequest={clientApprovalRequest}
             allRequestsForSop={allRequestsForSop || []}
             comments={comments || []}
             currentUserId={user.id}
