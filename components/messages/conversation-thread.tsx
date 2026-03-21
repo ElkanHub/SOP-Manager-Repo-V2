@@ -53,10 +53,12 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         .order('created_at', { ascending: false })
         .limit(50)
 
-      if (active && msgData) {
-        setMessages(msgData as unknown as Message[])
+      if (active) {
+        if (msgData) {
+          setMessages(msgData as unknown as Message[])
+          markConversationRead(conversationId)
+        }
         setLoading(false)
-        markConversationRead(conversationId)
       }
     }
 
@@ -232,62 +234,87 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
     const isOwn = msg.sender_id === userId
 
     renderedMessages.push(
-      <div key={msg.id} className={cn("flex gap-3 px-4 py-1 hover:bg-surface-raised group", msg.deleted_at ? "opacity-60" : "")}>
-        {!isGrouped && !isOwn && (
-           <div className="w-8 h-8 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center">
-             {msg.sender?.avatar_url ? (
-               <img src={msg.sender.avatar_url} alt="" className="w-full h-full object-cover" />
-             ) : (
-               <span className="text-xs font-semibold">{msg.sender?.full_name?.substring(0,2).toUpperCase()}</span>
-             )}
-           </div>
-        )}
-        {(isGrouped || isOwn) && <div className="w-8 h-8 shrink-0" />}
+      <div key={msg.id} className={cn("flex flex-col mb-1 group px-4", isOwn ? "items-end pl-12" : "items-start pr-12", !isGrouped ? "mt-4" : "")}>
         
-        <div className="flex-1 min-w-0">
-          {!isGrouped && (
-            <div className="flex items-baseline gap-2 mb-0.5">
-              <span className="text-[14px] font-semibold text-foreground">{isOwn ? "You" : msg.sender?.full_name}</span>
-              <span className="text-[11px] text-muted-foreground">{format(msgDate, 'HH:mm')}</span>
-            </div>
-          )}
+        {/* Header for non-grouped messages */}
+        {!isGrouped && (
+          <div className={cn("flex items-end gap-2 mb-1", isOwn ? "justify-end mr-1" : "ml-1")}>
+            {!isOwn && (
+               <div className="w-6 h-6 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center">
+                 {msg.sender?.avatar_url ? (
+                   <img src={msg.sender.avatar_url} alt="" className="w-full h-full object-cover" />
+                 ) : (
+                   <span className="text-[10px] font-semibold text-slate-600">{msg.sender?.full_name?.substring(0,2).toUpperCase()}</span>
+                 )}
+               </div>
+            )}
+            {!isOwn && <span className="text-[12px] font-semibold text-muted-foreground">{msg.sender?.full_name}</span>}
+            <span className="text-[10px] text-muted-foreground/80 mb-[1px]">{format(msgDate, 'HH:mm')}</span>
+          </div>
+        )}
 
+        {/* Bubble */}
+        <div className={cn(
+          "relative max-w-[85%] px-3 py-2 rounded-2xl shadow-sm",
+          isOwn ? "bg-brand-navy text-white rounded-tr-sm" : "bg-muted text-foreground border border-border/50 rounded-tl-sm",
+          msg.deleted_at ? "opacity-60 italic" : ""
+        )}>
           {msg.deleted_at ? (
-            <span className="text-[13px] text-muted-foreground italic">This message was deleted.</span>
+            <span className="text-[14px]">This message was deleted.</span>
           ) : (
             <>
+              {/* Reply Quote */}
               {msg.reply_to_id && msg.reply_to && (
-                <div className="bg-muted/50 border-l-2 border-brand-teal rounded-r-md px-3 py-1.5 mb-1.5 cursor-pointer">
-                  <span className="block text-[11px] font-semibold text-muted-foreground">Replying to someone</span>
-                  <span className="block text-[12px] text-muted-foreground truncate">{msg.reply_to.body}</span>
+                <div className={cn(
+                  "rounded-md px-2 py-1 mb-2 border-l-[3px] text-[12px]",
+                  isOwn ? "bg-white/10 border-white/50 text-white/90" : "bg-background border-brand-teal/50 text-muted-foreground"
+                )}>
+                  <span className="font-semibold text-[10px] uppercase tracking-wider opacity-80 block mb-0.5">Replying to</span>
+                  <span className="block truncate line-clamp-1">{msg.reply_to.body}</span>
                 </div>
               )}
-              <div className="text-[14px] text-foreground leading-relaxed break-words whitespace-pre-wrap">
-                  {/* Basic mention formatting */}
+
+              {/* Message Body */}
+              <div className="text-[14px] leading-relaxed break-words whitespace-pre-wrap">
                   {msg.body.split(/(@\[.*?\])/g).map((part, index) => {
                       if (part.startsWith('@[') && part.endsWith(']')) {
                           const name = part.substring(2, part.length - 1)
-                          const isMe = otherUser?.full_name === name || false
-                          return <span key={index} className={cn("rounded-sm px-1 font-semibold text-[13px]", isMe ? "bg-brand-teal/25 text-brand-teal" : "bg-brand-teal/15 text-brand-teal")}>{part}</span>
+                          const isMe = userId && otherUser?.full_name === name // Assuming user is the other guy if not in group, simplistic for now
+                          return <span key={index} className={cn("rounded px-1 font-semibold text-[13px]", isOwn ? "bg-white/20 text-white" : "bg-brand-teal/15 text-brand-teal")}>{part}</span>
                       }
                       return <span key={index}>{part}</span>
                   })}
               </div>
               
-              {msg.is_edited && <span className="text-[11px] text-muted-foreground italic ml-2">edited</span>}
+              {msg.is_edited && <div className={cn("text-[10px] text-right mt-1.5 opacity-60", isOwn ? "text-white" : "text-muted-foreground")}>Edited</div>}
 
-              {/* Reference Card Placeholder */}
+              {/* Reference Card */}
               {msg.reference_type && msg.reference_id && (
-                <div className="mt-2 bg-muted/30 border border-border rounded-lg px-4 py-3 border-l-4 border-l-brand-teal flex items-start gap-3">
-                   <FileText className="w-[18px] h-[18px] text-brand-teal mt-0.5" />
-                   <div className="flex-1">
-                     <div className="text-[11px] uppercase text-muted-foreground">{msg.reference_type.replace('_', ' ')}</div>
-                     <div className="text-[13px] font-semibold text-foreground mt-0.5">Reference ID: {msg.reference_id.substring(0,8)}</div>
+                <div className={cn(
+                  "mt-2 border rounded-lg px-3 py-2 flex items-start gap-3",
+                  isOwn ? "bg-white/10 border-white/20" : "bg-background border-border/50"
+                )}>
+                   <FileText className={cn("w-[16px] h-[16px] mt-0.5", isOwn ? "text-white" : "text-brand-teal")} />
+                   <div className="flex-1 min-w-0">
+                     <div className={cn("text-[10px] uppercase font-bold tracking-wider", isOwn ? "text-white/70" : "text-muted-foreground")}>{msg.reference_type.replace('_', ' ')}</div>
+                     <div className="text-[13px] font-semibold mt-0.5 truncate">Reference: {msg.reference_id.substring(0,8)}</div>
                    </div>
-                   <Button variant="ghost" size="sm" className="h-7 text-xs">Open &rarr;</Button>
                 </div>
               )}
             </>
+          )}
+
+          {/* Actions Hover Menu (Absolute) */}
+          {!msg.deleted_at && (
+            <div className={cn(
+              "absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 -translate-y-1/2",
+              isOwn ? "left-0 -translate-x-full pr-2" : "right-0 translate-x-full pl-2"
+            )}>
+              {/* Optional: Add hover actions like react, reply later here */}
+              <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background shadow-sm border border-border text-muted-foreground hover:text-foreground" onClick={() => setReplyTo(msg)}>
+                 <span className="text-[10px] font-bold">↵</span>
+              </Button>
+            </div>
           )}
         </div>
       </div>
