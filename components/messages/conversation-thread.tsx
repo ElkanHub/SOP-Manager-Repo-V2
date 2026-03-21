@@ -27,7 +27,7 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
   const [loading, setLoading] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const [profileModalUser, setProfileModalUser] = useState<Profile | null>(null)
-  
+
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
@@ -51,7 +51,7 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
 
       if (active && convData) {
         setConversation(convData as unknown as Conversation)
-        
+
         const me = convData.members?.find((m: any) => m.user_id === userId)
         if (me && me.notify_setting === 'muted') {
           setIsMuted(true)
@@ -83,16 +83,16 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
     // 3. Subscriptions
     const msgSubscription = supabase.channel(`messages:${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, async (payload) => {
-          // Fetch sender info for new message
-          const { data: senderData } = await supabase.from('profiles').select('id, full_name, avatar_url').eq('id', payload.new.sender_id).single()
-          const newMsg = { ...payload.new, sender: senderData } as Message
-          setMessages(prev => [newMsg, ...prev])
-          if (payload.new.sender_id !== userId) {
-            markConversationRead(conversationId)
-          }
+        // Fetch sender info for new message
+        const { data: senderData } = await supabase.from('profiles').select('id, full_name, avatar_url').eq('id', payload.new.sender_id).single()
+        const newMsg = { ...payload.new, sender: senderData } as Message
+        setMessages(prev => [newMsg, ...prev])
+        if (payload.new.sender_id !== userId) {
+          markConversationRead(conversationId)
+        }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, (payload) => {
-          setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m))
+        setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, ...payload.new } : m))
       })
       .subscribe()
 
@@ -118,7 +118,7 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
   useEffect(() => {
     if (!conversation) return
     const presenceChannel = supabase.channel(`typing:${conversationId}`)
-    
+
     if (inputValue.length > 0) {
       presenceChannel.track({ user_id: userId, is_typing: true })
     } else {
@@ -137,16 +137,16 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
     const body = inputValue.trim()
     if (!body) return
     setIsSubmitting(true)
-    
+
     // We parse mentions naively for now based on @[Name]
     const mentionsRegex = /@\[(.*?)\]/g
     const mentions: string[] = []
     let match
     while ((match = mentionsRegex.exec(body)) !== null) {
-        const name = match[1]
-        // find user id
-        const member = conversation?.members?.find(m => m.profile?.full_name === name)
-        if (member) mentions.push(member.user_id)
+      const name = match[1]
+      // find user id
+      const member = conversation?.members?.find(m => m.profile?.full_name === name)
+      if (member) mentions.push(member.user_id)
     }
 
     try {
@@ -183,7 +183,7 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         referenceId: reference?.id || null,
         replyToId: replyTo?.id || null
       })
-      
+
       // We don't need to replace the temp message ID perfectly here because 
       // the realtime subscription will pull in the real one and React's `key` handles the rest reasonably well.
       // But ideally we'd swap it. For basic snappy UI, the realtime event will soon provide the real ID.
@@ -211,11 +211,11 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
 
   if (!conversation) return null
 
-  const otherUser = conversation.type === 'direct' 
-    ? conversation.members?.find(m => m.user_id !== userId)?.profile 
+  const otherUser = conversation.type === 'direct'
+    ? conversation.members?.find(m => m.user_id !== userId)?.profile
     : null
-    
-  const displayTitle = conversation.type === 'direct' 
+
+  const displayTitle = conversation.type === 'direct'
     ? otherUser?.full_name || 'Unknown User'
     : conversation.name || 'Group Chat'
 
@@ -225,7 +225,7 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         {otherUser?.avatar_url ? (
           <img src={otherUser.avatar_url} alt="" className="w-full h-full object-cover" />
         ) : (
-          <span className="text-xs font-semibold">{otherUser?.full_name?.substring(0,2).toUpperCase()}</span>
+          <span className="text-xs font-semibold">{otherUser?.full_name?.substring(0, 2).toUpperCase()}</span>
         )}
       </div>
     )
@@ -260,11 +260,11 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         </div>
       )
     }
-    
+
     // Grouping
     let isGrouped = false;
     if (lastSenderId === msg.sender_id && i > 0) {
-      const prevMsg = chronologicalMsgs[i-1]
+      const prevMsg = chronologicalMsgs[i - 1]
       const diffMinutes = (msgDate.getTime() - new Date(prevMsg.created_at).getTime()) / 60000
       if (diffMinutes <= 2) {
         isGrouped = true
@@ -275,18 +275,18 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
 
     renderedMessages.push(
       <div key={msg.id} className={cn("flex flex-col mb-1 group px-4", isOwn ? "items-end pl-12" : "items-start pr-12", !isGrouped ? "mt-4" : "")}>
-        
+
         {/* Header for non-grouped messages */}
         {!isGrouped && (
           <div className={cn("flex items-end gap-2 mb-1", isOwn ? "justify-end mr-1" : "ml-1")}>
             {!isOwn && (
-               <div className="w-6 h-6 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center">
-                 {msg.sender?.avatar_url ? (
-                   <img src={msg.sender.avatar_url} alt="" className="w-full h-full object-cover" />
-                 ) : (
-                   <span className="text-[10px] font-semibold text-slate-600">{msg.sender?.full_name?.substring(0,2).toUpperCase()}</span>
-                 )}
-               </div>
+              <div className="w-6 h-6 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center">
+                {msg.sender?.avatar_url ? (
+                  <img src={msg.sender.avatar_url} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] font-semibold text-slate-600">{msg.sender?.full_name?.substring(0, 2).toUpperCase()}</span>
+                )}
+              </div>
             )}
             {!isOwn && <span className="text-[12px] font-semibold text-muted-foreground">{msg.sender?.full_name}</span>}
             <span className="text-[10px] text-muted-foreground/80 mb-[1px]">{format(msgDate, 'HH:mm')}</span>
@@ -316,16 +316,16 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
 
               {/* Message Body */}
               <div className="text-[14px] leading-relaxed break-words whitespace-pre-wrap">
-                  {msg.body.split(/(@\[.*?\])/g).map((part, index) => {
-                      if (part.startsWith('@[') && part.endsWith(']')) {
-                          const name = part.substring(2, part.length - 1)
-                          const isMe = userId && otherUser?.full_name === name // Assuming user is the other guy if not in group, simplistic for now
-                          return <span key={index} className={cn("rounded px-1 font-semibold text-[13px]", isOwn ? "bg-white/20 text-white" : "bg-brand-teal/15 text-brand-teal")}>{part}</span>
-                      }
-                      return <span key={index}>{part}</span>
-                  })}
+                {msg.body.split(/(@\[.*?\])/g).map((part, index) => {
+                  if (part.startsWith('@[') && part.endsWith(']')) {
+                    const name = part.substring(2, part.length - 1)
+                    const isMe = userId && otherUser?.full_name === name // Assuming user is the other guy if not in group, simplistic for now
+                    return <span key={index} className={cn("rounded px-1 font-semibold text-[13px]", isOwn ? "bg-white/20 text-white" : "bg-brand-teal/15 text-brand-teal")}>{part}</span>
+                  }
+                  return <span key={index}>{part}</span>
+                })}
               </div>
-              
+
               {msg.is_edited && <div className={cn("text-[10px] text-right mt-1.5 opacity-60", isOwn ? "text-white" : "text-muted-foreground")}>Edited</div>}
 
               {/* Reference Card */}
@@ -334,11 +334,11 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
                   "mt-2 border rounded-lg px-3 py-2 flex items-start gap-3",
                   isOwn ? "bg-white/10 border-white/20" : "bg-background border-border/50"
                 )}>
-                   <FileText className={cn("w-[16px] h-[16px] mt-0.5", isOwn ? "text-white" : "text-brand-teal")} />
-                   <div className="flex-1 min-w-0">
-                     <div className={cn("text-[10px] uppercase font-bold tracking-wider", isOwn ? "text-white/70" : "text-muted-foreground")}>{msg.reference_type.replace('_', ' ')}</div>
-                     <div className="text-[13px] font-semibold mt-0.5 truncate">Reference: {msg.reference_id.substring(0,8)}</div>
-                   </div>
+                  <FileText className={cn("w-[16px] h-[16px] mt-0.5", isOwn ? "text-white" : "text-brand-teal")} />
+                  <div className="flex-1 min-w-0">
+                    <div className={cn("text-[10px] uppercase font-bold tracking-wider", isOwn ? "text-white/70" : "text-muted-foreground")}>{msg.reference_type.replace('_', ' ')}</div>
+                    <div className="text-[13px] font-semibold mt-0.5 truncate">Reference: {msg.reference_id.substring(0, 8)}</div>
+                  </div>
                 </div>
               )}
             </>
@@ -352,7 +352,7 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
             )}>
               {/* Optional: Add hover actions like react, reply later here */}
               <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full bg-background shadow-sm border border-border text-muted-foreground hover:text-foreground" onClick={() => setReplyTo(msg)}>
-                 <span className="text-[10px] font-bold">↵</span>
+                <span className="text-[10px] font-bold">↵</span>
               </Button>
             </div>
           )}
@@ -390,10 +390,10 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={async () => {
-                 const newSetting = isMuted ? 'all' : 'muted'
-                 setIsMuted(!isMuted)
-                 await updateNotifySetting(conversationId, newSetting)
-                 toast.success(isMuted ? "Notifications unmuted" : "Notifications muted")
+                const newSetting = isMuted ? 'all' : 'muted'
+                setIsMuted(!isMuted)
+                await updateNotifySetting(conversationId, newSetting)
+                toast.success(isMuted ? "Notifications unmuted" : "Notifications muted")
               }}>
                 <div className="flex items-center">
                   <BellOff className="w-4 h-4 mr-2" />
@@ -402,23 +402,23 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {conversation.type === 'group' ? (
-                 <DropdownMenuItem className="text-red-500" onClick={async () => {
-                    await leaveGroup(conversationId)
-                    toast.success("You left the group")
-                    router.push('/messages')
-                 }}>Leave Group</DropdownMenuItem>
+                <DropdownMenuItem className="text-red-500" onClick={async () => {
+                  await leaveGroup(conversationId)
+                  toast.success("You left the group")
+                  router.push('/messages')
+                }}>Leave Group</DropdownMenuItem>
               ) : (
-                 <>
-                   <DropdownMenuItem onClick={() => {
-                      const other = conversation.members?.find(m => m.user_id !== userId)
-                      if (other && other.profile) setProfileModalUser(other.profile as unknown as Profile)
-                   }}>View Profile</DropdownMenuItem>
-                   <DropdownMenuItem className="text-red-500 font-medium" onClick={async () => {
-                      await deleteConversation(conversationId)
-                      toast.success("Chat deleted")
-                      router.push('/messages')
-                   }}>Delete Chat</DropdownMenuItem>
-                 </>
+                <>
+                  <DropdownMenuItem onClick={() => {
+                    const other = conversation.members?.find(m => m.user_id !== userId)
+                    if (other && other.profile) setProfileModalUser(other.profile as unknown as Profile)
+                  }}>View Profile</DropdownMenuItem>
+                  <DropdownMenuItem className="text-red-500 font-medium" onClick={async () => {
+                    await deleteConversation(conversationId)
+                    toast.success("Chat deleted")
+                    router.push('/messages')
+                  }}>Delete Chat</DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -443,23 +443,23 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
       {/* Input */}
       <div className="p-3 border-t bg-background shrink-0">
         {replyTo && (
-           <div className="bg-muted/50 border-l-2 border-brand-teal rounded-r-md px-3 py-2 mb-2 flex items-center justify-between">
-             <div>
-               <span className="text-[12px] font-semibold text-brand-teal">Replying to message</span>
-               <span className="text-[12px] text-muted-foreground truncate ml-2">{replyTo.body.substring(0, 30)}...</span>
-             </div>
-             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setReplyTo(null)}>X</Button>
-           </div>
+          <div className="bg-muted/50 border-l-2 border-brand-teal rounded-r-md px-3 py-2 mb-2 flex items-center justify-between">
+            <div>
+              <span className="text-[12px] font-semibold text-brand-teal">Replying to message</span>
+              <span className="text-[12px] text-muted-foreground truncate ml-2">{replyTo.body.substring(0, 30)}...</span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setReplyTo(null)}>X</Button>
+          </div>
         )}
-        
+
         {reference && (
-           <div className="bg-muted/50 border-l-2 border-blue-500 rounded-r-md px-3 py-2 mb-2 flex items-center justify-between">
-             <div>
-               <span className="text-[12px] font-semibold text-blue-500">Attached Reference</span>
-               <span className="text-[12px] text-muted-foreground truncate ml-2">{reference.type}: {reference.id.substring(0, 8)}</span>
-             </div>
-             <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setReference(null)}>X</Button>
-           </div>
+          <div className="bg-muted/50 border-l-2 border-blue-500 rounded-r-md px-3 py-2 mb-2 flex items-center justify-between">
+            <div>
+              <span className="text-[12px] font-semibold text-blue-500">Attached Reference</span>
+              <span className="text-[12px] text-muted-foreground truncate ml-2">{reference.type}: {reference.id.substring(0, 8)}</span>
+            </div>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setReference(null)}>X</Button>
+          </div>
         )}
 
         <div className="flex gap-2 items-end">
@@ -474,8 +474,8 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
             className="flex-1 min-h-[36px] max-h-[120px] bg-muted/50 border border-transparent focus:border-border rounded-md px-3 py-2 text-sm resize-none focus:outline-none"
             rows={1}
           />
-          <Button 
-            className="h-9 w-9 shrink-0 bg-brand-navy hover:bg-brand-navy/90 p-0" 
+          <Button
+            className="h-9 w-9 shrink-0 bg-brand-navy hover:bg-brand-navy/90 p-0"
             onClick={handleSend}
             disabled={!inputValue.trim() || isSubmitting}
           >
@@ -483,51 +483,51 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
           </Button>
         </div>
       </div>
-      
-      <ReferencePicker 
-        isOpen={isReferencePickerOpen} 
-        onClose={() => setIsReferencePickerOpen(false)} 
+
+      <ReferencePicker
+        isOpen={isReferencePickerOpen}
+        onClose={() => setIsReferencePickerOpen(false)}
         onSelect={(ref) => { setReference(ref); setIsReferencePickerOpen(false) }}
       />
 
       <Dialog open={!!profileModalUser} onOpenChange={(open) => !open && setProfileModalUser(null)}>
         <DialogContent className="sm:max-w-xs md:max-w-sm rounded-[16px] border border-border/10 shadow-2xl overflow-hidden p-0 bg-gradient-to-br from-background via-background to-muted/20">
-           <DialogHeader className="sr-only">
-             <DialogTitle>User Profile</DialogTitle>
-           </DialogHeader>
-           
-           <div className="h-24 bg-gradient-to-r from-brand-navy to-brand-blue relative w-full">
-             <div className="absolute inset-0 bg-white/5 mix-blend-overlay"></div>
-             {profileModalUser?.department && (
-               <div className="absolute top-3 right-3 bg-white/10 text-white backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20">
-                 {profileModalUser.department}
-               </div>
-             )}
-           </div>
-           
-           {profileModalUser && (
-              <div className="flex flex-col items-center pb-8 px-6 -mt-12 relative z-10">
-                 <div className="rounded-full p-1 bg-background shadow-lg mb-4 ring-1 ring-border/5">
-                   <Avatar className="h-20 w-20 border-2 border-transparent">
-                      <AvatarImage src={profileModalUser.avatar_url || ""} />
-                      <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-blue text-white text-xl font-bold">
-                         {profileModalUser.full_name?.substring(0,2).toUpperCase() || "US"}
-                      </AvatarFallback>
-                   </Avatar>
-                 </div>
-                 
-                 <div className="text-center w-full">
-                   <h3 className="text-xl font-bold text-foreground tracking-tight">{profileModalUser.full_name}</h3>
-                   <div className="flex items-center justify-center gap-2 mt-2">
-                     {profileModalUser.role && (
-                       <span className="text-[13px] text-brand-teal font-semibold capitalize bg-brand-teal/10 px-2.5 py-0.5 rounded-full ring-1 ring-brand-teal/20">
-                         {profileModalUser.role.replace('_', ' ')}
-                       </span>
-                     )}
-                   </div>
-                 </div>
+          <DialogHeader className="sr-only">
+            <DialogTitle>User Profile</DialogTitle>
+          </DialogHeader>
+
+          <div className="h-24 bg-gradient-to-r from-brand-navy to-brand-blue relative w-full">
+            <div className="absolute inset-0 bg-white/5 mix-blend-overlay"></div>
+            {profileModalUser?.department && (
+              <div className="absolute top-3 left-3 bg-white/10 text-white backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20">
+                {profileModalUser.department}
               </div>
-           )}
+            )}
+          </div>
+
+          {profileModalUser && (
+            <div className="flex flex-col items-center pb-8 px-6 -mt-12 relative z-10">
+              <div className="rounded-full p-1 bg-background shadow-lg mb-4 ring-1 ring-border/5">
+                <Avatar className="h-20 w-20 border-2 border-transparent">
+                  <AvatarImage src={profileModalUser.avatar_url || ""} />
+                  <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-blue text-white text-xl font-bold">
+                    {profileModalUser.full_name?.substring(0, 2).toUpperCase() || "US"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+
+              <div className="text-center w-full">
+                <h3 className="text-xl font-bold text-foreground tracking-tight">{profileModalUser.full_name}</h3>
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  {profileModalUser.role && (
+                    <span className="text-[13px] text-brand-teal font-semibold capitalize bg-brand-teal/10 px-2.5 py-0.5 rounded-full ring-1 ring-brand-teal/20">
+                      {profileModalUser.role.replace('_', ' ')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
