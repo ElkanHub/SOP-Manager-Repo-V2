@@ -49,12 +49,17 @@ export default async function SopViewerPage({ params }: PageProps) {
     redirect("/library")
   }
 
-  // Rather than passing a direct Supabase signed URL to the client (which triggers browser CORS blocks 
-  // on Vercel production), we pass a relative path to our internal proxy which securely fetches the blob.
-  // We add a cache-buster (v=version) to ensure we don't get stuck with stale 304 responses in prod.
-  let proxyFileUrl: string | null = null
+  // Generate a secure, 1-hour signed URL via the Supabase Service Role.
+  // This satisfies the requirement to keep the underlying storage bucket completely private,
+  // while generating a temporary cryptographic token that Microsoft's Office Viewer can safely read remotely.
+  let signedFileUrl: string | null = null
   if (sop.file_url) {
-    proxyFileUrl = `/api/docs/proxy?path=${encodeURIComponent(sop.file_url)}&v=${encodeURIComponent(sop.version)}`
+    const { createServiceClient: createSvc } = await import('@/lib/supabase/server')
+    const svcClient = await createSvc()
+    const { data: signed } = await svcClient.storage
+      .from('documents')
+      .createSignedUrl(sop.file_url, 3600)
+    signedFileUrl = signed?.signedUrl ?? null
   }
 
   const isOwnDept =
@@ -171,9 +176,9 @@ export default async function SopViewerPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-12 py-8 bg-card">
-        {proxyFileUrl ? (
-          <SopViewer fileUrl={proxyFileUrl} className="max-w-3xl mx-auto" />
+      <div className="flex-1 overflow-y-auto px-12 py-8 bg-card flex flex-col">
+        {signedFileUrl ? (
+          <SopViewer fileUrl={signedFileUrl} className="max-w-4xl mx-auto flex-1 h-full min-h-[850px]" />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400">
             No document available
