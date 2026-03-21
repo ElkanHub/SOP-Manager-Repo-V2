@@ -8,8 +8,12 @@ import { format, isSameDay } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Message, Conversation, Profile } from "@/types/app.types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ReferencePicker } from "./reference-picker"
-import { sendMessage, editMessage, deleteMessage, markConversationRead } from "@/actions/messages"
+import { sendMessage, editMessage, deleteMessage, markConversationRead, leaveGroup, deleteConversation, updateNotifySetting } from "@/actions/messages"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function ConversationThread({ conversationId, userId }: { conversationId: string, userId: string }) {
   const [conversation, setConversation] = useState<Conversation | null>(null)
@@ -21,7 +25,10 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
   const [isReferencePickerOpen, setIsReferencePickerOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [loading, setLoading] = useState(true)
-
+  const [isMuted, setIsMuted] = useState(false)
+  const [profileModalUser, setProfileModalUser] = useState<Profile | null>(null)
+  
+  const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
@@ -44,6 +51,13 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
 
       if (active && convData) {
         setConversation(convData as unknown as Conversation)
+        
+        const me = convData.members?.find((m: any) => m.user_id === userId)
+        if (me && me.notify_setting === 'muted') {
+          setIsMuted(true)
+        } else {
+          setIsMuted(false)
+        }
       }
 
       // 2. Fetch messages
@@ -350,17 +364,36 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
               <MoreHorizontal className="w-4 h-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={async () => {
+                 const newSetting = isMuted ? 'all' : 'muted'
+                 setIsMuted(!isMuted)
+                 await updateNotifySetting(conversationId, newSetting)
+                 toast.success(isMuted ? "Notifications unmuted" : "Notifications muted")
+              }}>
                 <div className="flex items-center">
                   <BellOff className="w-4 h-4 mr-2" />
-                  <span>Mute Notifications</span>
+                  <span>{isMuted ? "Unmute" : "Mute"} Notifications</span>
                 </div>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {conversation.type === 'group' ? (
-                 <DropdownMenuItem className="text-red-500">Leave Group</DropdownMenuItem>
+                 <DropdownMenuItem className="text-red-500" onClick={async () => {
+                    await leaveGroup(conversationId)
+                    toast.success("You left the group")
+                    router.push('/messages')
+                 }}>Leave Group</DropdownMenuItem>
               ) : (
-                 <DropdownMenuItem>View Profile</DropdownMenuItem>
+                 <>
+                   <DropdownMenuItem onClick={() => {
+                      const other = conversation.members?.find(m => m.user_id !== userId)
+                      if (other && other.profile) setProfileModalUser(other.profile as unknown as Profile)
+                   }}>View Profile</DropdownMenuItem>
+                   <DropdownMenuItem className="text-red-500 font-medium" onClick={async () => {
+                      await deleteConversation(conversationId)
+                      toast.success("Chat deleted")
+                      router.push('/messages')
+                   }}>Delete Chat</DropdownMenuItem>
+                 </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -431,6 +464,47 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         onClose={() => setIsReferencePickerOpen(false)} 
         onSelect={(ref) => { setReference(ref); setIsReferencePickerOpen(false) }}
       />
+
+      <Dialog open={!!profileModalUser} onOpenChange={(open) => !open && setProfileModalUser(null)}>
+        <DialogContent className="sm:max-w-xs md:max-w-sm rounded-[16px] border border-border/10 shadow-2xl overflow-hidden p-0 bg-gradient-to-br from-background via-background to-muted/20">
+           <DialogHeader className="sr-only">
+             <DialogTitle>User Profile</DialogTitle>
+           </DialogHeader>
+           
+           <div className="h-24 bg-gradient-to-r from-brand-navy to-brand-blue relative w-full">
+             <div className="absolute inset-0 bg-white/5 mix-blend-overlay"></div>
+             {profileModalUser?.department && (
+               <div className="absolute top-3 right-3 bg-white/10 text-white backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20">
+                 {profileModalUser.department}
+               </div>
+             )}
+           </div>
+           
+           {profileModalUser && (
+              <div className="flex flex-col items-center pb-8 px-6 -mt-12 relative z-10">
+                 <div className="rounded-full p-1 bg-background shadow-lg mb-4 ring-1 ring-border/5">
+                   <Avatar className="h-20 w-20 border-2 border-transparent">
+                      <AvatarImage src={profileModalUser.avatar_url || ""} />
+                      <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-blue text-white text-xl font-bold">
+                         {profileModalUser.full_name?.substring(0,2).toUpperCase() || "US"}
+                      </AvatarFallback>
+                   </Avatar>
+                 </div>
+                 
+                 <div className="text-center w-full">
+                   <h3 className="text-xl font-bold text-foreground tracking-tight">{profileModalUser.full_name}</h3>
+                   <div className="flex items-center justify-center gap-2 mt-2">
+                     {profileModalUser.role && (
+                       <span className="text-[13px] text-brand-teal font-semibold capitalize bg-brand-teal/10 px-2.5 py-0.5 rounded-full ring-1 ring-brand-teal/20">
+                         {profileModalUser.role.replace('_', ' ')}
+                       </span>
+                     )}
+                   </div>
+                 </div>
+              </div>
+           )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

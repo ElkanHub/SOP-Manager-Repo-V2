@@ -237,3 +237,23 @@ export async function leaveGroup(conversationId: string) {
      await adminClient.from('conversations').update({ is_archived: true }).eq('id', conversationId)
   }
 }
+
+export async function deleteConversation(conversationId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("Unauthorized")
+
+  const adminClient = await createServiceClient()
+
+  // Verify membership
+  const { data: m } = await adminClient.from('conversation_members').select('id').eq('conversation_id', conversationId).eq('user_id', user.id).single()
+  if (!m) throw new Error("Not a member")
+
+  const { data: conv } = await adminClient.from('conversations').select('type').eq('id', conversationId).single()
+  if (!conv) return
+
+  if (conv.type === 'direct') {
+    // Completely physically delete the DM
+    await adminClient.from('conversations').delete().eq('id', conversationId)
+  }
+}
