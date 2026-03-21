@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { PenTool, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { signChangeControl } from "@/actions/sop"
 
