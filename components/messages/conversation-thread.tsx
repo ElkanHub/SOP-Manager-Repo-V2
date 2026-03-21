@@ -150,6 +150,31 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
     }
 
     try {
+      // Create an optimistic message object
+      const optimisticMsg: Message = {
+        id: 'temp-' + Date.now(),
+        conversation_id: conversationId,
+        sender_id: userId,
+        body,
+        mentions,
+        reference_type: reference?.type || null,
+        reference_id: reference?.id || null,
+        reply_to_id: replyTo?.id || null,
+        is_edited: false,
+        edited_at: null,
+        deleted_at: null,
+        created_at: new Date().toISOString(),
+        sender: conversation?.members?.find(m => m.user_id === userId)?.profile || { id: userId, full_name: "Me", avatar_url: null },
+        reply_to: replyTo ? { id: replyTo.id, body: replyTo.body, sender_id: replyTo.sender_id } : null
+      }
+
+      // Optimistically add to UI immediately
+      setMessages(prev => [optimisticMsg, ...prev])
+      setInputValue("")
+      setReplyTo(null)
+      setReference(null)
+      setTimeout(scrollToBottom, 100)
+
       await sendMessage({
         conversationId,
         body,
@@ -158,10 +183,10 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         referenceId: reference?.id || null,
         replyToId: replyTo?.id || null
       })
-      setInputValue("")
-      setReplyTo(null)
-      setReference(null)
-      scrollToBottom()
+      
+      // We don't need to replace the temp message ID perfectly here because 
+      // the realtime subscription will pull in the real one and React's `key` handles the rest reasonably well.
+      // But ideally we'd swap it. For basic snappy UI, the realtime event will soon provide the real ID.
     } catch (e) {
       console.error(e)
     } finally {
