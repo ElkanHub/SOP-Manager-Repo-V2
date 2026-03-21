@@ -49,16 +49,11 @@ export default async function SopViewerPage({ params }: PageProps) {
     redirect("/library")
   }
 
-  // Generate a server-side signed URL (1 hour) from the stored storage path.
-  // file_url stores the raw storage path (sop-uploads/uuid.docx).
-  let signedFileUrl: string | null = null
+  // Rather than passing a direct Supabase signed URL to the client (which triggers browser CORS blocks 
+  // on Vercel production), we pass a relative path to our internal proxy which securely fetches the blob.
+  let proxyFileUrl: string | null = null
   if (sop.file_url) {
-    const { createServiceClient: createSvc } = await import('@/lib/supabase/server')
-    const svcClient = await createSvc()
-    const { data: signed } = await svcClient.storage
-      .from('documents')
-      .createSignedUrl(sop.file_url, 3600)
-    signedFileUrl = signed?.signedUrl ?? null
+    proxyFileUrl = `/api/docs/proxy?path=${encodeURIComponent(sop.file_url)}`
   }
 
   const isOwnDept =
@@ -176,8 +171,8 @@ export default async function SopViewerPage({ params }: PageProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto px-12 py-8 bg-card">
-        {signedFileUrl ? (
-          <SopViewer fileUrl={signedFileUrl} className="max-w-3xl mx-auto" />
+        {proxyFileUrl ? (
+          <SopViewer fileUrl={proxyFileUrl} className="max-w-3xl mx-auto" />
         ) : (
           <div className="flex items-center justify-center h-full text-slate-400">
             No document available
