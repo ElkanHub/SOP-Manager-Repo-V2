@@ -53,7 +53,7 @@ export function TodoComposer() {
         return (
             <Button
                 variant="outline"
-                className="w-full text-xs h-8 bg-white border-dashed text-brand-navy hover:text-brand-navy hover:border-brand-navy shrink-0"
+                className="w-full text-xs h-8 bg-background border-dashed text-foreground/70 hover:text-foreground hover:border-foreground/50 transition-colors shrink-0"
                 onClick={() => setIsExpanded(true)}
             >
                 <Plus className="w-3 h-3 mr-1" /> Create To-Do
@@ -62,18 +62,18 @@ export function TodoComposer() {
     }
 
     return (
-        <div className="bg-white border rounded-lg p-2 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="bg-background border border-border/50 rounded-lg p-2 shadow-sm ring-1 ring-transparent focus-within:ring-brand-teal/30 focus-within:border-brand-teal/50 transition-all animate-in fade-in slide-in-from-bottom-2 duration-200">
             <Textarea
                 ref={textareaRef}
                 value={content}
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setContent(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="What do you need to do?"
-                className="min-h-[60px] resize-none text-sm border-0 focus-visible:ring-0 px-2 py-1"
+                className="min-h-[60px] resize-none text-sm border-0 focus-visible:ring-0 px-2 py-1 bg-transparent"
                 disabled={loading}
             />
             <div className="flex justify-between items-center mt-2 px-1">
-                <p className="text-[10px] text-slate-400">Press Enter to save</p>
+                <p className="text-[10px] text-muted-foreground font-medium">Press Enter to save</p>
                 <div className="flex gap-1">
                     <Button
                         variant="ghost"

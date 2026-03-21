@@ -75,22 +75,26 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     }
 
     return (
-        <aside className="flex flex-col w-80 h-full border-l bg-card shadow-[-4px_0_24px_-12px_rgba(0,0,0,0.1)]">
-            <div className="flex items-center justify-between p-4 border-b bg-muted rounded-t-lg">
-                <div className="flex items-center gap-2 font-semibold text-foreground">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+        <aside className="flex flex-col w-80 h-full border-l border-border bg-background shadow-2xl relative z-50">
+            <div className="flex items-center justify-between p-4 border-b border-white/10 bg-brand-navy relative overflow-hidden shrink-0">
+                <div className="absolute inset-0 bg-white/5 mix-blend-overlay"></div>
+                <div className="flex items-center gap-2.5 font-bold text-lg text-white relative z-10 tracking-tight">
+                    <div className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-teal shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
+                    </div>
                     The Pulse
                 </div>
             </div>
 
-            <Tabs defaultValue="all" className="flex-1 flex flex-col pt-2">
-                <div className="px-4 pb-2 border-b">
-                    <TabsList className="w-full grid grid-cols-3">
-                        <TabsTrigger value="all" className="text-xs">All</TabsTrigger>
-                        <TabsTrigger value="notices" className="text-xs">
+            <Tabs defaultValue="all" className="flex-1 flex flex-col pt-0 overflow-hidden">
+                <div className="px-4 py-3 border-b border-border bg-muted/10 shrink-0">
+                    <TabsList className="w-full grid grid-cols-3 h-9 bg-muted/50 p-1">
+                        <TabsTrigger value="all" className="text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">All</TabsTrigger>
+                        <TabsTrigger value="notices" className="text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <Bell className="w-3 h-3 mr-1" /> Notices
                         </TabsTrigger>
-                        <TabsTrigger value="todos" className="text-xs">
+                        <TabsTrigger value="todos" className="text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm">
                             <CheckSquare className="w-3 h-3 mr-1" /> To-Do
                         </TabsTrigger>
                     </TabsList>
@@ -120,7 +124,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 </ScrollArea>
             </Tabs>
 
-            <div className="p-4 border-t bg-slate-50 mt-auto flex flex-col gap-2">
+            <div className="p-4 border-t border-border bg-muted/10 mt-auto flex flex-col gap-3 shrink-0 relative z-10">
                 <NoticeComposer profile={profile} />
                 <TodoComposer />
             </div>
