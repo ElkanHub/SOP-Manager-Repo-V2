@@ -126,21 +126,33 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
   if (type === 'group' && (allMembers.length < 3 || !name?.trim())) throw new Error("Group requires name and 3+ total members")
 
   if (type === 'direct') {
-    // Check if exists
+    // Check if exists using a proper inner query to avoid relationship filtering
     const otherId = memberIds.find(id => id !== user.id)
-    const { data: myDMs } = await adminClient
-      .from('conversations')
-      .select('id, members:conversation_members(user_id)')
-      .eq('type', 'direct')
-      .eq('conversation_members.user_id', user.id)
+    
+    // 1. Get all conversations this user is in
+    const { data: myMemberships } = await adminClient
+      .from('conversation_members')
+      .select('conversation_id')
+      .eq('user_id', user.id)
 
-    if (myDMs) {
-       for (const dm of myDMs) {
-          const members = dm.members as any[]
-          if (members?.length === 2 && members.find(m => m.user_id === otherId)) {
-             return { id: dm.id } // return existing
-          }
-       }
+    if (myMemberships && myMemberships.length > 0) {
+      const convIds = myMemberships.map(m => m.conversation_id)
+      
+      // 2. Fetch those conversations to check members
+      const { data: sharedDMs } = await adminClient
+        .from('conversations')
+        .select('id, members:conversation_members(user_id)')
+        .in('id', convIds)
+        .eq('type', 'direct')
+
+      if (sharedDMs) {
+         for (const dm of sharedDMs) {
+            const members = dm.members as any[]
+            if (members?.length === 2 && members.find(m => m.user_id === otherId)) {
+               return { id: dm.id } // return existing
+            }
+         }
+      }
     }
   }
 

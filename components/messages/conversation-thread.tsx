@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client"
 import { format, isSameDay } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Message, Conversation, Profile } from "@/types/app.types"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ReferencePicker } from "./reference-picker"
 import { sendMessage, editMessage, deleteMessage, markConversationRead } from "@/actions/messages"
 
@@ -344,7 +345,25 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
               <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><Settings className="w-4 h-4" /></Button>
             </>
           )}
-          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground"><MoreHorizontal className="w-4 h-4" /></Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" />}>
+              <MoreHorizontal className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem>
+                <div className="flex items-center">
+                  <BellOff className="w-4 h-4 mr-2" />
+                  <span>Mute Notifications</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {conversation.type === 'group' ? (
+                 <DropdownMenuItem className="text-red-500">Leave Group</DropdownMenuItem>
+              ) : (
+                 <DropdownMenuItem>View Profile</DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
