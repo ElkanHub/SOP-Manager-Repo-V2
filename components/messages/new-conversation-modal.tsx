@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,25 +21,29 @@ export function NewConversationModal({ isOpen, onClose, userId }: { isOpen: bool
   const { setActive } = useMessagesStore()
   const supabase = createClient()
 
-  // Debounced search logic would go here
-  const handleSearch = async (val: string) => {
-      setSearch(val)
-      if (val.length < 2) {
-          setResults([])
-          return
+  const [allUsers, setAllUsers] = useState<any[]>([])
+
+  useEffect(() => {
+      if (isOpen && allUsers.length === 0) {
+          const fetchAllUsers = async () => {
+              setLoading(true)
+              const { data } = await supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url, department, role')
+                .eq('is_active', true)
+                .neq('id', userId)
+                .order('full_name')
+                
+              setAllUsers(data || [])
+              setLoading(false)
+          }
+          fetchAllUsers()
       }
-      setLoading(true)
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url, department, role')
-        .eq('is_active', true)
-        .neq('id', userId)
-        .ilike('full_name', `%${val}%`)
-        .limit(10)
-        
-      setResults(data || [])
-      setLoading(false)
-  }
+  }, [isOpen, userId, supabase, allUsers.length])
+
+  const displayedUsers = search.trim() === "" 
+    ? allUsers 
+    : allUsers.filter(u => u.full_name.toLowerCase().includes(search.toLowerCase()))
 
   const toggleMember = (user: any) => {
       if (selectedMembers.find(m => m.id === user.id)) {
@@ -118,39 +122,37 @@ export function NewConversationModal({ isOpen, onClose, userId }: { isOpen: bool
             </div>
         )}
 
-        <div className="relative">
+        <div className="relative mt-2">
              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
              <Input 
                  placeholder={type === 'direct' ? "Search for a person..." : "Add members..."} 
                  className="pl-9"
                  value={search}
-                 onChange={(e) => handleSearch(e.target.value)}
+                 onChange={(e) => setSearch(e.target.value)}
              />
-             {search && (
-                 <div className="absolute top-12 left-0 w-[100%] bg-popover border border-border rounded-md shadow-lg z-50 max-h-[200px] overflow-y-auto">
-                     {loading ? (
-                         <div className="p-3 text-sm text-muted-foreground text-center">Searching...</div>
-                     ) : results.length > 0 ? (
-                         results.map(r => (
-                             <div 
-                               key={r.id} 
-                               className="flex items-center gap-3 p-2 hover:bg-muted cursor-pointer"
-                               onClick={() => toggleMember(r)}
-                             >
-                                 <div className="w-8 h-8 rounded-full bg-brand-navy flex items-center justify-center text-[10px] text-white font-semibold">
-                                     {r.full_name?.substring(0,2).toUpperCase()}
-                                 </div>
-                                 <div className="flex-1">
-                                     <div className="text-sm font-semibold">{r.full_name}</div>
-                                     <div className="text-xs text-muted-foreground uppercase">{r.department} · {r.role}</div>
-                                 </div>
+             <div className="mt-2 border border-border rounded-md max-h-[220px] overflow-y-auto w-full bg-background">
+                 {loading ? (
+                     <div className="p-4 text-sm text-muted-foreground text-center">Loading users...</div>
+                 ) : displayedUsers.length > 0 ? (
+                     displayedUsers.map(r => (
+                         <div 
+                           key={r.id} 
+                           className="flex items-center gap-3 p-2 hover:bg-muted cursor-pointer transition-colors"
+                           onClick={() => toggleMember(r)}
+                         >
+                             <div className="w-8 h-8 rounded-full bg-brand-navy flex items-center justify-center text-[10px] text-white font-semibold flex-shrink-0">
+                                 {r.full_name?.substring(0,2).toUpperCase()}
                              </div>
-                         ))
-                     ) : (
-                         <div className="p-3 text-sm text-muted-foreground text-center">No results found.</div>
-                     )}
-                 </div>
-             )}
+                             <div className="flex-1 min-w-0">
+                                 <div className="text-sm font-semibold truncate">{r.full_name}</div>
+                                 <div className="text-xs text-muted-foreground uppercase truncate">{r.department} · {r.role}</div>
+                             </div>
+                         </div>
+                     ))
+                 ) : (
+                     <div className="p-4 text-sm text-muted-foreground text-center">No results found.</div>
+                 )}
+             </div>
         </div>
 
         {type === 'group' && selectedMembers.length > 0 && (
