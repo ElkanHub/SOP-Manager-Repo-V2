@@ -51,9 +51,10 @@ export default async function SopViewerPage({ params }: PageProps) {
 
   // Rather than passing a direct Supabase signed URL to the client (which triggers browser CORS blocks 
   // on Vercel production), we pass a relative path to our internal proxy which securely fetches the blob.
+  // We add a cache-buster (v=version) to ensure we don't get stuck with stale 304 responses in prod.
   let proxyFileUrl: string | null = null
   if (sop.file_url) {
-    proxyFileUrl = `/api/docs/proxy?path=${encodeURIComponent(sop.file_url)}`
+    proxyFileUrl = `/api/docs/proxy?path=${encodeURIComponent(sop.file_url)}&v=${encodeURIComponent(sop.version)}`
   }
 
   const isOwnDept =

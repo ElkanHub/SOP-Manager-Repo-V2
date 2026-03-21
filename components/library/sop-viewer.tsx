@@ -26,18 +26,21 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
       setError(null)
 
       try {
+        console.log("[SopViewer] Fetching document from:", fileUrl)
         const response = await fetch(fileUrl)
         if (!response.ok) {
-          throw new Error("Failed to fetch document")
+          throw new Error(`Failed to fetch document: ${response.statusText}`)
         }
 
         const arrayBuffer = await response.arrayBuffer()
+        console.log("[SopViewer] Fetched bytes:", arrayBuffer.byteLength)
         
         if (containerRef.current) {
           // Clear previous content
           containerRef.current.innerHTML = ""
           
           const docx = await import("docx-preview")
+          console.log("[SopViewer] docx-preview rendering...")
           await docx.renderAsync(arrayBuffer, containerRef.current, undefined, {
             className: "docx-preview",
             inWrapper: false,
@@ -53,6 +56,7 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
             showChanges: false,
             debug: false
           })
+          console.log("[SopViewer] docx-preview render complete.")
         }
       } catch (err) {
         console.error("Error rendering SOP:", err)
