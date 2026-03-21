@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import * as docx from "docx-preview"
 import { FileText, Loader2, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils/cn"
 
@@ -38,6 +37,7 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
           // Clear previous content
           containerRef.current.innerHTML = ""
           
+          const docx = await import("docx-preview")
           await docx.renderAsync(arrayBuffer, containerRef.current, undefined, {
             className: "docx-preview",
             inWrapper: false,
