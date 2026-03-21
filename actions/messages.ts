@@ -1,6 +1,6 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 
 export async function sendMessage({ 
   conversationId, 
@@ -21,8 +21,10 @@ export async function sendMessage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
+  const adminClient = await createServiceClient()
+
   // Verify membership
-  const { data: member } = await supabase
+  const { data: member } = await adminClient
     .from('conversation_members')
     .select('user_id')
     .eq('conversation_id', conversationId)
@@ -34,7 +36,7 @@ export async function sendMessage({
   if (body.trim().length === 0) throw new Error("Message cannot be empty")
   if (body.trim().length > 2000) throw new Error("Message too long")
 
-  const { data: message, error } = await supabase
+  const { data: message, error } = await adminClient
     .from('messages')
     .insert({
       conversation_id: conversationId,
@@ -54,7 +56,7 @@ export async function sendMessage({
   }
 
   // Update last read for self
-  await supabase
+  await adminClient
     .from('conversation_members')
     .update({ last_read_at: new Date().toISOString() })
     .eq('conversation_id', conversationId)
@@ -68,8 +70,10 @@ export async function editMessage(messageId: string, newBody: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
+  const adminClient = await createServiceClient()
+
   // Verify ownership and time
-  const { data: msg } = await supabase
+  const { data: msg } = await adminClient
     .from('messages')
     .select('created_at, sender_id')
     .eq('id', messageId)
@@ -80,7 +84,7 @@ export async function editMessage(messageId: string, newBody: string) {
   const diffMinutes = (new Date().getTime() - new Date(msg.created_at).getTime()) / 60000
   if (diffMinutes > 15) throw new Error("Edit window closed")
 
-  const { error } = await supabase
+  const { error } = await adminClient
     .from('messages')
     .update({
       body: newBody.trim(),
@@ -98,7 +102,9 @@ export async function deleteMessage(messageId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
-  const { error } = await supabase
+  const adminClient = await createServiceClient()
+
+  const { error } = await adminClient
     .from('messages')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', messageId)
@@ -112,6 +118,8 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
+  
+  const adminClient = await createServiceClient()
   const allMembers = Array.from(new Set([...memberIds, user.id]))
 
   if (type === 'direct' && allMembers.length !== 2) throw new Error("Direct must have 2 members")
@@ -120,12 +128,7 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
   if (type === 'direct') {
     // Check if exists
     const otherId = memberIds.find(id => id !== user.id)
-    const { data: existingConvs } = await supabase.rpc('get_direct_conversation', { user1: user.id, user2: otherId })
-    // If we don't have an RPC, we can query it manually, but due to lack of RPC in schema, let's query:
-    // This is a naive check. A better check is finding conversations where type='direct' and both members exist.
-    // For now, let's just create it directly, or do a complex query.
-    // Actually, we can fetch all direct convs for user
-    const { data: myDMs } = await supabase
+    const { data: myDMs } = await adminClient
       .from('conversations')
       .select('id, members:conversation_members(user_id)')
       .eq('type', 'direct')
@@ -142,13 +145,16 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
   }
 
   // Create new
-  const { data: conv, error: convErr } = await supabase
+  const { data: conv, error: convErr } = await adminClient
     .from('conversations')
     .insert({ type, name: type === 'group' ? name?.trim() : null, created_by: user.id })
     .select('id')
     .single()
 
-  if (convErr || !conv) throw new Error("Failed to create conversation")
+  if (convErr || !conv) {
+     console.error("Conversation creation error:", convErr)
+     throw new Error("Failed to create conversation: " + JSON.stringify(convErr))
+  }
 
   // Insert members
   const memberRows = allMembers.map(id => ({
@@ -157,11 +163,11 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
     notify_setting: 'all'
   }))
 
-  const { error: memErr } = await supabase
+  const { error: memErr } = await adminClient
     .from('conversation_members')
     .insert(memberRows)
 
-  if (memErr) throw new Error("Failed to add members")
+  if (memErr) throw new Error("Failed to add members: " + JSON.stringify(memErr))
 
   return conv
 }
@@ -170,7 +176,9 @@ export async function markConversationRead(conversationId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  await supabase
+  
+  const adminClient = await createServiceClient()
+  await adminClient
     .from('conversation_members')
     .update({ last_read_at: new Date().toISOString() })
     .eq('conversation_id', conversationId)
@@ -181,7 +189,9 @@ export async function updateNotifySetting(conversationId: string, setting: 'all'
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return
-  await supabase
+  
+  const adminClient = await createServiceClient()
+  await adminClient
     .from('conversation_members')
     .update({ notify_setting: setting })
     .eq('conversation_id', conversationId)
@@ -193,23 +203,25 @@ export async function leaveGroup(conversationId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("Unauthorized")
 
+  const adminClient = await createServiceClient()
+
   // Must be group
-  const { data: conv } = await supabase.from('conversations').select('type').eq('id', conversationId).single()
+  const { data: conv } = await adminClient.from('conversations').select('type').eq('id', conversationId).single()
   if (conv?.type !== 'group') throw new Error("Cannot leave direct")
 
-  await supabase
+  await adminClient
     .from('conversation_members')
     .delete()
     .eq('conversation_id', conversationId)
     .eq('user_id', user.id)
 
   // check remaining
-  const { count } = await supabase
+  const { count } = await adminClient
     .from('conversation_members')
     .select('*', { count: 'exact', head: true })
     .eq('conversation_id', conversationId)
 
   if (count === 0) {
-     await supabase.from('conversations').update({ is_archived: true }).eq('id', conversationId)
+     await adminClient.from('conversations').update({ is_archived: true }).eq('id', conversationId)
   }
 }

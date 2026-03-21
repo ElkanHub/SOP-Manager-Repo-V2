@@ -4,6 +4,7 @@ values ('documents', 'documents', false)
 on conflict (id) do nothing;
 
 -- Allow managers to upload SOPs
+drop policy if exists "Managers can upload SOPs" on storage.objects;
 create policy "Managers can upload SOPs"
   on storage.objects for insert
   with check (
@@ -16,6 +17,7 @@ create policy "Managers can upload SOPs"
   );
 
 -- Allow QA Managers and involved managers to view documents
+drop policy if exists "QA and Managers can view documents" on storage.objects;
 create policy "QA and Managers can view documents"
   on storage.objects for select
   using (
