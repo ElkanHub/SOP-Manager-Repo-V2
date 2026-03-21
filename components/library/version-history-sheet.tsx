@@ -1,10 +1,11 @@
 "use client"
 
 import { format } from "date-fns"
-import { History, FileText } from "lucide-react"
+import { History, FileText, CheckCircle2 } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Badge } from "@/components/ui/badge"
 import { SopVersion } from "@/types/app.types"
 
 interface VersionHistorySheetProps {
