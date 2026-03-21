@@ -43,6 +43,10 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
             Icon = AlertCircle
             colorClass = "bg-red-50 text-red-600 border-red-100"
             break
+        case 'message':
+            Icon = MessageSquare
+            colorClass = "bg-brand-teal/10 text-brand-teal border-brand-teal/20"
+            break
     }
 
     const isSystem = item.sender_id === null

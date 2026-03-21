@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare } from "lucide-react"
 import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
@@ -51,6 +51,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       url: "/equipment",
       icon: <Wrench className="w-5 h-5" />,
       isActive: pathname.startsWith("/equipment"),
+    },
+    {
+      title: "Messages",
+      url: "/messages",
+      icon: <MessageSquare className="w-5 h-5" />,
+      isActive: pathname.startsWith("/messages"),
     },
     {
       title: "Calendar",
