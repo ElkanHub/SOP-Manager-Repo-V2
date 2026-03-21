@@ -34,7 +34,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: *.supabase.co",
       "connect-src 'self' *.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com",
-      "frame-src 'none'",
+      "frame-src 'self' https://view.officeapps.live.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
