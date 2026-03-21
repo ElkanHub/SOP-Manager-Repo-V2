@@ -202,15 +202,16 @@ export function SopUploadModal({
     if (submitSuccess) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">Submitted for QA Review</DialogTitle>
-                        <DialogDescription className="text-center">
-                            You&apos;ll be notified when QA responds.
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/40 shadow-2xl">
+                    <div className="h-2 bg-gradient-to-r from-green-400 to-brand-teal" />
+                    <div className="p-8 flex flex-col items-center text-center">
+                        <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+                             <CheckCircle2 className="h-10 w-10 text-green-500" />
+                        </div>
+                        <DialogTitle className="text-2xl font-bold mb-2">Submitted for QA Review</DialogTitle>
+                        <DialogDescription className="text-muted-foreground max-w-[280px]">
+                            Your SOP has been successfully queued. You&apos;ll be notified once the QA team has completed their review.
                         </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-center py-4">
-                        <CheckCircle2 className="h-16 w-16 text-green-500" />
                     </div>
                 </DialogContent>
             </Dialog>
@@ -219,31 +220,44 @@ export function SopUploadModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>Submit SOP</DialogTitle>
-                    <DialogDescription>
-                        Step {step} of 3
-                    </DialogDescription>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
+                <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-teal/10 via-brand-navy/5 to-transparent border-b border-border/50 relative">
+                    <div className="space-y-1">
+                        <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">Submit SOP Document</DialogTitle>
+                        <DialogDescription className="text-xs font-bold uppercase tracking-widest text-brand-teal/80">
+                            Regulatory Compliance Submission
+                        </DialogDescription>
+                    </div>
+
+                    {/* Progress Indicator */}
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-muted/30">
+                        <div 
+                           className="h-full bg-brand-teal transition-all duration-500 ease-in-out" 
+                           style={{ width: `${(step / 3) * 100}%` }}
+                        />
+                    </div>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground/40 font-mono">
+                         0{step} / 03
+                    </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto py-4">
+                <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
                     {step === 1 && (
-                        <div className="space-y-4">
-                            <div>
-                                <Label className="text-base">Upload SOP Document</Label>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    Upload a .docx file (max 25MB)
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Upload SOP Document</Label>
+                                <p className="text-[11px] text-muted-foreground/70 ml-1">
+                                    Microsoft Word files (.docx) up to 25MB
                                 </p>
                             </div>
 
                             <div
                                 className={`
-                                    border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-                                    transition-colors
+                                    relative border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer
+                                    transition-all duration-300 group
                                     ${file
-                                        ? 'border-green-500 dark:border-green-400 bg-green-50 dark:bg-green-950/30'
-                                        : 'border-input hover:border-muted-foreground dark:hover:border-muted-foreground'}
+                                        ? 'border-green-500/50 bg-green-500/5 shadow-inner'
+                                        : 'border-border/60 bg-muted/20 hover:bg-muted/30 hover:border-brand-teal/40 hover:shadow-md'}
                                 `}
                                 onClick={() => fileInputRef.current?.click()}
                                 onDrop={handleDrop}
@@ -258,36 +272,45 @@ export function SopUploadModal({
                                 />
 
                                 {uploading ? (
-                                    <div className="flex flex-col items-center">
-                                        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground mb-2" />
-                                        <p className="text-sm text-muted-foreground">Uploading...</p>
+                                    <div className="flex flex-col items-center gap-3">
+                                        <div className="p-4 rounded-full bg-background shadow-sm border border-border/50">
+                                            <Loader2 className="h-8 w-8 animate-spin text-brand-teal" />
+                                        </div>
+                                        <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Encrypting & Uploading...</p>
                                     </div>
                                 ) : file ? (
-                                    <div className="flex flex-col items-center">
-                                        <FileText className="h-10 w-10 text-green-500 mb-2" />
-                                        <p className="font-medium">{file.name}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                                        </p>
+                                    <div className="flex flex-col items-center gap-3 scale-in-center">
+                                        <div className="p-4 rounded-full bg-green-500/10 text-green-600 shadow-sm border border-green-500/20">
+                                            <FileText className="h-8 w-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-bold text-foreground max-w-[300px] truncate">{file.name}</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+                                                {(file.size / 1024 / 1024).toFixed(2)} MB · READY
+                                            </p>
+                                        </div>
                                         <Button
-                                            variant="link"
+                                            variant="ghost"
                                             size="sm"
-                                            className="mt-2 text-muted-foreground"
+                                            className="h-8 text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                                             onClick={(e) => {
                                                 e.stopPropagation()
                                                 setFile(null)
                                                 setFileUrl(null)
                                             }}
                                         >
-                                            Remove
+                                            <X className="h-3 w-3 mr-1" /> Remove File
                                         </Button>
                                     </div>
                                 ) : (
-                                    <div className="flex flex-col items-center">
-                                        <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-                                        <p className="text-sm text-muted-foreground">
-                                            Click to upload or drag and drop
-                                        </p>
+                                    <div className="flex flex-col items-center gap-3 transition-transform group-hover:scale-105">
+                                        <div className="p-4 rounded-full bg-background shadow-sm border border-border/50 text-muted-foreground group-hover:text-brand-teal transition-colors">
+                                            <Upload className="h-8 w-8" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-bold text-foreground">Drop document here</p>
+                                            <p className="text-[11px] text-muted-foreground/60 uppercase tracking-tight">or click to browse filesystem</p>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -302,55 +325,55 @@ export function SopUploadModal({
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
-                            <div>
-                                <Label className="text-base">Submission Type</Label>
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-3">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Submission Type</Label>
                                 <RadioGroup
                                     value={sopType}
                                     onValueChange={(v) => setSopType(v as 'new' | 'update')}
-                                    className="flex gap-4 mt-2"
+                                    className="flex gap-4"
                                 >
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="new" id="type-new" />
-                                        <Label htmlFor="type-new" className="cursor-pointer">New SOP</Label>
+                                    <div className="flex items-center space-x-2 p-3 rounded-xl border border-border/50 bg-muted/10 flex-1 hover:bg-muted/20 cursor-pointer transition-colors">
+                                        <RadioGroupItem value="new" id="type-new" className="text-brand-teal" />
+                                        <Label htmlFor="type-new" className="cursor-pointer font-bold text-sm">New SOP</Label>
                                     </div>
-                                    <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="update" id="type-update" />
-                                        <Label htmlFor="type-update" className="cursor-pointer">Update Existing</Label>
+                                    <div className="flex items-center space-x-2 p-3 rounded-xl border border-border/50 bg-muted/10 flex-1 hover:bg-muted/20 cursor-pointer transition-colors">
+                                        <RadioGroupItem value="update" id="type-update" className="text-brand-teal" />
+                                        <Label htmlFor="type-update" className="cursor-pointer font-bold text-sm">Update Existing</Label>
                                     </div>
                                 </RadioGroup>
                             </div>
 
                             {sopType === 'new' ? (
-                                <>
-                                    <div>
-                                        <Label htmlFor="sop-number">SOP Number</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sop-number" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">SOP Number</Label>
                                         <Input
                                             id="sop-number"
                                             value={sopNumber}
                                             onChange={(e) => setSopNumber(e.target.value)}
                                             placeholder="e.g., SOP-001"
-                                            className="mt-1"
+                                            className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
                                         />
                                     </div>
 
-                                    <div>
-                                        <Label htmlFor="title">Title</Label>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Document Title</Label>
                                         <Input
                                             id="title"
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
-                                            placeholder="e.g., Operating Procedure for X"
-                                            className="mt-1"
+                                            placeholder="Core Operational Procedure..."
+                                            className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
                                         />
                                     </div>
-                                </>
+                                </div>
                             ) : (
-                                <div>
-                                    <Label>Select SOP to Update</Label>
+                                <div className="space-y-2">
+                                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Target Document For Update</Label>
                                     <Select value={selectedSopId} onValueChange={handleSelectExistingSOP}>
-                                        <SelectTrigger className="mt-1">
-                                            <SelectValue placeholder="Search for an SOP..." />
+                                        <SelectTrigger className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
+                                            <SelectValue placeholder="Search SOP Registry..." />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {existingSops
@@ -358,8 +381,8 @@ export function SopUploadModal({
                                                 .map(sop => (
                                                     <SelectItem key={sop.id} value={sop.id}>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-mono">{sop.sop_number}</span>
-                                                            <span className="text-muted-foreground">- {sop.title}</span>
+                                                            <span className="font-bold font-mono text-xs">{sop.sop_number}</span>
+                                                            <span className="text-muted-foreground text-xs opacity-70">- {sop.title}</span>
                                                         </div>
                                                     </SelectItem>
                                                 ))}
@@ -367,26 +390,28 @@ export function SopUploadModal({
                                     </Select>
 
                                     {selectedSopId && (
-                                        <div className="mt-2 text-sm">
-                                            <span className="text-muted-foreground">Updating: </span>
-                                            <Badge variant="outline">{sopNumber}</Badge>
-                                            <span className="ml-2">{title}</span>
+                                        <div className="mt-2 p-3 rounded-lg bg-brand-teal/5 border border-brand-teal/20 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <Badge variant="default" className="bg-brand-teal text-[10px] font-bold">{sopNumber}</Badge>
+                                                <span className="text-sm font-semibold truncate max-w-[300px]">{title}</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-brand-teal">Selected</span>
                                         </div>
                                     )}
 
                                     {lockedError && (
-                                        <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mt-2">
-                                            <AlertCircle className="h-4 w-4" />
-                                            {lockedError}
+                                        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs mt-2">
+                                            <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                            <p className="font-medium leading-tight">{lockedError}</p>
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            <div>
-                                <Label htmlFor="primary-dept">Primary Department</Label>
+                            <div className="space-y-2">
+                                <Label htmlFor="primary-dept" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Primary Department</Label>
                                 <Select value={primaryDept} onValueChange={(v) => setPrimaryDept(v || user.department)}>
-                                    <SelectTrigger id="primary-dept" className="mt-1">
+                                    <SelectTrigger id="primary-dept" className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -399,9 +424,9 @@ export function SopUploadModal({
                                 </Select>
                             </div>
 
-                            <div>
-                                <Label>Secondary Departments (Optional)</Label>
-                                <div className="flex flex-wrap gap-2 mt-2">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Secondary Department Access</Label>
+                                <div className="flex flex-wrap gap-2 p-3 rounded-2xl border border-dashed border-border/50 bg-muted/10">
                                     {departments
                                         .filter(d => d.name !== primaryDept)
                                         .map(dept => (
@@ -409,6 +434,11 @@ export function SopUploadModal({
                                                 key={dept.name}
                                                 variant={secondaryDepts.includes(dept.name) ? "default" : "outline"}
                                                 size="sm"
+                                                className={`h-7 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all ${
+                                                    secondaryDepts.includes(dept.name) 
+                                                        ? 'bg-brand-teal hover:bg-teal-600' 
+                                                        : 'hover:bg-brand-teal/5 hover:border-brand-teal/30'
+                                                }`}
                                                 onClick={() => {
                                                     setSecondaryDepts(prev =>
                                                         prev.includes(dept.name)
@@ -426,43 +456,41 @@ export function SopUploadModal({
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-6">
-                            <div>
-                                <Label htmlFor="notes">Notes to QA (Optional)</Label>
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="space-y-2">
+                                <Label htmlFor="notes" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Notes to QA (Optional)</Label>
                                 <Textarea
                                     id="notes"
                                     value={notesToQa}
                                     onChange={(e) => setNotesToQa(e.target.value)}
                                     placeholder="Provide any additional context or notes for the QA reviewer..."
                                     maxLength={500}
-                                    className="mt-1"
+                                    className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 min-h-[120px]"
                                 />
-                                <p className="text-xs text-muted-foreground mt-1 text-right">
-                                    {notesToQa.length}/500
+                                <p className="text-[10px] font-bold text-muted-foreground tracking-widest text-right uppercase">
+                                    {notesToQa.length} / 500 characters
                                 </p>
                             </div>
 
-                            <div className="bg-muted dark:bg-card rounded-lg p-4 space-y-2">
-                                <h4 className="font-medium text-sm">Summary</h4>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <span className="text-muted-foreground">Type:</span>
-                                    <span>{sopType === 'new' ? 'New SOP' : 'Update'}</span>
-
-                                    <span className="text-muted-foreground">SOP Number:</span>
-                                    <span className="font-mono">{sopNumber}</span>
-
-                                    <span className="text-muted-foreground">Title:</span>
-                                    <span>{title}</span>
-
-                                    <span className="text-muted-foreground">Department:</span>
-                                    <span>{primaryDept}</span>
-
-                                    {secondaryDepts.length > 0 && (
-                                        <>
-                                            <span className="text-muted-foreground">Also for:</span>
-                                            <span>{secondaryDepts.join(', ')}</span>
-                                        </>
-                                    )}
+                            <div className="bg-brand-navy/5 dark:bg-card border border-brand-navy/10 rounded-2xl p-6 space-y-4">
+                                <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-brand-navy/60 dark:text-muted-foreground/60 border-b border-brand-navy/10 pb-2">Submission Summary</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Type</p>
+                                        <p className="text-sm font-bold text-foreground capitalize">{sopType}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Document ID</p>
+                                        <p className="text-sm font-mono font-bold text-brand-teal">{sopNumber}</p>
+                                    </div>
+                                    <div className="space-y-1 sm:col-span-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Title</p>
+                                        <p className="text-sm font-bold text-foreground leading-tight">{title}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Department</p>
+                                        <p className="text-sm font-bold text-foreground">{primaryDept}</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -476,10 +504,14 @@ export function SopUploadModal({
                     )}
                 </div>
 
-                <DialogFooter className="sm:justify-between">
+                <DialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/10 sm:justify-between items-center gap-4">
                     <div>
                         {step > 1 && (
-                            <Button variant="outline" onClick={() => setStep(step - 1)}>
+                            <Button 
+                                variant="ghost" 
+                                onClick={() => setStep(step - 1)}
+                                className="text-muted-foreground hover:text-foreground font-bold text-xs uppercase tracking-widest"
+                            >
                                 Back
                             </Button>
                         )}
@@ -489,22 +521,23 @@ export function SopUploadModal({
                             <Button
                                 onClick={() => setStep(step + 1)}
                                 disabled={step === 1 ? !fileUrl : !canProceedStep2()}
+                                className="bg-brand-navy hover:bg-brand-navy/90 px-8 rounded-lg shadow-md font-bold"
                             >
-                                Next
+                                Continue
                             </Button>
                         ) : (
                             <Button
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="bg-brand-teal hover:bg-teal-600"
+                                className="bg-brand-teal hover:bg-teal-600 px-8 rounded-lg shadow-lg font-bold"
                             >
                                 {submitting ? (
                                     <>
                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        Submitting...
+                                        Processing...
                                     </>
                                 ) : (
-                                    'Submit for QA Review'
+                                    'Submit for QA'
                                 )}
                             </Button>
                         )}

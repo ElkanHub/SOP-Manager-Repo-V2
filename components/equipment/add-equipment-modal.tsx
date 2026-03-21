@@ -155,15 +155,16 @@ export function AddEquipmentModal({
     if (submitSuccess) {
         return (
             <Dialog open={open} onOpenChange={onOpenChange}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">Submitted for QA Review</DialogTitle>
-                        <DialogDescription className="text-center">
-                            Equipment will be active once approved by QA.
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/40 shadow-2xl">
+                    <div className="h-2 bg-gradient-to-r from-green-400 to-brand-teal" />
+                    <div className="p-8 flex flex-col items-center">
+                        <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6 animate-in zoom-in duration-500">
+                             <CheckCircle2 className="h-10 w-10 text-green-500 dark:text-green-400" />
+                        </div>
+                        <DialogTitle className="text-2xl font-bold text-center mb-2">Submitted for Review</DialogTitle>
+                        <DialogDescription className="text-center text-muted-foreground max-w-[280px]">
+                            Equipment details have been sent to QA. It will be active once approved.
                         </DialogDescription>
-                    </DialogHeader>
-                    <div className="flex justify-center py-4">
-                        <CheckCircle2 className="h-16 w-16 text-green-500 dark:text-green-400" />
                     </div>
                 </DialogContent>
             </Dialog>
@@ -172,65 +173,80 @@ export function AddEquipmentModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
-                <DialogHeader>
-                    <DialogTitle>Add Equipment</DialogTitle>
-                    <DialogDescription>
-                        Step {step} of 3
-                    </DialogDescription>
+            <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
+                <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-navy/10 via-brand-teal/5 to-transparent border-b border-border/50 relative">
+                    <div className="space-y-1">
+                        <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">Add New Equipment</DialogTitle>
+                        <DialogDescription className="text-xs font-bold uppercase tracking-widest text-brand-teal/80">
+                            Professional Asset Registration
+                        </DialogDescription>
+                    </div>
+                    
+                    {/* Progress Indicator */}
+                    <div className="absolute bottom-0 left-0 w-full h-1 bg-muted/30">
+                        <div 
+                           className="h-full bg-brand-teal transition-all duration-500 ease-in-out" 
+                           style={{ width: `${(step / 3) * 100}%` }}
+                        />
+                    </div>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground/40 font-mono">
+                         0{step} / 03
+                    </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-y-auto py-4">
+                <div className="flex-1 overflow-y-auto px-6 py-6 custom-scrollbar">
                     {step === 1 && (
-                        <div className="space-y-6">
-                            <div>
-                                <Label htmlFor="asset-id">Asset ID <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="asset-id"
-                                    value={assetId}
-                                    onChange={(e) => setAssetId(e.target.value)}
-                                    placeholder="e.g., EQ-001"
-                                    className="mt-1"
-                                />
+                        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="asset-id" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Asset ID <span className="text-destructive">*</span></Label>
+                                    <Input
+                                        id="asset-id"
+                                        value={assetId}
+                                        onChange={(e) => setAssetId(e.target.value)}
+                                        placeholder="e.g., EQ-001"
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Equipment Name <span className="text-destructive">*</span></Label>
+                                    <Input
+                                        id="name"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        placeholder="e.g., Forklift #1"
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="serial-number" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Serial Number</Label>
+                                    <Input
+                                        id="serial-number"
+                                        value={serialNumber}
+                                        onChange={(e) => setSerialNumber(e.target.value)}
+                                        placeholder="Serial tag #"
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="model" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Model / Specs</Label>
+                                    <Input
+                                        id="model"
+                                        value={model}
+                                        onChange={(e) => setModel(e.target.value)}
+                                        placeholder="Model name/number"
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
+                                    />
+                                </div>
                             </div>
 
-                            <div>
-                                <Label htmlFor="name">Name <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="name"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    placeholder="e.g., Forklift #1"
-                                    className="mt-1"
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="serial-number">Serial Number</Label>
-                                <Input
-                                    id="serial-number"
-                                    value={serialNumber}
-                                    onChange={(e) => setSerialNumber(e.target.value)}
-                                    placeholder="Optional"
-                                    className="mt-1"
-                                />
-                            </div>
-
-                            <div>
-                                <Label htmlFor="model">Model</Label>
-                                <Input
-                                    id="model"
-                                    value={model}
-                                    onChange={(e) => setModel(e.target.value)}
-                                    placeholder="Optional"
-                                    className="mt-1"
-                                />
-                            </div>
-
-                            <div>
-                                <Label>Primary Department</Label>
+                            <div className="space-y-2 pt-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Primary Controlling Department</Label>
                                 <Select value={primaryDept} onValueChange={(v) => setPrimaryDept(v || currentUser.department)}>
-                                    <SelectTrigger className="mt-1">
+                                    <SelectTrigger className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -243,9 +259,9 @@ export function AddEquipmentModal({
                                 </Select>
                             </div>
 
-                            <div>
-                                <Label>Secondary Departments (Optional)</Label>
-                                <div className="flex flex-wrap gap-2 mt-2">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Secondary Access Departments</Label>
+                                <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-dashed border-border/50 bg-muted/10">
                                     {departments
                                         .filter(d => d.name !== primaryDept)
                                         .map(dept => (
@@ -253,6 +269,11 @@ export function AddEquipmentModal({
                                                 key={dept.name}
                                                 variant={secondaryDepts.includes(dept.name) ? "default" : "outline"}
                                                 size="sm"
+                                                className={`h-7 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all ${
+                                                    secondaryDepts.includes(dept.name) 
+                                                        ? 'bg-brand-teal hover:bg-teal-600' 
+                                                        : 'hover:bg-brand-teal/5 hover:border-brand-teal/30'
+                                                }`}
                                                 onClick={() => {
                                                     setSecondaryDepts(prev =>
                                                         prev.includes(dept.name)
@@ -267,9 +288,9 @@ export function AddEquipmentModal({
                                 </div>
                             </div>
 
-                            <div>
-                                <Label>Photo (Optional)</Label>
-                                <div className="mt-1">
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Equipment Photo</Label>
+                                <div className="p-4 rounded-xl border-2 border-dashed border-border/30 bg-muted/20 flex flex-col items-center justify-center min-h-[160px] cursor-pointer hover:bg-muted/30 transition-all group" onClick={() => !photoUrl && photoInputRef.current?.click()}>
                                     <input
                                         ref={photoInputRef}
                                         type="file"
@@ -278,34 +299,35 @@ export function AddEquipmentModal({
                                         onChange={handlePhotoUpload}
                                     />
                                     {photoUrl ? (
-                                        <div className="relative inline-block">
+                                        <div className="relative group">
                                             <img 
                                                 src={photoUrl} 
                                                 alt="Equipment" 
-                                                className="h-32 w-32 object-cover rounded-lg border"
+                                                className="h-32 w-48 object-cover rounded-lg border shadow-md"
                                             />
                                             <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="absolute -top-2 -right-2 h-6 w-6 p-0"
-                                                onClick={() => setPhotoUrl(null)}
+                                                variant="destructive"
+                                                size="icon"
+                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => { e.stopPropagation(); setPhotoUrl(null); }}
                                             >
-                                                <X className="h-4 w-4" />
+                                                <X className="h-3 w-3" />
                                             </Button>
                                         </div>
                                     ) : (
-                                        <Button
-                                            variant="outline"
-                                            onClick={() => photoInputRef.current?.click()}
-                                            disabled={uploading}
-                                        >
-                                            {uploading ? (
-                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                            ) : (
-                                                <Upload className="h-4 w-4 mr-2" />
-                                            )}
-                                            Upload Photo
-                                        </Button>
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="p-3 rounded-full bg-background/80 shadow-sm border border-border/50 group-hover:scale-110 transition-transform">
+                                                {uploading ? (
+                                                    <Loader2 className="h-6 w-6 animate-spin text-brand-teal" />
+                                                ) : (
+                                                    <Upload className="h-6 w-6 text-muted-foreground" />
+                                                )}
+                                            </div>
+                                            <p className="text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors uppercase tracking-widest">
+                                                {uploading ? 'Uploading...' : 'Tap to Upload Asset Photo'}
+                                            </p>
+                                            <p className="text-[10px] text-muted-foreground/60 tracking-tight">Support: JPG, PNG · Max 2MB</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -313,121 +335,140 @@ export function AddEquipmentModal({
                     )}
 
                     {step === 2 && (
-                        <div className="space-y-6">
-                            <div>
-                                <Label>Maintenance Frequency <span className="text-destructive">*</span></Label>
+                        <div className="space-y-8 animate-in fade-in slide-in-from-right-2 duration-300">
+                            <div className="space-y-4">
+                                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Preventive Maintenance (PM) Cycle <span className="text-red-500">*</span></Label>
                                 <RadioGroup
                                     value={frequency}
                                     onValueChange={(v) => setFrequency(v as any)}
-                                    className="flex flex-wrap gap-4 mt-2"
+                                    className="grid grid-cols-2 sm:grid-cols-3 gap-3"
                                 >
                                     {['daily', 'weekly', 'monthly', 'quarterly', 'custom'].map((freq) => (
-                                        <div key={freq} className="flex items-center space-x-2">
+                                        <div 
+                                            key={freq} 
+                                            className={`flex items-center space-x-2 rounded-xl border p-3 cursor-pointer transition-all ${frequency === freq ? 'border-brand-teal bg-brand-teal/5 ring-1 ring-brand-teal/20' : 'border-border/40 hover:bg-muted/50'}`}
+                                            onClick={() => setFrequency(freq as any)}
+                                        >
                                             <RadioGroupItem value={freq} id={`freq-${freq}`} />
-                                            <Label htmlFor={`freq-${freq}`} className="cursor-pointer capitalize">
-                                                {freq}
-                                            </Label>
+                                            <Label htmlFor={`freq-${freq}`} className="cursor-pointer capitalize font-bold text-xs">{freq}</Label>
                                         </div>
                                     ))}
                                 </RadioGroup>
                             </div>
 
                             {frequency === 'custom' && (
-                                <div>
-                                    <Label htmlFor="custom-days">Custom Interval (days)</Label>
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1">
+                                    <Label htmlFor="custom-days" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Custom Recurrence (Days)</Label>
                                     <Input
                                         id="custom-days"
                                         type="number"
                                         min="1"
                                         value={customDays}
                                         onChange={(e) => setCustomDays(e.target.value)}
-                                        placeholder="e.g., 14"
-                                        className="mt-1"
+                                        placeholder="Enter number of days..."
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all"
                                     />
                                 </div>
                             )}
 
-                            <div>
-                                <Label htmlFor="last-serviced">Last Serviced <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="last-serviced"
-                                    type="date"
-                                    value={lastServiced}
-                                    onChange={(e) => setLastServiced(e.target.value)}
-                                    className="mt-1"
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="last-serviced" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Historical Last Service <span className="text-red-500">*</span></Label>
+                                    <Input
+                                        id="last-serviced"
+                                        type="date"
+                                        value={lastServiced}
+                                        onChange={(e) => setLastServiced(e.target.value)}
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all font-mono text-xs"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Responsible Technical Assignee <span className="text-red-500">*</span></Label>
+                                    <Select value={initialAssigneeId} onValueChange={(v) => setInitialAssigneeId(v || '')}>
+                                        <SelectTrigger className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
+                                            <SelectValue placeholder="Assign personnel..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {assignableUsers
+                                                .filter(u => 
+                                                    u.department === primaryDept || 
+                                                    secondaryDepts.includes(u.department)
+                                                )
+                                                .map(user => (
+                                                    <SelectItem key={user.id} value={user.id}>
+                                                        {user.full_name} ({user.department})
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
 
-                            <div>
-                                <Label>Initial Assignee (PM Responsible)</Label>
-                                <Select value={initialAssigneeId} onValueChange={(v) => setInitialAssigneeId(v || '')}>
-                                    <SelectTrigger className="mt-1">
-                                        <SelectValue placeholder="Select a person..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {assignableUsers
-                                            .filter(u => 
-                                                u.department === primaryDept || 
-                                                secondaryDepts.includes(u.department)
-                                            )
-                                            .map(user => (
-                                                <SelectItem key={user.id} value={user.id}>
-                                                    {user.full_name} - {user.department}
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    This person will be responsible for PM tasks
-                                </p>
-                            </div>
-
-                            <div>
-                                <Label>Link to SOP (Optional)</Label>
-                                <Input
-                                    value={linkedSopId}
-                                    onChange={(e) => setLinkedSopId(e.target.value)}
-                                    placeholder="SOP ID if applicable"
-                                    className="mt-1"
-                                />
+                            <div className="space-y-2 pt-2">
+                                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Protocol Linkage (Optional SOP)</Label>
+                                <div className="relative">
+                                    <Input
+                                        value={linkedSopId}
+                                        onChange={(e) => setLinkedSopId(e.target.value)}
+                                        placeholder="Enter reference SOP-ID..."
+                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all pr-10"
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-20 italic text-[10px] font-bold uppercase tracking-tighter">REF-ID</div>
+                                </div>
                             </div>
                         </div>
                     )}
 
                     {step === 3 && (
-                        <div className="space-y-6">
-                            <div className="bg-muted dark:bg-card rounded-lg p-4 space-y-2">
-                                <h4 className="font-medium">Summary</h4>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <span className="text-muted-foreground">Asset ID:</span>
-                                    <span className="font-mono">{assetId}</span>
-                                    
-                                    <span className="text-muted-foreground">Name:</span>
-                                    <span>{name}</span>
-                                    
-                                    <span className="text-muted-foreground">Department:</span>
-                                    <span>{primaryDept}</span>
-                                    
-                                    {secondaryDepts.length > 0 && (
-                                        <>
-                                            <span className="text-muted-foreground">Also for:</span>
-                                            <span>{secondaryDepts.join(', ')}</span>
-                                        </>
-                                    )}
-                                    
-                                    <span className="text-muted-foreground">Frequency:</span>
-                                    <span className="capitalize">
-                                        {frequency === 'custom' ? `Every ${customDays} days` : frequency}
-                                    </span>
-                                    
-                                    <span className="text-muted-foreground">Last Serviced:</span>
-                                    <span>{lastServiced}</span>
+                        <div className="space-y-6 animate-in zoom-in-95 duration-300">
+                            <div className="bg-brand-navy/5 dark:bg-card border border-brand-navy/10 rounded-2xl p-6 space-y-4">
+                                <div className="flex items-center justify-between border-b border-border/40 pb-4">
+                                     <h4 className="text-sm font-bold uppercase tracking-widest text-foreground/70">Registration Summary</h4>
+                                     <Badge variant="outline" className="border-brand-teal/30 text-brand-teal bg-brand-teal/5 font-bold text-[10px]">PENDING APPROVAL</Badge>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-xs">
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Asset Identification</span>
+                                        <p className="font-mono font-bold text-foreground">{assetId}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Equipment Title</span>
+                                        <p className="font-bold text-foreground">{name}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Controlling Sector</span>
+                                        <p className="font-bold text-foreground">{primaryDept}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Service Interval</span>
+                                        <p className="capitalize font-bold text-brand-teal">
+                                            {frequency === 'custom' ? `Every ${customDays} days` : frequency}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Assignee</span>
+                                        <p className="font-bold text-foreground">
+                                            {assignableUsers.find(u => u.id === initialAssigneeId)?.full_name || 'System Auto'}
+                                        </p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Protocol Link</span>
+                                        <p className="font-bold text-foreground/70">{linkedSopId || 'Not Applicable'}</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 flex gap-2 items-start mt-2">
+                                     <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                     <p className="text-[10px] text-amber-800/80 font-medium leading-relaxed">
+                                         This registration will be logged in the facility audit trail. Please ensure all technical specifications are accurate before finalization.
+                                     </p>
                                 </div>
                             </div>
 
                             {submitError && (
-                                <div className="flex items-center gap-2 text-destructive text-sm">
-                                    <AlertCircle className="h-4 w-4" />
+                                <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-bold animate-in fade-in slide-in-from-top-1">
+                                    <AlertCircle className="h-4 w-4 shrink-0" />
                                     {submitError}
                                 </div>
                             )}
@@ -435,10 +476,14 @@ export function AddEquipmentModal({
                     )}
                 </div>
 
-                <DialogFooter className="sm:justify-between">
+                <DialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/10 sm:justify-between items-center gap-4">
                     <div>
                         {step > 1 && (
-                            <Button variant="outline" onClick={() => setStep(step - 1)}>
+                            <Button 
+                                variant="ghost" 
+                                onClick={() => setStep(step - 1)}
+                                className="text-muted-foreground hover:text-foreground font-bold text-xs uppercase tracking-widest"
+                            >
                                 Back
                             </Button>
                         )}
@@ -448,22 +493,23 @@ export function AddEquipmentModal({
                             <Button 
                                 onClick={() => setStep(step + 1)}
                                 disabled={step === 1 ? !canProceedStep2() : !canProceedStep3()}
+                                className="bg-brand-navy hover:bg-brand-navy/90 px-8 rounded-lg shadow-md"
                             >
-                                Next
+                                Continue
                             </Button>
                         ) : (
                             <Button 
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className="bg-brand-teal hover:bg-teal-600"
+                                className="bg-brand-teal hover:bg-teal-600 px-8 rounded-lg shadow-lg font-bold"
                             >
                                 {submitting ? (
                                     <>
                                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                        Submitting...
+                                        Processing...
                                     </>
                                 ) : (
-                                    'Submit for QA Review'
+                                    'Register Equipment'
                                 )}
                             </Button>
                         )}

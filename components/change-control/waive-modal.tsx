@@ -57,69 +57,80 @@ export function WaiveModal({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <UserX className="h-5 w-5" />
+            <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/95">
+                <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-navy/10 via-brand-navy/5 to-transparent border-b border-border/50">
+                    <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
+                        <div className="p-2 rounded-lg bg-brand-navy/10">
+                            <UserX className="h-5 w-5 text-brand-navy" />
+                        </div>
                         Waive Signature Requirement
                     </DialogTitle>
-                    <DialogDescription>
-                        You are waiving the signature requirement for {targetUserName}
+                    <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground/70 ml-11">
+                        Regulatory Compliance Override
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4">
-                    <div className="bg-muted dark:bg-muted/50 rounded-lg p-4">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Reference:</span>
-                            <span className="font-mono">{ccRef}</span>
-                        </div>
+                <div className="p-6 space-y-6">
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 flex gap-3">
+                         <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                         <div className="space-y-1">
+                             <p className="text-sm font-bold text-amber-900 dark:text-amber-400">Security Override Warning</p>
+                             <p className="text-xs text-amber-800/70 dark:text-amber-400/60 leading-relaxed">
+                                 You are waiving the signature for <span className="font-bold text-amber-900 dark:text-amber-300">{targetUserName}</span> for CC Reference <span className="font-mono font-bold text-amber-900 dark:text-amber-300">{ccRef}</span>.
+                             </p>
+                         </div>
                     </div>
 
-                    <div>
-                        <label className="text-sm font-medium">
-                            Reason for waiving <span className="text-destructive">*</span>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">
+                            Justification Statement <span className="text-destructive">*</span>
                         </label>
                         <Textarea 
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            placeholder="Provide a reason for waiving this signature..."
-                            rows={3}
-                            className="mt-1"
+                            placeholder="State the formal reason for this regulatory override..."
+                            rows={4}
+                            className="bg-muted/30 border-border/50 focus:border-brand-navy/50 focus:ring-brand-navy/20 resize-none transition-all"
                         />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            This reason will be recorded in the audit log
-                        </p>
+                        <div className="flex items-center justify-between px-1">
+                            <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter">
+                                This action is recorded in the permanent audit trail
+                            </p>
+                            <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest font-mono">
+                                {reason.length} / 250
+                            </p>
+                        </div>
                     </div>
 
                     {error && (
-                        <div className="flex items-center gap-2 text-destructive text-sm">
-                            <AlertCircle className="h-4 w-4" />
+                        <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-bold animate-in fade-in slide-in-from-top-1">
+                            <AlertCircle className="h-4 w-4 shrink-0" />
                             {error}
                         </div>
                     )}
                 </div>
 
-                <div className="flex justify-end gap-2">
+                <div className="p-6 pt-2 border-t border-border/40 bg-muted/5 flex flex-col-reverse sm:flex-row justify-end gap-3">
                     <Button 
-                        variant="outline" 
+                        variant="ghost" 
                         onClick={() => onOpenChange(false)}
                         disabled={loading}
+                        className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground"
                     >
                         Cancel
                     </Button>
                     <Button 
                         onClick={handleWaive}
                         disabled={loading || !reason.trim()}
-                        variant="destructive"
+                        className="bg-destructive hover:bg-destructive/90 shadow-lg font-bold px-8 rounded-lg"
                     >
                         {loading ? (
                             <>
                                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                Waiving...
+                                PROCESSING OVERRIDE...
                             </>
                         ) : (
-                            'Confirm Waive'
+                            'CONFIRM REGULATORY WAIVER'
                         )}
                     </Button>
                 </div>

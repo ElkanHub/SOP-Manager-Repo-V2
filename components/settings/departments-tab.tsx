@@ -101,87 +101,96 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
     }
 
     return (
-        <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+        <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:justify-between border-b border-border/40 pb-6">
                 <div>
-                    <h3 className="font-semibold text-foreground">Departments</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{depts.length} department(s) configured</p>
+                    <h3 className="text-2xl font-bold tracking-tight text-foreground">Departmental Infrastructure</h3>
+                    <p className="text-xs font-bold uppercase tracking-widest text-brand-teal/80 mt-1">{depts.length} Active Segment(s) Configured</p>
                 </div>
-                <Button size="sm" onClick={handleAddOpen} className="self-start sm:self-auto">
-                    <Plus className="w-4 h-4 mr-1" /> Add Department
+                <Button size="sm" onClick={handleAddOpen} className="bg-brand-navy hover:bg-brand-navy/90 text-white shadow-lg font-bold px-6">
+                    <Plus className="w-4 h-4 mr-2" /> Provision New Department
                 </Button>
             </div>
 
-            <div className="rounded-xl border border-border overflow-hidden">
+            <div className="rounded-2xl border border-border/40 overflow-hidden shadow-sm bg-background/50 backdrop-blur-sm">
                 <div className="overflow-x-auto">
-                <table className="w-full text-sm min-w-[560px]">
-                    <thead className="bg-muted/50 text-muted-foreground">
+                <table className="w-full text-sm min-w-[650px]">
+                    <thead className="bg-muted/30 text-muted-foreground border-b border-border/40">
                         <tr>
-                            <th className="text-left px-4 py-3 font-medium">Name</th>
-                            <th className="text-left px-4 py-3 font-medium">Colour</th>
-                            <th className="text-left px-4 py-3 font-medium">Type</th>
-                            <th className="text-left px-4 py-3 font-medium">Created</th>
-                            <th className="px-4 py-3" />
+                            <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Department Name</th>
+                            <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Visual Identifier</th>
+                            <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Segment Class</th>
+                            <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Provisioned Date</th>
+                            <th className="px-6 py-4" />
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-border/20">
                         {depts.map((dept) => (
-                            <tr key={dept.id} className="bg-background hover:bg-muted/30 transition-colors">
-                                <td className="px-4 py-3 font-medium text-foreground">{dept.name}</td>
-                                <td className="px-4 py-3">
+                            <tr key={dept.id} className="group hover:bg-muted/10 transition-colors">
+                                <td className="px-6 py-4">
+                                    <span className="font-bold text-foreground text-sm tracking-tight">{dept.name}</span>
+                                </td>
+                                <td className="px-6 py-4">
                                     {editingId === dept.id ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="flex gap-1">
+                                        <div className="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-200">
+                                            <div className="flex gap-1.5 p-1.5 rounded-lg bg-muted/30 border border-border/40">
                                                 {COLOUR_SWATCHES.map((s) => (
                                                     <button
                                                         key={s.value}
                                                         type="button"
-                                                        className={`w-5 h-5 rounded-full border-2 transition-all ${editColour === s.value ? 'border-foreground scale-125' : 'border-transparent'}`}
+                                                        className={`w-5 h-5 rounded-full border-2 ring-offset-2 ring-offset-background transition-all hover:scale-110 ${editColour === s.value ? 'border-foreground ring-1 ring-foreground/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
                                                         style={{ backgroundColor: s.hex }}
                                                         onClick={() => setEditColour(s.value)}
                                                         aria-label={s.label}
                                                     />
                                                 ))}
                                             </div>
-                                            <Button size="sm" variant="outline" onClick={() => handleEditColour(dept.id)} disabled={isPending}>
-                                                {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
-                                            </Button>
-                                            <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>Cancel</Button>
+                                            <div className="flex gap-1">
+                                                <Button size="sm" variant="outline" onClick={() => handleEditColour(dept.id)} disabled={isPending} className="h-8 font-bold text-[10px] uppercase tracking-widest px-3 border-brand-teal/30 text-brand-teal hover:bg-brand-teal/5">
+                                                    {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save Changes"}
+                                                </Button>
+                                                <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-8 font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Cancel</Button>
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-2">
-                                            <ColourDot colour={dept.colour} />
-                                            <span className="capitalize text-muted-foreground text-xs">{dept.colour}</span>
+                                        <div className="flex items-center gap-2.5">
+                                            <div className="relative">
+                                                <ColourDot colour={dept.colour} />
+                                                <div className="absolute inset-0 rounded-full animate-pulse-slow opacity-20" style={{ backgroundColor: COLOUR_SWATCHES.find(s => s.value === dept.colour)?.hex }} />
+                                            </div>
+                                            <span className="capitalize font-bold text-muted-foreground text-[10px] tracking-widest">{dept.colour}</span>
                                         </div>
                                     )}
                                 </td>
-                                <td className="px-4 py-3">
+                                <td className="px-6 py-4">
                                     {dept.is_qa ? (
-                                        <Badge variant="outline" className="border-brand-teal text-brand-teal gap-1">
-                                            <ShieldCheck className="w-3 h-3" /> QA
+                                        <Badge className="bg-brand-teal/10 hover:bg-brand-teal/15 text-brand-teal border-brand-teal/20 gap-1.5 px-2.5 py-0.5 h-6 font-bold text-[10px] rounded-full">
+                                            <ShieldCheck className="w-3 h-3" /> COMPLIANCE (QA)
                                         </Badge>
                                     ) : (
-                                        <Badge variant="secondary">Standard</Badge>
+                                        <Badge variant="secondary" className="bg-muted hover:bg-muted/80 text-muted-foreground border-border/40 font-bold text-[10px] rounded-full px-2.5 py-0.5 h-6">
+                                            OPERATIONAL
+                                        </Badge>
                                     )}
                                 </td>
-                                <td className="px-4 py-3 text-muted-foreground text-xs">
-                                    {new Date(dept.created_at).toLocaleDateString()}
+                                <td className="px-6 py-4">
+                                    <span className="text-muted-foreground font-mono text-[10px] font-bold">
+                                        {new Date(dept.created_at).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                                    </span>
                                 </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-1 justify-end">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                         <Button
-                                            variant="ghost" size="icon" className="h-7 w-7"
+                                            variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                             onClick={() => { setEditingId(dept.id); setEditColour(dept.colour) }}
                                             disabled={editingId === dept.id}
-                                            aria-label={`Edit ${dept.name} colour`}
                                         >
                                             <Pencil className="w-3.5 h-3.5" />
                                         </Button>
                                         <Button
                                             variant="ghost" size="icon"
-                                            className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/5"
                                             onClick={() => { setDeleteError(null); setDeleteTarget(dept) }}
-                                            aria-label={`Delete ${dept.name}`}
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </Button>
@@ -199,21 +208,23 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
 
             {/* Add Department Dialog */}
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
-                <DialogContent className="sm:max-w-sm">
-                    <DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>
-                    <div className="space-y-4 py-2">
+                <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/95">
+                    <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-teal/10 via-brand-navy/5 to-transparent border-b border-border/50">
+                        <DialogTitle className="text-xl font-bold tracking-tight text-foreground">Provision Department</DialogTitle>
+                    </DialogHeader>
+                    <div className="p-6 space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="new-dept-name">Name <span className="text-red-500">*</span></Label>
-                            <Input id="new-dept-name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Engineering" />
+                            <Label htmlFor="new-dept-name" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Department Nomenclature <span className="text-red-500">*</span></Label>
+                            <Input id="new-dept-name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Clinical Research & Development" className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all" />
                         </div>
                         <div className="space-y-2">
-                            <Label>Colour</Label>
-                            <div className="flex gap-2 flex-wrap">
+                            <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Identity Colour Assignment</Label>
+                            <div className="flex gap-2.5 flex-wrap p-3 rounded-2xl border border-dashed border-border/50 bg-muted/10">
                                 {COLOUR_SWATCHES.map((s) => (
                                     <button
                                         key={s.value}
                                         type="button"
-                                        className={`w-7 h-7 rounded-full border-2 transition-all ${newColour === s.value ? 'border-foreground scale-110 shadow-sm' : 'border-transparent'}`}
+                                        className={`w-8 h-8 rounded-full border-2 ring-offset-2 ring-offset-background transition-all hover:scale-110 ${newColour === s.value ? 'border-foreground ring-2 ring-foreground/20 shadow-md' : 'border-transparent opacity-80 hover:opacity-100'}`}
                                         style={{ backgroundColor: s.hex }}
                                         onClick={() => setNewColour(s.value)}
                                         aria-label={s.label}
@@ -221,13 +232,17 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                                 ))}
                             </div>
                         </div>
-                        {addError && <p className="text-sm text-red-600 dark:text-red-400">{addError}</p>}
+                        {addError && (
+                            <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 text-destructive text-xs font-bold animate-in fade-in slide-in-from-top-1">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                {addError}
+                            </div>
+                        )}
                     </div>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-                        <Button onClick={handleAdd} disabled={isPending}>
-                            {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                            Add Department
+                    <DialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/10 flex-col-reverse sm:flex-row gap-3">
+                        <Button variant="ghost" onClick={() => setAddOpen(false)} className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground">Cancel</Button>
+                        <Button onClick={handleAdd} disabled={isPending} className="bg-brand-navy hover:bg-brand-navy/90 text-white shadow-lg font-bold px-8 rounded-lg">
+                            {isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : "PROVISION SEGMENT"}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

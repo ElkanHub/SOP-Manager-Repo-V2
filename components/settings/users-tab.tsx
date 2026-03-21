@@ -35,9 +35,9 @@ interface UsersTabProps {
 function UserAvatar({ profile }: { profile: ProfileWithEmail }) {
     const initials = profile.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
     return profile.avatar_url ? (
-        <img src={profile.avatar_url} alt={profile.full_name} className="w-8 h-8 rounded-full object-cover" />
+        <img src={profile.avatar_url} alt={profile.full_name} className="w-9 h-9 rounded-xl object-cover border border-border/40 shadow-sm" />
     ) : (
-        <div className="w-8 h-8 rounded-full bg-brand-blue/10 text-brand-blue flex items-center justify-center text-xs font-semibold">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-teal/20 to-brand-navy/10 text-brand-teal flex items-center justify-center text-xs font-bold border border-brand-teal/10 shadow-sm">
             {initials}
         </div>
     )
@@ -101,12 +101,12 @@ function UserRow({
 
     return (
         <tr className="bg-background hover:bg-muted/30 transition-colors">
-            <td className="px-4 py-3">
-                <div className="flex items-center gap-3">
+            <td className="px-6 py-4">
+                <div className="flex items-center gap-4">
                     <UserAvatar profile={user} />
-                    <div>
-                        <p className="font-medium text-foreground text-sm leading-tight">{user.full_name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email ?? user.job_title}</p>
+                    <div className="space-y-0.5">
+                        <p className="font-bold text-foreground text-sm tracking-tight">{user.full_name}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{user.email ?? user.job_title}</p>
                     </div>
                 </div>
             </td>
@@ -238,25 +238,39 @@ function UserRow({
 
                 {/* Deactivate Confirm */}
                 <AlertDialog open={deactivateOpen} onOpenChange={(v) => { if (!v) setDeactivateOpen(false) }}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Deactivate {user.full_name}?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will immediately invalidate their session and prevent login. Their data is preserved. You can reactivate them at any time.
+                    <AlertDialogContent className="p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
+                        <AlertDialogHeader className="p-6 pb-4 bg-gradient-to-r from-red-500/10 via-brand-navy/5 to-transparent border-b border-border/50">
+                            <AlertDialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+                                <UserX className="w-5 h-5 text-red-500" />
+                                Deactivate Personnel
+                            </AlertDialogTitle>
+                            <AlertDialogDescription className="text-xs font-bold uppercase tracking-widest text-red-500/80">
+                                System Access Restriction
                             </AlertDialogDescription>
                         </AlertDialogHeader>
-                        {deactivateError && (
-                            <p className="text-sm text-red-600 dark:text-red-400 px-4">{deactivateError}</p>
-                        )}
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <div className="p-6 py-4 space-y-4">
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                You are about to deactivate <span className="font-bold text-foreground">{user.full_name}</span>. This will immediately invalidate their active sessions and prevent future authentication.
+                            </p>
+                            <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 flex gap-3 items-start">
+                                <ShieldOff className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <p className="text-[10px] text-amber-800/80 font-medium leading-relaxed uppercase tracking-wide">
+                                    Historical records, audit logs, and SOP signatures will remain preserved for compliance purposes.
+                                </p>
+                            </div>
+                            {deactivateError && (
+                                <p className="text-xs font-bold text-red-600 bg-red-50 p-2 rounded-lg">{deactivateError}</p>
+                            )}
+                        </div>
+                        <AlertDialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/10 flex flex-col-reverse sm:flex-row gap-3">
+                            <AlertDialogCancel className="mt-0 border-none bg-transparent hover:bg-muted font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Abort</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={handleDeactivate}
                                 disabled={deactivating}
-                                className="bg-red-600 hover:bg-red-700 text-white"
+                                className="bg-red-600 hover:bg-red-700 text-white shadow-lg font-bold px-8 rounded-lg"
                             >
                                 {deactivating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                                Deactivate
+                                CONFIRM DEACTIVATION
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
@@ -278,17 +292,18 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
     const inactive = users.filter((u) => !u.is_active)
 
     const tableHeaders = (
-        <thead className="bg-muted/50 text-muted-foreground">
+        <thead className="bg-gradient-to-r from-brand-navy/5 via-brand-teal/5 to-transparent border-b border-border/50">
             <tr>
-                <th className="text-left px-4 py-3 font-medium text-sm">User</th>
-                <th className="text-left px-4 py-3 font-medium text-sm">Department</th>
-                <th className="text-left px-4 py-3 font-medium text-sm">Role</th>
-                <th className="text-left px-4 py-3 font-medium text-sm">Access</th>
-                <th className="text-left px-4 py-3 font-medium text-sm">Status</th>
-                <th className="text-left px-4 py-3 font-medium text-sm">Joined</th>
-                <th className="px-4 py-3" />
+                <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Personnel</th>
+                <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Department</th>
+                <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Role</th>
+                <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Governance</th>
+                <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Status</th>
+                <th className="text-left px-4 py-4 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/70">Registration</th>
+                <th className="px-6 py-4" />
             </tr>
         </thead>
+    )
     )
 
     return (

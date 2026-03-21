@@ -50,34 +50,48 @@ export function PasswordConfirmModal({
 
     return (
         <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
-            <DialogContent className="sm:max-w-sm">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                        <KeyRound className="w-5 h-5 text-amber-500" />
+            <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/95">
+                <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-navy/10 to-transparent border-b border-border/50">
+                    <DialogTitle className="flex items-center gap-2 text-xl font-bold tracking-tight text-foreground">
+                        <div className="p-2 rounded-lg bg-brand-navy/10">
+                            <KeyRound className="w-5 h-5 text-brand-navy" />
+                        </div>
                         {title}
                     </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 py-1">
-                    <p className="text-sm text-muted-foreground">{description}</p>
+                <div className="p-6 space-y-4">
+                    <p className="text-xs font-medium text-muted-foreground leading-relaxed">{description}</p>
                     <div className="space-y-2">
-                        <Label htmlFor="admin-confirm-password">Your Password</Label>
+                        <Label htmlFor="admin-confirm-password" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Identity Verification Required</Label>
                         <Input
                             id="admin-confirm-password"
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm() }}
-                            placeholder="Enter your current password"
+                            placeholder="Current account password"
                             autoComplete="current-password"
+                            className="bg-muted/30 border-border/50 focus:border-brand-navy/50 focus:ring-brand-navy/20 transition-all font-mono"
                         />
                     </div>
-                    {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+                    {error && (
+                        <div className="flex items-center gap-2 p-2 rounded-lg bg-destructive/10 text-destructive text-xs font-medium animate-in fade-in slide-in-from-top-1 duration-200">
+                             <div className="w-1 h-1 rounded-full bg-destructive" />
+                             {error}
+                        </div>
+                    )}
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={handleClose} disabled={loading}>Cancel</Button>
-                    <Button onClick={handleConfirm} disabled={loading || !password}>
+                <DialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/5 flex-col-reverse sm:flex-row gap-2">
+                    <Button variant="ghost" onClick={handleClose} disabled={loading} className="font-bold text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={handleConfirm} 
+                        disabled={loading || !password}
+                        className="bg-brand-navy hover:bg-brand-navy/90 shadow-md font-bold px-6"
+                    >
                         {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                        {loading ? "Verifying…" : confirmLabel}
+                        {loading ? "AUTHENTICATING…" : (confirmLabel || "Confirm Identity")}
                     </Button>
                 </DialogFooter>
             </DialogContent>

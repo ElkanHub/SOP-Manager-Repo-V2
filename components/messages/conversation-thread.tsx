@@ -491,39 +491,47 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
       />
 
       <Dialog open={!!profileModalUser} onOpenChange={(open) => !open && setProfileModalUser(null)}>
-        <DialogContent className="sm:max-w-xs md:max-w-sm rounded-[16px] border border-border/10 shadow-2xl overflow-hidden p-0 bg-gradient-to-br from-background via-background to-muted/20">
+        <DialogContent className="sm:max-w-xs md:max-w-sm rounded-3xl border border-border/10 shadow-3xl overflow-hidden p-0 bg-gradient-to-br from-background via-background to-brand-navy/[0.02]">
           <DialogHeader className="sr-only">
-            <DialogTitle>User Profile</DialogTitle>
+            <DialogTitle>Personnel Profile</DialogTitle>
           </DialogHeader>
 
-          <div className="h-24 bg-gradient-to-r from-brand-navy to-brand-blue relative w-full">
-            <div className="absolute inset-0 bg-white/5 mix-blend-overlay"></div>
+          <div className="h-28 bg-gradient-to-r from-brand-navy via-brand-navy/90 to-brand-teal relative w-full overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)]" />
+            <div className="absolute inset-0 bg-grid-white/[0.05] [mask-image:linear-gradient(to_bottom,white,transparent)]" />
             {profileModalUser?.department && (
-              <div className="absolute top-3 left-3 bg-white/10 text-white backdrop-blur-md px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/20">
+              <div className="absolute top-4 left-4 bg-white/10 text-white backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-[0.2em] border border-white/20 shadow-sm">
                 {profileModalUser.department}
               </div>
             )}
           </div>
 
           {profileModalUser && (
-            <div className="flex flex-col items-center pb-8 px-6 -mt-12 relative z-10">
-              <div className="rounded-full p-1 bg-background shadow-lg mb-4 ring-1 ring-border/5">
-                <Avatar className="h-20 w-20 border-2 border-transparent">
-                  <AvatarImage src={profileModalUser.avatar_url || ""} />
-                  <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-blue text-white text-xl font-bold">
-                    {profileModalUser.full_name?.substring(0, 2).toUpperCase() || "US"}
+            <div className="flex flex-col items-center pb-10 px-8 -mt-14 relative z-10">
+              <div className="rounded-[2rem] p-1.5 bg-background shadow-2xl mb-5 ring-1 ring-border/5">
+                <Avatar className="h-24 w-24 border-2 border-transparent">
+                  <AvatarImage src={profileModalUser.avatar_url || ""} className="object-cover" />
+                  <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-teal text-white text-2xl font-bold">
+                    {profileModalUser.full_name?.substring(0, 2).toUpperCase() || "PS"}
                   </AvatarFallback>
                 </Avatar>
               </div>
 
-              <div className="text-center w-full">
-                <h3 className="text-xl font-bold text-foreground tracking-tight">{profileModalUser.full_name}</h3>
-                <div className="flex items-center justify-center gap-2 mt-2">
+              <div className="text-center w-full space-y-3">
+                <div className="space-y-1">
+                    <h3 className="text-2xl font-bold text-foreground tracking-tight leading-none">{profileModalUser.full_name}</h3>
+                    <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-[0.3em]">{profileModalUser.job_title || "Personnel"}</p>
+                </div>
+                
+                <div className="flex items-center justify-center gap-2 pt-2">
                   {profileModalUser.role && (
-                    <span className="text-[13px] text-brand-teal font-semibold capitalize bg-brand-teal/10 px-2.5 py-0.5 rounded-full ring-1 ring-brand-teal/20">
+                    <span className="text-[11px] font-bold text-brand-teal uppercase tracking-widest bg-brand-teal/10 px-4 py-1.5 rounded-xl ring-1 ring-brand-teal/20 shadow-sm">
                       {profileModalUser.role.replace('_', ' ')}
                     </span>
                   )}
+                  <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center border border-border/50">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-muted-foreground"><path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9.5C2 7 4 5 6.5 5H18c2.2 0 4 1.8 4 4v8Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>
+                  </div>
                 </div>
               </div>
             </div>
