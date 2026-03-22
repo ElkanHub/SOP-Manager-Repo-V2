@@ -986,3 +986,98 @@ next.config.ts                          # MODIFIED — security headers + image 
 ```
 
 **Verification:** `npm run build` — Exit code 0, 79 routes clean ✅
+
+
+
+
+
+## my prompt...use later
+
+now i want to add a crucial feature to the app... i want you to implement this securely so that it doesnt break anything and still allows for good UX...
+
+I want you to add a feature to the settings of the admin that will allow hom to add, change or modify and delete fields that displays the details of the SOP document and Equipments details..... SInce the company will have different requirements and data about each document i wwant them to be able to alter the fieldsfor the deatils they want to display on the view pages..... this change will go on to affect all other places in the app where those details will need to appear.... i want to make it dynamic....keep what we have currentky as default...but then in the setting the admin can decide to modify it which ever way they want.....
+
+This is some info about it.... i want you to carefully consolidate it with what we have in our app and find the best way to implement this.....
+
+The Core Idea
+Instead of storing extra fields as actual database columns (which would require ALTER TABLE every time), you store the field definitions in a separate table and the values in a JSONB column. This is clean, scalable, and doesn't touch your schema when a company adds fields.
+
+Database Design
+sql-- Stores the field definitions per company per document type
+CREATE TABLE custom_field_definitions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    company_id UUID REFERENCES companies(id),
+    document_type TEXT, -- e.g. 'sop', 'change_request', etc.
+    field_key TEXT,     -- e.g. 'batch_number'
+    field_label TEXT,   -- e.g. 'Batch Number'
+    field_type TEXT,    -- 'text' | 'number' | 'date' | 'select' | 'checkbox'
+    field_options JSONB, -- for select fields: ["Option A", "Option B"]
+    is_required BOOLEAN DEFAULT false,
+    is_visible BOOLEAN DEFAULT true,
+    sort_order INT,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Your existing document table gets a JSONB column for custom values
+ALTER TABLE documents ADD COLUMN custom_fields JSONB DEFAULT '{}';
+```
+
+---
+
+**How It Flows**
+```
+Admin adds a field "Batch Number" (type: text) in Settings
+        ↓
+Inserts a row into custom_field_definitions
+        ↓
+Every document form now renders "Batch Number" as an extra input
+        ↓
+On save, value is stored in documents.custom_fields -> { "batch_number": "BN-001" }
+        ↓
+Document table view shows "Batch Number" as an extra visible column
+
+The Settings UI the Admin Sees
+A table in Settings where they can:
+
+Add a new field (name, type, required toggle)
+Reorder fields (drag and drop)
+Toggle visibility
+Delete fields
+
+
+The Dynamic Form Rendering
+tsx// Fetch field definitions for this company + document type
+const { data: fieldDefs } = await supabase
+    .from('custom_field_definitions')
+    .select('*')
+    .eq('company_id', companyId)
+    .eq('document_type', 'sop')
+    .order('sort_order')
+
+// Render dynamically
+{fieldDefs.map(field => (
+    <DynamicField key={field.field_key} definition={field} />
+))}
+tsx// DynamicField component
+function DynamicField({ definition, value, onChange }) {
+    switch (definition.field_type) {
+        case 'text':    return <input ... />
+        case 'number':  return <input type="number" ... />
+        case 'date':    return <input type="date" ... />
+        case 'select':  return <select>{definition.field_options.map(...)}</select>
+        case 'checkbox': return <input type="checkbox" ... />
+    }
+}
+
+The Dynamic Table Columns
+tsx// Build columns dynamically
+const baseColumns = ['Title', 'Status', 'Created At'] // always present
+
+const customColumns = fieldDefs
+    .filter(f => f.is_visible)
+    .map(f => ({
+        header: f.field_label,
+        cell: (row) => row.custom_fields?.[f.field_key] ?? '—'
+    }))
+
+const allColumns = [...baseColumns, ...customColumns]

@@ -2684,3 +2684,5 @@ These rows are added to the QUICK REFERENCE — NEVER DO LIST:
 ---
 
 *End of BUILD.md v2.2 — Core platform (Phases 0–12) + Messaging (Phase 13). All architectural, security, data model, UX, and operational decisions documented.*
+
+
