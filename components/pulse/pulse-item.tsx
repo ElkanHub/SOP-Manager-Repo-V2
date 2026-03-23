@@ -85,7 +85,7 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
                 </div>
 
                 <p className="text-sm text-foreground/90 leading-snug break-words">
-                    {item.content}
+                    {item.body || item.content}
                 </p>
 
                 <div className="flex items-center gap-4 mt-2">
@@ -139,7 +139,7 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
                                             {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-foreground/80">{reply.content}</p>
+                                    <p className="text-sm text-foreground/80">{reply.body || reply.content}</p>
                                 </div>
                             </div>
                         ))}

@@ -21,7 +21,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
             // "everyone", or their "department", or directly to them
             const { data, error } = await supabase
                 .from('pulse_items')
-                .select('*, sender:profiles(full_name)')
+                .select('*, sender:profiles!sender_id(full_name)')
                 .or(`audience.eq.everyone,audience.eq.department,recipient_id.eq.${user.id}`)
                 .order('created_at', { ascending: false })
                 .limit(50)
