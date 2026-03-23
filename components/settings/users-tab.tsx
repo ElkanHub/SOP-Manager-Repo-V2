@@ -21,6 +21,7 @@ import {
     changeUserRole, changeUserDepartment, grantAdmin, revokeAdmin, deactivateUser, reactivateUser
 } from "@/actions/settings"
 import type { Profile, Department } from "@/types/app.types"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface ProfileWithEmail extends Profile {
     email?: string
@@ -32,16 +33,7 @@ interface UsersTabProps {
     currentUserId: string
 }
 
-function UserAvatar({ profile }: { profile: ProfileWithEmail }) {
-    const initials = profile.full_name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
-    return profile.avatar_url ? (
-        <img src={profile.avatar_url} alt={profile.full_name} className="w-9 h-9 rounded-xl object-cover border border-border/40 shadow-sm" />
-    ) : (
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-teal/20 to-brand-navy/10 text-brand-teal flex items-center justify-center text-xs font-bold border border-brand-teal/10 shadow-sm">
-            {initials}
-        </div>
-    )
-}
+// UserAvatar is now imported from @/components/user-avatar
 
 function UserRow({
     user,
@@ -103,7 +95,7 @@ function UserRow({
         <tr className="bg-background hover:bg-muted/30 transition-colors">
             <td className="px-6 py-4">
                 <div className="flex items-center gap-4">
-                    <UserAvatar profile={user} />
+                    <UserAvatar name={user.full_name} image={user.avatar_url} className="w-9 h-9 rounded-xl" />
                     <div className="space-y-0.5">
                         <p className="font-bold text-foreground text-sm tracking-tight">{user.full_name}</p>
                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">{user.email ?? user.job_title}</p>

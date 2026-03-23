@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { completeSetup } from "@/actions/onboarding-complete"
 import { CheckCircle2, Building2, Briefcase, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { UserAvatar } from "@/components/user-avatar"
 
 export function ReviewStep({ initialData }: any) {
     const [loading, setLoading] = useState(false)
@@ -40,11 +41,7 @@ export function ReviewStep({ initialData }: any) {
             <div className="border rounded-xl p-6 bg-background space-y-6">
                 <div className="flex flex-col items-center justify-center space-y-3">
                     <div className="w-20 h-20 rounded-full bg-white border-4 border-white shadow-sm overflow-hidden flex items-center justify-center">
-                        {initialData?.avatar_url ? (
-                            <img src={initialData.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                            <User className="w-10 h-10 text-slate-300" />
-                        )}
+                        <UserAvatar name={initialData?.full_name} image={initialData?.avatar_url} size="lg" className="w-full h-full rounded-none" />
                     </div>
                     <div className="text-center">
                         <h3 className="text-xl font-bold">{initialData?.full_name || "Full Name"}</h3>

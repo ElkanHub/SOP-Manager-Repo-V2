@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { saveStepTwo } from "@/actions/onboarding"
 import { createClient } from "@/lib/supabase/client"
 import { Camera, Loader2, User } from "lucide-react"
+import { UserAvatar } from "@/components/user-avatar"
 
 export function ProfileStep({ initialData, onNext }: any) {
     const [fullName, setFullName] = useState(initialData?.full_name || "")
@@ -93,11 +94,7 @@ export function ProfileStep({ initialData, onNext }: any) {
 
             <div className="flex flex-col items-center justify-center space-y-4 py-4">
                 <div className="relative group w-24 h-24 rounded-full border-4 border-slate-100 overflow-hidden bg-slate-50 flex items-center justify-center">
-                    {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
-                        <User className="w-10 h-10 text-slate-300" />
-                    )}
+                    <UserAvatar name={fullName} image={avatarUrl} className="w-full h-full rounded-none" />
 
                     <label htmlFor="avatar-upload" className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                         {uploading ? <Loader2 className="w-6 h-6 text-white animate-spin" /> : <Camera className="w-6 h-6 text-white" />}

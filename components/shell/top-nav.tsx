@@ -17,6 +17,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { GlobalSearch } from "./global-search"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { createClient } from "@/lib/supabase/client"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface TopNavProps {
     user: any;
@@ -97,12 +98,7 @@ export function TopNav({ user, profile }: TopNavProps) {
 
                     <DropdownMenu>
                         <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/20 ml-2 hover:bg-white/10" />}>
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={profile?.avatar_url || ""} alt={profile?.full_name || "User"} />
-                                <AvatarFallback className="bg-brand-navy text-white text-xs">
-                                    {profile?.full_name?.substring(0, 2).toUpperCase() || "US"}
-                                </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar name={profile?.full_name} image={profile?.avatar_url} size="sm" className="h-8 w-8" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56" align="end">
                             <DropdownMenuLabel className="font-normal">

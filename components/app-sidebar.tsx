@@ -18,6 +18,7 @@ import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user: any;
@@ -116,13 +117,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         </SidebarMenu>
         {/* User Mini Profile */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
-            {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
-            )}
-          </div>
+          <UserAvatar name={profile?.full_name} image={profile?.avatar_url} size="lg" className="w-10 h-10" />
           <div className="flex flex-col">
             <span className="text-sm font-semibold text-foreground line-clamp-1">{profile?.full_name}</span>
             <div className="flex gap-1 mt-0.5">
