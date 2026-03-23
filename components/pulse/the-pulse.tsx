@@ -107,28 +107,28 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                     </TabsList>
                 </div>
 
-                <ScrollArea className="flex-1">
-                    <TabsContent value="all" className="m-0 p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 custom-scrollbar">
+                    <TabsContent value="all" className="m-0 p-4 space-y-4 focus-visible:outline-none">
                         {topLevelItems.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No recent activity.</p>}
                         {topLevelItems.map(item => (
                             <PulseItem key={item.id} item={item} currentUser={user} replies={getReplies(item.id)} />
                         ))}
                     </TabsContent>
 
-                    <TabsContent value="notices" className="m-0 p-4 space-y-4">
+                    <TabsContent value="notices" className="m-0 p-4 space-y-4 focus-visible:outline-none">
                         {notices.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No notices.</p>}
                         {notices.map(item => (
                             <PulseItem key={item.id} item={item} currentUser={user} replies={getReplies(item.id)} />
                         ))}
                     </TabsContent>
 
-                    <TabsContent value="todos" className="m-0 p-4 space-y-4">
+                    <TabsContent value="todos" className="m-0 p-4 space-y-4 focus-visible:outline-none">
                         {todos.length === 0 && <p className="text-sm text-slate-500 text-center py-8">No tasks right now.</p>}
                         {todos.map(item => (
                             <PulseItem key={item.id} item={item} currentUser={user} />
                         ))}
                     </TabsContent>
-                </ScrollArea>
+                </div>
             </Tabs>
 
             <div className="p-4 border-t border-border bg-muted/10 mt-auto flex flex-col gap-3 shrink-0 relative z-10">
