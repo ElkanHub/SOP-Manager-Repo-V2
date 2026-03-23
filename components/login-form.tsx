@@ -80,37 +80,6 @@ export function LoginForm({
           </div>
         )}
 
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" name="email" type="email" placeholder="m@example.com" required className="bg-background" />
-        </Field>
-        <Field>
-          <div className="flex items-center">
-            <FieldLabel htmlFor="password">Password</FieldLabel>
-            <Link
-              href="/forgot-password"
-              className="ml-auto text-sm underline-offset-4 hover:underline"
-            >
-              Forgot your password?
-            </Link>
-          </div>
-          <Input id="password" name="password" type="password" required className="bg-background" />
-        </Field>
-        <Field>
-          <Button type="submit" disabled={loading || googleLoading}>
-            {loading ? "Logging in..." : "Login"}
-          </Button>
-        </Field>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground font-medium">Or continue with</span>
-          </div>
-        </div>
-
         <Button
           type="button"
           variant="outline"
@@ -134,10 +103,43 @@ export function LoginForm({
               >
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.96 3.12-2.12 4.08-1.28 1.04-3.12 1.84-5.72 1.84-4.8 0-8.72-3.84-8.72-8.64s3.92-8.64 8.72-8.64c2.56 0 4.4 1.04 5.8 2.32L20.6 3.08C18.64 1.2 15.6 0 12.48 0 6.6 0 1.6 4.8 1.6 11.12S6.6 22.24 12.48 22.24c3.28 0 5.68-1.12 7.6-3.12 1.96-1.92 2.6-4.68 2.6-7.08 0-.64-.04-1.28-.12-1.84h-10.08z" fill="currentColor" />
               </svg>
-              Google
+              Sign in with Google
             </>
           )}
         </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <Separator className="w-full" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground font-medium">Or continue with email</span>
+          </div>
+        </div>
+
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input id="email" name="email" type="email" placeholder="m@example.com" required className="bg-background" />
+        </Field>
+        <Field>
+          <div className="flex items-center">
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <Link
+              href="/forgot-password"
+              className="ml-auto text-sm underline-offset-4 hover:underline"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+          <Input id="password" name="password" type="password" required className="bg-background" />
+        </Field>
+        <Field>
+          <Button type="submit" disabled={loading || googleLoading}>
+            {loading ? "Logging in..." : "Login"}
+          </Button>
+        </Field>
+
+
         {/* create account */}
         <div className="flex items-center justify-center">
           <p className="text-sm text-balance text-muted-foreground">

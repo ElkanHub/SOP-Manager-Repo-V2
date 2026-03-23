@@ -87,38 +87,6 @@ export function SignupForm({
           </div>
         )}
 
-        <Field>
-          <FieldLabel htmlFor="name">Full Name</FieldLabel>
-          <Input id="name" name="name" type="text" placeholder="John Doe" required className="bg-background" />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" name="email" type="email" placeholder="m@example.com" required className="bg-background" />
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input id="password" name="password" type="password" required className="bg-background" />
-          <FieldDescription>Must be at least 8 characters long.</FieldDescription>
-        </Field>
-        <Field>
-          <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
-          <Input id="confirm-password" name="confirm-password" type="password" required className="bg-background" />
-        </Field>
-        <Field>
-          <Button type="submit" disabled={loading || googleLoading}>
-            {loading ? "Creating..." : "Create Account"}
-          </Button>
-        </Field>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <Separator className="w-full" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground font-medium">Or continue with</span>
-          </div>
-        </div>
-
         <Button
           type="button"
           variant="outline"
@@ -142,10 +110,44 @@ export function SignupForm({
               >
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.96 3.12-2.12 4.08-1.28 1.04-3.12 1.84-5.72 1.84-4.8 0-8.72-3.84-8.72-8.64s3.92-8.64 8.72-8.64c2.56 0 4.4 1.04 5.8 2.32L20.6 3.08C18.64 1.2 15.6 0 12.48 0 6.6 0 1.6 4.8 1.6 11.12S6.6 22.24 12.48 22.24c3.28 0 5.68-1.12 7.6-3.12 1.96-1.92 2.6-4.68 2.6-7.08 0-.64-.04-1.28-.12-1.84h-10.08z" fill="currentColor" />
               </svg>
-              Google
+              Sign up with Google
             </>
           )}
         </Button>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <Separator className="w-full" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground font-medium">Or continue with email</span>
+          </div>
+        </div>
+
+        <Field>
+          <FieldLabel htmlFor="name">Full Name</FieldLabel>
+          <Input id="name" name="name" type="text" placeholder="John Doe" required className="bg-background" />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input id="email" name="email" type="email" placeholder="m@example.com" required className="bg-background" />
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
+          <Input id="password" name="password" type="password" required className="bg-background" />
+          <FieldDescription>Must be at least 8 characters long.</FieldDescription>
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
+          <Input id="confirm-password" name="confirm-password" type="password" required className="bg-background" />
+        </Field>
+        <Field>
+          <Button type="submit" disabled={loading || googleLoading}>
+            {loading ? "Creating..." : "Create Account"}
+          </Button>
+        </Field>
+
+
         {/* login */}
         <div className="flex items-center justify-center">
           <p className="text-sm text-balance text-muted-foreground">
