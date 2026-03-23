@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { PulseItem } from "./pulse-item"
 import { NoticeComposer } from "./notice-composer"
@@ -12,12 +12,43 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 export function ThePulse({ user, profile }: { user: any, profile: any }) {
     const [items, setItems] = useState<any[]>([])
-    const supabase = createClient()
+    const [counts, setCounts] = useState({ everyone: 0, department: 0 })
+    const supabase = useMemo(() => createClient(), [])
+
+    // Fetch total counts once
+    useEffect(() => {
+        const fetchCounts = async () => {
+            const { count: everyoneCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('is_active', true)
+
+            const { count: deptCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('department', profile.department)
+                .eq('is_active', true)
+
+            setCounts({ 
+                everyone: everyoneCount || 0, 
+                department: deptCount || 0 
+            })
+        }
+        fetchCounts()
+    }, [profile.department, supabase])
+
+    // Utility to slap counts onto an item
+    const withCounts = useCallback((item: any) => {
+        let total = 0
+        if (item.audience === 'everyone') total = counts.everyone
+        else if (item.audience === 'department') total = counts.department
+        else if (item.recipient_id) total = 1
+        return { ...item, total_recipients: total }
+    }, [counts])
 
     // 1. Initial Fetch
     useEffect(() => {
         async function fetchInitial() {
-            // Fetch items with joined sender and acknowledgements
             const { data, error } = await supabase
                 .from('pulse_items')
                 .select(`
@@ -30,37 +61,12 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
 
             if (error) {
                 console.error("Pulse fetch error:", error)
-                return
-            }
-
-            if (data) {
-                // To get "X out of Y", we need total counts for the audiences
-                // We'll fetch the counts for Department and Everyone
-                const { count: everyoneCount } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('is_active', true)
-
-                const { count: deptCount } = await supabase
-                    .from('profiles')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('department', profile.department)
-                    .eq('is_active', true)
-
-                const itemsWithCounts = data.map(item => {
-                    let total = 0
-                    if (item.audience === 'everyone') total = everyoneCount || 0
-                    else if (item.audience === 'department') total = deptCount || 0
-                    else if (item.recipient_id) total = 1
-                    
-                    return { ...item, total_recipients: total }
-                })
-
-                setItems(itemsWithCounts)
+            } else if (data) {
+                setItems(data.map(withCounts))
             }
         }
         fetchInitial()
-    }, [user.id, profile.department, supabase])
+    }, [user.id, supabase, withCounts])
 
     // 2. Realtime Subscription
     useEffect(() => {
@@ -68,27 +74,24 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'pulse_items' },
-                (payload) => {
+                (payload: any) => {
                     const newItem = payload.new as any
-                    console.log("Pulse realtime payload:", payload)
-
-                    // Let RLS handle the heavy lifting, but we can do a guestimate check
-                    // if it's not for us, we just ignore it to keep the list clean.
+                    
                     const isPotentiallyForMe = 
                         newItem.recipient_id === user.id || 
                         newItem.recipient_id === null ||
                         newItem.audience === 'everyone' || 
                         newItem.audience === 'department'
 
-                    console.log("Pulse realtime isPotentiallyForMe:", isPotentiallyForMe, "Type:", newItem.type)
-
                     if (isPotentiallyForMe) {
+                        const itemWithCounts = withCounts(newItem)
+                        
                         if (newItem.sender_id) {
-                            supabase.from('profiles').select('full_name').eq('id', newItem.sender_id).single().then(({ data }) => {
-                                setItems(prev => [{ ...newItem, sender: data }, ...prev])
+                            supabase.from('profiles').select('full_name').eq('id', newItem.sender_id).single().then(({ data }: any) => {
+                                setItems(prev => [{ ...itemWithCounts, sender: data }, ...prev])
                             })
                         } else {
-                            setItems(prev => [newItem, ...prev])
+                            setItems(prev => [itemWithCounts, ...prev])
                         }
                     }
                 }
@@ -110,7 +113,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [user.id, profile.department, supabase])
+    }, [user.id, supabase, withCounts])
 
 
     const topLevelItems = items.filter(i => !i.parent_id)
