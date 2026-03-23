@@ -59,7 +59,7 @@ export function LibraryPageClient({
         )}
       </div>
 
-      <div className="mt-6 flex items-center gap-3 mb-4">
+      <div className="mt-6 flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-4 overflow-x-auto no-scrollbar max-w-full">
         <StatusFilterTab
           label="All"
           active={!statusFilter}
@@ -124,9 +124,9 @@ function StatusFilterTab({
   return (
     <a
       href={href}
-      className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${active
-        ? "bg-card shadow-sm border border-border text-brand-blue"
-        : "text-muted-foreground hover:text-foreground"
+      className={`px-4 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all ${active
+        ? "bg-background text-brand-blue shadow-sm border border-border/50"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
         }`}
     >
       {label}

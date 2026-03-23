@@ -249,7 +249,13 @@ export function SopLibraryTable({
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold"
+                    className={cn(
+                      "px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold",
+                      header.id === "sop_number" && "hidden md:table-cell",
+                      header.id === "date_listed" && "hidden lg:table-cell",
+                      header.id === "due_for_revision" && "hidden lg:table-cell",
+                      header.id === "version" && "hidden sm:table-cell"
+                    )}
                     style={{ width: header.getSize() }}
                   >
                     {header.isPlaceholder
@@ -282,7 +288,16 @@ export function SopLibraryTable({
                 )}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3">
+                  <td 
+                    key={cell.id} 
+                    className={cn(
+                      "px-4 py-3",
+                      cell.column.id === "sop_number" && "hidden md:table-cell",
+                      cell.column.id === "date_listed" && "hidden lg:table-cell",
+                      cell.column.id === "due_for_revision" && "hidden lg:table-cell",
+                      cell.column.id === "version" && "hidden sm:table-cell"
+                    )}
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

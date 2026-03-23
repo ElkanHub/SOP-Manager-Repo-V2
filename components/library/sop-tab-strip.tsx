@@ -13,7 +13,7 @@ export function SopTabStrip() {
   if (tabs.length === 0) return null
 
   return (
-    <div className="flex items-end gap-1 px-3 py-2 bg-card border border-b-0 border-border rounded-t-lg">
+    <div className="flex items-end gap-1 px-3 py-2 bg-card border border-b-0 border-border rounded-t-lg overflow-x-auto no-scrollbar">
       {tabs.map((tab) => (
         <div
           key={tab.id}
@@ -22,7 +22,7 @@ export function SopTabStrip() {
             router.push(`/library/${tab.id}`)
           }}
           className={cn(
-            "flex items-center gap-1.5 h-9 px-3 rounded-t-md border border-b-0 cursor-pointer transition-colors max-w-[160px]",
+            "flex items-center gap-1.5 h-9 px-3 rounded-t-md border border-b-0 cursor-pointer transition-colors min-w-fit max-w-[160px] whitespace-nowrap flex-shrink-0",
             activeTabId === tab.id
               ? "bg-background border-border font-semibold text-foreground"
               : "bg-muted/50 border-transparent text-muted-foreground hover:bg-muted"

@@ -136,16 +136,16 @@ export function DashboardClient({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Link href="/library?status=active">
           <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-blue shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none">
-            <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Active SOPs</div>
+            <CardContent className="pt-6 px-4 md:px-6">
+              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Active SOPs</div>
               <div className="mt-2">
                 <NumberTicker
                   value={kpi.activeSops}
                   duration={0.6}
-                  className="text-4xl font-bold text-slate-800 dark:text-slate-100"
+                  className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-slate-100"
                 />
               </div>
             </CardContent>
@@ -154,13 +154,13 @@ export function DashboardClient({
 
         <Link href={profile.role === 'manager' || profile.is_admin ? "/approvals" : "/library"}>
           <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none">
-            <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Pending Approvals</div>
+            <CardContent className="pt-6 px-4 md:px-6">
+              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Pending Approvals</div>
               <div className="mt-2">
                 <NumberTicker
                   value={kpi.pendingApprovals}
                   duration={0.6}
-                  className={`text-4xl font-bold ${kpi.pendingApprovals > 0
+                  className={`text-2xl md:text-4xl font-bold ${kpi.pendingApprovals > 0
                     ? "text-brand-teal"
                     : "text-slate-400"
                     }`}
@@ -172,15 +172,15 @@ export function DashboardClient({
 
         <Link href="/equipment">
           <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-blue-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none">
-            <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">PM Compliance</div>
+            <CardContent className="pt-6 px-4 md:px-6">
+              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">PM Compliance</div>
               <div className="mt-2 flex items-baseline gap-1">
                 <NumberTicker
                   value={kpi.pmCompliance}
                   duration={0.6}
-                  className={`text-4xl font-bold ${getComplianceColor(kpi.pmCompliance)}`}
+                  className={`text-2xl md:text-4xl font-bold ${getComplianceColor(kpi.pmCompliance)}`}
                 />
-                <span className={`text-xl font-bold ${getComplianceColor(kpi.pmCompliance)}`}>%</span>
+                <span className={`text-lg md:text-xl font-bold ${getComplianceColor(kpi.pmCompliance)}`}>%</span>
               </div>
             </CardContent>
           </Card>
@@ -188,13 +188,13 @@ export function DashboardClient({
 
         <Link href="/library?filter=due">
           <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-amber-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none">
-            <CardContent className="pt-6">
-              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Due For Revision</div>
+            <CardContent className="pt-6 px-4 md:px-6">
+              <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Due For Revision</div>
               <div className="mt-2">
                 <NumberTicker
                   value={kpi.sopsDueForRevision}
                   duration={0.6}
-                  className={`text-4xl font-bold ${kpi.sopsDueForRevision > 0
+                  className={`text-2xl md:text-4xl font-bold ${kpi.sopsDueForRevision > 0
                     ? "text-amber-600 dark:text-amber-500"
                     : "text-slate-400"
                     }`}
