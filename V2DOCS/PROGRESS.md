@@ -1037,6 +1037,9 @@ next.config.ts                          # MODIFIED — security headers + image 
 - **Dashboard Grid Reorganization**: Transitioned the dashboard KPI grid to a 2x2 layout on mobile, replacing the previous vertical stack for a more professional utilization of space.
 - **SOP Library Streamlining**: Implemented responsive column visibility in the TanStack table. Non-essential columns (SOP No., Date) now hide on small screens to prioritize document titles and status.
 - **Professional Pill Filters**: Upgraded the status filter group into a refined, high-end pill-based toggle system with smooth transitions and horizontal scrolling.
+- **Edge-to-Edge Headers**: Reconfigured the layout shell and client components to allow page headers to hit the full viewport width on mobile.
+- **Micro-Padding Optimization**: Removed unnecessary global horizontal margins on mobile, reclaimed screen real estate for cards and tables while maintaining a premium 16px internal safe zone.
+- **Shared Intials Utility**: Centralized the `getInitials` logic into `lib/utils.ts`, resolving multiple "missing function" errors and standardizing avatar fallbacks across the platform.
 
 **Verification:** `npm run build` — Exit code 0, 82 routes clean ✅
     switch (definition.field_type) {
