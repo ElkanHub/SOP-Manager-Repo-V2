@@ -43,7 +43,7 @@ export default async function DashboardLayout({
                     <AppSidebar user={user} profile={profile} isQa={isQa || false} />
 
                     {/* Main Content Area */}
-                    <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-20 md:pb-6 relative z-10 bg-background">
+                    <main className="flex-1 overflow-y-auto p-0 md:p-6 pb-20 md:pb-6 relative z-10 bg-background">
                         {children}
                     </main>
 

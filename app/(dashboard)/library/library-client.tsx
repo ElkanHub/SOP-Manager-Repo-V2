@@ -27,7 +27,7 @@ export function LibraryPageClient({
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   return (
-    <div className="p-6">
+    <div className="p-0 md:p-6">
       {/* <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-foreground">SOP Library</h1>
         {isManager && (
@@ -41,7 +41,7 @@ export function LibraryPageClient({
         )}
       </div> */}
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-4 md:px-6 py-4 shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <BookOpen className="h-4 w-4" />
@@ -59,7 +59,7 @@ export function LibraryPageClient({
         )}
       </div>
 
-      <div className="mt-6 flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-4 overflow-x-auto no-scrollbar max-w-full">
+      <div className="mt-6 flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-4 overflow-x-auto no-scrollbar max-w-full mx-4 md:mx-0">
         <StatusFilterTab
           label="All"
           active={!statusFilter}
@@ -91,13 +91,15 @@ export function LibraryPageClient({
         )}
       </div>
 
-      <SopTabStrip />
+      <div className="px-4 md:px-0">
+        <SopTabStrip />
 
-      <SopLibraryTable
-        sops={sops}
-        userDepartment={profile.department}
-        userRole={profile.role}
-      />
+        <SopLibraryTable
+          sops={sops}
+          userDepartment={profile.department}
+          userRole={profile.role}
+        />
+      </div>
 
       {isManager && (
         <SopUploadModal

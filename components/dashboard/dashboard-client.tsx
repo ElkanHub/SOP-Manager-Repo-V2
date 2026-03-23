@@ -123,13 +123,13 @@ export function DashboardClient({
   }
 
   return (
-    <div className="px-6 py-2 space-y-6">
+    <div className="px-0 md:px-6 py-2 space-y-6">
       {/* <div>
         <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
         <p className="text-muted-foreground mt-1">Welcome back, {profile.full_name}</p>
       </div> */}
       {/* Page Header */}
-      <div className="flex items-start gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+      <div className="flex items-start gap-3 border-b border-border bg-card px-4 md:px-6 py-4 shrink-0">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <FileText className="h-4 w-4" />
         </div>
@@ -139,7 +139,7 @@ export function DashboardClient({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-0">
         <Link href="/library?status=active">
           <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-blue shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none">
             <CardContent className="pt-6 px-4 md:px-6">
@@ -208,7 +208,7 @@ export function DashboardClient({
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 md:px-0">
         <Card className="shadow-sm border-slate-200 dark:border-slate-800">
           <CardContent className="pt-6">
             <h2 className="text-lg font-semibold mb-4 text-slate-800 dark:text-slate-100">Upcoming PM Tasks</h2>
