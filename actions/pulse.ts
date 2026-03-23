@@ -30,7 +30,7 @@ export async function broadcastNotice(formData: FormData) {
         .insert({
             sender_id: user.id,
             type: 'notice',
-            content,
+            body: content,
             audience,
             sender_name: profile?.full_name || 'User',
             // If audience is department and they have one, RLS matches it. We can store it in metadata if needed, but audience='department' implies sender's department.
@@ -73,7 +73,7 @@ export async function createTodo(formData: FormData) {
             sender_id: user.id,
             recipient_id: user.id, // Personal todo
             type: 'todo',
-            content,
+            body: content,
             audience: null, // Personal items don't have an audience
             sender_name: profile?.full_name || 'User',
         })
@@ -126,7 +126,7 @@ export async function replyToNotice(parentId: string, content: string) {
         .insert({
             sender_id: user.id,
             type: 'notice',
-            content,
+            body: content,
             audience: parentNode.audience, // inherit audience
             sender_name: profile?.full_name || 'User',
             parent_id: parentId,
