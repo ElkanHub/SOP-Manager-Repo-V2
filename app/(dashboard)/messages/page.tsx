@@ -11,7 +11,7 @@ export default async function MessagesPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.14))] flex-col sm:flex-row w-full overflow-hidden bg-background">
+    <div className="flex h-full flex-col sm:flex-row w-full overflow-hidden bg-background">
         <MessagesClient userId={user.id} />
     </div>
   );

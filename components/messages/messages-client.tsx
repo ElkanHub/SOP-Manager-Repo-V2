@@ -99,7 +99,7 @@ export function MessagesClient({ userId, initialActiveId }: { userId: string, in
   })
 
   return (
-    <div className="flex h-full w-full max-h-[calc(100vh-3.5rem)]">
+    <div className="flex h-full w-full">
       {/* Left Panel */}
       <div className={cn(
         "w-full md:w-[280px] shrink-0 flex flex-col border-r bg-background",
