@@ -83,9 +83,15 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
     // 3. Subscriptions
     const msgSubscription = supabase.channel(`messages:${conversationId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` }, async (payload) => {
-        // Fetch sender info for new message
-        const { data: senderData } = await supabase.from('profiles').select('id, full_name, avatar_url').eq('id', payload.new.sender_id).single()
-        const newMsg = { ...payload.new, sender: senderData } as Message
+        // Fetch full message with joins to get sender and reply_to context
+        const { data: msgData } = await supabase
+          .from('messages')
+          .select('*, sender:profiles(id, full_name, avatar_url), reply_to:messages(id, body, sender_id)')
+          .eq('id', payload.new.id)
+          .single()
+
+        if (!msgData) return
+        const newMsg = msgData as unknown as Message
 
         setMessages(prev => {
           // Optimization: Check if this message was already added optimistically by the current user
