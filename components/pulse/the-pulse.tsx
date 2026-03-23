@@ -17,18 +17,19 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     // 1. Initial Fetch
     useEffect(() => {
         async function fetchInitial() {
-            // We fetch items that are relevant to this user
-            // "everyone", or their "department", or directly to them
             const { data, error } = await supabase
                 .from('pulse_items')
-                .select('*, sender:profiles!sender_id(full_name)')
-                .or(`audience.eq.everyone,audience.eq.department,recipient_id.eq.${user.id}`)
+                .select(`
+                    *,
+                    sender:profiles!pulse_items_sender_id_fkey(full_name)
+                `)
                 .order('created_at', { ascending: false })
                 .limit(50)
 
-            if (!error && data) {
-                // Filter the department items in memory since PostgREST doesn't support complex OR with different column correlations easily here if audience is just an enum
-                // Actually the policy handles this! If they can SELECT it, we can just show it.
+            if (error) {
+                console.error("Pulse fetch error:", error)
+            } else if (data) {
+                console.log("Pulse items fetched:", data.length, data.map(d => d.type))
                 setItems(data)
             }
         }
@@ -42,15 +43,20 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'pulse_items' },
                 (payload) => {
-                    const newItem = payload.new
+                    const newItem = payload.new as any
+                    console.log("Pulse realtime payload:", payload)
 
-                    // Client-side filtering check (backup to RLS if realtime bypasses it depending on config)
-                    const isForMe =
-                        newItem.audience === 'everyone' ||
-                        (newItem.audience === 'department' && profile.department) || // Simplified dept check 
-                        newItem.recipient_id === user.id
+                    // Let RLS handle the heavy lifting, but we can do a guestimate check
+                    // if it's not for us, we just ignore it to keep the list clean.
+                    const isPotentiallyForMe = 
+                        newItem.recipient_id === user.id || 
+                        newItem.recipient_id === null ||
+                        newItem.audience === 'everyone' || 
+                        newItem.audience === 'department'
 
-                    if (isForMe) {
+                    console.log("Pulse realtime isPotentiallyForMe:", isPotentiallyForMe, "Type:", newItem.type)
+
+                    if (isPotentiallyForMe) {
                         // Fetch sender name for the new item if it's not a system message
                         if (newItem.sender_id) {
                             supabase.from('profiles').select('full_name').eq('id', newItem.sender_id).single().then(({ data }) => {
