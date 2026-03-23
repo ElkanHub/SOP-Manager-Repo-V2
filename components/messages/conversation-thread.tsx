@@ -86,7 +86,28 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         // Fetch sender info for new message
         const { data: senderData } = await supabase.from('profiles').select('id, full_name, avatar_url').eq('id', payload.new.sender_id).single()
         const newMsg = { ...payload.new, sender: senderData } as Message
-        setMessages(prev => [newMsg, ...prev])
+
+        setMessages(prev => {
+          // Optimization: Check if this message was already added optimistically by the current user
+          // Deduplicate by searching for a temporary message with the same body and sender
+          const optimisticIdx = prev.findIndex(m =>
+            m.id.startsWith('temp-') &&
+            m.body === newMsg.body &&
+            m.sender_id === newMsg.sender_id
+          )
+
+          if (optimisticIdx !== -1) {
+            const updated = [...prev]
+            updated[optimisticIdx] = newMsg
+            return updated
+          }
+
+          // If not optimistic, but message already exists (rare race condition), don't add
+          if (prev.some(m => m.id === newMsg.id)) return prev
+
+          return [newMsg, ...prev]
+        })
+
         if (payload.new.sender_id !== userId) {
           markConversationRead(conversationId)
         }

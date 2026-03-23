@@ -1040,6 +1040,7 @@ next.config.ts                          # MODIFIED — security headers + image 
 - **Edge-to-Edge Headers**: Reconfigured the layout shell and client components to allow page headers to hit the full viewport width on mobile.
 - **Micro-Padding Optimization**: Removed unnecessary global horizontal margins on mobile, reclaimed screen real estate for cards and tables while maintaining a premium 16px internal safe zone.
 - **Shared Intials Utility**: Centralized the `getInitials` logic into `lib/utils.ts`, resolving multiple "missing function" errors and standardizing avatar fallbacks across the platform.
+- **Messaging Glitch Resolution**: Implemented optimistic-to-realtime message resolution in `conversation-thread.tsx`, eliminating duplicate chat bubbles during active sessions.
 
 **Verification:** `npm run build` — Exit code 0, 82 routes clean ✅
     switch (definition.field_type) {
