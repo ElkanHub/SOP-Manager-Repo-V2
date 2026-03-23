@@ -8,6 +8,8 @@ import { NumberTicker } from "@/components/ui/number-ticker"
 import { Card, CardContent } from "@/components/ui/card"
 import { Profile } from "@/types/app.types"
 import { FileText } from "lucide-react"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getInitials } from "@/lib/utils"
 
 interface KpiData {
   activeSops: number
@@ -25,6 +27,7 @@ interface AuditEntry {
   actor_id?: string
   actor?: {
     full_name: string
+    avatar_url?: string
   }
 }
 
@@ -245,11 +248,12 @@ export function DashboardClient({
                     className="flex items-start gap-4 p-3 group hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-lg transition-colors border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
                   >
                     <div className="w-10 h-10 rounded-full bg-brand-navy flex items-center justify-center text-white overflow-hidden shadow-sm">
-                      {profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-sm font-semibold">{profile?.full_name?.substring(0, 2).toUpperCase()}</span>
-                      )}
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={entry.actor?.avatar_url} />
+                        <AvatarFallback>
+                          {getInitials(entry.actor?.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm leading-tight mb-1">

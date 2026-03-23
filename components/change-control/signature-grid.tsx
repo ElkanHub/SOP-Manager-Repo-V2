@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CcSignatory, SignatureCertificate } from "@/types/app.types"
+import { getInitials } from "@/lib/utils"
 
 interface SignatureGridProps {
     signatories: CcSignatory[]
@@ -27,9 +28,6 @@ export function SignatureGrid({
     onWaive,
     isLocked
 }: SignatureGridProps) {
-    const getInitials = (name: string) => {
-        return name.split(' ').map(n => n[0]).join('').toUpperCase()
-    }
 
     const getSignatureRecord = (userId: string) => {
         return certificates.find(cert => cert.user_id === userId)

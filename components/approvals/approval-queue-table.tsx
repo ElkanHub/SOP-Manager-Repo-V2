@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SopApprovalRequest, Profile, SopRecord } from "@/types/app.types"
 import Link from "next/link"
+import { getInitials } from "@/lib/utils"
 
 interface ApprovalQueueTableProps {
     requests: (SopApprovalRequest & {
@@ -54,10 +55,6 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
         return submittedById === currentUserId
     }
 
-    const getInitials = (name: string | undefined) => {
-        if (!name) return '?'
-        return name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-    }
 
     if (requests.length === 0) {
         return (

@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { SopViewer } from "@/components/library/sop-viewer"
 import { approveSopRequest, requestChangesSop } from "@/actions/sop"
 import { SopApprovalRequest, Profile, SopRecord } from "@/types/app.types"
+import { getInitials } from "@/lib/utils"
 
 interface ApprovalDetailClientProps {
     approvalRequest: SopApprovalRequest & {
@@ -100,10 +101,6 @@ export function ApprovalDetailClient({
         }
     }
 
-    const getInitials = (name: string | undefined) => {
-        if (!name) return '?'
-        return name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-    }
 
     return (
         <div className="container mx-auto py-6">

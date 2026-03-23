@@ -91,7 +91,7 @@ export default async function DashboardPage() {
   // Audit log — scoped to user's own department activity for employees
   let auditQuery = serviceClient
     .from('audit_log')
-    .select('*, actor:profiles!actor_id(full_name, department)')
+    .select('*, actor:profiles!actor_id(full_name, department, avatar_url)')
     .order('created_at', { ascending: false })
     .limit(10)
 
