@@ -21,7 +21,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
             // "everyone", or their "department", or directly to them
             const { data, error } = await supabase
                 .from('pulse_items')
-                .select('*')
+                .select('*, sender:profiles(full_name)')
                 .or(`audience.eq.everyone,audience.eq.department,recipient_id.eq.${user.id}`)
                 .order('created_at', { ascending: false })
                 .limit(50)
@@ -51,7 +51,14 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                         newItem.recipient_id === user.id
 
                     if (isForMe) {
-                        setItems(prev => [newItem, ...prev])
+                        // Fetch sender name for the new item if it's not a system message
+                        if (newItem.sender_id) {
+                            supabase.from('profiles').select('full_name').eq('id', newItem.sender_id).single().then(({ data }) => {
+                                setItems(prev => [{ ...newItem, sender: data }, ...prev])
+                            })
+                        } else {
+                            setItems(prev => [newItem, ...prev])
+                        }
                     }
                 }
             )

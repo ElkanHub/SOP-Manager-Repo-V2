@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 
 import {
   Sidebar,
@@ -28,6 +29,53 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 
 export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebarProps) {
   const pathname = usePathname()
+  const [unreadConversations, setUnreadConversations] = React.useState(0)
+  const supabase = createClient()
+
+  React.useEffect(() => {
+    if (!user) return
+
+    async function fetchUnreadCount() {
+      const { data: convData } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          last_message_at,
+          conversation_members!inner(last_read_at)
+        `)
+        .eq('conversation_members.user_id', user.id)
+        .eq('is_archived', false)
+
+      if (convData) {
+        const count = convData.filter((c: any) => {
+          const myMember = (c as any).conversation_members[0];
+          return c.last_message_at && myMember?.last_read_at
+            ? new Date(c.last_message_at) > new Date(myMember.last_read_at)
+            : false;
+        }).length;
+        setUnreadConversations(count);
+      }
+    }
+
+    fetchUnreadCount()
+
+    // Realtime update for unread count
+    const channel = supabase.channel('sidebar-messages')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        fetchUnreadCount()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
+        fetchUnreadCount()
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${user.id}` }, () => {
+        fetchUnreadCount()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user.id, supabase])
 
   const navItems = [
     {
@@ -102,6 +150,11 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
               >
                 {item.icon}
                 <span>{item.title}</span>
+                {item.title === "Messages" && unreadConversations > 0 && (
+                  <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px]">
+                    {unreadConversations}
+                  </Badge>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

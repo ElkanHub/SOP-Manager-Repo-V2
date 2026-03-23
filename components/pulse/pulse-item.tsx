@@ -77,7 +77,7 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
             <div className="flex-1 min-w-0 pt-1">
                 <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-xs font-semibold text-foreground truncate">
-                        {isSystem ? 'System' : item.sender_name || 'Someone'}
+                        {isSystem ? 'System' : (item.sender?.full_name || item.sender_name || 'Someone')}
                     </span>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap">
                         {timeAgo}
@@ -134,7 +134,7 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
                                 </div>
                                 <div className="flex-1 bg-muted/30 p-3 rounded-md border border-border/50 shadow-sm transition-all hover:bg-muted/50">
                                     <div className="flex justify-between items-center mb-1">
-                                        <span className="text-xs font-semibold text-foreground">{reply.sender_name}</span>
+                                        <span className="text-xs font-semibold text-foreground">{reply.sender?.full_name || reply.sender_name || 'Someone'}</span>
                                         <span className="text-[10px] text-muted-foreground">
                                             {formatDistanceToNow(new Date(reply.created_at), { addSuffix: true })}
                                         </span>
