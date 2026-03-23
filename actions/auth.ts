@@ -196,3 +196,29 @@ export async function updatePassword(formData: FormData) {
 
     return { success: true }
 }
+
+export async function signInWithGoogle() {
+    const supabase = await createClient()
+
+    // Use headers for better port and origin handling across all environments
+    const { headers: getHeaders } = await import('next/headers')
+    const headerList = await getHeaders()
+    const host = headerList.get('host')
+    const protocol = headerList.get('x-forwarded-proto') || 'http'
+    const appUrl = `${protocol}://${host}`
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${appUrl}/auth/callback`,
+        },
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    if (data.url) {
+        redirect(data.url)
+    }
+}
