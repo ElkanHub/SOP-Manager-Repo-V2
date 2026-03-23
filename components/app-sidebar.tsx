@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 
 import {
@@ -87,7 +88,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           {navItems.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton
-                render={<a href={item.url} />}
+                render={<Link href={item.url} />}
                 isActive={item.isActive}
                 className={`
                     flex items-center gap-3 px-3 py-2 rounded-md transition-all duration-200 ease-in-out
@@ -107,7 +108,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       <SidebarFooter className="border-t p-2 space-y-4">
         <SidebarMenu>
           <SidebarMenuItem className="flex items-center justify-between">
-            <SidebarMenuButton render={<a href="/settings" className="flex items-center gap-3 px-3 py-2 flex-1" />} className="text-muted-foreground hover:bg-accent hover:text-foreground">
+            <SidebarMenuButton render={<Link href="/settings" className="flex items-center gap-3 px-3 py-2 flex-1" />} className="text-muted-foreground hover:bg-accent hover:text-foreground">
               <Settings className="w-5 h-5" />
               <span>Settings</span>
             </SidebarMenuButton>

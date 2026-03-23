@@ -1,4 +1,5 @@
 import { useState } from "react"
+import Link from "next/link"
 import { Bell, FileCheck, ShieldAlert, CheckCircle2, MessageSquare, AlertCircle, CornerDownRight } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
@@ -89,9 +90,9 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
 
                 <div className="flex items-center gap-4 mt-2">
                     {item.link_url && (
-                        <a href={item.link_url} className="inline-block text-xs font-medium text-brand-teal dark:text-teal-400 hover:underline">
+                        <Link href={item.link_url} className="inline-block text-xs font-medium text-brand-teal dark:text-teal-400 hover:underline">
                             View Details &rarr;
-                        </a>
+                        </Link>
                     )}
                     {canReply && (
                         <button

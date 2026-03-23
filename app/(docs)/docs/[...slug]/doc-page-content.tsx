@@ -37,7 +37,25 @@ const components = {
     />
   ),
   p: (props: any) => <p className="text-[16px] text-muted-foreground leading-[1.8] mb-6 font-sans" {...props} />,
-  a: (props: any) => <a className="text-brand-blue font-medium decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue" {...props} />,
+  a: (props: any) => {
+    const isInternal = props.href?.startsWith('/') || props.href?.startsWith('./') || props.href?.startsWith('../')
+    if (isInternal) {
+      return (
+        <Link 
+          className="text-brand-blue font-medium decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue" 
+          {...props} 
+        />
+      )
+    }
+    return (
+      <a 
+        className="text-brand-blue font-medium decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        {...props} 
+      />
+    )
+  },
   ul: (props: any) => <ul className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-disc pl-5 space-y-2" {...props} />,
   ol: (props: any) => <ol className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-decimal pl-5 space-y-2" {...props} />,
   li: (props: any) => <li className="pl-1" {...props} />,
