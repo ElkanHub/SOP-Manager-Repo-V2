@@ -11,6 +11,8 @@ import type { Profile, Department } from "@/types/app.types"
 interface NotifPrefs {
     email: boolean
     pulse: boolean
+    notice_sound: boolean
+    message_sound: boolean
 }
 
 interface ProfileWithEmail extends Profile {
@@ -36,6 +38,8 @@ export function SettingsClient({
     const notifPrefs: NotifPrefs = {
         email: typeof rawPrefs?.email === 'boolean' ? rawPrefs.email : true,
         pulse: typeof rawPrefs?.pulse === 'boolean' ? rawPrefs.pulse : true,
+        notice_sound: typeof rawPrefs?.notice_sound === 'boolean' ? rawPrefs.notice_sound : true,
+        message_sound: typeof rawPrefs?.message_sound === 'boolean' ? rawPrefs.message_sound : true,
     }
 
     return (

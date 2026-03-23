@@ -1,6 +1,8 @@
 export interface NotificationPrefs {
     email: boolean;
     pulse: boolean;
+    notice_sound: boolean;
+    message_sound: boolean;
 }
 
 export interface Profile {

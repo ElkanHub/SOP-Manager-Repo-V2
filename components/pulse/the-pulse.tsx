@@ -90,6 +90,17 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                     if (isPotentiallyForMe) {
                         const itemWithCounts = withCounts(newItem)
                         
+                        // Play Notification Sound
+                        const prefs = profile.notification_prefs || {}
+                        const shouldPlayNotice = (newItem.type === 'notice' || newItem.type === 'todo') && (prefs.notice_sound !== false)
+                        const shouldPlayMessage = newItem.type === 'message' && (prefs.message_sound !== false)
+
+                        if (shouldPlayNotice) {
+                            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {})
+                        } else if (shouldPlayMessage) {
+                            new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3').play().catch(() => {})
+                        }
+
                         if (newItem.sender_id) {
                             supabase.from('profiles').select('full_name').eq('id', newItem.sender_id).single().then(({ data }: any) => {
                                 setItems(prev => [{ ...itemWithCounts, sender: data }, ...prev])

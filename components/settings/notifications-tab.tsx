@@ -9,6 +9,8 @@ import { updateNotificationPrefs } from "@/actions/settings"
 interface NotifPrefs {
     email: boolean
     pulse: boolean
+    notice_sound: boolean
+    message_sound: boolean
 }
 
 interface NotificationsTabProps {
@@ -16,8 +18,14 @@ interface NotificationsTabProps {
 }
 
 export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
-    const [prefs, setPrefs] = useState<NotifPrefs>(initialPrefs)
-    const [saving, setSaving] = useState<null | 'email' | 'pulse'>(null)
+    const defaultPrefs: NotifPrefs = {
+        email: initialPrefs.email ?? true,
+        pulse: initialPrefs.pulse ?? true,
+        notice_sound: initialPrefs.notice_sound ?? true,
+        message_sound: initialPrefs.message_sound ?? true
+    }
+    const [prefs, setPrefs] = useState<NotifPrefs>(defaultPrefs)
+    const [saving, setSaving] = useState<null | keyof NotifPrefs>(null)
     const [error, setError] = useState<string | null>(null)
 
     async function toggle(key: keyof NotifPrefs) {
@@ -35,7 +43,7 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
 
     return (
         <div className="space-y-6 max-w-xl">
-            <p className="text-sm text-muted-foreground">Control how you receive notifications from SOP-Guard Pro.</p>
+            <p className="text-sm text-muted-foreground">Control how you receive notifications and alerts from SOP-Guard Pro.</p>
 
             {error && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">{error}</div>
@@ -71,8 +79,8 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                             <Bell className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                         </div>
                         <div>
-                            <Label htmlFor="notif-pulse" className="font-medium cursor-pointer">Pulse In-App Notifications</Label>
-                            <p className="text-xs text-muted-foreground mt-0.5">Receive alerts via the Pulse panel</p>
+                            <Label htmlFor="notif-pulse" className="font-medium cursor-pointer">Pulse Panel Alerts</Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">Show notifications in the side panel</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -83,6 +91,45 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                             onCheckedChange={() => toggle('pulse')}
                             disabled={saving !== null}
                         />
+                    </div>
+                </div>
+
+                <div className="pt-2">
+                    <h3 className="text-sm font-semibold mb-3 text-foreground/70 px-1">Sound Preferences</h3>
+                    <div className="space-y-3">
+                        {/* Notice Sound */}
+                        <div className="flex items-center justify-between rounded-xl border border-border bg-card/50 p-4 gap-4">
+                            <div>
+                                <Label htmlFor="notif-notice-sound" className="font-medium cursor-pointer">Notice Chime</Label>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Play a sound for new broadcast notices</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {saving === 'notice_sound' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                                <Switch
+                                    id="notif-notice-sound"
+                                    checked={prefs.notice_sound}
+                                    onCheckedChange={() => toggle('notice_sound')}
+                                    disabled={saving !== null}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Message Sound */}
+                        <div className="flex items-center justify-between rounded-xl border border-border bg-card/50 p-4 gap-4">
+                            <div>
+                                <Label htmlFor="notif-message-sound" className="font-medium cursor-pointer">Message Pop</Label>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Play a sound for new direct messages</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                {saving === 'message_sound' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
+                                <Switch
+                                    id="notif-message-sound"
+                                    checked={prefs.message_sound}
+                                    onCheckedChange={() => toggle('message_sound')}
+                                    disabled={saving !== null}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

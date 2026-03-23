@@ -90,6 +90,8 @@ export async function redrawSignature(signatureUrl: string): Promise<SettingsRes
 export async function updateNotificationPrefs(prefs: {
     email: boolean
     pulse: boolean
+    notice_sound: boolean
+    message_sound: boolean
 }): Promise<SettingsResult> {
     const ctx = await getActiveUser()
     if (!ctx) return { success: false, error: 'Not authenticated' }
