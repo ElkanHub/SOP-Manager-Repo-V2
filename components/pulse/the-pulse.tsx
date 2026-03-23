@@ -40,9 +40,13 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     // Utility to slap counts onto an item
     const withCounts = useCallback((item: any) => {
         let total = 0
-        if (item.audience === 'everyone') total = counts.everyone
-        else if (item.audience === 'department') total = counts.department
-        else if (item.recipient_id) total = 1
+        if (item.audience === 'everyone') {
+            total = Math.max(0, counts.everyone - 1)
+        } else if (item.audience === 'department') {
+            total = Math.max(0, counts.department - 1)
+        } else if (item.recipient_id) {
+            total = 1
+        }
         return { ...item, total_recipients: total }
     }, [counts])
 
