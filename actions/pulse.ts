@@ -141,3 +141,30 @@ export async function replyToNotice(parentId: string, content: string) {
 
     return { success: true }
 }
+
+export async function acknowledgeNotice(itemId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('pulse_acknowledgements')
+        .insert({
+            pulse_item_id: itemId,
+            user_id: user.id
+        })
+
+    if (error) {
+        if (error.code === '23505') { // Unique constraint
+            return { error: 'Already acknowledged' }
+        }
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+
+    return { success: true }
+}

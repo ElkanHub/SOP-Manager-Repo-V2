@@ -5,12 +5,29 @@ import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { replyToNotice } from "@/actions/pulse"
+import { acknowledgeNotice } from "@/actions/pulse"
 
 export function PulseItem({ item, currentUser, replies = [] }: { item: any; currentUser: any, replies?: any[] }) {
-    const [isReplying, setIsReplying] = useState(false)
-    const [replyContent, setReplyContent] = useState("")
     const [isSubmitting, setIsSubmitting] = useState(false)
+
+    // Acknowledgement logic
+    const acks = item.acknowledgements || []
+    const isAcknowledged = acks.some((a: any) => a.user_id === currentUser.id)
+    const ackCount = acks.length
+    const isSender = item.sender_id === currentUser.id
+
+    const timeAgo = formatDistanceToNow(new Date(item.created_at), { addSuffix: true })
+    const isSystem = item.sender_id === null
+
+    async function handleAcknowledge() {
+        if (isAcknowledged) return
+        setIsSubmitting(true)
+        const result = await acknowledgeNotice(item.id)
+        if (result.error) {
+            console.error(result.error)
+        }
+        setIsSubmitting(false)
+    }
 
     // Determine icon and colors based on type
     let Icon = Bell
@@ -50,20 +67,8 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
             break
     }
 
-    const isSystem = item.sender_id === null
-    const timeAgo = formatDistanceToNow(new Date(item.created_at), { addSuffix: true })
-    const canReply = item.type === 'notice' && (!item.thread_depth || item.thread_depth === 0)
+    const canReply = false // No more direct replies in Pulse for now as per user request
 
-    const handleSubmitReply = async () => {
-        if (!replyContent.trim()) return
-        setIsSubmitting(true)
-        const result = await replyToNotice(item.id, replyContent.trim())
-        if (result.success) {
-            setIsReplying(false)
-            setReplyContent("")
-        }
-        setIsSubmitting(false)
-    }
 
     return (
         <div className="flex gap-3 items-start group relative pb-4 last:pb-0">
@@ -88,40 +93,46 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
                     {item.body || item.content}
                 </p>
 
-                <div className="flex items-center gap-4 mt-2">
-                    {item.link_url && (
-                        <Link href={item.link_url} className="inline-block text-xs font-medium text-brand-teal dark:text-teal-400 hover:underline">
-                            View Details &rarr;
-                        </Link>
-                    )}
-                    {canReply && (
-                        <button
-                            onClick={() => setIsReplying(!isReplying)}
-                            className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            Reply
-                        </button>
+                <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center gap-4">
+                        {item.link_url && (
+                            <Link href={item.link_url} className="inline-block text-xs font-medium text-brand-teal dark:text-teal-400 hover:underline">
+                                View Details &rarr;
+                            </Link>
+                        )}
+                        {!isSender && item.type === 'notice' && (
+                            <button
+                                onClick={handleAcknowledge}
+                                disabled={isAcknowledged || isSubmitting}
+                                className={`text-xs font-semibold flex items-center gap-1.5 px-2 py-1 rounded-md transition-all
+                                    ${isAcknowledged
+                                        ? 'text-brand-teal bg-brand-teal/10 cursor-default'
+                                        : 'text-muted-foreground hover:text-brand-navy hover:bg-brand-navy/5 active:scale-95'
+                                    }`}
+                            >
+                                {isAcknowledged ? (
+                                    <>
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        Acknowledged
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-current rounded-sm" />
+                                        Acknowledge
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
+
+                    {isSender && item.type === 'notice' && item.total_recipients && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground bg-muted/30 px-2 py-0.5 rounded-full border border-border/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-brand-teal animate-pulse" />
+                            {ackCount} / {item.total_recipients} acknowledged
+                        </div>
                     )}
                 </div>
 
-                {isReplying && (
-                    <div className="mt-3 pl-3 border-l-2 border-border/50">
-                        <Textarea
-                            value={replyContent}
-                            onChange={(e) => setReplyContent(e.target.value)}
-                            placeholder="Write a reply..."
-                            className="min-h-[60px] text-sm resize-none mb-2 bg-background focus-visible:ring-1 focus-visible:ring-brand-teal"
-                        />
-                        <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setIsReplying(false)} disabled={isSubmitting}>
-                                Cancel
-                            </Button>
-                            <Button size="sm" onClick={handleSubmitReply} disabled={isSubmitting || !replyContent.trim()} className="bg-brand-navy">
-                                Post Reply
-                            </Button>
-                        </div>
-                    </div>
-                )}
 
                 {/* Nested Replies */}
                 {replies.length > 0 && (

@@ -17,24 +17,50 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
     // 1. Initial Fetch
     useEffect(() => {
         async function fetchInitial() {
+            // Fetch items with joined sender and acknowledgements
             const { data, error } = await supabase
                 .from('pulse_items')
                 .select(`
                     *,
-                    sender:profiles!pulse_items_sender_id_fkey(full_name)
+                    sender:profiles!pulse_items_sender_id_fkey(full_name),
+                    acknowledgements:pulse_acknowledgements(user_id)
                 `)
                 .order('created_at', { ascending: false })
                 .limit(50)
 
             if (error) {
                 console.error("Pulse fetch error:", error)
-            } else if (data) {
-                console.log("Pulse items fetched:", data.length, data.map(d => d.type))
-                setItems(data)
+                return
+            }
+
+            if (data) {
+                // To get "X out of Y", we need total counts for the audiences
+                // We'll fetch the counts for Department and Everyone
+                const { count: everyoneCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('is_active', true)
+
+                const { count: deptCount } = await supabase
+                    .from('profiles')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('department', profile.department)
+                    .eq('is_active', true)
+
+                const itemsWithCounts = data.map(item => {
+                    let total = 0
+                    if (item.audience === 'everyone') total = everyoneCount || 0
+                    else if (item.audience === 'department') total = deptCount || 0
+                    else if (item.recipient_id) total = 1
+                    
+                    return { ...item, total_recipients: total }
+                })
+
+                setItems(itemsWithCounts)
             }
         }
         fetchInitial()
-    }, [user.id, supabase])
+    }, [user.id, profile.department, supabase])
 
     // 2. Realtime Subscription
     useEffect(() => {
@@ -57,7 +83,6 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                     console.log("Pulse realtime isPotentiallyForMe:", isPotentiallyForMe, "Type:", newItem.type)
 
                     if (isPotentiallyForMe) {
-                        // Fetch sender name for the new item if it's not a system message
                         if (newItem.sender_id) {
                             supabase.from('profiles').select('full_name').eq('id', newItem.sender_id).single().then(({ data }) => {
                                 setItems(prev => [{ ...newItem, sender: data }, ...prev])
@@ -66,6 +91,18 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                             setItems(prev => [newItem, ...prev])
                         }
                     }
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'pulse_acknowledgements' },
+                (payload: any) => {
+                    const newAck = payload.new as any
+                    setItems(prev => prev.map(item => 
+                        item.id === newAck.pulse_item_id 
+                            ? { ...item, acknowledgements: [...(item.acknowledgements || []), newAck] }
+                            : item
+                    ))
                 }
             )
             .subscribe()

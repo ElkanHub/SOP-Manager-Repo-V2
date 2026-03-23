@@ -158,6 +158,13 @@ export interface PmTask {
     created_at: string;
 }
 
+export interface PulseAcknowledgement {
+    id: string;
+    pulse_item_id: string;
+    user_id: string;
+    acknowledged_at: string;
+}
+
 export interface PulseItem {
     id: string;
     recipient_id?: string;
@@ -174,6 +181,9 @@ export interface PulseItem {
     is_acknowledged: boolean;
     thread_depth: number;
     created_at: string;
+    sender?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'>;
+    acknowledgements?: PulseAcknowledgement[];
+    total_recipients?: number;
 }
 
 export interface CalendarEvent {
