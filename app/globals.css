@@ -153,30 +153,34 @@
     @apply bg-white/80 backdrop-blur-md border border-white/20 dark:bg-slate-900/80 dark:border-slate-800/50;
   }
 
-  @keyframes blob {
-    0% {
-      transform: translate(0px, 0px) scale(1);
-    }
-    33% {
-      transform: translate(30px, -50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-20px, 20px) scale(0.9);
-    }
-    100% {
-      transform: translate(0px, 0px) scale(1);
-    }
+  @keyframes aurora-1 {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33% { transform: translate(-4%, 4%) rotate(-2deg) scale(1.05); }
+    66% { transform: translate(2%, -2%) rotate(2deg) scale(1.1); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
   }
 
-  .animate-blob {
-    animation: blob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  @keyframes aurora-2 {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33% { transform: translate(4%, -4%) rotate(2deg) scale(1.1); }
+    66% { transform: translate(-2%, 2%) rotate(-2deg) scale(1.05); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
   }
 
-  .animation-delay-2000 {
-    animation-delay: 2s;
+  @keyframes aurora-3 {
+    0% { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33% { transform: translate(2%, 2%) rotate(1deg) scale(1.1); }
+    66% { transform: translate(-3%, -2%) rotate(-1deg) scale(1.05); }
+    100% { transform: translate(0, 0) rotate(0deg) scale(1); }
   }
 
-  .animation-delay-4000 {
-    animation-delay: 4s;
+  .animate-aurora-1 {
+    animation: aurora-1 15s ease-in-out infinite;
+  }
+  .animate-aurora-2 {
+    animation: aurora-2 18s ease-in-out infinite reverse;
+  }
+  .animate-aurora-3 {
+    animation: aurora-3 20s ease-in-out infinite;
   }
 }
