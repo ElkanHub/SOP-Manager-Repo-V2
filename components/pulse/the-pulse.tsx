@@ -83,22 +83,29 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                     
                     const isPotentiallyForMe = 
                         newItem.recipient_id === user.id || 
-                        newItem.recipient_id === null ||
                         newItem.audience === 'everyone' || 
-                        newItem.audience === 'department'
+                        (newItem.audience === 'department' && newItem.target_department === profile.department)
+
+                    const isFromMe = newItem.sender_id === user.id
 
                     if (isPotentiallyForMe) {
                         const itemWithCounts = withCounts(newItem)
                         
-                        // Play Notification Sound
-                        const prefs = profile.notification_prefs || {}
-                        const shouldPlayNotice = (newItem.type === 'notice' || newItem.type === 'todo') && (prefs.notice_sound !== false)
-                        const shouldPlayMessage = newItem.type === 'message' && (prefs.message_sound !== false)
+                        // Play Notification Sound (only if NOT from me)
+                        if (!isFromMe) {
+                            const prefs = profile.notification_prefs || {}
+                            const shouldPlayNotice = (newItem.type === 'notice' || newItem.type === 'todo') && (prefs.notice_sound !== false)
+                            const shouldPlayMessage = newItem.type === 'message' && (prefs.message_sound !== false)
 
-                        if (shouldPlayNotice) {
-                            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {})
-                        } else if (shouldPlayMessage) {
-                            new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3').play().catch(() => {})
+                            if (shouldPlayNotice) {
+                                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3')
+                                audio.volume = 0.5
+                                audio.play().catch(err => console.warn('Pulse: Notice sound blocked or failed:', err))
+                            } else if (shouldPlayMessage) {
+                                const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3')
+                                audio.volume = 0.5
+                                audio.play().catch(err => console.warn('Pulse: Message sound blocked or failed:', err))
+                            }
                         }
 
                         if (newItem.sender_id) {
