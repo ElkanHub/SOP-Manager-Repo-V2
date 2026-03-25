@@ -38,6 +38,7 @@ export function ApprovalDetailClient({
 }: ApprovalDetailClientProps) {
     const [loading, setLoading] = useState(false)
     const [action, setAction] = useState<'approve' | 'changes' | null>(null)
+    const [changeType, setChangeType] = useState<'minor' | 'significant' | null>(null)
     const [comment, setComment] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
@@ -46,12 +47,21 @@ export function ApprovalDetailClient({
     const submitter = approvalRequest.profiles
 
     const handleApprove = async () => {
+        if (approvalRequest.type === 'update' && !changeType) {
+            setError('Please classify the change type before approving')
+            return
+        }
+
         setLoading(true)
         setError(null)
         setAction('approve')
         
         try {
-            const result = await approveSopRequest(approvalRequest.id)
+            const result = await approveSopRequest(
+                approvalRequest.id, 
+                changeType || 'significant',
+                comment || undefined
+            )
             
             if (!result.success) {
                 setError(result.error)
@@ -289,33 +299,68 @@ export function ApprovalDetailClient({
                                                     Approve
                                                 </Button>
                                             ) : (
-                                                <div className="space-y-2 p-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-md">
-                                                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                                                        Confirm approval of this SOP?
-                                                    </p>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            onClick={handleApprove}
-                                                            disabled={loading}
-                                                            size="sm"
-                                                            className="flex-1 bg-green-600 hover:bg-green-700"
-                                                        >
-                                                            {loading ? (
-                                                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                                            ) : (
-                                                                <CheckCircle2 className="h-4 w-4 mr-1" />
-                                                            )}
-                                                            Confirm Approval
-                                                        </Button>
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            disabled={loading}
-                                                            onClick={() => setAction(null)}
-                                                        >
-                                                            Cancel
-                                                        </Button>
+                                                <div className="space-y-4 p-4 bg-green-50/50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-400">Step 2: Classification</span>
+                                                        <Button variant="ghost" size="sm" onClick={() => setAction(null)} className="h-6 w-6 p-0 text-green-700">×</Button>
                                                     </div>
+                                                    
+                                                    {approvalRequest.type === 'update' ? (
+                                                        <div className="space-y-3">
+                                                            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Classify this update before activation:</p>
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <button
+                                                                    onClick={() => setChangeType('minor')}
+                                                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                                                        changeType === 'minor' 
+                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm' 
+                                                                        : 'bg-transparent border-slate-200 dark:border-slate-800 opacity-60'
+                                                                    }`}
+                                                                >
+                                                                    <p className="text-xs font-bold">Minor change</p>
+                                                                    <p className="text-[9px] text-muted-foreground">Activate immediately (v1.x)</p>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setChangeType('significant')}
+                                                                    className={`p-3 rounded-xl border text-left transition-all ${
+                                                                        changeType === 'significant' 
+                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm' 
+                                                                        : 'bg-transparent border-slate-200 dark:border-slate-800 opacity-60'
+                                                                    }`}
+                                                                >
+                                                                    <p className="text-xs font-bold">Significant change</p>
+                                                                    <p className="text-[9px] text-muted-foreground">Change Control (vX.0)</p>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                                                            Confirm activation for this new SOP?
+                                                        </p>
+                                                    )}
+
+                                                    <div className="space-y-2">
+                                                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Optional justification:</p>
+                                                        <Textarea 
+                                                            placeholder="Why was this classification chosen?"
+                                                            value={comment}
+                                                            onChange={(e) => setComment(e.target.value)}
+                                                            className="text-xs min-h-[60px] bg-white/50 dark:bg-black/20"
+                                                        />
+                                                    </div>
+
+                                                    <Button
+                                                        onClick={handleApprove}
+                                                        disabled={loading || (approvalRequest.type === 'update' && !changeType)}
+                                                        className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/10"
+                                                    >
+                                                        {loading ? (
+                                                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                        ) : (
+                                                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                                                        )}
+                                                        Confirm & Activate
+                                                    </Button>
                                                 </div>
                                             )}
 

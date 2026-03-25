@@ -266,7 +266,11 @@ export type ApproveResult =
     | { success: true; result: 'activated' | 'change_control_issued'; changeControlId?: string }
     | { success: false; error: string }
 
-export async function approveSopRequest(requestId: string): Promise<ApproveResult> {
+export async function approveSopRequest(
+    requestId: string, 
+    changeType: 'minor' | 'significant' = 'significant',
+    qaNote?: string
+): Promise<ApproveResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
 
@@ -294,6 +298,8 @@ export async function approveSopRequest(requestId: string): Promise<ApproveResul
         const result = await supabase.rpc('approve_sop_request', {
             p_request_id: requestId,
             p_qa_user_id: user.id,
+            p_change_type: changeType,
+            p_qa_note: qaNote || null
         })
 
         if (result.error) {

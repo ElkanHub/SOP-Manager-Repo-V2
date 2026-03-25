@@ -66,11 +66,21 @@ export function VersionHistorySheet({
                        <span className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/10 px-2 py-0.5 rounded">
                          v{version.version}
                        </span>
-                       {version.version === currentVersion && (
-                         <Badge variant="default" className="bg-brand-teal text-[10px] font-bold uppercase tracking-tighter px-1.5 py-0 h-4">
-                           LIVE
-                         </Badge>
-                       )}
+                        {version.version === currentVersion && (
+                          <Badge variant="default" className="bg-brand-teal text-[10px] font-bold uppercase tracking-tighter px-1.5 py-0 h-4">
+                            LIVE
+                          </Badge>
+                        )}
+                        {version.change_type === 'minor' && (
+                          <Badge variant="outline" className="text-[9px] font-bold border-slate-300 text-slate-500 px-1.5 py-0 h-4 uppercase tracking-tighter">
+                            Minor
+                          </Badge>
+                        )}
+                        {version.change_type === 'significant' && (
+                          <Badge variant="outline" className="text-[9px] font-bold border-blue-300 text-blue-500 px-1.5 py-0 h-4 uppercase tracking-tighter">
+                            Significant
+                          </Badge>
+                        )}
                     </div>
                     <Button
                       variant="ghost"

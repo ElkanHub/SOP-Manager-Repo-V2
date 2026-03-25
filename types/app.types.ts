@@ -58,6 +58,7 @@ export interface SopVersion {
     diff_json?: any;
     delta_summary?: string;
     uploaded_by?: string;
+    change_type?: 'minor' | 'significant';
     created_at: string;
 }
 
@@ -69,6 +70,7 @@ export interface SopApprovalRequest {
     status: 'pending' | 'changes_requested' | 'approved' | 'rejected';
     file_url: string;
     version_label: string;
+    change_type?: 'minor' | 'significant';
     notes_to_qa?: string;
     created_at: string;
     updated_at: string;
