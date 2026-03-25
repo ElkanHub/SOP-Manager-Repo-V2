@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Bell, Mail, Loader2 } from "lucide-react"
@@ -104,6 +105,19 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                                 <p className="text-[11px] text-muted-foreground mt-0.5">Play a sound for new broadcast notices</p>
                             </div>
                             <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 w-7 p-0 rounded-full hover:bg-brand-teal/10 hover:text-brand-teal"
+                                    onClick={() => {
+                                        const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/5/5c/Notification_1.mp3');
+                                        audio.volume = 0.5;
+                                        audio.play().catch(() => {});
+                                    }}
+                                    title="Test Sound"
+                                >
+                                    <Bell className="h-3 w-3" />
+                                </Button>
                                 {saving === 'notice_sound' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
                                 <Switch
                                     id="notif-notice-sound"
@@ -121,6 +135,19 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                                 <p className="text-[11px] text-muted-foreground mt-0.5">Play a sound for new direct messages</p>
                             </div>
                             <div className="flex items-center gap-2">
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-7 w-7 p-0 rounded-full hover:bg-blue-600/10 hover:text-blue-600"
+                                    onClick={() => {
+                                        const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/a/a9/Announcement_chime.mp3');
+                                        audio.volume = 0.5;
+                                        audio.play().catch(() => {});
+                                    }}
+                                    title="Test Sound"
+                                >
+                                    <Mail className="h-3 w-3" />
+                                </Button>
                                 {saving === 'message_sound' && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />}
                                 <Switch
                                     id="notif-message-sound"
