@@ -48,19 +48,21 @@ export function ApprovalDetailClient({
     const handleApprove = async () => {
         setLoading(true)
         setError(null)
+        setAction('approve')
         
         try {
             const result = await approveSopRequest(approvalRequest.id)
             
             if (!result.success) {
                 setError(result.error)
+                setAction(null)
                 return
             }
 
             if (result.result === 'activated') {
-                setSuccess('SOP approved and activated!')
+                setSuccess('SOP approved and activated! Redirecting…')
             } else if (result.result === 'change_control_issued') {
-                setSuccess('Change Control has been issued for signing!')
+                setSuccess('Approved — Change Control issued for signing. Redirecting…')
             }
             
             setTimeout(() => {
@@ -68,6 +70,7 @@ export function ApprovalDetailClient({
             }, 2000)
         } catch (err: any) {
             setError(err.message || 'Failed to approve')
+            setAction(null)
         } finally {
             setLoading(false)
         }
@@ -275,23 +278,51 @@ export function ApprovalDetailClient({
                                 ) : (
                                     <>
                                         <div className="space-y-2">
-                                            <Button 
-                                                onClick={() => setAction('approve')}
-                                                disabled={loading}
-                                                className="w-full bg-green-600 hover:bg-green-700"
-                                            >
-                                                {loading && action === 'approve' ? (
-                                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                ) : (
+                                            {/* Approve — two-step: click to reveal confirm, then confirm fires handleApprove */}
+                                            {action !== 'approve' ? (
+                                                <Button 
+                                                    onClick={() => setAction('approve')}
+                                                    disabled={loading}
+                                                    className="w-full bg-green-600 hover:bg-green-700"
+                                                >
                                                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                                                )}
-                                                Approve
-                                            </Button>
-                                            
+                                                    Approve
+                                                </Button>
+                                            ) : (
+                                                <div className="space-y-2 p-3 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-md">
+                                                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                                                        Confirm approval of this SOP?
+                                                    </p>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            onClick={handleApprove}
+                                                            disabled={loading}
+                                                            size="sm"
+                                                            className="flex-1 bg-green-600 hover:bg-green-700"
+                                                        >
+                                                            {loading ? (
+                                                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                                            ) : (
+                                                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                                            )}
+                                                            Confirm Approval
+                                                        </Button>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            disabled={loading}
+                                                            onClick={() => setAction(null)}
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <Button 
                                                 onClick={() => setAction('changes')}
                                                 variant="outline"
-                                                disabled={loading}
+                                                disabled={loading || action === 'approve'}
                                                 className="w-full border-amber-500 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50"
                                             >
                                                 <AlertCircle className="h-4 w-4 mr-2" />
