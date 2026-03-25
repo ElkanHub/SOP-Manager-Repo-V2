@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Sparkles, RefreshCw, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +15,12 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
     const [loading, setLoading] = useState(false)
     const [summary, setSummary] = useState<string | null>(changeControl.delta_summary || null)
     const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        if (!summary && onRegenerate && !loading) {
+            handleRegenerate()
+        }
+    }, [])
 
     const handleRegenerate = async () => {
         if (!onRegenerate) return
@@ -43,19 +49,8 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
                         <Sparkles className="h-4 w-4 text-brand-teal" />
                         AI Summary of Changes
                     </CardTitle>
-                    {onRegenerate && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={handleRegenerate}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <RefreshCw className="h-4 w-4" />
-                            )}
-                        </Button>
+                    {loading && (
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                     )}
                 </div>
             </CardHeader>
@@ -79,18 +74,9 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
                 ) : (
                     <div className="text-center py-4 text-muted-foreground">
                         <Sparkles className="h-6 w-6 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No AI summary available</p>
-                        {onRegenerate && (
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="mt-2"
-                                onClick={handleRegenerate}
-                                disabled={loading}
-                            >
-                                Generate Summary
-                            </Button>
-                        )}
+                        <p className="text-sm">
+                            {loading ? 'Analyzing changes...' : 'No summary available'}
+                        </p>
                     </div>
                 )}
 
