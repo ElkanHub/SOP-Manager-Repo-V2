@@ -72,7 +72,7 @@ export function SignupForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className={cn("flex flex-col gap-6 border-1 border-brand-gray rounded-2xl rounded-tl-none border-t-8  py-6 px-2 shadow-md", className)} {...props}>
+    <form onSubmit={handleSubmit} className={cn("bg-background z-10 flex flex-col gap-6 border border-border rounded-xl shadow-md py-6 px-4 md:px-8", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Create your account</h1>
