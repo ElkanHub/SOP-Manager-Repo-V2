@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import Link from "next/link"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/server"
 import { SopViewerLazy as SopViewer } from "@/components/library/sop-viewer-lazy"
@@ -92,8 +93,34 @@ export default async function SopViewerPage({ params }: PageProps) {
   const isCrossDept = !isOwnDept
   const isLocked = sop.locked
 
+  let activeChangeControlId: string | null = null
+  if (sop.status === 'pending_cc') {
+    const { data: cc } = await supabase
+      .from('change_controls')
+      .select('id')
+      .eq('sop_id', id)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (cc) activeChangeControlId = cc.id
+  }
+
   return (
     <div className="flex flex-col h-full">
+      {sop.status === 'pending_cc' && activeChangeControlId && (
+        <div className="bg-amber-50 border-b border-amber-200 px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-2 text-amber-800 text-sm font-medium">
+            <Lock className="h-4 w-4" />
+            This SOP is currently locked under an active Change Control process.
+          </div>
+          <Link href={`/change-control/${activeChangeControlId}`}>
+            <Button size="sm" variant="outline" className="text-amber-700 border-amber-300 hover:bg-amber-100 bg-white">
+              View Change Control
+            </Button>
+          </Link>
+        </div>
+      )}
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">

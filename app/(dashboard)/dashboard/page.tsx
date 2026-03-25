@@ -123,6 +123,32 @@ export default async function DashboardPage() {
 
   const { data: upcomingPmTasks } = await pmQuery
 
+  // Fetch pending Change Controls requiring this user's signature
+  let pendingChangeControls: any[] = []
+  if (profile.role === 'manager') {
+    const { data: ccs } = await serviceClient
+      .from('change_controls')
+      .select('id, new_version, created_at, required_signatories, sops(title, department)')
+      .eq('status', 'pending')
+      .contains('required_signatories', `[{"user_id": "${user.id}"}]`)
+      
+    if (ccs && ccs.length > 0) {
+      const { data: certs } = await serviceClient
+        .from('signature_certificates')
+        .select('change_control_id')
+        .eq('user_id', user.id)
+        
+      const signedCcIds = new Set(certs?.map(c => c.change_control_id) || [])
+      
+      pendingChangeControls = ccs.filter(cc => {
+        if (signedCcIds.has(cc.id)) return false
+        const sig = (cc.required_signatories as any[]).find((s: any) => s.user_id === user.id)
+        if (sig?.waived) return false
+        return true
+      })
+    }
+  }
+
   return (
     <DashboardClient
       profile={profile as Profile}
@@ -134,6 +160,7 @@ export default async function DashboardPage() {
       }}
       auditEntries={auditEntries || []}
       upcomingPmTasks={upcomingPmTasks as any[] || []}
+      pendingChangeControls={pendingChangeControls}
     />
   )
 }

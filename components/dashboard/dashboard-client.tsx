@@ -7,9 +7,10 @@ import { createClient } from "@/lib/supabase/client"
 import { NumberTicker } from "@/components/ui/number-ticker"
 import { Card, CardContent } from "@/components/ui/card"
 import { Profile } from "@/types/app.types"
-import { FileText } from "lucide-react"
+import { FileText, ClipboardCheck } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { getInitials } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 interface KpiData {
   activeSops: number
@@ -41,11 +42,19 @@ interface PmTask {
   }
 }
 
+interface PendingCC {
+  id: string
+  new_version: string
+  created_at: string
+  sops: { title: string; department: string }
+}
+
 interface DashboardClientProps {
   profile: Profile
   kpiData: KpiData
   auditEntries: AuditEntry[]
   upcomingPmTasks: PmTask[]
+  pendingChangeControls: PendingCC[]
 }
 
 export function DashboardClient({
@@ -53,6 +62,7 @@ export function DashboardClient({
   kpiData,
   auditEntries: initialAuditEntries,
   upcomingPmTasks,
+  pendingChangeControls,
 }: DashboardClientProps) {
   const supabase = createClient()
   const [kpi, setKpi] = useState(kpiData)
@@ -138,6 +148,32 @@ export function DashboardClient({
           <p className="text-muted-foreground mt-1">Welcome back, {profile.full_name}</p>
         </div>
       </div>
+
+      {pendingChangeControls && pendingChangeControls.length > 0 && (
+        <div className="px-4 md:px-0 mb-4 mt-2">
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 rounded-xl p-4 shadow-sm">
+            <h3 className="text-amber-800 dark:text-amber-500 font-bold mb-3 flex items-center gap-2">
+              <ClipboardCheck className="w-5 h-5" />
+              Action Required: Pending Change Controls
+            </h3>
+            <div className="space-y-2">
+              {pendingChangeControls.map(cc => (
+                <div key={cc.id} className="flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-slate-900 border border-amber-100 dark:border-amber-800/30 p-3 rounded-lg shadow-sm">
+                  <div>
+                    <div className="font-semibold text-slate-800 dark:text-slate-100">{cc.sops?.title}</div>
+                    <div className="text-xs text-slate-500 font-medium mt-0.5">Version {cc.new_version} • {cc.sops?.department}</div>
+                  </div>
+                  <Link href={`/change-control/${cc.id}`} className="mt-3 md:mt-0">
+                    <Button size="sm" className="bg-brand-teal hover:bg-brand-teal/90 text-white w-full md:w-auto shadow-md">
+                      Review & Sign
+                    </Button>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-0">
         <Link href="/library?status=active">
