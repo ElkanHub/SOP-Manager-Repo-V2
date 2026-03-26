@@ -100,11 +100,11 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                         console.log('Pulse: shouldPlayNotice?', shouldPlayNotice, 'shouldPlayMessage?', shouldPlayMessage, 'Prefs:', prefs)
 
                         if (shouldPlayNotice) {
-                            const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/5/5c/Notification_1.mp3')
+                            const audio = new Audio('/sounds/mixkit-double-beep-tone-alert-2868.wav')
                             audio.volume = 0.5
                             audio.play().catch(err => console.warn('Pulse: Notice sound blocked or failed:', err))
                         } else if (shouldPlayMessage) {
-                            const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/a/a9/Announcement_chime.mp3')
+                            const audio = new Audio('/sounds/mixkit-bubble-pop-up-alert-notification-2357.wav')
                             audio.volume = 0.5
                             audio.play().catch(err => console.warn('Pulse: Message sound blocked or failed:', err))
                         }

@@ -110,7 +110,7 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                                     size="sm" 
                                     className="h-7 w-7 p-0 rounded-full hover:bg-brand-teal/10 hover:text-brand-teal"
                                     onClick={() => {
-                                        const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/5/5c/Notification_1.mp3');
+                                        const audio = new Audio('/sounds/mixkit-double-beep-tone-alert-2868.wav');
                                         audio.volume = 0.5;
                                         audio.play().catch(() => {});
                                     }}
@@ -140,7 +140,7 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                                     size="sm" 
                                     className="h-7 w-7 p-0 rounded-full hover:bg-blue-600/10 hover:text-blue-600"
                                     onClick={() => {
-                                        const audio = new Audio('https://upload.wikimedia.org/wikipedia/commons/a/a9/Announcement_chime.mp3');
+                                        const audio = new Audio('/sounds/mixkit-bubble-pop-up-alert-notification-2357.wav');
                                         audio.volume = 0.5;
                                         audio.play().catch(() => {});
                                     }}
