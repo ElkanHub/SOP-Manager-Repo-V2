@@ -104,7 +104,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                             audio.volume = 0.5
                             audio.play().catch(err => console.warn('Pulse: Notice sound blocked or failed:', err))
                         } else if (shouldPlayMessage) {
-                            const audio = new Audio('/sounds/mixkit-bubble-pop-up-alert-notification-2357.wav')
+                            const audio = new Audio('/sounds/mixkit-correct-answer-tone-2870.wav')
                             audio.volume = 0.5
                             audio.play().catch(err => console.warn('Pulse: Message sound blocked or failed:', err))
                         }
