@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Download, Bell, Calendar, User, Users, Building2, MailOpen } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 interface PulseNoticeReportProps {
   dateFrom: string | null
@@ -74,43 +75,91 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Pulse / Notice Log</h2>
-        <Button variant="outline" onClick={buildCsv} disabled={data.length === 0}>
-          <Download className="h-4 w-4 mr-2" />
-          Export CSV
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-indigo-500/10 p-2 rounded-lg">
+            <Bell className="h-5 w-5 text-indigo-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Pulse / Notice Log</h2>
+            <p className="text-sm text-muted-foreground">Audit log of all broadcast notices and system communications</p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={buildCsv} 
+          disabled={data.length === 0}
+          className="rounded-xl border-indigo-500/20 hover:bg-indigo-500/5 hover:text-indigo-500 shadow-sm group/btn"
+        >
+          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+          Export Dataset (.csv)
         </Button>
       </div>
 
       {data.length === 0 ? (
-        <p className="text-center py-8 text-muted-foreground">No data found</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
+          <div className="bg-background p-4 rounded-full shadow-sm">
+            <Bell className="h-10 w-10 text-muted-foreground/30" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-foreground/70">No notices found</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">Try adjusting your date range filters.</p>
+          </div>
+        </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
+        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
+          <div className="overflow-x-auto no-scrollbar">
             <table className="w-full min-w-[1000px]">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Sender</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Audience</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Target Dept</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Subject</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Body</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Sent At</th>
+              <thead>
+                <tr className="bg-muted/30 border-b border-border/40">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><User className="h-3 w-3" /> Sender</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Users className="h-3 w-3" /> Audience</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Target</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    Content
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Sent At</div>
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/30">
                 {data.map((entry) => (
-                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-4 py-3 text-sm font-medium">{entry.sender?.full_name || '-'}</td>
-                    <td className="px-4 py-3 text-sm capitalize">{entry.audience}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.target_department || '-'}</td>
-                    <td className="px-4 py-3 text-sm font-medium">{entry.title}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
-                      {entry.body ? entry.body.substring(0, 100) : '-'}
+                  <tr key={entry.id} className="hover:bg-indigo-500/[0.02] transition-colors group">
+                    <td className="px-6 py-5">
+                      <div className="text-sm font-semibold">{entry.sender?.full_name || 'System'}</div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
+                    <td className="px-6 py-5">
+                      <Badge variant="secondary" className="capitalize text-[10px] font-bold">
+                        {entry.audience}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.target_department || '-'}</div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="space-y-1 max-w-md">
+                        <div className="text-sm font-bold flex items-center gap-2">
+                          <MailOpen className="h-3 w-3 text-indigo-500 opacity-60" />
+                          {entry.title}
+                        </div>
+                        <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed" title={entry.body}>
+                          {entry.body || '-'}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                        <span className="ml-2 opacity-50">{format(new Date(entry.created_at), 'HH:mm')}</span>
+                      </div>
                     </td>
                   </tr>
                 ))}

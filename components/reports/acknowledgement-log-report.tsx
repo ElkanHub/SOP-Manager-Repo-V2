@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Download, Users, FileText, Calendar, Hash, Building2, ShieldCheck } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 interface AcknowledgementLogReportProps {
   dateFrom: string | null
@@ -72,41 +73,99 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Worker Acknowledgement Log</h2>
-        <Button variant="outline" onClick={buildCsv} disabled={data.length === 0}>
-          <Download className="h-4 w-4 mr-2" />
-          Export CSV
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-blue-500/10 p-2 rounded-lg">
+            <Users className="h-5 w-5 text-blue-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Worker Acknowledgements</h2>
+            <p className="text-sm text-muted-foreground">Detailed log of SOP reading and comprehension sign-offs</p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={buildCsv} 
+          disabled={data.length === 0}
+          className="rounded-xl border-blue-500/20 hover:bg-blue-500/5 hover:text-blue-500 shadow-sm group/btn"
+        >
+          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+          Export Dataset (.csv)
         </Button>
       </div>
 
       {data.length === 0 ? (
-        <p className="text-center py-8 text-muted-foreground">No data found</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
+          <div className="bg-background p-4 rounded-full shadow-sm">
+            <Users className="h-10 w-10 text-muted-foreground/30" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-foreground/70">No acknowledgements found</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">No records match the current filters.</p>
+          </div>
+        </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">SOP No.</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">SOP Title</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Employee Name</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Dept</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Version</th>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Acknowledged At</th>
+        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full min-w-[1000px]">
+              <thead>
+                <tr className="bg-muted/30 border-b border-border/40">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Hash className="h-3 w-3" /> SOP No.</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><FileText className="h-3 w-3" /> Title</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    Employee
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Dept</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    Version
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Acknowledged At</div>
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/30">
                 {data.map((entry: any) => (
-                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-4 py-3 text-sm font-mono text-brand-teal font-medium">{entry.sop?.sop_number || '-'}</td>
-                    <td className="px-4 py-3 text-sm font-medium">{entry.sop?.title || '-'}</td>
-                    <td className="px-4 py-3 text-sm">{entry.user?.full_name || 'Unknown'}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.user?.department || '-'}</td>
-                    <td className="px-4 py-3 text-sm">{entry.version}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {format(new Date(entry.acknowledged_at), 'MMM d, yyyy HH:mm')}
+                  <tr key={entry.id} className="hover:bg-blue-500/[0.02] transition-colors group">
+                    <td className="px-6 py-5">
+                      <span className="font-mono text-xs font-bold text-blue-600 bg-blue-500/5 px-2 py-1 rounded">
+                        {entry.sop?.sop_number || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-sm font-semibold truncate max-w-[200px]" title={entry.sop?.title}>
+                        {entry.sop?.title || '-'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+                          {entry.user?.full_name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+                        </div>
+                        <div className="text-sm font-medium">{entry.user?.full_name || 'Unknown'}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.user?.department || '-'}</div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <Badge variant="secondary" className="font-mono text-[10px] font-bold px-1.5 h-4">
+                        v{entry.version}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <ShieldCheck className="h-3 w-3 text-green-500" />
+                        {format(new Date(entry.acknowledged_at), 'MMM d, yyyy')}
+                        <span className="ml-1 opacity-50">{format(new Date(entry.acknowledged_at), 'HH:mm')}</span>
+                      </div>
                     </td>
                   </tr>
                 ))}

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Download, FileText, Calendar, Hash, User, Building2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
 
 interface SopChangeHistoryReportProps {
   dateFrom: string | null
@@ -86,39 +87,85 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
   }
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">SOP Change History</h2>
-        <Button variant="outline" onClick={buildCsv} disabled={data.length === 0}>
-          <Download className="h-4 w-4 mr-2" />
-          Export CSV
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-6">
+        <div className="flex items-center gap-3">
+          <div className="bg-brand-teal/10 p-2 rounded-lg">
+            <FileText className="h-5 w-5 text-brand-teal" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">SOP Change History</h2>
+            <p className="text-sm text-muted-foreground">Audit trail of all SOP approvals and modifications</p>
+          </div>
+        </div>
+        <Button 
+          variant="outline" 
+          onClick={buildCsv} 
+          disabled={data.length === 0}
+          className="rounded-xl border-brand-teal/20 hover:bg-brand-teal/5 hover:text-brand-teal shadow-sm group/btn"
+        >
+          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
+          Export Dataset (.csv)
         </Button>
       </div>
 
       {data.length === 0 ? (
-        <p className="text-center py-8 text-muted-foreground">No data found</p>
+        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
+          <div className="bg-background p-4 rounded-full shadow-sm">
+            <FileText className="h-10 w-10 text-muted-foreground/30" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-lg font-semibold text-foreground/70">No data found</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">Try adjusting your date range filters to see activity logs.</p>
+          </div>
+        </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px]">
-              <thead className="bg-slate-50 dark:bg-slate-800/50 border-b">
-                <tr>
-                  <th className="px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">SOP No.</th>
-                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Action</th>
-                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Actor Name</th>
-                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Dept</th>
-                  <th className="px-4 py-2 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold">Timestamp</th>
+        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
+          <div className="overflow-x-auto no-scrollbar">
+            <table className="w-full min-w-[900px]">
+              <thead>
+                <tr className="bg-muted/30 border-b border-border/40">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Hash className="h-3 w-3" /> SOP No.</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    Action
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><User className="h-3 w-3" /> Actor</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Dept</div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Timestamp</div>
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-border/30">
                 {data.map((entry) => (
-                  <tr key={entry.id} className="border-t hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
-                    <td className="px-4 py-3 text-sm font-mono text-brand-teal font-medium">{entry.sop?.sop_number || '-'}</td>
-                    <td className="px-4 py-3 text-sm font-medium">{getActionLabel(entry.action)}</td>
-                    <td className="px-4 py-3 text-sm">{entry.actor?.full_name || 'Unknown'}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">{entry.actor?.department || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {format(new Date(entry.created_at), 'MMM d, yyyy HH:mm')}
+                  <tr key={entry.id} className="hover:bg-brand-teal/[0.02] transition-colors group">
+                    <td className="px-6 py-5">
+                      <span className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded">
+                        {entry.sop?.sop_number || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-5">
+                      <Badge variant="outline" className="font-bold border-brand-teal/20 text-brand-teal">
+                        {getActionLabel(entry.action)}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-sm font-semibold">{entry.actor?.full_name || 'Unknown'}</div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.actor?.department || '-'}</div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="text-xs font-medium text-muted-foreground">
+                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                        <span className="ml-2 opacity-50">{format(new Date(entry.created_at), 'HH:mm')}</span>
+                      </div>
                     </td>
                   </tr>
                 ))}
