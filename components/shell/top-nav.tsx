@@ -96,34 +96,17 @@ export function TopNav({ user, profile }: TopNavProps) {
                         </Button>
                     </Link>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full border border-white/20 ml-2 hover:bg-white/10" />}>
-                            <UserAvatar name={profile?.full_name} image={profile?.avatar_url} size="sm" className="h-8 w-8" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56" align="end">
-                            <DropdownMenuLabel className="font-normal">
-                                <div className="flex flex-col space-y-1">
-                                    <p className="text-sm font-medium leading-none">{profile?.full_name}</p>
-                                    <p className="text-xs leading-none text-muted-foreground">
-                                        {user?.email}
-                                    </p>
-                                </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem render={<Link href="/settings/profile" />}>
-                                Profile Settings
-                            </DropdownMenuItem>
-                            <DropdownMenuItem render={<Link href="/settings/preferences" />}>
-                                Preferences
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem render={
-                                <form action="/auth/signout" method="post" className="w-full cursor-pointer" />
-                            }>
-                                <button type="submit" className="w-full text-left inline-flex min-w-full">Log out</button>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+
+                    {/* Direct Link to Settings */}
+                    <Link href="/settings" className="ml-2 transition-transform hover:scale-105 active:scale-95">
+                        <UserAvatar
+                            name={profile?.full_name}
+                            image={profile?.avatar_url}
+                            size="sm"
+                            className="h-8 w-8 border border-white/20 hover:border-white/50 transition-colors"
+                        />
+                        <span className="sr-only">Settings</span>
+                    </Link>
                 </nav>
             </div>
         </header>
