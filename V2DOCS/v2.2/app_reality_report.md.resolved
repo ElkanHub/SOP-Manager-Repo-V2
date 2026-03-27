@@ -1,0 +1,300 @@
+# App Reality Report - SOP Manager V2
+
+This report documents the actual implementation of the SOP Manager V2 codebase as of March 27, 2026.
+
+---
+
+## 1. ROUTES AND PAGES
+
+List of existing routes, their authentication requirements, and functionality:
+
+| URL Path | Auth Required | Roles | Loading.tsx | Error.tsx | Description |
+|----------|---------------|-------|-------------|-----------|-------------|
+| `/` | No | All | No | No | Root proxy that redirects to `/dashboard` or `/login`. |
+| `/login` | No | All | No | No | User login page with Google OAuth support. |
+| `/signup` | No | All | No | No | User registration page. |
+| `/setup` | No | All | No | No | First-time administrator setup page. |
+| `/onboarding` | Yes | All | No | No | 4-step wizard for new users to complete their profile and signature. |
+| `/dashboard` | Yes | All | Yes | Yes | Main overview with KPI cards and activity feed. |
+| `/library` | Yes | All | Yes | Yes | SOP Library with TanStack table and status filters. |
+| `/library/[id]` | Yes | All* | Yes | No | SOP Viewer showing document and acknowledgement history. |
+| `/approvals` | Yes | QA | Yes | Yes | Queue of SOP and Equipment requests pending QA review. |
+| `/approvals/[id]` | Yes | QA | Yes | No | Detailed review page for a specific approval request. |
+| `/change-control/[id]` | Yes | All | Yes | No | Change control page with diff viewer and signature grid. |
+| `/equipment` | Yes | All | Yes | Yes | Registry of assets and PM tasks with status indicators. |
+| `/equipment/[id]` | Yes | All | Yes | Yes | Equipment detail page with service history and QR code. |
+| `/calendar` | Yes | All | Yes | Yes | Company calendar featuring manual events and auto-generated PM dates. |
+| `/reports` | Yes | Manager/QA | Yes | Yes | Reporting hub with CSV export for audit and compliance data. |
+| `/settings` | Yes | All | Yes | Yes | User profile management and admin tools (Departments/Users). |
+| `/messages` | Yes | All | No | No | Real-time messaging system for direct and group conversations. |
+| `/docs` | No | All | No | No | Documentation home page. |
+| `/docs/[...slug]` | No | All | No | No | Dynamic documentation pages rendered from MDX. |
+
+*\*Access to specific SOPs is governed by RLS (Department-based).*
+
+---
+
+## 2. DATABASE TABLES
+
+Total tables: 18 (excluding Supabase internal/auth tables).
+
+### `departments`
+- **RLS Enabled:** Yes (Select: All active users, Insert/Update/Delete: Admins)
+- **Columns:**
+  - [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191) (uuid, primary key)
+  - `name` (text, unique)
+  - `colour` (text)
+  - `is_qa` (boolean, default false)
+  - `created_at` (timestamptz)
+- **Triggers:** None
+- **Indexes:** `departments_name_key` (unique)
+
+### `profiles`
+- **RLS Enabled:** Yes (Select: All active users, Update: Self or Admin)
+- **Columns:**
+  - [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191) (uuid, primary key, references auth.users)
+  - `full_name` (text)
+  - `job_title` (text)
+  - `department` (text, references departments.name)
+  - `role` (text, check: employee/manager)
+  - `employee_id` (text, unique)
+  - `phone` (text)
+  - `avatar_url` (text)
+  - `signature_url` (text)
+  - `onboarding_complete` (boolean, default false)
+  - `is_admin` (boolean, default false)
+  - `is_active` (boolean, default true)
+  - `notification_prefs` (jsonb)
+  - `created_at` (timestamptz)
+  - `updated_at` (timestamptz)
+- **Triggers:** `on_auth_user_created` (in Supabase)
+- **Indexes:** `profiles_employee_id_key` (unique)
+
+### `sops`
+- **RLS Enabled:** Yes (Select: Two-layer visibility rule)
+- **Columns:**
+  - [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191) (uuid, primary key)
+  - `sop_number` (text, unique)
+  - `title` (text)
+  - `version` (text)
+  - `department` (text, references departments.name)
+  - `secondary_departments` (text[])
+  - `status` (text, check: draft/pending_qa/active/archived/pending_cc)
+  - `file_url` (text)
+  - `locked` (boolean, default false)
+  - `submitted_by` (uuid, references profiles.id)
+  - `approved_by` (uuid, references profiles.id)
+  - `date_revised` (date)
+  - `created_at` (timestamptz)
+  - `updated_at` (timestamptz)
+- **Triggers:** `update_sops_updated_at`
+- **Indexes:** `sops_sop_number_key` (unique)
+
+### `sop_versions`
+- **RLS Enabled:** Yes (Select: Same as sops)
+- **Columns:**
+  - [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191) (uuid, primary key)
+  - `sop_id` (uuid, references sops.id)
+  - `version` (text)
+  - `file_url` (text)
+  - `uploaded_by` (uuid)
+  - `change_type` (text, minor/significant)
+  - `created_at` (timestamptz)
+
+### `sop_approval_requests`
+- **RLS Enabled:** Yes (Select: QA or Submitter)
+- **Columns:**
+  - [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191) (uuid, primary key)
+  - `sop_id` (uuid, references sops.id)
+  - `submitted_by` (uuid, references profiles.id)
+  - `type` (text, check: new/update)
+  - `status` (text, check: pending/approved/changes_requested/rejected)
+  - `file_url` (text)
+  - `notes_to_qa` (text)
+  - `change_type` (text, minor/significant)
+  - `created_at` (timestamptz)
+  - `updated_at` (timestamptz)
+
+### `sop_approval_comments`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `request_id`, `author_id`, `comment`, `action`, `created_at`
+
+### `sop_acknowledgements`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `sop_id`, `user_id`, `version`, `acknowledged_at`
+
+### `change_controls`
+- **RLS Enabled:** Yes
+- **Columns:**
+  - [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191) (uuid, primary key)
+  - `cc_number` (text, unique)
+  - `sop_id` (uuid)
+  - `issued_by` (uuid)
+  - `old_version` (text)
+  - `new_version` (text)
+  - `old_file_url` (text)
+  - `new_file_url` (text)
+  - `status` (text, pending/complete)
+  - `deadline` (date)
+  - `delta_summary` (text)
+  - `diff_json` (jsonb)
+  - `required_signatories` (jsonb - snapshot of managers)
+  - `created_at` (timestamptz)
+- **Triggers:** `on_cc_completed` (completes SOP version)
+
+### `signature_certificates`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `change_control_id`, `user_id`, `signature_url`, `ip_address`, `signed_at`
+
+### `equipment`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `asset_id`, `name`, `serial_number`, `model`, `department`, `secondary_departments`, `status`, `photo_url`, `maintenance_frequency`, `last_serviced`, `next_due`, `initial_assignee_id`
+
+### `pm_tasks`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `equipment_id`, `assigned_to`, `due_date`, `status` (pending/overdue/completed), `completed_at`, `notes`, `photo_url`
+
+### `pulse_items`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `recipient_id` (null if broadcast), `sender_id`, `type`, `title`, `body`, `entity_type`, `entity_id`, `audience` (self/department/everyone), `target_department`, `created_at`
+
+### `pulse_acknowledgements`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `pulse_item_id`, `user_id`, `acknowledged_at`
+
+### `events` (Calendar)
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `title`, `description`, `start_time`, `end_time`, `is_public`, `department`, `created_by`
+
+### `conversations`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `type` (direct/group), `name`, `created_by`, `is_archived`
+
+### `conversation_members`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `conversation_id`, `user_id`, `last_read_at`, `notify_setting`
+
+### `messages`
+- **RLS Enabled:** Yes
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `conversation_id`, `sender_id`, `body`, `mentions`, `is_edited`, `is_ai`, `reference_type`, `reference_id`, `reply_to_id`, `created_at`, `deleted_at`
+
+### `audit_log`
+- **RLS Enabled:** Yes (Select: All, Insert: System)
+- **Columns:** [id](file:///e:/Projects/sop-manager-v2/components/app-sidebar.tsx#30-191), `actor_id`, `action`, `entity_type`, `entity_id`, `metadata`, `created_at`
+
+---
+
+## 3. SERVER ACTIONS
+
+All server actions follow a consistent pattern: **Manual validation** (auth and role checks) and **Result Object** error handling (`{ success: boolean, error?: string }`).
+
+### SOP & Approvals ([/actions/sop.ts](file:///e:/Projects/sop-manager-v2/actions/sop.ts))
+- **Functions**: [submitSopForApproval](file:///e:/Projects/sop-manager-v2/actions/sop.ts#11-161), [resubmitSop](file:///e:/Projects/sop-manager-v2/actions/sop.ts#162-264), [approveSopRequest](file:///e:/Projects/sop-manager-v2/actions/sop.ts#269-357), [requestChangesSop](file:///e:/Projects/sop-manager-v2/actions/sop.ts#358-439), [signChangeControl](file:///e:/Projects/sop-manager-v2/actions/sop.ts#444-526), [waiveSignature](file:///e:/Projects/sop-manager-v2/actions/sop.ts#527-568).
+- **Logic**:
+    - **Validation**: Manual checks for `auth.getUser()`, `profile.is_active`, and `profile.role === 'manager'` (for submissions) or `is_qa_manager` (for approvals). Self-approval is blocked via logic.
+    - **Error Handling**: Uses [SubmitSopResult](file:///e:/Projects/sop-manager-v2/actions/sop.ts#7-10) or [SettingsResult](file:///e:/Projects/sop-manager-v2/actions/settings.ts#7-10) types. All database errors are caught and returned as `error: message`.
+- **Special Case**: [signChangeControl](file:///e:/Projects/sop-manager-v2/actions/sop.ts#444-526) captures `x-forwarded-for` headers for IP logging.
+
+### Equipment & PM ([/actions/equipment.ts](file:///e:/Projects/sop-manager-v2/actions/equipment.ts))
+- **Functions**: [submitEquipment](file:///e:/Projects/sop-manager-v2/actions/equipment.ts#10-121), [approveEquipment](file:///e:/Projects/sop-manager-v2/actions/equipment.ts#122-158), [completePmTask](file:///e:/Projects/sop-manager-v2/actions/equipment.ts#225-285), [reassignPmTask](file:///e:/Projects/sop-manager-v2/actions/equipment.ts#286-339).
+- **Logic**:
+    - **Validation**: Manual checks for manager/QA roles. [completePmTask](file:///e:/Projects/sop-manager-v2/actions/equipment.ts#225-285) requires `notes` to be non-empty.
+    - **Error Handling**: Returns `{ success: false, error: string }` on failure. Employs `service_role` client for elevated database operations (e.g., updating equipment status).
+
+### Messaging ([/actions/messages.ts](file:///e:/Projects/sop-manager-v2/actions/messages.ts))
+- **Functions**: [sendMessage](file:///e:/Projects/sop-manager-v2/actions/messages.ts#5-67), [createConversation](file:///e:/Projects/sop-manager-v2/actions/messages.ts#117-186), [editMessage](file:///e:/Projects/sop-manager-v2/actions/messages.ts#68-99), [deleteMessage](file:///e:/Projects/sop-manager-v2/actions/messages.ts#100-116), [markConversationRead](file:///e:/Projects/sop-manager-v2/actions/messages.ts#187-199), [leaveGroup](file:///e:/Projects/sop-manager-v2/actions/messages.ts#213-240).
+- **Logic**:
+    - **Validation**: Verifies membership in `conversation_members` before allowing messages. [editMessage](file:///e:/Projects/sop-manager-v2/actions/messages.ts#68-99) enforces a **15-minute window** and ownership check.
+    - **Error Handling**: Throws `Error` objects directly (handled by `useTransition` or `try-catch` in client components).
+
+### Settings ([/actions/settings.ts](file:///e:/Projects/sop-manager-v2/actions/settings.ts))
+- **Functions**: [updateProfile](file:///e:/Projects/sop-manager-v2/actions/settings.ts#30-59), [redrawSignature](file:///e:/Projects/sop-manager-v2/actions/settings.ts#60-87), [grantAdmin](file:///e:/Projects/sop-manager-v2/actions/settings.ts#242-293), [revokeAdmin](file:///e:/Projects/sop-manager-v2/actions/settings.ts#294-344), [deactivateUser](file:///e:/Projects/sop-manager-v2/actions/settings.ts#345-374), [addDepartment](file:///e:/Projects/sop-manager-v2/actions/settings.ts#134-147).
+- **Logic**:
+    - **Validation**: [grantAdmin](file:///e:/Projects/sop-manager-v2/actions/settings.ts#242-293) and [revokeAdmin](file:///e:/Projects/sop-manager-v2/actions/settings.ts#294-344) require an `adminPassword` which is verified by re-authenticating the current user via `signInWithPassword`. [deleteDepartment](file:///e:/Projects/sop-manager-v2/actions/settings.ts#159-193) validates that the department is not "QA" and has no users/SOPs.
+    - **Error Handling**: Returns [SettingsResult](file:///e:/Projects/sop-manager-v2/actions/settings.ts#7-10) (`{ success: true }` or `{ success: false, error: string }`).
+
+### Calendar Events ([/actions/events.ts](file:///e:/Projects/sop-manager-v2/actions/events.ts))
+- **Functions**: `createEvent`, `deleteEvent`.
+- **Logic**:
+    - **Validation**: Manual check for `is_public` only allowed for managers. `deleteEvent` checks `created_by === user.id`.
+    - **Error Handling**: Returns success/error object.
+
+---
+
+## 4. API ROUTES
+
+- `POST /api/storage/sop-upload`: Secure .docx upload.
+- `POST /api/storage/equipment-photo`: Asset image upload.
+- `POST /api/change-control/diff`: mammoth.js + diff-match-patch comparison.
+- `POST /api/gemini/delta-summary`: AI-generated change summaries.
+- `POST /api/gemini/risk-insights`: AI analysis of audit logs for compliance.
+- `GET /api/cron/overdue-check`: Nightly job to mark overdue PMs and CCs.
+- `GET /api/docs/search`: Dynamic documentation indexing.
+
+---
+
+## 5. SHELL AND NAVIGATION
+
+- **TopNav**: Contains Global Search, Theme Toggle, Real-time Pulse notification count, and User Profile dropdown.
+- **AppSidebar**:
+  - Dynamically renders navigation based on roles.
+  - "Approvals" tab visibility guarded by `is_qa_manager`.
+  - Shows real-time unread message counts.
+- **Pulse Panel**:
+  - Fly-out overlay from the right edge.
+  - Real-time subscription to `pulse_items`.
+  - Supports sound notifications (toggleable in Settings).
+- **Navigation Guard**: Managed in [proxy.ts](file:///e:/Projects/sop-manager-v2/proxy.ts), handles auth redirects, inactive user blocking, and onboarding flow forced redirection.
+
+---
+
+## 6. FEATURE IMPLEMENTATIONS
+
+### The Pulse
+- **Broadcast Model**: Notifications are inserted once (if `audience` is 'department' or 'everyone') or targeted via `recipient_id`.
+- **Acknowledgement**: Individual reads are tracked in `pulse_acknowledgements`.
+- **Sound**: Different sounds for "Notices" vs "Messages" implemented in [ThePulse](file:///e:/Projects/sop-manager-v2/components/pulse/the-pulse.tsx#13-210) client.
+
+### SOP Library
+- **Two-Layer Visibility**: 
+  1. Default: Own Dept + Secondary Depts.
+  2. Search: Organization-wide (Read-only).
+- **Rendering**: Uses **Microsoft Online Viewer** iframe for pixel-perfect .docx display with Supabase Signed URLs.
+- **Tab Management**: Zustand-powered tab strip allowing up to 8 open documents.
+
+### Change Control
+- **Classification**: Branched into "Minor" (instant activation) and "Significant" (requires CC).
+- **Snapshotting**: Signatories are snapshotted at the moment of issuance from the current list of managers in the department.
+- **Certificates**: Stores IP address and cryptographic reference to the user's signature.
+
+### Equipment/PM
+- **Lifecycle**: Pending QA -> Active.
+- **Scheduling**: Auto-creates next task upon completion based on frequency (Monthly, Quarterly, etc.).
+- **Escalation**: Overdue CC tasks > 3 days are automatically escalated to QA Managers via Pulse.
+
+---
+
+## 7. ENVIRONMENT VARIABLES (LIST NAMES ONLY)
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GEMINI_API_KEY`
+- `CRON_SECRET`
+- `NEXT_PUBLIC_APP_URL`
+
+---
+
+## 8. THINGS THAT WERE NOT IMPLEMENTED (COMPARED TO BUILD PLAN)
+
+- **Custom Metadata / Dynamic Fields (Phase 15)**: Although marked as complete in [PROGRESS.md](file:///e:/Projects/sop-manager-v2/V2DOCS/PROGRESS.md), the `custom_field_definitions` table and associated rendering logic are MISSING from the actual database and UI.
+- **SOP Version Rollback**: The UI allows viewing history but lacks a "Promote to Current" one-click button for version rollback.
+- **mammoth.js for SOP Rendering**: The plan suggested mammoth.js for the main viewer; the app actually uses an Office Viewer iframe for better fidelity (mammoth is used for diffing).
+
+---
+
+## 10. KNOWN BUGS OR SCRATCHPAD ITEMS
+
+- **Signature Signature RLS**: Previously fixed, but requires `service_role` client for initial signup signature insertion as the profile doesn't exist yet to pass "own record" policies.
+- **Office Viewer Access**: Requires the document to be accessible via Signed URL; if the Supabase token expires while the user is reading, the iframe may show an error until page refresh.
+- **Zustand Persistence**: The SOP Tab strip state is currently memory-only; refreshing the page clears open tabs.
