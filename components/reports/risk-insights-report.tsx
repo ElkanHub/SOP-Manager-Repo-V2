@@ -106,7 +106,7 @@ export function RiskInsightsReport() {
       {insights && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 animate-in fade-in duration-700">
           <div className="lg:col-span-1 space-y-6">
-            <div className="p-6 rounded-2xl bg-muted/20 border border-border/40 space-y-4">
+            <div className="p-6 rounded-2xl bg-card border border-border shadow-sm space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground/60">Risk Assessment</h3>
               <div className="pt-2">
                 {getRiskBadge(insights.risk_level)}
@@ -118,8 +118,8 @@ export function RiskInsightsReport() {
           </div>
 
           <div className="lg:col-span-3 space-y-6">
-            <Card className="rounded-3xl border-border/40 bg-background/30 backdrop-blur-md overflow-hidden shadow-2xl shadow-black/5">
-              <CardHeader className="bg-muted/30 border-b border-border/40 py-4 px-8">
+            <Card className="rounded-3xl border-border bg-card overflow-hidden shadow-md">
+              <CardHeader className="bg-muted/30 border-b border-border py-4 px-8">
                 <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2">
                   <ClipboardList className="h-4 w-4 text-brand-teal" />
                   Neural Synthesis
@@ -139,7 +139,7 @@ export function RiskInsightsReport() {
                   ))}
                 </ul>
 
-                <div className="mt-12 pt-6 border-t border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <History className="h-3.5 w-3.5" />
                     <span className="text-[10px] font-bold uppercase tracking-widest">
@@ -157,9 +157,9 @@ export function RiskInsightsReport() {
       )}
 
       {!insights && !loading && !error && (
-        <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-muted/10 rounded-3xl border-2 border-dashed border-border/40">
+        <div className="flex flex-col items-center justify-center py-24 text-center space-y-4 bg-muted/5 rounded-3xl border-2 border-dashed border-border shadow-inner">
           <div className="relative">
-             <div className="absolute inset-0 bg-brand-teal/20 blur-2xl rounded-full" />
+             <div className="absolute inset-0 bg-brand-teal/10 blur-2xl rounded-full" />
              <Sparkles className="h-16 w-16 text-brand-teal relative z-10 animate-pulse" />
           </div>
           <div className="space-y-1">

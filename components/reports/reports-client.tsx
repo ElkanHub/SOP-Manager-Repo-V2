@@ -111,8 +111,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
           </div>
         </div>
 
-        <Card className="border-border/40 shadow-xl shadow-black/5 bg-background/50 backdrop-blur-md relative overflow-hidden mb-8">
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-teal/5 via-transparent to-transparent opacity-50 pointer-events-none" />
+        <Card className="border-border shadow-md bg-card relative overflow-hidden mb-8">
           <CardContent className="p-0 relative z-10">
             <div className="p-4 sm:p-8">
               {activeReport === "sop-changes" && (
@@ -134,9 +133,11 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
 
       {/* AI Insights Section - Always visible at bottom for QA/Admins */}
       {(isQa || isAdmin) && (
-        <div className="mt-4 pt-8 border-t border-border/40">
-           <RiskInsightsReport />
-        </div>
+        <Card className="mt-4 border-border shadow-md bg-card overflow-hidden">
+          <CardContent className="p-4 sm:p-8">
+            <RiskInsightsReport />
+          </CardContent>
+        </Card>
       )}
     </div>
   )
