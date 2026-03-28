@@ -76,7 +76,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className={cn("space-y-4 w-full", className)}>
-      <div className="rounded-xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm transition-all duration-300">
+      <div className={cn("rounded-xl border border-border bg-card overflow-hidden shadow-md transition-all duration-300", isLoading && "opacity-70")}>
         <div className="overflow-x-auto no-scrollbar">
           <table className="w-full">
             <thead className="bg-muted/30 border-b border-border/40">

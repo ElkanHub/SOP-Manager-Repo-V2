@@ -233,7 +233,7 @@ export function SopLibraryTable({
 
   return (
     <div className="space-y-3">
-      <div className={cn("rounded-lg border border-border bg-card overflow-hidden shadow-sm transition-opacity", isFetching && "opacity-70")}>
+      <div className={cn("rounded-xl border border-border bg-card overflow-hidden shadow-md transition-opacity", isFetching && "opacity-70")}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">
             <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-border">
