@@ -14,108 +14,135 @@ interface PulseWrapperProps {
 export function PulseWrapper({ user, profile }: PulseWrapperProps) {
     const [isOpen, setIsOpen] = useState(true)
     const [isMounted, setIsMounted] = useState(false)
-    const [unreadCount, setUnreadCount] = useState(0)
-    const prevUnreadRef = useRef(0)
+    const [badgeCount, setBadgeCount] = useState(0)
+    const prevCountRef = useRef(0)
 
-    useEffect(() => {
-        if (unreadCount > prevUnreadRef.current) {
-            const soundEnabled = profile?.notification_prefs?.notice_sound
-            // Play if sound enabled AND pulse is either closed OR open but new items arrived
-            if (soundEnabled && (document.hidden || !isOpen)) {
-                const audio = new Audio('/sounds/mixkit-retro-confirmation-tone-2860.wav')
-                audio.play().catch(err => console.log('Pulse sound prevented:', err))
-            }
-        }
-        prevUnreadRef.current = unreadCount
-    }, [unreadCount, profile?.notification_prefs?.notice_sound, isOpen])
-
+    // Restore open state from localStorage on mount
     useEffect(() => {
         const saved = localStorage.getItem("pulse-sidebar-open")
-        if (saved !== null) {
-            setIsOpen(saved === "true")
-        }
+        if (saved !== null) setIsOpen(saved === "true")
         setIsMounted(true)
     }, [])
 
-    const fetchUnread = useCallback(async () => {
+    // Sound notification when new items arrive
+    useEffect(() => {
+        if (badgeCount > prevCountRef.current) {
+            const soundEnabled = profile?.notification_prefs?.notice_sound
+            if (soundEnabled && !isOpen) {
+                const audio = new Audio('/sounds/mixkit-retro-confirmation-tone-2860.wav')
+                audio.play().catch(() => {})
+            }
+        }
+        prevCountRef.current = badgeCount
+    }, [badgeCount, profile?.notification_prefs?.notice_sound, isOpen])
+
+    const fetchBadgeCount = useCallback(async () => {
         if (!user) return
         const supabase = createClient()
 
-        // Unread calculation: 
-        // 1. Get pulse_items for user/dept/everyone
-        // 2. Filter those that don't have an acknowledgement from this user
+        // Get the timestamp of when the user last opened the Pulse
+        const lastOpenedAt = parseInt(localStorage.getItem('last_pulse_view') || '0')
+
+        // Fetch all pulse items that could be visible to this user
         const { data: items } = await supabase
             .from('pulse_items')
             .select(`
                 id,
+                type,
                 sender_id,
-                recipient_id,
                 audience,
                 target_department,
-                pulse_acknowledgements(user_id),
-                created_at
+                created_at,
+                pulse_acknowledgements(user_id)
             `)
-            .or(`recipient_id.eq.${user.id},audience.eq.everyone,and(audience.eq.department,target_department.eq.${profile.department})`)
-        
-        if (items) {
-            const storedLastSeen = parseInt(localStorage.getItem('last_pulse_view') || '0')
-            
-            const unread = items.filter((item: any) => {
-                if (item.sender_id === user.id) return false
-                
-                const isAcked = item.pulse_acknowledgements?.some((ack: any) => ack.user_id === user.id)
-                const isNew = new Date(item.created_at).getTime() > storedLastSeen
-                
-                return !isAcked || isNew
-            }).length
-            setUnreadCount(unread)
-        }
-    }, [user, profile.department])
+            .neq('sender_id', user.id)
+            .or(`audience.eq.everyone,and(audience.eq.department,target_department.eq.${profile.department}),recipient_id.eq.${user.id}`)
+            .order('created_at', { ascending: false })
 
-    useEffect(() => {
-        const handleToggle = (e: any) => {
-            const detail = (e as CustomEvent).detail
-            if (detail?.open !== undefined) {
-                setIsOpen(detail.open)
-                if (detail.open) {
-                    localStorage.setItem("last_pulse_view", Date.now().toString())
-                    // Refresh unread count locally
-                    setTimeout(() => fetchUnread(), 50)
+        if (!items) return
+
+        let count = 0
+        for (const item of items) {
+            const isAcked = (item.pulse_acknowledgements as any[])?.some(
+                (ack: any) => ack.user_id === user.id
+            ) ?? false
+
+            // BUCKET 1: Action required (Notices that require acknowledgement)
+            // These only clear when the user clicks "Acknowledge"
+            if (item.type === 'notice' && !isAcked) {
+                count++
+                continue
+            }
+
+            // BUCKET 2: New/Unread items (created after last time panel was opened)
+            // These clear when the user opens the panel
+            if (item.type === 'todo' && !isAcked) {
+                const itemTime = new Date(item.created_at).getTime()
+                if (itemTime > lastOpenedAt) {
+                    count++
+                    continue
                 }
             }
         }
-        
-        const handleSync = () => fetchUnread()
 
+        setBadgeCount(count)
+    }, [user, profile.department])
+
+    // Realtime subscriptions + event sync
+    useEffect(() => {
+        if (!user) return
         const supabase = createClient()
-        fetchUnread()
+
+        fetchBadgeCount()
 
         const channel = supabase.channel('pulse-wrapper-badges')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pulse_items' }, fetchUnread)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'pulse_acknowledgements' }, fetchUnread)
+            .on('postgres_changes', {
+                event: '*', schema: 'public', table: 'pulse_items'
+            }, fetchBadgeCount)
+            .on('postgres_changes', {
+                event: '*', schema: 'public', table: 'pulse_acknowledgements'
+            }, fetchBadgeCount)
             .subscribe()
 
+        // Listen for cross-component events
+        const handlePulseViewed = () => {
+            // Re-fetch after a brief delay so localStorage is definitely updated
+            setTimeout(fetchBadgeCount, 30)
+        }
+        const handleToggle = (e: Event) => {
+            const detail = (e as CustomEvent).detail
+            if (detail?.open !== undefined) {
+                setIsOpen(detail.open)
+                localStorage.setItem("pulse-sidebar-open", String(detail.open))
+                if (detail.open) {
+                    localStorage.setItem("last_pulse_view", Date.now().toString())
+                    setTimeout(fetchBadgeCount, 30)
+                }
+            }
+        }
+
+        window.addEventListener('pulse-viewed', handlePulseViewed)
         window.addEventListener('pulse-toggle', handleToggle)
-        window.addEventListener('pulse-viewed', handleSync)
+
         return () => {
             supabase.removeChannel(channel)
+            window.removeEventListener('pulse-viewed', handlePulseViewed)
             window.removeEventListener('pulse-toggle', handleToggle)
-            window.removeEventListener('pulse-viewed', handleSync)
         }
-    }, [fetchUnread])
+    }, [user, fetchBadgeCount])
 
     const togglePulse = () => {
         const newState = !isOpen
         setIsOpen(newState)
         localStorage.setItem("pulse-sidebar-open", String(newState))
-        
+
         if (newState) {
-            // Marking as "Seen" when opening
+            // Mark as "seen" — clears "new item" part of badge
             localStorage.setItem("last_pulse_view", Date.now().toString())
-            // Notify other components (TopNav) to update their badge count
+            // Notify TopNav bell to also refresh
             window.dispatchEvent(new Event('pulse-viewed'))
-            // Refresh local count
-            setTimeout(() => fetchUnread(), 50)
+            // Re-calculate badge (action-required items will remain)
+            setTimeout(fetchBadgeCount, 30)
         }
     }
 
@@ -124,7 +151,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
     return (
         <>
             {/* Toggle Button - Fixed position, always visible */}
-            <div 
+            <div
                 className={`
                     fixed top-1/2 -translate-y-1/2 z-50 flex items-center
                     transition-all duration-300 ease-in-out
@@ -143,9 +170,9 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
                     ) : (
                         <>
                             <PanelRightOpen className="h-4 w-4" />
-                            {unreadCount > 0 && (
+                            {badgeCount > 0 && (
                                 <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
-                                    {unreadCount > 9 ? '9+' : unreadCount}
+                                    {badgeCount > 9 ? '9+' : badgeCount}
                                 </span>
                             )}
                         </>
