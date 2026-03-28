@@ -79,23 +79,23 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
             </TabsList>
           </div>
 
-          <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border border-border/50 self-end md:self-auto">
+          <div className="flex flex-wrap items-center gap-2 bg-muted/30 p-1 rounded-lg border border-border/50 w-full sm:w-auto self-end md:self-auto justify-end sm:justify-start">
             <div className="flex items-center px-2 gap-1.5 border-r border-border/50">
-               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">From</span>
+               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 shrink-0">From</span>
                <input
                  type="date"
                  value={dateFrom || ""}
                  onChange={(e) => setDateRange(e.target.value || null, dateTo)}
-                 className="bg-transparent border-none text-[11px] font-semibold focus:ring-0 p-0 w-24 h-6 text-foreground"
+                 className="bg-transparent border-none text-[11px] font-semibold focus:ring-0 p-0 w-24 h-8 text-foreground"
                />
             </div>
-            <div className="flex items-center px-2 gap-1.5">
-               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">To</span>
+            <div className="flex items-center px-2 gap-1.5 min-w-[100px]">
+               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 shrink-0">To</span>
                <input
                  type="date"
                  value={dateTo || ""}
                  onChange={(e) => setDateRange(dateFrom, e.target.value || null)}
-                 className="bg-transparent border-none text-[11px] font-semibold focus:ring-0 p-0 w-24 h-6 text-foreground"
+                 className="bg-transparent border-none text-[11px] font-semibold focus:ring-0 p-0 w-24 h-8 text-foreground"
                />
             </div>
             { (dateFrom || dateTo) && (
@@ -103,7 +103,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
                 variant="ghost" 
                 size="sm" 
                 onClick={clearFilters}
-                className="h-6 px-2 text-[9px] font-bold uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 rounded-md"
+                className="h-7 px-2 text-[9px] font-bold uppercase tracking-widest hover:bg-red-500/10 hover:text-red-500 rounded-md shrink-0 sm:ml-auto"
               >
                 Clear
               </Button>

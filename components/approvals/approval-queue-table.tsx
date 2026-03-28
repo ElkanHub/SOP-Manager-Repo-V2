@@ -94,34 +94,38 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
                     return (
                         <Card key={sopId} className="overflow-hidden">
                             <CardContent className="p-0">
-                                <div className="flex items-center gap-4 p-4">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarImage src={submitter?.avatar_url} />
-                                        <AvatarFallback>
-                                            {getInitials(submitter?.full_name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-mono text-sm font-medium">{sop?.sop_number}</span>
-                                            <Badge variant="secondary">{latestRequest.type === 'new' ? 'New' : 'Update'}</Badge>
+                                <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4">
+                                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                                        <Avatar className="h-10 w-10 shrink-0">
+                                            <AvatarImage src={submitter?.avatar_url} />
+                                            <AvatarFallback>
+                                                {getInitials(submitter?.full_name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-mono text-sm font-medium">{sop?.sop_number}</span>
+                                                <Badge variant="secondary" className="text-[10px] px-1.5 h-4">{latestRequest.type === 'new' ? 'New' : 'Update'}</Badge>
+                                            </div>
+                                            <p className="text-sm font-semibold truncate">{sop?.title}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                By {submitter?.full_name} • {formatDistanceToNow(new Date(latestRequest.created_at), { addSuffix: true })}
+                                            </p>
                                         </div>
-                                        <p className="text-sm font-medium truncate">{sop?.title}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            Submitted by {submitter?.full_name} • {formatDistanceToNow(new Date(latestRequest.created_at), { addSuffix: true })}
-                                        </p>
                                     </div>
 
-                                    <div className="flex items-center gap-3 flex-wrap justify-end">
-                                        {getStatusBadge(latestRequest.status)}
-                                        {latestRequest.status === 'pending' && isSelfSubmission(latestRequest.submitted_by) && (
-                                            <Badge variant="outline" className="border-border text-muted-foreground">
-                                                You submitted this
-                                            </Badge>
-                                        )}
-                                        <Link href={`/approvals/${latestRequest.id}`}>
-                                            <Button size="sm">
+                                    <div className="flex items-center gap-3 justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {getStatusBadge(latestRequest.status)}
+                                            {latestRequest.status === 'pending' && isSelfSubmission(latestRequest.submitted_by) && (
+                                                <Badge variant="outline" className="border-border text-muted-foreground whitespace-nowrap">
+                                                    Your request
+                                                </Badge>
+                                            )}
+                                        </div>
+                                        <Link href={`/approvals/${latestRequest.id}`} className="shrink-0">
+                                            <Button size="sm" className="h-8 px-4">
                                                 Review
                                             </Button>
                                         </Link>

@@ -17,11 +17,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { approveEquipment, rejectEquipment, completePmTask, reassignPmTask } from "@/actions/equipment"
 import { Equipment, PmTask, Profile } from "@/types/app.types"
+import { SopReadModal } from "@/components/library/sop-read-modal"
+import { FileText } from "lucide-react"
 
 interface EquipmentDetailClientProps {
     equipment: Equipment & {
         departments?: { colour: string }
         profiles?: { id: string; full_name: string; department: string; role: string }
+        sops?: { id: string; title: string; sop_number: string; file_url: string; version: string }
     }
     pmTasks: (PmTask & {
         profiles?: { id: string; full_name: string; avatar_url?: string; department: string }
@@ -49,6 +52,7 @@ export function EquipmentDetailClient({
     const [reassignUserId, setReassignUserId] = useState('')
     const [taskToReassign, setTaskToReassign] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const [sopModalOpen, setSopModalOpen] = useState(false)
 
     const photoInputRef = useRef<HTMLInputElement>(null)
 
@@ -226,9 +230,31 @@ export function EquipmentDetailClient({
                                         {isOverdue && <span className="ml-2 text-xs bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">OVERDUE</span>}
                                     </span>
                                 </div>
+                                {equipment.linked_sop_id && (
+                                    <div className="col-span-2 mt-2 pt-2 border-t border-border/50">
+                                        <span className="text-muted-foreground mr-3">Maintenance Protocol:</span>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-7 text-xs bg-brand-navy/5 border-brand-navy/20 text-brand-navy hover:bg-brand-navy/10"
+                                            onClick={() => setSopModalOpen(true)}
+                                        >
+                                            <FileText className="h-3 w-3 mr-2" />
+                                            {equipment.sops?.sop_number || 'View SOP'}: {equipment.sops?.title || equipment.linked_sop_id}
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
+
+                    <SopReadModal 
+                        sopId={equipment.linked_sop_id || null}
+                        sopNumber={equipment.sops?.sop_number}
+                        sopTitle={equipment.sops?.title}
+                        open={sopModalOpen}
+                        onOpenChange={setSopModalOpen}
+                    />
 
                     <Card>
                         <CardHeader>

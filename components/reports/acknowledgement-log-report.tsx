@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Download, Users, FileText, Calendar, Hash, Building2, ShieldCheck } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+
 interface AcknowledgementLogReportProps {
   dateFrom: string | null
   dateTo: string | null
@@ -48,6 +51,66 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
     fetchData()
   }, [dateFrom, dateTo])
 
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "sop.sop_number",
+      header: "SOP No.",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs font-bold text-blue-600 bg-blue-500/5 px-2 py-1 rounded">
+          {row.original.sop?.sop_number || '-'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "sop.title",
+      header: "Title",
+      cell: ({ row }) => (
+        <div className="text-sm font-semibold truncate max-w-[200px]" title={row.original.sop?.title}>
+          {row.original.sop?.title || '-'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "user.full_name",
+      header: "Employee",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
+            {row.original.user?.full_name?.split(' ').map((n: string) => n[0]).join('') || '?'}
+          </div>
+          <div className="text-sm font-medium">{row.original.user?.full_name || 'Unknown'}</div>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "user.department",
+      header: "Dept",
+      cell: ({ row }) => (
+        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.user?.department || '-'}</div>
+      ),
+    },
+    {
+      accessorKey: "version",
+      header: "Version",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="font-mono text-[10px] font-bold px-1.5 h-4">
+          v{row.getValue("version")}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "acknowledged_at",
+      header: "Acknowledged At",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+          <ShieldCheck className="h-3 w-3 text-green-500" />
+          {format(new Date(row.getValue("acknowledged_at")), 'MMM d, yyyy')}
+          <span className="ml-1 opacity-50">{format(new Date(row.getValue("acknowledged_at")), 'HH:mm')}</span>
+        </div>
+      ),
+    },
+  ]
+
   const buildCsv = () => {
     const headers = ['SOP No.', 'SOP Title', 'Employee Name', 'Dept', 'Version', 'Acknowledged At']
     const rows = data.map((entry: any) => [
@@ -66,10 +129,6 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
     a.download = `acknowledgements-${format(new Date(), 'yyyy-MM-dd')}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }
-
-  if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Loading...</div>
   }
 
   return (
@@ -95,85 +154,13 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
         </Button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
-          <div className="bg-background p-4 rounded-full shadow-sm">
-            <Users className="h-10 w-10 text-muted-foreground/30" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-lg font-semibold text-foreground/70">No acknowledgements found</p>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">No records match the current filters.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full min-w-[1000px]">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border/40">
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Hash className="h-3 w-3" /> SOP No.</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><FileText className="h-3 w-3" /> Title</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Employee
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Dept</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Version
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Acknowledged At</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30">
-                {data.map((entry: any) => (
-                  <tr key={entry.id} className="hover:bg-blue-500/[0.02] transition-colors group">
-                    <td className="px-6 py-5">
-                      <span className="font-mono text-xs font-bold text-blue-600 bg-blue-500/5 px-2 py-1 rounded">
-                        {entry.sop?.sop_number || '-'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-sm font-semibold truncate max-w-[200px]" title={entry.sop?.title}>
-                        {entry.sop?.title || '-'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold">
-                          {entry.user?.full_name?.split(' ').map((n: string) => n[0]).join('') || '?'}
-                        </div>
-                        <div className="text-sm font-medium">{entry.user?.full_name || 'Unknown'}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.user?.department || '-'}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <Badge variant="secondary" className="font-mono text-[10px] font-bold px-1.5 h-4">
-                        v{entry.version}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <ShieldCheck className="h-3 w-3 text-green-500" />
-                        {format(new Date(entry.acknowledged_at), 'MMM d, yyyy')}
-                        <span className="ml-1 opacity-50">{format(new Date(entry.acknowledged_at), 'HH:mm')}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={data} 
+        isLoading={loading}
+        noDataMessage={loading ? "Loading records..." : "No acknowledgements found."}
+        pageSize={15}
+      />
     </div>
   )
 }

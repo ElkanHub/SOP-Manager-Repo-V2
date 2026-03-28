@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Download, FileText, Calendar, Hash, User, Building2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+
 interface SopChangeHistoryReportProps {
   dateFrom: string | null
   dateTo: string | null
@@ -43,8 +46,40 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
         query = query.lte('created_at', dateTo + 'T23:59:59')
       }
 
-      const { data } = await query.limit(100)
-      setData(data || [])
+      const { data: logs } = await query.limit(100)
+      
+      if (!logs || logs.length === 0) {
+        setData([])
+        setLoading(false)
+        return
+      }
+
+      // Task 11: Fetch SOP numbers for both direct SOP actions and CC actions
+      const sopIds = logs
+        .filter(l => l.entity_type === 'sop')
+        .map(l => l.entity_id)
+      
+      const ccIds = logs
+        .filter(l => l.entity_type === 'change_control')
+        .map(l => l.entity_id)
+
+      const [{ data: sops }, { data: ccs }] = await Promise.all([
+        supabase.from('sops').select('id, sop_number').in('id', sopIds),
+        supabase.from('change_controls').select('id, sop_id, sops(sop_number)').in('id', ccIds)
+      ])
+
+      const enrichedLogs = logs.map(log => {
+        let sopNumber = '-'
+        if (log.entity_type === 'sop') {
+          sopNumber = sops?.find(s => s.id === log.entity_id)?.sop_number || '-'
+        } else if (log.entity_type === 'change_control') {
+          const cc = ccs?.find(c => c.id === log.entity_id)
+          sopNumber = (cc?.sops as any)?.sop_number || '-'
+        }
+        return { ...log, sop_number: sopNumber }
+      })
+
+      setData(enrichedLogs)
       setLoading(false)
     }
 
@@ -63,10 +98,55 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
     return labels[action] || action
   }
 
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "sop_number",
+      header: "SOP No.",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded">
+          {row.getValue("sop_number")}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "action",
+      header: "Action",
+      cell: ({ row }) => (
+        <Badge variant="outline" className="font-bold border-brand-teal/20 text-brand-teal">
+          {getActionLabel(row.getValue("action"))}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "actor.full_name",
+      header: "Actor",
+      cell: ({ row }) => (
+        <div className="text-sm font-semibold">{row.original.actor?.full_name || 'Unknown'}</div>
+      ),
+    },
+    {
+      accessorKey: "actor.department",
+      header: "Dept",
+      cell: ({ row }) => (
+        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.actor?.department || '-'}</div>
+      ),
+    },
+    {
+      accessorKey: "created_at",
+      header: "Timestamp",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium text-muted-foreground">
+          {format(new Date(row.getValue("created_at")), 'MMM d, yyyy')}
+          <span className="ml-2 opacity-50">{format(new Date(row.getValue("created_at")), 'HH:mm')}</span>
+        </div>
+      ),
+    },
+  ]
+
   const buildCsv = () => {
     const headers = ['SOP No.', 'Action', 'Actor Name', 'Department', 'Timestamp']
     const rows = data.map(entry => [
-      entry.sop?.sop_number || entry.entity_id.substring(0, 8),
+      entry.sop_number,
       getActionLabel(entry.action),
       entry.actor?.full_name || 'Unknown',
       entry.actor?.department || 'Unknown',
@@ -80,10 +160,6 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
     a.download = `sop-change-history-${format(new Date(), 'yyyy-MM-dd')}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }
-
-  if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Loading...</div>
   }
 
   return (
@@ -109,71 +185,13 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
         </Button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
-          <div className="bg-background p-4 rounded-full shadow-sm">
-            <FileText className="h-10 w-10 text-muted-foreground/30" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-lg font-semibold text-foreground/70">No data found</p>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">Try adjusting your date range filters to see activity logs.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full min-w-[900px]">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border/40">
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Hash className="h-3 w-3" /> SOP No.</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Action
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><User className="h-3 w-3" /> Actor</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Dept</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Timestamp</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30">
-                {data.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-brand-teal/[0.02] transition-colors group">
-                    <td className="px-6 py-5">
-                      <span className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded">
-                        {entry.sop?.sop_number || '-'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <Badge variant="outline" className="font-bold border-brand-teal/20 text-brand-teal">
-                        {getActionLabel(entry.action)}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-sm font-semibold">{entry.actor?.full_name || 'Unknown'}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.actor?.department || '-'}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
-                        <span className="ml-2 opacity-50">{format(new Date(entry.created_at), 'HH:mm')}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={data} 
+        isLoading={loading}
+        noDataMessage={loading ? "Loading audit logs..." : "No data found. Try adjusting your date range."}
+        pageSize={15}
+      />
     </div>
   )
 }

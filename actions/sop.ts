@@ -664,3 +664,31 @@ export async function acknowledgeSop(
     revalidatePath('/library')
     return { success: true }
 }
+
+export async function getSopSignedUrl(sopId: string): Promise<{ success: boolean; signedUrl?: string; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { data: sop } = await supabase
+        .from('sops')
+        .select('file_url')
+        .eq('id', sopId)
+        .single()
+
+    if (!sop || !sop.file_url) {
+        return { success: false, error: 'SOP or file not found' }
+    }
+
+    const { data, error } = await supabase.storage
+        .from('documents')
+        .createSignedUrl(sop.file_url, 3600)
+
+    if (error) {
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, signedUrl: data.signedUrl }
+}

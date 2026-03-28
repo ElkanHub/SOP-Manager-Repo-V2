@@ -30,12 +30,32 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const [unreadConversations, setUnreadConversations] = React.useState(0)
+  const [pendingApprovals, setPendingApprovals] = React.useState(0)
+  const [pendingPmTasks, setPendingPmTasks] = React.useState(0)
   const supabase = createClient()
+  
+  const prevUnreadRef = React.useRef(0)
+
+  // Sound notification effect
+  React.useEffect(() => {
+    // Check if unreadCount increased and sound is enabled
+    if (unreadConversations > prevUnreadRef.current) {
+        const soundEnabled = profile?.notification_prefs?.message_sound
+        const shouldPlay = soundEnabled && (document.hidden || !pathname.startsWith('/messages'))
+        
+        if (shouldPlay) {
+            const audio = new Audio('/sounds/mixkit-bubble-pop-up-alert-notification-2357.wav')
+            audio.play().catch(err => console.log('Audio playback prevented:', err))
+        }
+    }
+    prevUnreadRef.current = unreadConversations
+  }, [unreadConversations, profile?.notification_prefs?.message_sound, pathname])
 
   React.useEffect(() => {
     if (!user) return
 
-    async function fetchUnreadCount() {
+    async function fetchCounts() {
+      // 1. Unread Messages
       const { data: convData } = await supabase
         .from('conversations')
         .select(`
@@ -55,27 +75,48 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         }).length;
         setUnreadConversations(count);
       }
+
+      // 2. Pending Approvals (SOPs)
+      if (isQa) {
+        const { count: approvalCount } = await supabase
+          .from('sop_approval_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending')
+        
+        setPendingApprovals(approvalCount || 0)
+      }
+
+      // 3. Pending PM Tasks (assigned to user or in department if manager)
+      // Actually, let's just count all 'pending' and 'overdue' tasks if QA/Manager, or just assigned to user if Employee.
+      // But for the sidebar badge, it usually reflects "work to be done".
+      let pmQuery = supabase.from('pm_tasks').select('*', { count: 'exact', head: true })
+      
+      if (profile.role === 'manager' || isQa) {
+        // Count all pending tasks in their department (if manager) or everywhere if QA
+        // For simplicity across the app, let's keep it to "Incomplete Tasks" user can see
+        pmQuery = pmQuery.in('status', ['pending', 'overdue'])
+      } else {
+        pmQuery = pmQuery.eq('assigned_to', user.id).in('status', ['pending', 'overdue'])
+      }
+      
+      const { count: pmCount } = await pmQuery
+      setPendingPmTasks(pmCount || 0)
     }
 
-    fetchUnreadCount()
+    fetchCounts()
 
     // Realtime update for unread count
-    const channel = supabase.channel('sidebar-messages')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-        fetchUnreadCount()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
-        fetchUnreadCount()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversation_members', filter: `user_id=eq.${user.id}` }, () => {
-        fetchUnreadCount()
-      })
+    const channel = supabase.channel('sidebar-badges')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sop_approval_requests' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'pm_tasks' }, fetchCounts)
       .subscribe()
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user.id, supabase])
+  }, [user.id, supabase, isQa, profile.role])
 
   const navItems = [
     {
@@ -95,18 +136,21 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       url: "/approvals",
       icon: <ClipboardCheck className="w-5 h-5" />,
       isActive: pathname.startsWith("/approvals"),
+      badge: pendingApprovals,
     }] : []),
     {
       title: "Equipment",
       url: "/equipment",
       icon: <Wrench className="w-5 h-5" />,
       isActive: pathname.startsWith("/equipment"),
+      badge: pendingPmTasks,
     },
     {
       title: "Messages",
       url: "/messages",
       icon: <MessageSquare className="w-5 h-5" />,
       isActive: pathname.startsWith("/messages"),
+      badge: unreadConversations,
     },
     {
       title: "Calendar",
@@ -150,9 +194,9 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
               >
                 {item.icon}
                 <span>{item.title}</span>
-                {item.title === "Messages" && unreadConversations > 0 && (
-                  <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px]">
-                    {unreadConversations}
+                {item.badge !== undefined && item.badge > 0 && (
+                  <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
+                    {item.badge > 99 ? '99+' : item.badge}
                   </Badge>
                 )}
               </SidebarMenuButton>

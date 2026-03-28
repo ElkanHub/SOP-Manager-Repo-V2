@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Download, Bell, Calendar, User, Users, Building2, MailOpen } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+
 interface PulseNoticeReportProps {
   dateFrom: string | null
   dateTo: string | null
@@ -50,6 +53,58 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
     fetchData()
   }, [dateFrom, dateTo])
 
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "sender.full_name",
+      header: "Sender",
+      cell: ({ row }) => (
+        <div className="text-sm font-semibold">{row.original.sender?.full_name || 'System'}</div>
+      ),
+    },
+    {
+      accessorKey: "audience",
+      header: "Audience",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="capitalize text-[10px] font-bold">
+          {row.getValue("audience")}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: "target_department",
+      header: "Target",
+      cell: ({ row }) => (
+        <div className="text-xs text-muted-foreground/80 font-medium">{row.getValue("target_department") || '-'}</div>
+      ),
+    },
+    {
+      accessorKey: "title",
+      header: "Content",
+      cell: ({ row }) => (
+        <div className="space-y-1 max-w-md">
+          <div className="text-sm font-bold flex items-center gap-2">
+            <MailOpen className="h-3 w-3 text-indigo-500 opacity-60" />
+            {row.getValue("title")}
+          </div>
+          <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed" title={row.original.body}>
+            {row.original.body || '-'}
+          </div>
+        </div>
+      ),
+      size: 400,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Sent At",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+          {format(new Date(row.getValue("created_at")), 'MMM d, yyyy')}
+          <span className="ml-2 opacity-50">{format(new Date(row.getValue("created_at")), 'HH:mm')}</span>
+        </div>
+      ),
+    },
+  ]
+
   const buildCsv = () => {
     const headers = ['Sender', 'Audience', 'Target Dept', 'Subject', 'Body', 'Sent At']
     const rows = data.map(entry => [
@@ -68,10 +123,6 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
     a.download = `pulse-notices-${format(new Date(), 'yyyy-MM-dd')}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }
-
-  if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Loading...</div>
   }
 
   return (
@@ -97,77 +148,13 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
         </Button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
-          <div className="bg-background p-4 rounded-full shadow-sm">
-            <Bell className="h-10 w-10 text-muted-foreground/30" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-lg font-semibold text-foreground/70">No notices found</p>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">Try adjusting your date range filters.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full min-w-[1000px]">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border/40">
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><User className="h-3 w-3" /> Sender</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Users className="h-3 w-3" /> Audience</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Target</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Content
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Sent At</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30">
-                {data.map((entry) => (
-                  <tr key={entry.id} className="hover:bg-indigo-500/[0.02] transition-colors group">
-                    <td className="px-6 py-5">
-                      <div className="text-sm font-semibold">{entry.sender?.full_name || 'System'}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <Badge variant="secondary" className="capitalize text-[10px] font-bold">
-                        {entry.audience}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.target_department || '-'}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="space-y-1 max-w-md">
-                        <div className="text-sm font-bold flex items-center gap-2">
-                          <MailOpen className="h-3 w-3 text-indigo-500 opacity-60" />
-                          {entry.title}
-                        </div>
-                        <div className="text-xs text-muted-foreground line-clamp-2 leading-relaxed" title={entry.body}>
-                          {entry.body || '-'}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-                        {format(new Date(entry.created_at), 'MMM d, yyyy')}
-                        <span className="ml-2 opacity-50">{format(new Date(entry.created_at), 'HH:mm')}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={data} 
+        isLoading={loading}
+        noDataMessage={loading ? "Loading logs..." : "No notices found."}
+        pageSize={15}
+      />
     </div>
   )
 }

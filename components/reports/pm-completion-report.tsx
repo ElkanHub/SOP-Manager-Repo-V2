@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Download, Wrench, Calendar, Hash, Building2, User, ClipboardList } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+
 interface PmCompletionReportProps {
   dateFrom: string | null
   dateTo: string | null
@@ -50,6 +53,66 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
     fetchData()
   }, [dateFrom, dateTo])
 
+  const columns: ColumnDef<any>[] = [
+    {
+      accessorKey: "equipment.asset_id",
+      header: "Asset ID",
+      cell: ({ row }) => (
+        <span className="font-mono text-xs font-bold text-orange-600 bg-orange-500/5 px-2 py-1 rounded">
+          {row.original.equipment?.asset_id || '-'}
+        </span>
+      ),
+    },
+    {
+      accessorKey: "equipment.name",
+      header: "Asset Name",
+      cell: ({ row }) => (
+        <div className="text-sm font-semibold truncate max-w-[180px]" title={row.original.equipment?.name}>
+          {row.original.equipment?.name || '-'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "equipment.department",
+      header: "Dept",
+      cell: ({ row }) => (
+        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.equipment?.department || '-'}</div>
+      ),
+    },
+    {
+      accessorKey: "assigned_to_user.full_name",
+      header: "Assigned To",
+      cell: ({ row }) => (
+        <div className="text-sm">{row.original.assigned_to_user?.full_name || '-'}</div>
+      ),
+    },
+    {
+      accessorKey: "completed_by_user.full_name",
+      header: "Completed By",
+      cell: ({ row }) => (
+        <div className="text-sm font-medium">{row.original.completed_by_user?.full_name || '-'}</div>
+      ),
+    },
+    {
+      accessorKey: "completed_at",
+      header: "Date",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium text-muted-foreground">
+          {row.getValue("completed_at") ? format(new Date(row.getValue("completed_at") as string), 'MMM d, yyyy') : '-'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "notes",
+      header: "Notes",
+      cell: ({ row }) => (
+        <div className="text-xs text-muted-foreground/70 italic max-w-xs truncate" title={row.getValue("notes")}>
+          {row.getValue("notes") || 'No work notes'}
+        </div>
+      ),
+    },
+  ]
+
   const buildCsv = () => {
     const headers = ['Asset ID', 'Asset Name', 'Dept', 'Assigned To', 'Completed By', 'Completion Date', 'Notes']
     const rows = data.map((entry: any) => [
@@ -69,10 +132,6 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
     a.download = `pm-completion-${format(new Date(), 'yyyy-MM-dd')}.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }
-
-  if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Loading...</div>
   }
 
   return (
@@ -98,80 +157,13 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
         </Button>
       </div>
 
-      {data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center space-y-3 bg-muted/20 rounded-2xl border border-dashed border-border/60">
-          <div className="bg-background p-4 rounded-full shadow-sm">
-            <Wrench className="h-10 w-10 text-muted-foreground/30" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-lg font-semibold text-foreground/70">No PM records found</p>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">Try adjusting your date range filters.</p>
-          </div>
-        </div>
-      ) : (
-        <div className="relative rounded-2xl border border-border/40 bg-background/30 backdrop-blur-sm overflow-hidden shadow-sm">
-          <div className="overflow-x-auto no-scrollbar">
-            <table className="w-full min-w-[1100px]">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border/40">
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Hash className="h-3 w-3" /> Asset ID</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Asset Name
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Building2 className="h-3 w-3" /> Dept</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Assigned To
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    Completed By
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><Calendar className="h-3 w-3" /> Date</div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                    <div className="flex items-center gap-2"><ClipboardList className="h-3 w-3" /> Notes</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/30">
-                {data.map((entry: any) => (
-                  <tr key={entry.id} className="hover:bg-orange-500/[0.02] transition-colors group">
-                    <td className="px-6 py-5">
-                      <span className="font-mono text-xs font-bold text-orange-600 bg-orange-500/5 px-2 py-1 rounded">
-                        {entry.equipment?.asset_id || '-'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-sm font-semibold truncate max-w-[180px]" title={entry.equipment?.name}>
-                        {entry.equipment?.name || '-'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs text-muted-foreground/80 font-medium">{entry.equipment?.department || '-'}</div>
-                    </td>
-                    <td className="px-6 py-5 text-sm">{entry.assigned_to_user?.full_name || '-'}</td>
-                    <td className="px-6 py-5 text-sm font-medium">{entry.completed_by_user?.full_name || '-'}</td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs font-medium text-muted-foreground">
-                        {entry.completed_at ? format(new Date(entry.completed_at), 'MMM d, yyyy') : '-'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="text-xs text-muted-foreground/70 italic max-w-xs truncate" title={entry.notes}>
-                        {entry.notes || 'No work notes'}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      <DataTable 
+        columns={columns} 
+        data={data} 
+        isLoading={loading}
+        noDataMessage={loading ? "Loading logs..." : "No PM records found."}
+        pageSize={15}
+      />
     </div>
   )
 }

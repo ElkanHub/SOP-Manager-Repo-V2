@@ -33,7 +33,8 @@ export default async function EquipmentDetailPage({ params }: Props) {
         .select(`
             *,
             departments(colour),
-            profiles!equipment_initial_assignee_id_fkey(id, full_name, department, role)
+            profiles!equipment_initial_assignee_id_fkey(id, full_name, department, role),
+            sops:linked_sop_id(id, title, sop_number, file_url, version)
         `)
         .eq('id', id)
         .single()

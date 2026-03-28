@@ -38,7 +38,7 @@ export default async function EquipmentPage({ searchParams }: PageProps) {
 
   let query = supabase
     .from("equipment")
-    .select("*, departments(colour)")
+    .select("*, departments(colour), sops:linked_sop_id(id, title, sop_number)")
     .order("created_at", { ascending: false })
 
   if (profile.role === "employee") {
