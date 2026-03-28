@@ -29,9 +29,9 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 .eq('department', profile.department)
                 .eq('is_active', true)
 
-            setCounts({ 
-                everyone: everyoneCount || 0, 
-                department: deptCount || 0 
+            setCounts({
+                everyone: everyoneCount || 0,
+                department: deptCount || 0
             })
         }
         fetchCounts()
@@ -81,17 +81,17 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 (payload: any) => {
                     const newItem = payload.new as any
                     console.log('Pulse Realtime Insert:', newItem)
-                    
-                    const isPotentiallyForMe = 
-                        newItem.recipient_id === user.id || 
-                        newItem.audience === 'everyone' || 
+
+                    const isPotentiallyForMe =
+                        newItem.recipient_id === user.id ||
+                        newItem.audience === 'everyone' ||
                         (newItem.audience === 'department' && newItem.target_department === profile.department)
 
                     console.log('Pulse: isPotentiallyForMe?', isPotentiallyForMe, 'Dept:', profile.department, 'TargetDept:', newItem.target_department)
 
                     if (isPotentiallyForMe) {
                         const itemWithCounts = withCounts(newItem)
-                        
+
                         // Play Notification Sound
                         const prefs = profile.notification_prefs || {}
                         const shouldPlayNotice = (newItem.type === 'notice' || newItem.type === 'todo') && (prefs.notice_sound !== false)
@@ -104,7 +104,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                             audio.volume = 0.5
                             audio.play().catch(err => console.warn('Pulse: Notice sound blocked or failed:', err))
                         } else if (shouldPlayMessage) {
-                            const audio = new Audio('/sounds/mixkit-correct-answer-tone-2870.wav')
+                            const audio = new Audio('/sounds/mixkit-positive-interface-beep-221.wav')
                             audio.volume = 0.5
                             audio.play().catch(err => console.warn('Pulse: Message sound blocked or failed:', err))
                         }
@@ -124,8 +124,8 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 { event: 'INSERT', schema: 'public', table: 'pulse_acknowledgements' },
                 (payload: any) => {
                     const newAck = payload.new as any
-                    setItems(prev => prev.map(item => 
-                        item.id === newAck.pulse_item_id 
+                    setItems(prev => prev.map(item =>
+                        item.id === newAck.pulse_item_id
                             ? { ...item, acknowledgements: [...(item.acknowledgements || []), newAck] }
                             : item
                     ))
@@ -156,8 +156,8 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 <div className="absolute inset-0 bg-white/5 mix-blend-overlay"></div>
                 <div className="flex items-center gap-2.5 font-bold text-lg text-white relative z-10 tracking-tight">
                     <div className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-teal shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-teal shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
                     </div>
                     The Pulse
                 </div>

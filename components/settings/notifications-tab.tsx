@@ -140,7 +140,7 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
                                     size="sm" 
                                     className="h-7 w-7 p-0 rounded-full hover:bg-blue-600/10 hover:text-blue-600"
                                     onClick={() => {
-                                        const audio = new Audio('/sounds/mixkit-correct-answer-tone-2870.wav');
+                                        const audio = new Audio('/sounds/mixkit-positive-interface-beep-221.wav');
                                         audio.volume = 0.5;
                                         audio.play().catch(() => {});
                                     }}
