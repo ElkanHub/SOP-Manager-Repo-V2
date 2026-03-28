@@ -72,7 +72,8 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 const user = row.original
                 const isSelf = user.id === currentUserId
                 
-                const handleDeptChange = (newDept: string) => {
+                const handleDeptChange = (newDept: string | null) => {
+                    if (!newDept) return
                     startTransition(async () => {
                         const result = await changeUserDepartment(user.id, newDept)
                         if (result.success) handleUpdate(user.id, { department: newDept })
@@ -82,7 +83,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 if (isSelf) return <span className="text-sm text-muted-foreground">{user.department}</span>
 
                 return (
-                    <Select value={user.department} onValueChange={handleDeptChange} disabled={isPending}>
+                    <Select value={user.department ?? ""} onValueChange={handleDeptChange} disabled={isPending}>
                         <SelectTrigger className="h-8 text-xs w-36">
                             <SelectValue />
                         </SelectTrigger>
@@ -102,7 +103,8 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 const user = row.original
                 const isSelf = user.id === currentUserId
 
-                const handleRoleChange = (newRole: string) => {
+                const handleRoleChange = (newRole: string | null) => {
+                    if (!newRole) return
                     startTransition(async () => {
                         const result = await changeUserRole(user.id, newRole as 'manager' | 'employee')
                         if (result.success) handleUpdate(user.id, { role: newRole as 'manager' | 'employee' })
@@ -112,7 +114,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 if (isSelf) return <Badge variant="secondary" className="capitalize">{user.role}</Badge>
 
                 return (
-                    <Select value={user.role} onValueChange={handleRoleChange} disabled={isPending}>
+                    <Select value={user.role ?? ""} onValueChange={handleRoleChange} disabled={isPending}>
                         <SelectTrigger className="h-8 text-xs w-28">
                             <SelectValue />
                         </SelectTrigger>

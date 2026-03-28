@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
-import { Loader2, Sparkles, AlertTriangle, CheckCircle2, Info, BrainCircuit, ShieldAlert, History } from "lucide-react"
+import { Loader2, Sparkles, AlertTriangle, CheckCircle2, Info, BrainCircuit, ShieldAlert, History, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"

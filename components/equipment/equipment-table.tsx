@@ -1,3 +1,23 @@
+"use client"
+
+import { useMemo, useState } from "react"
+import { format } from "date-fns"
+import { useRouter } from "next/navigation"
+import { MoreHorizontal, FileText } from "lucide-react"
+import { ColumnDef } from "@tanstack/react-table"
+import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Equipment } from "@/types/app.types"
+import { DeptBadge } from "@/components/ui/dept-badge"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { cn } from "@/lib/utils"
+import { SopReadModal } from "@/components/library/sop-read-modal"
 import { DataTable } from "@/components/ui/data-table"
 
 interface EquipmentTableProps {
@@ -127,7 +147,7 @@ export function EquipmentTable({ equipment, userDepartment, userRole }: Equipmen
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+                <DropdownMenuTrigger>
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/50 hover:text-foreground">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
