@@ -157,7 +157,7 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 <div className="flex items-center gap-2.5 font-bold text-lg text-white relative z-10 tracking-tight">
                     <div className="relative flex h-3 w-3">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-teal opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-teal shadow-[0_0_8px_rgba(20,184,166,0.8)]"></span>
                     </div>
                     The Pulse
                 </div>
