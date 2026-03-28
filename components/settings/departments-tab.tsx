@@ -112,7 +112,7 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                 </Button>
             </div>
 
-            <div className="rounded-2xl border border-border/40 overflow-hidden shadow-sm bg-background/50 backdrop-blur-sm">
+            <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm min-w-[650px]">
                         <thead className="bg-muted/30 text-muted-foreground border-b border-border/40">
