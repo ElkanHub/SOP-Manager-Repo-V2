@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { PanelRightClose, PanelRightOpen } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -37,47 +37,86 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         setIsMounted(true)
     }, [])
 
-    useEffect(() => {
+    const fetchUnread = useCallback(async () => {
         if (!user) return
         const supabase = createClient()
 
-        async function fetchUnread() {
-            // Unread calculation: 
-            // 1. Get pulse_items for user/dept/everyone
-            // 2. Filter those that don't have an acknowledgement from this user
-            const { data: items } = await supabase
-                .from('pulse_items')
-                .select(`
-                    id,
-                    recipient_id,
-                    audience,
-                    target_department,
-                    pulse_acknowledgements(user_id)
-                `)
-                .or(`recipient_id.eq.${user.id},audience.eq.everyone,target_department.eq.${profile.department}`)
+        // Unread calculation: 
+        // 1. Get pulse_items for user/dept/everyone
+        // 2. Filter those that don't have an acknowledgement from this user
+        const { data: items } = await supabase
+            .from('pulse_items')
+            .select(`
+                id,
+                sender_id,
+                recipient_id,
+                audience,
+                target_department,
+                pulse_acknowledgements(user_id),
+                created_at
+            `)
+            .or(`recipient_id.eq.${user.id},audience.eq.everyone,and(audience.eq.department,target_department.eq.${profile.department})`)
+        
+        if (items) {
+            const storedLastSeen = parseInt(localStorage.getItem('last_pulse_view') || '0')
             
-            if (items) {
-                const unread = items.filter((item: any) => 
-                    !item.pulse_acknowledgements?.some((ack: any) => ack.user_id === user.id)
-                ).length
-                setUnreadCount(unread)
+            const unread = items.filter((item: any) => {
+                if (item.sender_id === user.id) return false
+                
+                const isAcked = item.pulse_acknowledgements?.some((ack: any) => ack.user_id === user.id)
+                const isNew = new Date(item.created_at).getTime() > storedLastSeen
+                
+                return !isAcked || isNew
+            }).length
+            setUnreadCount(unread)
+        }
+    }, [user, profile.department])
+
+    useEffect(() => {
+        const handleToggle = (e: any) => {
+            const detail = (e as CustomEvent).detail
+            if (detail?.open !== undefined) {
+                setIsOpen(detail.open)
+                if (detail.open) {
+                    localStorage.setItem("last_pulse_view", Date.now().toString())
+                    // Refresh unread count locally
+                    setTimeout(() => fetchUnread(), 50)
+                }
             }
         }
+        
+        const handleSync = () => fetchUnread()
 
+        const supabase = createClient()
         fetchUnread()
 
         const channel = supabase.channel('pulse-wrapper-badges')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pulse_items' }, fetchUnread)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'pulse_acknowledgements' }, fetchUnread)
             .subscribe()
-        
-        return () => { supabase.removeChannel(channel) }
-    }, [user, profile.department])
+
+        window.addEventListener('pulse-toggle', handleToggle)
+        window.addEventListener('pulse-viewed', handleSync)
+        return () => {
+            supabase.removeChannel(channel)
+            window.removeEventListener('pulse-toggle', handleToggle)
+            window.removeEventListener('pulse-viewed', handleSync)
+        }
+    }, [fetchUnread])
 
     const togglePulse = () => {
         const newState = !isOpen
         setIsOpen(newState)
         localStorage.setItem("pulse-sidebar-open", String(newState))
+        
+        if (newState) {
+            // Marking as "Seen" when opening
+            localStorage.setItem("last_pulse_view", Date.now().toString())
+            // Notify other components (TopNav) to update their badge count
+            window.dispatchEvent(new Event('pulse-viewed'))
+            // Refresh local count
+            setTimeout(() => fetchUnread(), 50)
+        }
     }
 
     if (!isMounted) return null
@@ -104,8 +143,8 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
                     ) : (
                         <>
                             <PanelRightOpen className="h-4 w-4" />
-                            {!isOpen && unreadCount > 0 && (
-                                <span className="absolute -top-1 -left-1 flex h-4 w-4 items-center justify-center rounded-full bg-brand-teal text-[9px] font-bold text-white shadow-sm ring-2 ring-background">
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
                                     {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>
                             )}
