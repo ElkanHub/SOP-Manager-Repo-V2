@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** March 28, 2026
-> **Version:** 2.3 (Performance & UI Polish)
-> **Current Phase:** Phase 18 ✅ Complete — Phase 19 Next
+> **Version:** 2.4 (Badge & Notification Consistency)
+> **Current Phase:** Phase 19 ✅ Complete — Phase 20 Next
 
 ---
 
@@ -33,6 +33,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 16 | ✅ Complete | Google Identity & Profile Sync |
 | Phase 17 | ✅ Complete | Mobile UX & Responsive Polish |
 | Phase 18 | ✅ Complete | Reports UI & Table Performance |
+| Phase 19 | ✅ Complete | Badge Logic, Notification Consistency & UI Fixes |
 
 ---
 
@@ -1136,3 +1137,109 @@ const customColumns = fieldDefs
     }))
 
 const allColumns = [...baseColumns, ...customColumns]
+
+---
+
+## Phase 19: Badge Logic, Notification Consistency & UI Fixes
+
+### Goals
+
+- Standardize all sidebar and notification badge styling across the application
+- Fix incorrect Equipment badge count (was showing PM Task count)
+- Implement persistent, action-aware Pulse badge logic that clears correctly
+- Ensure UI consistency across all tables (card-based design)
+- Resolve TypeScript/syntax errors introduced during refactoring
+
+### Completed Tasks
+
+#### 1. Full Table UI Audit & Standardization
+
+All data table containers throughout the application now use a consistent, premium card-based design system:
+- `bg-card` — solid background that stands out from the page
+- `shadow-md` — visual elevation
+- `border-border` — solid, visible border (replaced all blurred/transparent variants)
+
+**Tables Audited & Updated:**
+
+| Table | Location | Status |
+|---|---|---|
+| `SopLibraryTable` | Library page | ✅ Updated |
+| `EquipmentTable` | Equipment page | ✅ Inherits from `DataTable` |
+| 4× Report tables | Reports page | ✅ Inherits from `DataTable` |
+| Users table | Settings → Users | ✅ Inherits from `DataTable` |
+| Departments table | `departments-tab.tsx` | ✅ Fixed — was using old blurred background |
+| Approval queue | Approvals page | ✅ Card-based layout — no change needed |
+
+#### 2. Sidebar Badge Standardization
+
+**Files Modified:**
+- `components/app-sidebar.tsx`
+
+**Changes:**
+- All sidebar badges changed from `bg-brand-teal` → **`bg-red-500`** for high-attention visibility
+- **Equipment badge** pivot: was counting all `pm_tasks` with `status IN ('pending', 'overdue')`. Now correctly counts `equipment` with `status = 'pending_qa'`
+  - QA users: all pending equipment
+  - Managers: only their department's pending equipment
+  - Employees: no equipment badge
+- Realtime subscription updated from `pm_tasks` → `equipment` table
+
+#### 3. Pulse Notification System Overhaul
+
+**Files Modified:**
+- `components/shell/top-nav.tsx`
+- `components/pulse/pulse-wrapper.tsx`
+
+**Badge Logic — Two Buckets:**
+
+| Bucket | Type | Clears When |
+|---|---|---|
+| Action Required | Notices (unacknowledged) | User clicks "Acknowledge" |
+| New/Unread | Todos (new) | User opens the Pulse panel |
+| Excluded | Self-sent items | Never counted |
+
+**Cross-Component Sync — Custom Events:**
+- `pulse-toggle` — fires when Bell icon opens the Pulse; `PulseWrapper` listens and syncs open state + `last_pulse_view`
+- `pulse-viewed` — fires when either Bell or Handle opens the Pulse; both `TopNav` and `PulseWrapper` refresh their counts
+
+**TopNav Bell (`top-nav.tsx`):**
+- Replaced ephemeral `newNotifs` state with a proper async `fetchPulseCounts` function using `useCallback`
+- Fetches `pulse_acknowledgements` to determine which notices have been actioned
+- Uses `last_pulse_view` (localStorage) to determine what is "new"
+- Realtime subscriptions on `pulse_items` and `pulse_acknowledgements`
+
+**Pulse Handle (`pulse-wrapper.tsx`):**
+- Completely rewritten with clean two-bucket logic
+- Correctly filters by audience: `everyone`, `department`, and `self` receipts
+- Excludes sender's own items from count
+- Realtime subscriptions on `pulse_items` and `pulse_acknowledgements`
+- Updates count immediately on open (via `setTimeout(fetchBadgeCount, 30)` after localStorage write)
+
+**Bug Fixed:** Previous logic used `storedLastSeen = 0` (value of unset `last_pulse_view`) which made every item appear "new" forever — causing the permanent "9+" badge.
+
+#### 4. TypeScript & Syntax Bug Fixes
+
+- Added missing `useCallback` import to both `top-nav.tsx` and `pulse-wrapper.tsx`
+- Fixed scoping error in `top-nav.tsx` where `fetchPulseCounts` was declared inside a `useEffect` but referenced at component scope
+- Fixed ordering error: `fetchPulseCounts` declared after its first `useEffect` use — moved above all `useEffect` calls
+- Fixed unclosed `useEffect` block left over from a partial refactor
+
+### Technical Architecture
+
+```
+User opens Pulse (Bell or Handle click)
+    │
+    ├── localStorage.setItem('last_pulse_view', Date.now())
+    ├── window.dispatchEvent('pulse-viewed') → TopNav refreshes count
+    ├── window.dispatchEvent('pulse-toggle') → PulseWrapper syncs open state
+    └── fetchBadgeCount() re-runs with updated lastOpenedAt
+            │
+            ├── Notices: if !isAcked → count++ (regardless of lastOpenedAt)
+            └── Todos: if !isAcked AND created > lastOpenedAt → count++
+```
+
+### Verification
+
+- TypeScript errors resolved; `npm run dev` shows no runtime errors in console
+- Badge count updates immediately on panel open
+- Badge count decrements immediately on "Acknowledge" action (via realtime subscription)
+- Sidebar Equipment badge reflects correct approval count, not PM task count
