@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** March 23, 2026
-> **Version:** 2.2 (Star-Centralized Architecture)
-> **Current Phase:** Phase 17 ✅ Complete — Phase 18 Next
+> **Last Updated:** March 28, 2026
+> **Version:** 2.3 (Performance & UI Polish)
+> **Current Phase:** Phase 18 ✅ Complete — Phase 19 Next
 
 ---
 
@@ -32,6 +32,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 15 | ✅ Complete | Custom Metadata & Dynamic Fields |
 | Phase 16 | ✅ Complete | Google Identity & Profile Sync |
 | Phase 17 | ✅ Complete | Mobile UX & Responsive Polish |
+| Phase 18 | ✅ Complete | Reports UI & Table Performance |
 
 ---
 
@@ -1043,6 +1044,77 @@ next.config.ts                          # MODIFIED — security headers + image 
 - **Messaging Glitch Resolution**: Implemented optimistic-to-realtime message resolution in `conversation-thread.tsx`, eliminating duplicate chat bubbles during active sessions.
 
 **Verification:** `npm run build` — Exit code 0, 82 routes clean ✅
+
+---
+
+## Phase 18: Reports UI & Table Performance
+
+**Status:** ✅ Complete  
+**Date Completed:** 2026-03-28
+
+### What Was Built
+
+#### Reports Page Visual Hierarchy
+- **Standing-out containers**: The main report card and the AI Risk Insights section were converted from transparent/blurred backgrounds to solid `bg-card` with `shadow-md` and `border-border`, giving them the same visual weight and definition as the page header.
+- **AI Insights card** is now wrapped in its own `Card` component when displayed, matching the elevation of the primary report container.
+- **Empty state** for Risk Insights was refined with a more subtle dashed border.
+
+#### Notification Sound Update
+- Message notification sound changed to `mixkit-positive-interface-beep-221.wav` in both `the-pulse.tsx` (realtime handler) and the Settings page sound preview button (`notifications-tab.tsx`).
+
+#### Server-Side Pagination + TanStack Query Caching
+
+All major data tables now use true server-side pagination with TanStack Query v5 caching, `keepPreviousData` to eliminate page-turn flash, and next-page prefetch for instant navigation.
+
+**Infrastructure Created:**
+
+| File | Description |
+|---|---|
+| `lib/providers/query-provider.tsx` | `QueryClientProvider` wrapper (staleTime: 30s) |
+| `lib/queries/sops.ts` | Paginated SOP fetch with role + dept scoping |
+| `lib/queries/equipment.ts` | Paginated Equipment fetch with role + dept scoping |
+| `lib/queries/reports.ts` | Paginated fetch helpers for all 4 report types |
+| `supabase/migrations/028_performance_indexes.sql` | 12 targeted DB indexes (safe for live DB) |
+
+**Components Migrated:**
+
+| Component | Before | After |
+|---|---|---|
+| `SopLibraryTable` | Received full array from server | `useQuery` + 25 rows/page + prefetch |
+| `EquipmentTable` | Received full array from server | `useQuery` + 25 rows/page + prefetch |
+| `SopChangeHistoryReport` | `useEffect` + unlimited Supabase query | `useQuery` + 50 rows/page + pagination UI |
+| `AcknowledgementLogReport` | `useEffect` + unlimited Supabase query | `useQuery` + 50 rows/page + pagination UI |
+| `PmCompletionReport` | `useEffect` + unlimited Supabase query | `useQuery` + 50 rows/page + pagination UI |
+| `PulseNoticeReport` | `useEffect` + unlimited Supabase query | `useQuery` + 50 rows/page + pagination UI |
+
+**Server Pages Optimized:**
+- `app/(dashboard)/library/page.tsx` — SOP bulk fetch removed; passes only auth context to client.
+- `app/(dashboard)/equipment/page.tsx` — Equipment bulk fetch removed; passes only auth context to client.
+
+**Database Indexes (`028_performance_indexes.sql`):**
+```sql
+-- SOP Library
+CREATE INDEX IF NOT EXISTS sops_dept_status_idx ON sops(department, status);
+CREATE INDEX IF NOT EXISTS sops_status_created_idx ON sops(status, created_at DESC);
+-- Equipment
+CREATE INDEX IF NOT EXISTS equipment_dept_status_idx ON equipment(department, status);
+-- PM Tasks
+CREATE INDEX IF NOT EXISTS pm_tasks_due_date_idx ON pm_tasks(due_date, status);
+CREATE INDEX IF NOT EXISTS pm_tasks_status_completed_idx ON pm_tasks(status, completed_at DESC);
+-- Audit Log (reports)
+CREATE INDEX IF NOT EXISTS audit_log_entity_created_idx ON audit_log(entity_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS audit_log_actor_created_idx ON audit_log(actor_id, created_at DESC);
+-- Pulse Items
+CREATE INDEX IF NOT EXISTS pulse_items_recipient_read_idx ON pulse_items(recipient_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS pulse_items_audience_dept_idx ON pulse_items(audience, target_department, created_at DESC);
+CREATE INDEX IF NOT EXISTS pulse_items_type_created_idx ON pulse_items(type, created_at DESC);
+-- Messages
+CREATE INDEX IF NOT EXISTS messages_conv_created_idx ON messages(conversation_id, created_at DESC);
+```
+
+> **Note:** `028_performance_indexes.sql` must be applied manually in the Supabase SQL editor. Uses `IF NOT EXISTS` throughout — safe on a live database.
+
+**Verification:** `npx tsc --noEmit` — Exit code 0, no type errors ✅
     switch (definition.field_type) {
         case 'text':    return <input ... />
         case 'number':  return <input type="number" ... />
