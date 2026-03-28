@@ -31,7 +31,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const pathname = usePathname()
   const [unreadConversations, setUnreadConversations] = React.useState(0)
   const [pendingApprovals, setPendingApprovals] = React.useState(0)
-  const [pendingPmTasks, setPendingPmTasks] = React.useState(0)
+  const [pendingEquipmentCount, setPendingEquipmentCount] = React.useState(0)
   const supabase = createClient()
   
   const prevUnreadRef = React.useRef(0)
@@ -86,21 +86,20 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         setPendingApprovals(approvalCount || 0)
       }
 
-      // 3. Pending PM Tasks (assigned to user or in department if manager)
-      // Actually, let's just count all 'pending' and 'overdue' tasks if QA/Manager, or just assigned to user if Employee.
-      // But for the sidebar badge, it usually reflects "work to be done".
-      let pmQuery = supabase.from('pm_tasks').select('*', { count: 'exact', head: true })
+      // 3. Pending Equipment (Awaiting QA)
+      let equipQuery = supabase.from('equipment').select('*', { count: 'exact', head: true }).eq('status', 'pending_qa')
       
-      if (profile.role === 'manager' || isQa) {
-        // Count all pending tasks in their department (if manager) or everywhere if QA
-        // For simplicity across the app, let's keep it to "Incomplete Tasks" user can see
-        pmQuery = pmQuery.in('status', ['pending', 'overdue'])
-      } else {
-        pmQuery = pmQuery.eq('assigned_to', user.id).in('status', ['pending', 'overdue'])
+      if (!isQa && profile.role === 'manager') {
+        // Managers only see their department's pending equipment
+        equipQuery = equipQuery.eq('department', profile.department)
+      } else if (!isQa) {
+        // Employees don't see pending equipment queue
+        setPendingEquipmentCount(0)
+        return
       }
       
-      const { count: pmCount } = await pmQuery
-      setPendingPmTasks(pmCount || 0)
+      const { count: equipCount } = await equipQuery
+      setPendingEquipmentCount(equipCount || 0)
     }
 
     fetchCounts()
@@ -110,7 +109,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sop_approval_requests' }, fetchCounts)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'pm_tasks' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, fetchCounts)
       .subscribe()
 
     return () => {
@@ -143,7 +142,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       url: "/equipment",
       icon: <Wrench className="w-5 h-5" />,
       isActive: pathname.startsWith("/equipment"),
-      badge: pendingPmTasks,
+      badge: pendingEquipmentCount,
     },
     {
       title: "Messages",
