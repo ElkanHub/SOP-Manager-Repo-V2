@@ -1,12 +1,11 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import { format } from "date-fns"
-import { createClient } from "@/lib/supabase/client"
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query"
+import { fetchPmCompletions } from "@/lib/queries/reports"
 import { Button } from "@/components/ui/button"
-import { Download, Wrench, Calendar, Hash, Building2, User, ClipboardList } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-
+import { Download, Wrench, ChevronLeft, ChevronRight } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 
@@ -17,41 +16,32 @@ interface PmCompletionReportProps {
 }
 
 export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionReportProps) {
-  const [data, setData] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(0)
+  const queryClient = useQueryClient()
+
+  useEffect(() => { setPage(0) }, [dateFrom, dateTo])
+
+  const queryKey = ["report-pm-completions", page, dateFrom, dateTo]
+
+  const { data: result, isLoading, isFetching } = useQuery({
+    queryKey,
+    queryFn: () => fetchPmCompletions({ page, dateFrom, dateTo }),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
 
   useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      const supabase = createClient()
+    queryClient.prefetchQuery({
+      queryKey: ["report-pm-completions", page + 1, dateFrom, dateTo],
+      queryFn: () => fetchPmCompletions({ page: page + 1, dateFrom, dateTo }),
+    })
+  }, [page, dateFrom, dateTo, queryClient])
 
-      let query = supabase
-        .from('pm_tasks')
-        .select(`
-          id,
-          completed_at,
-          notes,
-          equipment:equipment_id(asset_id, name, department),
-          assigned_to_user:profiles!pm_tasks_assigned_to_fkey(full_name),
-          completed_by_user:profiles!pm_tasks_completed_by_fkey(full_name)
-        `)
-        .eq('status', 'complete')
-        .order('completed_at', { ascending: false })
-
-      if (dateFrom) {
-        query = query.gte('completed_at', dateFrom)
-      }
-      if (dateTo) {
-        query = query.lte('completed_at', dateTo + 'T23:59:59')
-      }
-
-      const { data } = await query.limit(100)
-      setData(data || [])
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [dateFrom, dateTo])
+  const data = result?.data ?? []
+  const totalCount = result?.count ?? 0
+  const pageSize = result?.pageSize ?? 50
+  const totalPages = Math.ceil(totalCount / pageSize)
+  const loading = isLoading || isFetching
 
   const columns: ColumnDef<any>[] = [
     {
@@ -59,7 +49,7 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
       header: "Asset ID",
       cell: ({ row }) => (
         <span className="font-mono text-xs font-bold text-orange-600 bg-orange-500/5 px-2 py-1 rounded">
-          {row.original.equipment?.asset_id || '-'}
+          {row.original.equipment?.asset_id || "-"}
         </span>
       ),
     },
@@ -68,7 +58,7 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
       header: "Asset Name",
       cell: ({ row }) => (
         <div className="text-sm font-semibold truncate max-w-[180px]" title={row.original.equipment?.name}>
-          {row.original.equipment?.name || '-'}
+          {row.original.equipment?.name || "-"}
         </div>
       ),
     },
@@ -76,21 +66,21 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
       accessorKey: "equipment.department",
       header: "Dept",
       cell: ({ row }) => (
-        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.equipment?.department || '-'}</div>
+        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.equipment?.department || "-"}</div>
       ),
     },
     {
       accessorKey: "assigned_to_user.full_name",
       header: "Assigned To",
       cell: ({ row }) => (
-        <div className="text-sm">{row.original.assigned_to_user?.full_name || '-'}</div>
+        <div className="text-sm">{row.original.assigned_to_user?.full_name || "-"}</div>
       ),
     },
     {
       accessorKey: "completed_by_user.full_name",
       header: "Completed By",
       cell: ({ row }) => (
-        <div className="text-sm font-medium">{row.original.completed_by_user?.full_name || '-'}</div>
+        <div className="text-sm font-medium">{row.original.completed_by_user?.full_name || "-"}</div>
       ),
     },
     {
@@ -98,7 +88,7 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
       header: "Date",
       cell: ({ row }) => (
         <div className="text-xs font-medium text-muted-foreground">
-          {row.getValue("completed_at") ? format(new Date(row.getValue("completed_at") as string), 'MMM d, yyyy') : '-'}
+          {row.getValue("completed_at") ? format(new Date(row.getValue("completed_at") as string), "MMM d, yyyy") : "-"}
         </div>
       ),
     },
@@ -107,29 +97,29 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
       header: "Notes",
       cell: ({ row }) => (
         <div className="text-xs text-muted-foreground/70 italic max-w-xs truncate" title={row.getValue("notes")}>
-          {row.getValue("notes") || 'No work notes'}
+          {row.getValue("notes") || "No work notes"}
         </div>
       ),
     },
   ]
 
   const buildCsv = () => {
-    const headers = ['Asset ID', 'Asset Name', 'Dept', 'Assigned To', 'Completed By', 'Completion Date', 'Notes']
+    const headers = ["Asset ID", "Asset Name", "Dept", "Assigned To", "Completed By", "Completion Date", "Notes"]
     const rows = data.map((entry: any) => [
-      entry.equipment?.asset_id || '-',
-      entry.equipment?.name || '-',
-      entry.equipment?.department || '-',
-      entry.assigned_to_user?.full_name || '-',
-      entry.completed_by_user?.full_name || '-',
-      entry.completed_at ? format(new Date(entry.completed_at), 'yyyy-MM-dd HH:mm:ss') : '-',
-      entry.notes || '-',
+      entry.equipment?.asset_id || "-",
+      entry.equipment?.name || "-",
+      entry.equipment?.department || "-",
+      entry.assigned_to_user?.full_name || "-",
+      entry.completed_by_user?.full_name || "-",
+      entry.completed_at ? format(new Date(entry.completed_at), "yyyy-MM-dd HH:mm:ss") : "-",
+      entry.notes || "-",
     ])
-    const csv = [headers, ...rows].map(row => row.map(v => `"${v}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const csv = [headers, ...rows].map((row) => row.map((v) => `"${v}"`).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
+    const a = document.createElement("a")
     a.href = url
-    a.download = `pm-completion-${format(new Date(), 'yyyy-MM-dd')}.csv`
+    a.download = `pm-completion-${format(new Date(), "yyyy-MM-dd")}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -146,9 +136,9 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
             <p className="text-sm text-muted-foreground">Historical records of preventive maintenance tasks and asset upkeep</p>
           </div>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={buildCsv} 
+        <Button
+          variant="outline"
+          onClick={buildCsv}
           disabled={data.length === 0}
           className="rounded-xl border-orange-500/20 hover:bg-orange-500/5 hover:text-orange-500 shadow-sm group/btn"
         >
@@ -157,13 +147,29 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
         </Button>
       </div>
 
-      <DataTable 
-        columns={columns} 
-        data={data} 
+      <DataTable
+        columns={columns}
+        data={data}
         isLoading={loading}
         noDataMessage={loading ? "Loading logs..." : "No PM records found."}
-        pageSize={15}
+        pageSize={pageSize}
       />
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-2">
+          <p className="text-xs text-muted-foreground">
+            Page {page + 1} of {totalPages} &middot; {totalCount} records
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || loading}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1 || loading}>
+              Next <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

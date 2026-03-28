@@ -1,19 +1,20 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { Lock, MoreHorizontal, History } from "lucide-react"
+import { Lock, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getFilteredRowModel,
   getSortedRowModel,
   SortingState,
 } from "@tanstack/react-table"
+import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query"
+import { fetchSopPage } from "@/lib/queries/sops"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { DeptBadge } from "@/components/ui/dept-badge"
@@ -30,27 +31,51 @@ import { useSopTabStore } from "@/store/sop-tabs"
 import { SopRecord } from "@/types/app.types"
 
 interface SopLibraryTableProps {
-  sops: SopRecord[]
   userDepartment: string
   userRole: "manager" | "employee"
-  isLoading?: boolean
+  isAdmin: boolean
+  isQa: boolean
+  statusFilter?: string
 }
 
 export function SopLibraryTable({
-  sops,
   userDepartment,
   userRole,
-  isLoading,
+  isAdmin,
+  isQa,
+  statusFilter,
 }: SopLibraryTableProps) {
   const router = useRouter()
   const { addTab } = useSopTabStore()
   const [sorting, setSorting] = useState<SortingState>([])
+  const [page, setPage] = useState(0)
+  const queryClient = useQueryClient()
 
-  const isQa = userDepartment === "QA"
+  // Reset to page 0 when status filter changes
+  useEffect(() => { setPage(0) }, [statusFilter])
 
-  const getDeptColour = (sop: SopRecord) => {
-    return "blue"
-  }
+  const queryKey = ["sops", page, userDepartment, userRole, isAdmin, isQa, statusFilter]
+
+  const { data: result, isLoading, isFetching } = useQuery({
+    queryKey,
+    queryFn: () => fetchSopPage({ page, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter }),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+
+  // Prefetch next page
+  useEffect(() => {
+    queryClient.prefetchQuery({
+      queryKey: ["sops", page + 1, userDepartment, userRole, isAdmin, isQa, statusFilter],
+      queryFn: () => fetchSopPage({ page: page + 1, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter }),
+    })
+  }, [page, userDepartment, userRole, isAdmin, isQa, statusFilter, queryClient])
+
+  const sops: SopRecord[] = (result?.data as SopRecord[]) ?? []
+  const totalCount = result?.count ?? 0
+  const pageSize = result?.pageSize ?? 25
+  const totalPages = Math.ceil(totalCount / pageSize)
+  const loading = isLoading || isFetching
 
   const columns: ColumnDef<SopRecord>[] = useMemo(
     () => [
@@ -71,17 +96,10 @@ export function SopLibraryTable({
           const isLocked = row.original.locked
           return (
             <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "truncate",
-                  isLocked && "text-muted-foreground"
-                )}
-              >
+              <span className={cn("truncate", isLocked && "text-muted-foreground")}>
                 {row.getValue("title")}
               </span>
-              {isLocked && (
-                <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />
-              )}
+              {isLocked && <Lock className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
             </div>
           )
         },
@@ -92,7 +110,7 @@ export function SopLibraryTable({
         header: "Department",
         cell: ({ row }) => {
           const dept = row.getValue("department") as string
-          return <DeptBadge department={dept} colour={getDeptColour(row.original)} />
+          return <DeptBadge department={dept} colour="blue" />
         },
         size: 140,
       },
@@ -133,23 +151,17 @@ export function SopLibraryTable({
         cell: ({ row }) => {
           const date = row.getValue("due_for_revision") as string | null
           if (!date) return null
-
           const dueDate = new Date(date)
           const today = new Date()
           const isOverdue = dueDate < today
-          const isDueSoon =
-            !isOverdue &&
-            dueDate.getTime() - today.getTime() < 30 * 24 * 60 * 60 * 1000
-
+          const isDueSoon = !isOverdue && dueDate.getTime() - today.getTime() < 30 * 24 * 60 * 60 * 1000
           return (
-            <span
-              className={cn(
-                "text-xs",
-                isOverdue && "text-red-600 dark:text-red-400 font-semibold",
-                isDueSoon && "text-amber-600 dark:text-amber-400 font-semibold",
-                !isOverdue && !isDueSoon && "text-muted-foreground"
-              )}
-            >
+            <span className={cn(
+              "text-xs",
+              isOverdue && "text-red-600 dark:text-red-400 font-semibold",
+              isDueSoon && "text-amber-600 dark:text-amber-400 font-semibold",
+              !isOverdue && !isDueSoon && "text-muted-foreground"
+            )}>
               {format(dueDate, "dd MMM yyyy")}
             </span>
           )
@@ -163,26 +175,12 @@ export function SopLibraryTable({
           return (
             <DropdownMenu>
               <DropdownMenuTrigger>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    addTab({
-                      id: sop.id,
-                      sopNumber: sop.sop_number,
-                      title: sop.title,
-                    })
-                    router.push(`/library/${sop.id}`)
-                  }}
-                >
+                <DropdownMenuItem onClick={() => { addTab({ id: sop.id, sopNumber: sop.sop_number, title: sop.title }); router.push(`/library/${sop.id}`) }}>
                   Open
                 </DropdownMenuItem>
                 <DropdownMenuItem>Version History</DropdownMenuItem>
@@ -191,9 +189,7 @@ export function SopLibraryTable({
                   <DropdownMenuItem disabled={sop.locked}>
                     Submit Edit
                     {sop.locked && (
-                      <span className="ml-2 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                        Locked
-                      </span>
+                      <span className="ml-2 text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">Locked</span>
                     )}
                   </DropdownMenuItem>
                 )}
@@ -215,19 +211,15 @@ export function SopLibraryTable({
     state: { sorting },
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
   })
 
-  if (isLoading) {
+  if (isLoading && !result) {
     return (
       <div className="rounded-lg border border-border bg-card">
         <div className="h-10 bg-muted border-b border-border" />
         {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-4 px-4 py-3 border-b border-border/50"
-          >
+          <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-border/50">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-4 w-48" />
             <Skeleton className="h-5 w-24" />
@@ -240,72 +232,84 @@ export function SopLibraryTable({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[800px]">
-          <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-border">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={cn(
-                      "px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold",
-                      header.id === "sop_number" && "hidden md:table-cell",
-                      header.id === "date_listed" && "hidden lg:table-cell",
-                      header.id === "due_for_revision" && "hidden lg:table-cell",
-                      header.id === "version" && "hidden sm:table-cell"
-                    )}
-                    style={{ width: header.getSize() }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
+    <div className="space-y-3">
+      <div className={cn("rounded-lg border border-border bg-card overflow-hidden shadow-sm transition-opacity", isFetching && "opacity-70")}>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px]">
+            <thead className="bg-slate-50 dark:bg-slate-800/50 border-b border-border">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className={cn(
+                        "px-4 py-3 text-left text-[11px] uppercase tracking-wider text-slate-500 font-semibold",
+                        header.id === "sop_number" && "hidden md:table-cell",
+                        header.id === "date_listed" && "hidden lg:table-cell",
+                        header.id === "due_for_revision" && "hidden lg:table-cell",
+                        header.id === "version" && "hidden sm:table-cell"
                       )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row, index) => (
-              <tr
-                key={row.id}
-                onClick={() => {
-                  const sop = row.original
-                  addTab({
-                    id: sop.id,
-                    sopNumber: sop.sop_number,
-                    title: sop.title,
-                  })
-                  router.push(`/library/${sop.id}`)
-                }}
-                className={cn(
-                  "cursor-pointer border-b border-border/50 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 group",
-                  index % 2 === 1 && "bg-slate-50/50 dark:bg-slate-800/20"
-                )}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td 
-                    key={cell.id} 
-                    className={cn(
-                      "px-4 py-3",
-                      cell.column.id === "sop_number" && "hidden md:table-cell",
-                      cell.column.id === "date_listed" && "hidden lg:table-cell",
-                      cell.column.id === "due_for_revision" && "hidden lg:table-cell",
-                      cell.column.id === "version" && "hidden sm:table-cell"
-                    )}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      style={{ width: header.getSize() }}
+                    >
+                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row, index) => (
+                <tr
+                  key={row.id}
+                  onClick={() => { const sop = row.original; addTab({ id: sop.id, sopNumber: sop.sop_number, title: sop.title }); router.push(`/library/${sop.id}`) }}
+                  className={cn(
+                    "cursor-pointer border-b border-border/50 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 group",
+                    index % 2 === 1 && "bg-slate-50/50 dark:bg-slate-800/20"
+                  )}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={cn(
+                        "px-4 py-3",
+                        cell.column.id === "sop_number" && "hidden md:table-cell",
+                        cell.column.id === "date_listed" && "hidden lg:table-cell",
+                        cell.column.id === "due_for_revision" && "hidden lg:table-cell",
+                        cell.column.id === "version" && "hidden sm:table-cell"
+                      )}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+              {sops.length === 0 && !loading && (
+                <tr>
+                  <td colSpan={columns.length} className="text-center py-16 text-sm text-muted-foreground">
+                    No SOPs found.
                   </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-xs text-muted-foreground">
+            Page {page + 1} of {totalPages} &middot; {totalCount} SOPs
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0 || loading}>
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page >= totalPages - 1 || loading}>
+              Next <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

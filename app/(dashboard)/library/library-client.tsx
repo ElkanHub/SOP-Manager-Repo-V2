@@ -1,27 +1,28 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
 import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
 import { Upload, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SopRecord, Profile, Department } from "@/types/app.types"
+import { Profile, Department } from "@/types/app.types"
 
 interface LibraryPageClientProps {
-  sops: SopRecord[]
   profile: Profile
   departments: Department[]
   isManager: boolean
+  isAdmin: boolean
+  isQa: boolean
   statusFilter?: string
 }
 
 export function LibraryPageClient({
-  sops,
   profile,
   departments,
   isManager,
+  isAdmin,
+  isQa,
   statusFilter,
 }: LibraryPageClientProps) {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
@@ -95,9 +96,11 @@ export function LibraryPageClient({
         <SopTabStrip />
 
         <SopLibraryTable
-          sops={sops}
           userDepartment={profile.department}
           userRole={profile.role}
+          isAdmin={isAdmin}
+          isQa={isQa}
+          statusFilter={statusFilter}
         />
       </div>
 
@@ -107,7 +110,7 @@ export function LibraryPageClient({
           onOpenChange={setUploadModalOpen}
           user={profile}
           departments={departments}
-          existingSops={sops.filter(s => s.status !== 'pending_cc')}
+          existingSops={[]}
         />
       )}
     </div>

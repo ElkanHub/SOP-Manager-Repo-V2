@@ -1,11 +1,10 @@
 import { redirect } from "next/navigation"
 import { createClient, createServiceClient } from "@/lib/supabase/server"
-import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
 import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
 import { Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { SopRecord, Profile, Department } from "@/types/app.types"
+import { Profile, Department } from "@/types/app.types"
 import { LibraryPageClient } from "./library-client"
 
 export const dynamic = "force-dynamic"
@@ -54,18 +53,6 @@ export default async function LibraryPage({ searchParams }: PageProps) {
 
   const { data: isQaManager } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
 
-  if (!profile.is_admin && !isQaManager) {
-    query = query.or(
-      `department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`
-    )
-  }
-
-  const { data: sops, error } = await query
-
-  if (error) {
-    console.error("Error fetching SOPs:", error)
-  }
-
   const { data: departments } = await serviceClient
     .from("departments")
     .select("*")
@@ -75,10 +62,11 @@ export default async function LibraryPage({ searchParams }: PageProps) {
 
   return (
     <LibraryPageClient
-      sops={(sops as SopRecord[]) || []}
       profile={profile as Profile}
       departments={(departments as Department[]) || []}
       isManager={isManager}
+      isAdmin={profile.is_admin || false}
+      isQa={isQaManager || false}
       statusFilter={statusFilter}
     />
   )

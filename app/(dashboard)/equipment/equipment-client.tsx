@@ -1,28 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import { EquipmentTable } from "@/components/equipment/equipment-table"
 import { AddEquipmentModal } from "@/components/equipment/add-equipment-modal"
 import { Wrench, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Equipment, Profile, Department } from "@/types/app.types"
+import { Profile, Department } from "@/types/app.types"
 
 interface EquipmentPageClientProps {
-  equipment: Equipment[]
   profile: Profile
   departments: Department[]
   assignableUsers: any[]
   isManager: boolean
+  isAdmin: boolean
   statusFilter?: string
 }
 
 export function EquipmentPageClient({
-  equipment,
   profile,
   departments,
   assignableUsers,
   isManager,
+  isAdmin,
   statusFilter,
 }: EquipmentPageClientProps) {
   const [addModalOpen, setAddModalOpen] = useState(false)
@@ -92,9 +91,10 @@ export function EquipmentPageClient({
 
       <div className="px-4 md:px-0">
         <EquipmentTable
-          equipment={equipment}
           userDepartment={profile.department}
           userRole={profile.role}
+          isAdmin={isAdmin}
+          statusFilter={statusFilter}
         />
       </div>
 
