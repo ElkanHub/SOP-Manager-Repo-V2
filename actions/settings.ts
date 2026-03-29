@@ -2,6 +2,7 @@
 
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendApprovalEmail } from './email'
 
 // ─── Shared result type ──────────────────────────────────────────────────────
 export type SettingsResult =
@@ -414,7 +415,13 @@ export async function approveUser(targetUserId: string): Promise<SettingsResult>
         metadata: {},
     })
 
-    // TODO: Trigger Email Delivery API Here
+    // Fetch the target user's email address securely from Auth admin panel
+    const { data: authData } = await ctx.service.auth.admin.getUserById(targetUserId)
+    const { data: profileData } = await ctx.service.from('profiles').select('full_name').eq('id', targetUserId).single()
+
+    if (authData?.user?.email && profileData?.full_name) {
+        await sendApprovalEmail(authData.user.email, profileData.full_name)
+    }
 
     revalidatePath('/settings')
     return { success: true }
