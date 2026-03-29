@@ -36,10 +36,11 @@ export async function POST(request: NextRequest) {
         const oldBuffer = Buffer.from(await oldFile.data.arrayBuffer())
         const newBuffer = Buffer.from(await newFile.data.arrayBuffer())
 
-        // Extract clean HTML structure instead of flat text
+        // Extract clean HTML structure instead of flat text, keeping empty paragraphs for visual spacing
+        const mammothOptions = { ignoreEmptyParagraphs: false }
         const [oldHtmlResult, newHtmlResult] = await Promise.all([
-            mammoth.convertToHtml({ buffer: oldBuffer }),
-            mammoth.convertToHtml({ buffer: newBuffer })
+            mammoth.convertToHtml({ buffer: oldBuffer }, mammothOptions),
+            mammoth.convertToHtml({ buffer: newBuffer }, mammothOptions)
         ])
 
         const oldHtml = oldHtmlResult.value

@@ -89,13 +89,17 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
                             <div 
                                 className="prose prose-sm md:prose-base max-w-none dark:prose-invert prose-slate 
                                            prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-slate-100
-                                           prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300
-                                           prose-table:border-collapse prose-table:w-full
+                                           prose-headings:mt-8 prose-headings:mb-4 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg
+                                           prose-p:leading-relaxed prose-p:text-slate-800 dark:prose-p:text-slate-200
+                                           prose-p:my-5 prose-li:my-2 prose-ul:my-5 prose-ol:my-5
+                                           prose-table:border-collapse prose-table:w-full prose-table:my-8
                                            prose-td:border prose-td:border-slate-200 dark:prose-td:border-slate-800 prose-td:p-3
                                            prose-th:border prose-th:border-slate-300 dark:prose-th:border-slate-700 prose-th:bg-slate-50 dark:prose-th:bg-slate-900 prose-th:p-3 prose-th:text-left
                                            
                                            [&_ins]:bg-green-300 [&_ins]:text-green-900 [&_ins]:no-underline [&_ins]:dark:bg-green-900/70 [&_ins]:dark:text-green-100 [&_ins]:rounded-sm [&_ins]:px-0.5
-                                           [&_del]:bg-red-300 [&_del]:text-red-900 [&_del]:line-through [&_del]:dark:bg-red-900/70 [&_del]:dark:text-red-100 [&_del]:rounded-sm [&_del]:px-0.5"
+                                           [&_del]:bg-red-300 [&_del]:text-red-900 [&_del]:line-through [&_del]:dark:bg-red-900/70 [&_del]:dark:text-red-100 [&_del]:rounded-sm [&_del]:px-0.5
+                                           
+                                           [&_p:empty]:h-6 [&_p:empty]:w-full"
                                 dangerouslySetInnerHTML={{ __html: diffHtml }} 
                             />
                         ) : (
