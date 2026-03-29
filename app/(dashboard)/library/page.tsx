@@ -58,12 +58,27 @@ export default async function LibraryPage({ searchParams }: PageProps) {
     .select("*")
     .order("name")
 
-  const isManager = profile.role === "manager"
+  const isManager = profile.role === "manager" || profile.is_admin
+
+  // Fetch active SOPs for the "Update Existing" dropdown in the upload modal
+  let existingSopsQuery = supabase
+    .from('sops')
+    .select('id, sop_number, title, department, status, locked')
+    .in('status', ['active', 'draft'])
+    .order('sop_number')
+
+  // Non-admin managers only see their own department SOPs
+  if (!profile.is_admin && !isQaManager) {
+    existingSopsQuery = existingSopsQuery.eq('department', profile.department)
+  }
+
+  const { data: existingSops } = await existingSopsQuery
 
   return (
     <LibraryPageClient
       profile={profile as Profile}
       departments={(departments as Department[]) || []}
+      existingSops={(existingSops as any[]) || []}
       isManager={isManager}
       isAdmin={profile.is_admin || false}
       isQa={isQaManager || false}

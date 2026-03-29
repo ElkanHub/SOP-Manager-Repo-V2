@@ -46,13 +46,21 @@ export default async function EquipmentPage({ searchParams }: PageProps) {
     .eq("is_active", true)
     .order("full_name")
 
-  const isManager = profile.role === "manager"
+  const isManager = profile.role === "manager" || profile.is_admin
+
+  // Fetch active SOPs for the linked SOP dropdown in the add equipment modal
+  const { data: availableSops } = await supabase
+    .from('sops')
+    .select('id, sop_number, title')
+    .eq('status', 'active')
+    .order('sop_number')
 
   return (
     <EquipmentPageClient
       profile={profile as Profile}
       departments={(departments as Department[]) || []}
       assignableUsers={allProfiles || []}
+      availableSops={availableSops || []}
       isManager={isManager}
       isAdmin={profile.is_admin || false}
       statusFilter={statusFilter}

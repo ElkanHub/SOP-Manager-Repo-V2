@@ -19,6 +19,7 @@ interface AddEquipmentModalProps {
     departments: Department[]
     currentUser: Profile
     assignableUsers: any[]
+    availableSops?: any[]
 }
 
 export function AddEquipmentModal({
@@ -27,6 +28,7 @@ export function AddEquipmentModal({
     departments,
     currentUser,
     assignableUsers,
+    availableSops = [],
 }: AddEquipmentModalProps) {
     const [step, setStep] = useState(1)
     const [assetId, setAssetId] = useState('')
@@ -404,18 +406,33 @@ export function AddEquipmentModal({
                                     </Select>
                                 </div>
                             </div>
-
-                            <div className="space-y-2 pt-2">
+                             <div className="space-y-2 pt-2">
                                 <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Protocol Linkage (Optional SOP)</Label>
-                                <div className="relative">
-                                    <Input
-                                        value={linkedSopId}
-                                        onChange={(e) => setLinkedSopId(e.target.value)}
-                                        placeholder="Enter reference SOP-ID..."
-                                        className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all pr-10"
-                                    />
-                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-20 italic text-[10px] font-bold uppercase tracking-tighter">REF-ID</div>
-                                </div>
+                                {availableSops.length > 0 ? (
+                                    <Select value={linkedSopId} onValueChange={(v) => setLinkedSopId(v || '')}>
+                                        <SelectTrigger className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
+                                            <SelectValue placeholder="Select linked SOP (optional)..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {availableSops.map((sop: any) => (
+                                                <SelectItem key={sop.id} value={sop.id}>
+                                                    <span className="font-mono font-bold text-xs">{sop.sop_number}</span>
+                                                    <span className="text-muted-foreground text-xs ml-1">— {sop.title}</span>
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <div className="relative">
+                                        <Input
+                                            value={linkedSopId}
+                                            onChange={(e) => setLinkedSopId(e.target.value)}
+                                            placeholder="Enter reference SOP-ID..."
+                                            className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all pr-10"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-20 italic text-[10px] font-bold uppercase tracking-tighter">REF-ID</div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

@@ -11,6 +11,7 @@ interface EquipmentPageClientProps {
   profile: Profile
   departments: Department[]
   assignableUsers: any[]
+  availableSops: any[]
   isManager: boolean
   isAdmin: boolean
   statusFilter?: string
@@ -20,6 +21,7 @@ export function EquipmentPageClient({
   profile,
   departments,
   assignableUsers,
+  availableSops,
   isManager,
   isAdmin,
   statusFilter,
@@ -105,6 +107,7 @@ export function EquipmentPageClient({
           departments={departments}
           currentUser={profile}
           assignableUsers={assignableUsers}
+          availableSops={availableSops}
         />
       )}
     </div>

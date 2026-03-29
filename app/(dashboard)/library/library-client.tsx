@@ -11,6 +11,7 @@ import { Profile, Department } from "@/types/app.types"
 interface LibraryPageClientProps {
   profile: Profile
   departments: Department[]
+  existingSops: any[]
   isManager: boolean
   isAdmin: boolean
   isQa: boolean
@@ -20,6 +21,7 @@ interface LibraryPageClientProps {
 export function LibraryPageClient({
   profile,
   departments,
+  existingSops,
   isManager,
   isAdmin,
   isQa,
@@ -110,7 +112,8 @@ export function LibraryPageClient({
           onOpenChange={setUploadModalOpen}
           user={profile}
           departments={departments}
-          existingSops={[]}
+          existingSops={existingSops}
+          onSuccess={() => setUploadModalOpen(false)}
         />
       )}
     </div>
