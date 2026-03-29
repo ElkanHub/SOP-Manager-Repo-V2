@@ -51,7 +51,8 @@ export async function createFirstAdmin(formData: FormData) {
             role: 'manager',
             is_admin: true,
             is_active: true,
-            onboarding_complete: false
+            onboarding_complete: false,
+            signup_status: 'approved'
         })
         .eq('id', userId)
 

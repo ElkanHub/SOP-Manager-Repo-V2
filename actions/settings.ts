@@ -394,3 +394,52 @@ export async function reactivateUser(targetUserId: string): Promise<SettingsResu
     revalidatePath('/settings')
     return { success: true }
 }
+
+export async function approveUser(targetUserId: string): Promise<SettingsResult> {
+    const ctx = await assertAdmin()
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const { error } = await ctx.service
+        .from('profiles')
+        .update({ signup_status: 'approved', updated_at: new Date().toISOString() })
+        .eq('id', targetUserId)
+
+    if (error) return { success: false, error: error.message }
+
+    await ctx.service.from('audit_log').insert({
+        actor_id: ctx.userId,
+        action: 'user_approved',
+        entity_type: 'profile',
+        entity_id: targetUserId,
+        metadata: {},
+    })
+
+    // TODO: Trigger Email Delivery API Here
+
+    revalidatePath('/settings')
+    return { success: true }
+}
+
+export async function rejectUser(targetUserId: string): Promise<SettingsResult> {
+    const ctx = await assertAdmin()
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const { error } = await ctx.service
+        .from('profiles')
+        .update({ signup_status: 'rejected', is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', targetUserId)
+
+    if (error) return { success: false, error: error.message }
+
+    await ctx.service.from('audit_log').insert({
+        actor_id: ctx.userId,
+        action: 'user_rejected',
+        entity_type: 'profile',
+        entity_id: targetUserId,
+        metadata: {},
+    })
+
+    revalidatePath('/settings')
+    return { success: true }
+}
+

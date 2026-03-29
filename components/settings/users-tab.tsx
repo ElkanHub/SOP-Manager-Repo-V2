@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import { PasswordConfirmModal } from "./password-confirm-modal"
 import {
-    changeUserRole, changeUserDepartment, grantAdmin, revokeAdmin, deactivateUser, reactivateUser
+    changeUserRole, changeUserDepartment, grantAdmin, revokeAdmin, deactivateUser, reactivateUser, approveUser, rejectUser
 } from "@/actions/settings"
 import type { Profile, Department } from "@/types/app.types"
 import { UserAvatar } from "@/components/user-avatar"
@@ -45,10 +45,11 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
         setUsers((prev) => prev.map((u) => u.id === id ? { ...u, ...patch } : u))
     }
 
-    const activeUsers = users.filter((u) => u.is_active)
-    const inactiveUsers = users.filter((u) => !u.is_active)
+    const activeUsers = users.filter((u) => u.is_active && u.signup_status !== 'pending')
+    const inactiveUsers = users.filter((u) => !u.is_active && u.signup_status !== 'pending')
+    const pendingUsers = users.filter((u) => u.signup_status === 'pending')
 
-    const createColumns = (isInactiveList: boolean): ColumnDef<ProfileWithEmail>[] => [
+    const createColumns = (listType: 'active' | 'inactive' | 'pending'): ColumnDef<ProfileWithEmail>[] => [
         {
             accessorKey: "full_name",
             header: "Personnel",
@@ -129,26 +130,28 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
         {
             accessorKey: "is_admin",
             header: "Governance",
-            cell: ({ row }) => (
-                row.original.is_admin ? (
+            cell: ({ row }) => {
+                if (listType === 'pending') return <Badge variant="secondary" className="text-xs">Pending</Badge>
+                return row.original.is_admin ? (
                     <Badge variant="outline" className="border-brand-teal text-brand-teal gap-1 text-xs">
                         <ShieldCheck className="w-3 h-3" /> Admin
                     </Badge>
                 ) : (
                     <Badge variant="secondary" className="text-xs">User</Badge>
                 )
-            ),
+            },
         },
         {
             accessorKey: "is_active",
             header: "Status",
-            cell: ({ row }) => (
-                row.original.is_active ? (
+            cell: ({ row }) => {
+                if (listType === 'pending') return <Badge variant="outline" className="border-amber-400 text-amber-500 text-xs">Awaiting Approval</Badge>
+                return row.original.is_active ? (
                     <Badge variant="outline" className="border-green-500 text-green-600 dark:text-green-400 text-xs">Active</Badge>
                 ) : (
                     <Badge variant="outline" className="border-red-400 text-red-500 text-xs">Inactive</Badge>
                 )
-            ),
+            }
         },
         {
             accessorKey: "created_at",
@@ -166,6 +169,10 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 const isSelf = user.id === currentUserId
                 if (isSelf) return null
 
+                if (listType === 'pending') {
+                    return <PendingUserActionsCell user={user} isPending={isPending} onUpdate={handleUpdate} />
+                }
+
                 return (
                     <UserActionsCell 
                         user={user} 
@@ -179,13 +186,32 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
 
     return (
         <div className="space-y-6">
+            {pendingUsers.length > 0 && (
+                <div className="mb-8 border border-amber-500/20 bg-amber-500/5 rounded-xl p-4 sm:p-6 pb-2">
+                    <div className="mb-4">
+                        <h3 className="font-semibold text-foreground flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5 text-amber-500" />
+                            Pending Access Requests
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 text-balance">
+                            {pendingUsers.length} user(s) have registered and are awaiting your approval to access the system.
+                        </p>
+                    </div>
+                    <DataTable 
+                        columns={createColumns('pending')} 
+                        data={pendingUsers} 
+                        pageSize={10}
+                    />
+                </div>
+            )}
+
             <div>
                 <h3 className="font-semibold text-foreground">Active Users</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">{activeUsers.length} active user(s)</p>
             </div>
 
             <DataTable 
-                columns={createColumns(false)} 
+                columns={createColumns('active')} 
                 data={activeUsers} 
                 pageSize={10}
             />
@@ -199,7 +225,7 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                     </CollapsibleTrigger>
                     <CollapsibleContent className="mt-3 opacity-80">
                         <DataTable 
-                            columns={createColumns(true)} 
+                            columns={createColumns('inactive')} 
                             data={inactiveUsers} 
                             pageSize={10}
                         />
@@ -209,6 +235,39 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
         </div>
     )
 }
+
+function PendingUserActionsCell({ user, onUpdate }: { user: ProfileWithEmail, isPending: boolean, onUpdate: (id: string, patch: Partial<ProfileWithEmail>) => void }) {
+    const [submittingParams, setSubmittingParams] = useState(false)
+    return (
+        <div className="flex items-center gap-1 justify-end flex-wrap cursor-default">
+            <Button
+                variant="ghost" size="sm" className="h-7 text-xs gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30 font-bold"
+                disabled={submittingParams}
+                onClick={async () => {
+                    setSubmittingParams(true)
+                    const result = await approveUser(user.id)
+                    setSubmittingParams(false)
+                    if (result.success) onUpdate(user.id, { signup_status: 'approved' })
+                }}
+            >
+                {submittingParams ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <ShieldCheck className="w-3.5 h-3.5" />} Approve
+            </Button>
+            <Button
+                variant="ghost" size="sm" className="h-7 text-xs gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-bold"
+                disabled={submittingParams}
+                onClick={async () => {
+                    setSubmittingParams(true)
+                    const result = await rejectUser(user.id)
+                    setSubmittingParams(false)
+                    if (result.success) onUpdate(user.id, { signup_status: 'rejected', is_active: false })
+                }}
+            >
+                {submittingParams ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <ShieldOff className="w-3.5 h-3.5" />} Reject
+            </Button>
+        </div>
+    )
+}
+
 
 function UserActionsCell({ 
     user, 

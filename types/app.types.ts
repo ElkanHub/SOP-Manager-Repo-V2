@@ -18,6 +18,7 @@ export interface Profile {
     avatar_url?: string;
     signature_url?: string;
     onboarding_complete: boolean;
+    signup_status: 'pending' | 'approved' | 'rejected';
     notification_prefs: NotificationPrefs;
     created_at: string;
     updated_at: string;

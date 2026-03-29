@@ -36,7 +36,7 @@ export default async function proxy(request: NextRequest) {
     } else if (user) {
         const { data: profile } = await supabase
             .from('profiles')
-            .select('is_active, onboarding_complete')
+            .select('is_active, onboarding_complete, signup_status')
             .eq('id', user.id)
             .single()
 
@@ -52,11 +52,15 @@ export default async function proxy(request: NextRequest) {
                 url.pathname = '/login'
                 url.search = '?reason=inactive'
                 redirectUrl = url
-            } else if (profile.is_active && !profile.onboarding_complete && request.nextUrl.pathname !== '/onboarding' && !isAuthRoute) {
+            } else if (profile.is_active && profile.signup_status === 'pending' && request.nextUrl.pathname !== '/waiting-room' && !isAuthRoute) {
+                console.log('>>> proxy: pending signup redirect to waiting room')
+                url.pathname = '/waiting-room'
+                redirectUrl = url
+            } else if (profile.is_active && profile.signup_status === 'approved' && !profile.onboarding_complete && request.nextUrl.pathname !== '/onboarding' && !isAuthRoute) {
                 console.log('>>> proxy: onboarding incomplete redirect')
                 url.pathname = '/onboarding'
                 redirectUrl = url
-            } else if (profile.is_active && profile.onboarding_complete && (isRestrictedAuthRoute || request.nextUrl.pathname === '/onboarding' || request.nextUrl.pathname === '/')) {
+            } else if (profile.is_active && profile.signup_status === 'approved' && profile.onboarding_complete && (isRestrictedAuthRoute || request.nextUrl.pathname === '/onboarding' || request.nextUrl.pathname === '/waiting-room' || request.nextUrl.pathname === '/')) {
                 console.log('>>> proxy: active user redirect to dashboard from', request.nextUrl.pathname)
                 url.pathname = '/dashboard'
                 redirectUrl = url
