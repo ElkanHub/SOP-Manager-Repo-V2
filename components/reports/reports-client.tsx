@@ -79,7 +79,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
             </TabsList>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 bg-muted/30 p-1 rounded-lg border border-border/50 w-full sm:w-auto self-end md:self-auto justify-end sm:justify-start">
+          <div className="flex flex-wrap items-center gap-2 bg-card p-1 rounded-lg border border-border/50 w-full sm:w-auto self-end md:self-auto justify-end sm:justify-start">
             <div className="flex items-center px-2 gap-1.5 border-r border-border/50">
                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 shrink-0">From</span>
                <input
