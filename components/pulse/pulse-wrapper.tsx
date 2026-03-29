@@ -40,48 +40,54 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         if (!user) return
         const supabase = createClient()
 
-        // Get the timestamp of when the user last opened the Pulse
         const lastOpenedAt = parseInt(localStorage.getItem('last_pulse_view') || '0')
 
-        // Fetch all pulse items that could be visible to this user
+        // Step 1: Get all pulse items visible to anyone (we'll filter in JS)
+        // Fetch recent top-level items only
         const { data: items } = await supabase
             .from('pulse_items')
-            .select(`
-                id,
-                type,
-                sender_id,
-                audience,
-                target_department,
-                created_at,
-                pulse_acknowledgements(user_id)
-            `)
-            .neq('sender_id', user.id)
-            .or(`audience.eq.everyone,and(audience.eq.department,target_department.eq.${profile.department}),recipient_id.eq.${user.id}`)
+            .select('id, type, sender_id, audience, target_department, recipient_id, created_at')
+            .is('parent_id', null)
             .order('created_at', { ascending: false })
+            .limit(200)
 
         if (!items) return
 
+        // Step 2: Get this user's acknowledgements
+        const { data: acks } = await supabase
+            .from('pulse_acknowledgements')
+            .select('pulse_item_id')
+            .eq('user_id', user.id)
+
+        const ackedIds = new Set((acks || []).map((a: any) => a.pulse_item_id))
+
+        // Step 3: Count based on two-bucket rules
         let count = 0
         for (const item of items) {
-            const isAcked = (item.pulse_acknowledgements as any[])?.some(
-                (ack: any) => ack.user_id === user.id
-            ) ?? false
+            // Skip items sent by this user
+            if (item.sender_id === user.id) continue
 
-            // BUCKET 1: Action required (Notices that require acknowledgement)
-            // These only clear when the user clicks "Acknowledge"
-            if (item.type === 'notice' && !isAcked) {
-                count++
+            // Check visibility: is this item meant for this user?
+            const isForMe =
+                item.audience === 'everyone' ||
+                (item.audience === 'department' && item.target_department === profile.department) ||
+                item.recipient_id === user.id ||
+                item.sender_id === null // system-generated items broadcast to all
+
+            if (!isForMe) continue
+
+            const isAcked = ackedIds.has(item.id)
+
+            // BUCKET 1 — Notices: count until explicitly acknowledged
+            if (item.type === 'notice') {
+                if (!isAcked) count++
                 continue
             }
 
-            // BUCKET 2: New/Unread items (created after last time panel was opened)
-            // These clear when the user opens the panel
-            if (item.type === 'todo' && !isAcked) {
-                const itemTime = new Date(item.created_at).getTime()
-                if (itemTime > lastOpenedAt) {
-                    count++
-                    continue
-                }
+            // BUCKET 2 — Everything else: count if new since last panel open
+            const itemTime = new Date(item.created_at).getTime()
+            if (itemTime > lastOpenedAt && !isAcked) {
+                count++
             }
         }
 
