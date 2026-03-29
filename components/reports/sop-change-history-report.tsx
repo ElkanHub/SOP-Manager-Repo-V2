@@ -81,11 +81,11 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
       ),
     },
     {
-      accessorKey: "version",
+      accessorKey: "old_version",
       header: "Version Delta",
       cell: ({ row }) => (
         <div className="text-xs font-medium flex items-center gap-1.5">
-          <span className="text-muted-foreground">{row.original.version || 'v0.0'}</span>
+          <span className="text-muted-foreground">{row.original.old_version || 'v0.0'}</span>
           <span className="text-brand-navy dark:text-brand-teal">→</span>
           <span className="font-bold text-foreground">{row.original.new_version || '-'}</span>
         </div>
@@ -132,7 +132,7 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
         sops?.sop_number || "-",
         sops?.title || "-",
         sops?.department || "-",
-        entry.version || "v0.0",
+        entry.old_version || "v0.0",
         entry.new_version || "-",
         entry.status || "-",
         entry.signatories?.length?.toString() || "0",
