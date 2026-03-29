@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** March 29, 2026
-> **Version:** 2.5 (Dashboard Professional Redesign)
-> **Current Phase:** Phase 20 ✅ Complete — Phase 21 Next
+> **Version:** 2.5 (Auth Waiting Room Security)
+> **Current Phase:** Phase 22 ✅ Complete — Phase 23 Next
 
 ---
 
@@ -35,6 +35,8 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 18 | ✅ Complete | Reports UI & Table Performance |
 | Phase 19 | ✅ Complete | Badge Logic, Notification Consistency & UI Fixes |
 | Phase 20 | ✅ Complete | Dashboard Professional Redesign |
+| Phase 21 | ✅ Complete | Change Control HTML Formatting & AI Automation |
+| Phase 22 | ✅ Complete | Auth Waiting Room Security & Webmail Delivery |
 
 ---
 
@@ -140,28 +142,7 @@ All 14 database migrations executed successfully:
   - Avatar upload to Supabase Storage
   - Signature upload to Supabase Storage
 
----
-
-## Phase 20: Dashboard Professional Redesign
-
-### Completed Tasks
-
-- **Server-Side Data Injection (`dashboard/page.tsx`):**
-  - Expanded queries to fetch real-time analytics for status strips (Active Users, SOP Updates, Completed PMs, Open CCs).
-  - Implemented logic for calculating trend KPI deltas (e.g., month-over-month PM adherence, +N SOPs added).
-  - Consolidated queries for upcoming PM Tasks, expanding payloads to include Assignee avatars and task urgency profiles.
-  - Added scoped fetching for a new Live Audit Trail, returning exact human-readable representations.
-
-- **Client UI Overhaul (`dashboard-client.tsx`):**
-  - Transitioned from a playful aesthetic to a serious, executive-grade Operations Centre.
-  - Replaced sparse KPI cards with dense context variants (incorporating numeric trends, color-coded shifts, and deep-link clickability).
-  - Integrated a new **Live Status Strip** across the top of the interface for immediate situational awareness.
-  - Implemented a segmented **Compliance Health** metric card detailing Acknowledgment Scope, Document Currency, and Overall Fleet Availability.
-  - Built a dynamic **Department Output Matrix** (Admin/Manager exclusive) detailing cross-company KPI adherence in table format.
-  - Streamlined the **Change Control Signatures Tracker** into an actionable queue directly on the dashboard.
-  - Rewrote the recent activity engine via `getActionLabel` to map raw database actions to professional, plain-english narrative sentences.
-
----  - Profile completion tracking (`onboarding_complete`)
+  - Profile completion tracking (`onboarding_complete`)
   - Middleware route protection
 
 ### Security Features
@@ -1265,4 +1246,54 @@ User opens Pulse (Bell or Handle click)
 - TypeScript errors resolved; `npm run dev` shows no runtime errors in console
 - Badge count updates immediately on panel open
 - Badge count decrements immediately on "Acknowledge" action (via realtime subscription)
-- Sidebar Equipment badge reflects correct approval count, not PM task count
+- Sidebar Equipment badge reflects correct approval count, not PM task count
+
+---
+
+## Phase 20: Dashboard Professional Redesign
+
+### The Transformation
+The root `/dashboard` experience has been entirely rewritten from the ground up, transitioning from a basic, playful overview into a dense, executive-grade Operations Centre.
+
+### Key Improvements
+*   **Live Status Strip:** Added a real-time data strip across the top displaying Active Users, SOP changes this week, PMs completed this month, and an aggregate count of open Change Controls.
+*   **Dense KPI Analytics:** KPI cards now include contextual trend data (e.g., month-over-month PM adherence drops, N+ new active SOPs this month) and actionable deep-links.
+*   **Action Required Prominent Tracking:** Pending Change Controls requiring the active user's signature are now parsed directly into the dashboard as high-priority actionable blocks.
+*   **Compliance Health Matrix:** A new dedicated widget translates raw SOP and PM data into "Ack Rate", "Document Currency", and "Schedule Adherence" progress bars.
+*   **Managerial Oversight:** Added a "Department Output Matrix" table strictly for Managers and Admins to view cross-division efficiency at a glance.
+*   **Human-Readable Audit Trails:** The Recent Activity feed was overhauled. Raw database strings like `sop_revision_submitted` are now cleanly mapped to narrative sentences like "submitted an SOP revision."
+*   **Richer Maintenance Feed:** The Upcoming PM Tasks list now highlights overdue tasks with urgency borders (red/amber/green) and pulls assignee avatars directly from user profiles.
+
+---
+
+## Phase 21: Change Control & Reports Enhancements
+
+### HTML Format-Preserving Diffing
+*   **Engine Upgrade:** Replaced the backend text-extraction pipeline with full `convertToHtml` DOM parsing to retain DOCX element metadata.
+*   **Inline HTML Diffing:** Integrated `htmldiff-js` to process the structural DOM changes and return precise `<ins>` and `<del>` HTML tags explicitly protecting table structure and bold/italic formatting.
+*   **DiffViewer UI Polish:** Designed a bold, high-contrast reading container utilizing Tailwind typography classes (`prose-p:my-5`, `prose-headings:mt-8`) to identically mimic source Word document spacing. Green/red block backgrounds ensure clarity without breaking DOM flow.
+
+### Governance & Signatures Polish
+*   **Active Avatar Images**: Governance signatures now dynamically query the `profiles` table to mount the AvatarImage components of the designated managers directly inside the approval payload.
+*   **Mobile Screen Layout**: Extensively applied `flex-col sm:flex-row` wrappers to the Top Navigation Strip, Diff Title Bars, AI Summary headers, and the Governance grid cells so that the interface cleanly collapses on cell phones.
+
+### AI Intelligence Automation & Operations Log
+*   **Zero-Click Generation:** The Gemini AI Delta Summary engine now generates and explicitly returns the summary payload concurrently with page load by polling raw DOCX file streams from Supabase Storage instead of fragile JSON traces.
+*   **Relational Overhaul:** Re-routed `fetchSopChanges` (in `lib/queries/reports.ts`) to target the `change_controls` table directly, expanding the dataset with complex `LEFT JOINS`.
+*   **Deep-Link Integration:** The new report table on `/reports` now displays true Version Deltas. Administrators can now click on any `CC_REF` cell to instantly warp to the underlying Change Control interface.
+
+---
+
+## Phase 22: Auth Waiting Room Security
+
+### Architectural Gate implementation
+To secure the application from unauthorized signups, a strict middleware interceptor was deployed.
+*   **Schema Upgrade:** Injected `signup_status` (`pending`, `approved`, `rejected`) into the `profiles` table. All pre-existing users were safely grandfathered in as `approved`.
+*   **Next.js Proxy Interceptor:** Rerouted core authenticated routing in `proxy.ts` so that verified users with `signup_status === 'pending'` are forcibly trapped inside the `/waiting-room` holding page.
+*   **Realtime Bouncer Delivery:** Engineered `waiting-room-client.tsx` with a Supabase `postgres_changes` listener. The exact moment an Administrator manually approves the account, the user is instantly and automatically propelled directly into their `/onboarding` flow, without requiring manual page refreshes.
+
+### Automated Email Automation (Resend Integration)
+*   **Generic White-Label Templates:** Engineered `lib/email-templates.ts` to construct pixel-perfect, highly responsive HTML email structures. The templates isolate branding variables (`primaryColor`, `logoUrl`, etc.) allowing immediate restyling for different enterprise clients without rewriting HTML elements.
+*   **Transactional Bindings:** Designed robust server actions in `actions/email.ts` to securely dispatch Resend deliveries upon DB-Triggered approval events (e.g., when the Admin taps `Approve` in the Settings tab).
+*   **Administration Control Panel:** Created a dedicated, high-priority grid table located within `app/(dashboard)/settings/users` strictly displaying `pending` users for the Governance review sequence.
+
