@@ -62,8 +62,8 @@ export function ChangeControlClient({
     return (
         <div className="min-h-screen bg-slate-50/30 dark:bg-slate-900/10">
             {/* Top Navigation Strip */}
-            <div className="border-b bg-background/50 backdrop-blur-md sticky top-0 z-10 px-6 py-3">
-                <div className="max-w-[1600px] mx-auto flex items-center justify-between">
+            <div className="border-b bg-background/50 backdrop-blur-md sticky top-0 z-10 px-4 sm:px-6 py-3">
+                <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                     <Link href="/library" className="group flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-brand-navy transition-colors">
                         <div className="p-1 rounded-md group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
                             <ArrowLeft className="h-4 w-4" />

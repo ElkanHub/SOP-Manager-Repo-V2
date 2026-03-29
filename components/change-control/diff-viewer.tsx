@@ -64,7 +64,7 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
     return (
         <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-xl bg-slate-50/50 dark:bg-slate-900/10">
             <CardHeader className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 pb-4 sticky top-0 z-10">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="space-y-1">
                         <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
                             <FileText className="h-5 w-5 text-brand-navy" />

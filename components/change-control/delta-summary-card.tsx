@@ -47,7 +47,7 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
     return (
         <Card>
             <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <CardTitle className="text-base flex items-center gap-2">
                         <Sparkles className="h-4 w-4 text-brand-teal" />
                         AI Summary of Changes

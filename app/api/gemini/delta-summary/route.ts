@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+// @ts-ignore
+import * as mammoth from 'mammoth'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -22,31 +24,52 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { diff_json } = body
+    const { old_file_url, new_file_url } = body
 
-    if (!diff_json || !Array.isArray(diff_json)) {
-        return NextResponse.json({ error: 'Invalid diff_json' }, { status: 400 })
+    if (!new_file_url) {
+        return NextResponse.json({ error: 'Missing document parameters' }, { status: 400 })
     }
 
     const geminiApiKey = process.env.GEMINI_API_KEY
-    
     if (!geminiApiKey) {
         return NextResponse.json({ error: 'Gemini API not configured' }, { status: 500 })
     }
 
-    const changes = diff_json
-        .filter((item: any) => item.op !== 'equal')
-        .map((item: any) => `${item.op}: ${item.value}`)
-        .join('\n')
-
-    const prompt = `You are a quality assurance assistant. Analyze the following document changes and provide a brief summary (3-5 bullet points) of what changed. Focus on substantive changes, not minor formatting.
-
-Changes:
-${changes}
-
-Provide a concise summary in bullet point format:`
-
     try {
+        const { data: newFile, error: newFileError } = await serviceClient.storage
+            .from('documents')
+            .download(new_file_url)
+
+        if (newFileError || !newFile) throw new Error('Failed to retrieve target document')
+        const newBuffer = Buffer.from(await newFile.arrayBuffer())
+
+        let diffContext = ""
+        if (old_file_url) {
+            const { data: oldFile } = await serviceClient.storage
+                .from('documents')
+                .download(old_file_url)
+            
+            if (oldFile) {
+                const oldBuffer = Buffer.from(await oldFile.arrayBuffer())
+                const [oldTextResult, newTextResult] = await Promise.all([
+                    mammoth.extractRawText({ buffer: oldBuffer }),
+                    mammoth.extractRawText({ buffer: newBuffer })
+                ])
+                diffContext = `OLD DOCUMENT TEXT:\n${oldTextResult.value}\n\nNEW DOCUMENT TEXT:\n${newTextResult.value}`
+            }
+        }
+
+        if (!diffContext) {
+            const newTextResult = await mammoth.extractRawText({ buffer: newBuffer })
+            diffContext = `NEW DOCUMENT TEXT:\n${newTextResult.value}`
+        }
+
+        const prompt = `You are a strict QA Technical Writer. Based on the document text provided, give a VERY concise bulleted summary (3-5 points) of the substantive differences between the old and new versions. Only focus on actual logic/policy expansions, not minor grammatical formatting. If there is no old document provided, summarize the core operational purpose of the new document.
+
+${diffContext}
+
+Provide the concise summary in basic bullet points using • :`
+
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
             {

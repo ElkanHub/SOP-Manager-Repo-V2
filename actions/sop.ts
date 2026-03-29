@@ -577,19 +577,19 @@ export async function generateDeltaSummary(changeControlId: string): Promise<{ s
 
     const { data: changeControl } = await supabase
         .from('change_controls')
-        .select('diff_json, sops(title)')
+        .select('old_file_url, new_file_url, sops(title)')
         .eq('id', changeControlId)
         .single()
 
-    if (!changeControl?.diff_json) {
-        return { success: false, error: 'No diff available to generate summary' }
+    if (!changeControl?.new_file_url) {
+        return { success: false, error: 'Files unavailable to generate summary' }
     }
 
     try {
-        const response = await fetch('/api/gemini/delta-summary', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/gemini/delta-summary`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ diff_json: changeControl.diff_json }),
+            body: JSON.stringify({ old_file_url: changeControl.old_file_url, new_file_url: changeControl.new_file_url }),
         })
 
         if (!response.ok) {

@@ -1,7 +1,7 @@
 "use client"
 
 import { CheckCircle2, Clock, UserX, PenTool } from "lucide-react"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CcSignatory, SignatureCertificate } from "@/types/app.types"
@@ -52,14 +52,17 @@ export function SignatureGrid({
                         <div 
                             key={signatory.user_id}
                             className={`
-                                flex items-center justify-between p-4 rounded-2xl border transition-all duration-300
+                                flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition-all duration-300
                                 ${signatory.waived 
                                     ? 'bg-muted/30 border-dashed border-border/50 opacity-60' 
                                     : 'bg-card/40 backdrop-blur-sm border-border/40 hover:border-brand-teal/30 hover:bg-brand-teal/[0.02]'}
                             `}
                         >
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 w-full sm:w-auto">
                                 <Avatar className="h-10 w-10 border border-border/40 shadow-sm">
+                                    {(signatory as any).avatar_url && (
+                                        <AvatarImage src={(signatory as any).avatar_url} />
+                                    )}
                                     <AvatarFallback className="text-xs font-bold bg-gradient-to-br from-brand-teal/20 to-brand-navy/10 text-brand-teal">
                                         {getInitials(signatory.full_name)}
                                     </AvatarFallback>
@@ -84,7 +87,7 @@ export function SignatureGrid({
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
                                 {certificate ? (
                                     <div className="flex items-center gap-3 bg-green-500/5 px-3 py-1.5 rounded-xl border border-green-500/20 text-green-700 dark:text-green-400 animate-in fade-in zoom-in-95 duration-500">
                                         <div className="p-1 rounded-full bg-green-500/20">

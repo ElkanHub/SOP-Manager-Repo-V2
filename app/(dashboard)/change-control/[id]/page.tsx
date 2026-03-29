@@ -62,9 +62,26 @@ export default async function ChangeControlPage({ params }: Props) {
 
     const canSign = profile.role === 'manager' && isSignatory && !hasSigned && !isWaived
 
+    const signatoryIds = changeControl.required_signatories?.map((s: any) => s.user_id) || []
+    
+    const { data: signatoryProfiles } = await serviceClient
+        .from('profiles')
+        .select('id, avatar_url')
+        .in('id', signatoryIds.length ? signatoryIds : [''])
+
+    const enrichedSignatories = changeControl.required_signatories?.map((s: any) => ({
+        ...s,
+        avatar_url: signatoryProfiles?.find(p => p.id === s.user_id)?.avatar_url || null
+    })) || []
+
+    const enrichedChangeControl = {
+        ...changeControl,
+        required_signatories: enrichedSignatories as any
+    }
+
     return (
         <ChangeControlClient 
-            changeControl={changeControl}
+            changeControl={enrichedChangeControl}
             signatureCertificates={signatureCertificates || []}
             currentUserId={user.id}
             currentUserProfile={profile}

@@ -76,7 +76,7 @@ export function ChangeControlHeader({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-6 text-sm">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm mt-4 sm:mt-0">
                     <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Deadline:</span>
                         <span className={`
