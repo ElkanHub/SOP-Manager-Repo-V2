@@ -8,50 +8,30 @@ interface DateParams {
   dateTo: string | null
 }
 
-// --- SOP Change History ---
+// --- Change Control Log ---
 export async function fetchSopChanges({ page, dateFrom, dateTo }: DateParams) {
   const supabase = createClient()
   const from = page * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
 
   let query = supabase
-    .from("audit_log")
+    .from("change_controls")
     .select(
-      `id, action, entity_type, entity_id, created_at, actor_id,
-       actor:profiles!actor_id(full_name, department)`,
+      `id, version, new_version, status, created_at, completed_at,
+       sops(sop_number, title, department),
+       signatories:signature_certificates(id)`,
       { count: "exact" }
     )
-    .in("entity_type", ["sop", "change_control"])
     .order("created_at", { ascending: false })
     .range(from, to)
 
   if (dateFrom) query = query.gte("created_at", dateFrom)
   if (dateTo) query = query.lte("created_at", dateTo + "T23:59:59")
 
-  const { data: logs, count, error } = await query
+  const { data, count, error } = await query
   if (error) throw error
-  if (!logs || logs.length === 0) return { data: [], count: 0, pageSize: PAGE_SIZE }
 
-  const sopIds = logs.filter((l) => l.entity_type === "sop").map((l) => l.entity_id)
-  const ccIds = logs.filter((l) => l.entity_type === "change_control").map((l) => l.entity_id)
-
-  const [{ data: sops }, { data: ccs }] = await Promise.all([
-    supabase.from("sops").select("id, sop_number").in("id", sopIds.length ? sopIds : [""]),
-    supabase.from("change_controls").select("id, sop_id, sops(sop_number)").in("id", ccIds.length ? ccIds : [""]),
-  ])
-
-  const enriched = logs.map((log) => {
-    let sopNumber = "-"
-    if (log.entity_type === "sop") {
-      sopNumber = sops?.find((s) => s.id === log.entity_id)?.sop_number || "-"
-    } else if (log.entity_type === "change_control") {
-      const cc = ccs?.find((c) => c.id === log.entity_id)
-      sopNumber = (cc?.sops as any)?.sop_number || "-"
-    }
-    return { ...log, sop_number: sopNumber }
-  })
-
-  return { data: enriched, count: count ?? 0, pageSize: PAGE_SIZE }
+  return { data: data ?? [], count: count ?? 0, pageSize: PAGE_SIZE }
 }
 
 // --- Acknowledgements ---

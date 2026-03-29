@@ -7,6 +7,7 @@ import { keepPreviousData } from "@tanstack/react-query"
 import { fetchSopChanges } from "@/lib/queries/reports"
 import { Button } from "@/components/ui/button"
 import { Download, FileText, ChevronLeft, ChevronRight } from "lucide-react"
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
@@ -47,92 +48,117 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
   const totalPages = Math.ceil(totalCount / pageSize)
   const loading = isLoading || isFetching
 
-  const getActionLabel = (action: string) => {
-    const labels: Record<string, string> = {
-      sop_approved_new: "Approved",
-      sop_submitted: "Submitted",
-      change_control_issued: "CC Issued",
-      change_control_completed: "CC Completed",
-      cc_signature_added: "Signed",
-      cc_signature_waived: "Waived",
-    }
-    return labels[action] || action
-  }
-
   const columns: ColumnDef<any>[] = [
     {
-      accessorKey: "sop_number",
-      header: "SOP No.",
+      accessorKey: "cc_ref",
+      header: "CC Ref",
+      cell: ({ row }) => {
+        const id = row.original.id
+        const date = new Date(row.original.created_at)
+        const ccRef = `CC-${date.getFullYear()}-${id.slice(0, 4).toUpperCase()}`
+        return (
+          <Link href={`/change-control/${id}`} className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded hover:underline hover:bg-brand-teal/10 transition-colors">
+            {ccRef}
+          </Link>
+        )
+      },
+    },
+    {
+      accessorKey: "sops.title",
+      header: "Document",
       cell: ({ row }) => (
-        <span className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded">
-          {row.getValue("sop_number")}
-        </span>
+        <div className="flex flex-col">
+          <span className="text-sm font-semibold">{row.original.sops?.title || "Unknown Document"}</span>
+          <span className="text-xs text-muted-foreground">{row.original.sops?.sop_number || "-"}</span>
+        </div>
       ),
     },
     {
-      accessorKey: "action",
-      header: "Action",
+      accessorKey: "sops.department",
+      header: "Dept",
       cell: ({ row }) => (
-        <Badge variant="outline" className="font-bold border-brand-teal/20 text-brand-teal">
-          {getActionLabel(row.getValue("action"))}
+        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.sops?.department || "-"}</div>
+      ),
+    },
+    {
+      accessorKey: "version",
+      header: "Version Delta",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium flex items-center gap-1.5">
+          <span className="text-muted-foreground">{row.original.version || 'v0.0'}</span>
+          <span className="text-brand-navy dark:text-brand-teal">→</span>
+          <span className="font-bold text-foreground">{row.original.new_version || '-'}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "signatories",
+      header: "Signatures",
+      cell: ({ row }) => (
+        <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+          {row.original.signatories?.length || 0} Collected
         </Badge>
       ),
     },
     {
-      accessorKey: "actor.full_name",
-      header: "Actor",
-      cell: ({ row }) => (
-        <div className="text-sm font-semibold">{(row.original as any).actor?.full_name || "Unknown"}</div>
-      ),
-    },
-    {
-      accessorKey: "actor.department",
-      header: "Dept",
-      cell: ({ row }) => (
-        <div className="text-xs text-muted-foreground/80 font-medium">{(row.original as any).actor?.department || "-"}</div>
-      ),
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const statusStr = String(row.original.status || 'unknown')
+        if (statusStr === 'complete') {
+          return <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50">Executed</Badge>
+        }
+        return <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 capitalize">{statusStr.replace('_', ' ')}</Badge>
+      },
     },
     {
       accessorKey: "created_at",
-      header: "Timestamp",
+      header: "Created",
       cell: ({ row }) => (
         <div className="text-xs font-medium text-muted-foreground">
-          {format(new Date(row.getValue("created_at")), "MMM d, yyyy")}
-          <span className="ml-2 opacity-50">{format(new Date(row.getValue("created_at")), "HH:mm")}</span>
+          {format(new Date(row.original.created_at), "MMM d, yyyy")}
         </div>
       ),
     },
   ]
 
   const buildCsv = () => {
-    const headers = ["SOP No.", "Action", "Actor Name", "Department", "Timestamp"]
-    const rows = data.map((entry) => [
-      entry.sop_number,
-      getActionLabel(entry.action),
-      (entry as any).actor?.full_name || "Unknown",
-      (entry as any).actor?.department || "Unknown",
-      format(new Date(entry.created_at), "yyyy-MM-dd HH:mm:ss"),
-    ])
+    const headers = ["CC Ref", "SOP Number", "Document Title", "Department", "From Version", "New Version", "Status", "Signatures", "Created Date"]
+    const rows = data.map((entry) => {
+      const ccRef = `CC-${new Date(entry.created_at).getFullYear()}-${entry.id.slice(0, 4).toUpperCase()}`
+      const sops = entry.sops as any
+      return [
+        ccRef,
+        sops?.sop_number || "-",
+        sops?.title || "-",
+        sops?.department || "-",
+        entry.version || "v0.0",
+        entry.new_version || "-",
+        entry.status || "-",
+        entry.signatories?.length?.toString() || "0",
+        format(new Date(entry.created_at), "yyyy-MM-dd HH:mm:ss"),
+      ]
+    })
     const csv = [headers, ...rows].map((row) => row.map((v) => `"${v}"`).join(",")).join("\n")
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `sop-change-history-${format(new Date(), "yyyy-MM-dd")}.csv`
+    a.download = `change-control-log-${format(new Date(), "yyyy-MM-dd")}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-6">
         <div className="flex items-center gap-3">
           <div className="bg-brand-teal/10 p-2 rounded-lg">
             <FileText className="h-5 w-5 text-brand-teal" />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">SOP Change History</h2>
-            <p className="text-sm text-muted-foreground">Audit trail of all SOP approvals and modifications</p>
+            <h2 className="text-xl font-bold tracking-tight">Change Control Log</h2>
+            <p className="text-sm text-muted-foreground">Comprehensive tracking of all active and historic document updates</p>
           </div>
         </div>
         <Button

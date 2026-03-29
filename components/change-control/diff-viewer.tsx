@@ -13,7 +13,7 @@ interface DiffViewerProps {
 }
 
 export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewerProps) {
-    const [diff, setDiff] = useState<any[] | null>(null)
+    const [diffHtml, setDiffHtml] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -28,7 +28,7 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
                 })
                 if (!response.ok) throw new Error('Failed to fetch document comparison')
                 const data = await response.json()
-                setDiff(data.diff)
+                setDiffHtml(data.diffHtml)
             } catch (err: any) {
                 setError(err.message)
             } finally {
@@ -62,61 +62,49 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
     }
 
     return (
-        <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-soft">
-            <CardHeader className="bg-slate-50/50 dark:bg-slate-900/50 border-b pb-4">
+        <Card className="overflow-hidden border-slate-200 dark:border-slate-800 shadow-xl bg-slate-50/50 dark:bg-slate-900/10">
+            <CardHeader className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 pb-4 sticky top-0 z-10">
                 <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                        <CardTitle className="text-base font-bold flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-brand-navy" />
-                            Substantive Document Delta
+                        <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                            <FileText className="h-5 w-5 text-brand-navy" />
+                            Format-Preserving Document Delta
                         </CardTitle>
-                        <p className="text-xs text-muted-foreground">Unified text comparison identifying structural modifications</p>
+                        <p className="text-xs text-muted-foreground font-medium">Structural comparison retaining tables, lists, and typography</p>
                     </div>
-                    <div className="flex gap-2">
-                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 text-[10px]">
-                            - Deletions
-                        </Badge>
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-[10px]">
-                            + Additions
-                        </Badge>
+                    <div className="flex gap-2 shadow-sm rounded-none overflow-hidden bg-background border border-border">
+                        <div className="px-3 py-1.5 bg-red-50/80 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-xs font-bold flex items-center gap-1.5 border-r border-border">
+                            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> Deletions
+                        </div>
+                        <div className="px-3 py-1.5 bg-green-50/80 dark:bg-green-950/30 text-green-700 dark:text-green-400 text-xs font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Additions
+                        </div>
                     </div>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
-                <div className="bg-background font-mono text-sm leading-relaxed overflow-x-auto">
-                    <div className="min-w-full inline-block align-middle">
-                        {diff && diff.length > 0 ? (
-                            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {diff.map((item, idx) => {
-                                    if (item.op === 'equal') {
-                                        return (
-                                            <div key={idx} className="px-6 py-2 text-slate-600 dark:text-slate-400 whitespace-pre-wrap">
-                                                {item.value}
-                                            </div>
-                                        )
-                                    }
-                                    if (item.op === 'delete') {
-                                        return (
-                                            <div key={idx} className="px-6 py-2 bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-200 border-l-4 border-red-500 whitespace-pre-wrap">
-                                                <span className="opacity-50 mr-2 selection:bg-red-200">-</span>
-                                                {item.value}
-                                            </div>
-                                        )
-                                    }
-                                    if (item.op === 'insert') {
-                                        return (
-                                            <div key={idx} className="px-6 py-2 bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-200 border-l-4 border-green-500 whitespace-pre-wrap">
-                                                <span className="opacity-50 mr-2 selection:bg-green-200">+</span>
-                                                {item.value}
-                                            </div>
-                                        )
-                                    }
-                                    return null
-                                })}
-                            </div>
+                <div className="bg-white dark:bg-card shadow-inner overflow-x-auto min-h-[500px] border-x-4 border-slate-100 dark:border-slate-900">
+                    <div className="min-w-full inline-block align-middle p-8 md:p-12">
+                        {diffHtml ? (
+                            <div 
+                                className="prose prose-sm md:prose-base max-w-none dark:prose-invert prose-slate 
+                                           prose-headings:font-bold prose-headings:text-slate-900 dark:prose-headings:text-slate-100
+                                           prose-p:leading-relaxed prose-p:text-slate-700 dark:prose-p:text-slate-300
+                                           prose-table:border-collapse prose-table:w-full
+                                           prose-td:border prose-td:border-slate-200 dark:prose-td:border-slate-800 prose-td:p-3
+                                           prose-th:border prose-th:border-slate-300 dark:prose-th:border-slate-700 prose-th:bg-slate-50 dark:prose-th:bg-slate-900 prose-th:p-3 prose-th:text-left
+                                           
+                                           [&_ins]:bg-green-300 [&_ins]:text-green-900 [&_ins]:no-underline [&_ins]:dark:bg-green-900/70 [&_ins]:dark:text-green-100 [&_ins]:rounded-sm [&_ins]:px-0.5
+                                           [&_del]:bg-red-300 [&_del]:text-red-900 [&_del]:line-through [&_del]:dark:bg-red-900/70 [&_del]:dark:text-red-100 [&_del]:rounded-sm [&_del]:px-0.5"
+                                dangerouslySetInnerHTML={{ __html: diffHtml }} 
+                            />
                         ) : (
-                            <div className="p-12 text-center">
-                                <p className="text-muted-foreground italic">No substantive changes detected between versions.</p>
+                            <div className="py-24 flex flex-col items-center justify-center text-center">
+                                <div className="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                                    <FileText className="h-6 w-6 text-slate-400" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-foreground mb-1">No Changes Detected</h3>
+                                <p className="text-muted-foreground max-w-sm">The semantic analysis did not find any substantive text or formatting differences between the two document versions.</p>
                             </div>
                         )}
                     </div>

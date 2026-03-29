@@ -8,7 +8,7 @@ import { ChangeControl } from "@/types/app.types"
 
 interface DeltaSummaryCardProps {
     changeControl: ChangeControl
-    onRegenerate?: () => void
+    onRegenerate?: () => Promise<string | void>
 }
 
 export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCardProps) {
@@ -29,7 +29,10 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
         setError(null)
         
         try {
-            await onRegenerate()
+            const newSummary = await onRegenerate()
+            if (newSummary && typeof newSummary === 'string') {
+                setSummary(newSummary)
+            }
         } catch (err: any) {
             setError(err.message || 'Failed to generate summary')
         } finally {

@@ -566,7 +566,7 @@ export async function waiveSignature(
     return { success: true }
 }
 
-export async function generateDeltaSummary(changeControlId: string): Promise<SignResult> {
+export async function generateDeltaSummary(changeControlId: string): Promise<{ success: boolean; summary?: string; error?: string }> {
     const supabase = await createServiceClient()
     const client = await createClient()
 
@@ -604,12 +604,12 @@ export async function generateDeltaSummary(changeControlId: string): Promise<Sig
             .update({ delta_summary: data.summary })
             .eq('id', changeControlId)
 
+        revalidatePath('/change-control')
+        return { success: true, summary: data.summary }
+
     } catch (error: any) {
         return { success: false, error: error.message || 'Failed to generate summary' }
     }
-
-    revalidatePath('/change-control')
-    return { success: true }
 }
 
 // ─── Acknowledge SOP ────────────────────────────────────────────────────────

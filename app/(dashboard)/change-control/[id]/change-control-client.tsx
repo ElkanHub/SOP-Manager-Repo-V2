@@ -54,10 +54,8 @@ export function ChangeControlClient({
 
     const handleRegenerateSummary = async () => {
         const result = await generateDeltaSummary(changeControl.id)
-        if (result.success) {
-            // Need to re-fetch or update locally. For simplicity in this logic, we'll assume the action updates the DB
-            // and the user might need to refresh if we don't return the data. 
-            // In a real app we'd return the summary in the SignResult.
+        if (result.success && result.summary) {
+            return result.summary
         }
     }
 

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 // @ts-ignore
 import * as mammoth from 'mammoth'
-import { diff_match_patch } from 'diff-match-patch'
+// @ts-ignore
+import HtmlDiff from 'htmldiff-js'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -35,29 +36,19 @@ export async function POST(request: NextRequest) {
         const oldBuffer = Buffer.from(await oldFile.data.arrayBuffer())
         const newBuffer = Buffer.from(await newFile.data.arrayBuffer())
 
-        // Extract clean text
-        const [oldTextResult, newTextResult] = await Promise.all([
-            mammoth.extractRawText({ buffer: oldBuffer }),
-            mammoth.extractRawText({ buffer: newBuffer })
+        // Extract clean HTML structure instead of flat text
+        const [oldHtmlResult, newHtmlResult] = await Promise.all([
+            mammoth.convertToHtml({ buffer: oldBuffer }),
+            mammoth.convertToHtml({ buffer: newBuffer })
         ])
 
-        const oldText = oldTextResult.value
-        const newText = newTextResult.value
+        const oldHtml = oldHtmlResult.value
+        const newHtml = newHtmlResult.value
 
-        // Run structured Diff
-        const dmp = new diff_match_patch()
-        const diffs = dmp.diff_main(oldText, newText)
-        dmp.diff_cleanupSemantic(diffs)
+        // Use precise HTML diffing to protect tables, links, and bold/italic elements
+        const diffHtml = HtmlDiff.execute(oldHtml, newHtml)
 
-        // Map to standard layout
-        const formattedDiff = diffs.map(([op, text]) => {
-            let opStr = 'equal'
-            if (op === -1) opStr = 'delete'
-            if (op === 1) opStr = 'insert'
-            return { op: opStr, value: text }
-        })
-
-        return NextResponse.json({ diff: formattedDiff })
+        return NextResponse.json({ diffHtml })
     } catch (error: any) {
         console.error('Text extraction diff error:', error)
         return NextResponse.json({ error: error.message || 'Failed to compare documents' }, { status: 500 })
