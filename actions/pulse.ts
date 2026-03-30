@@ -1,7 +1,8 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { sendPulseEmail } from "./email"
 
 export async function broadcastNotice(formData: FormData) {
     const supabase = await createClient()
@@ -42,6 +43,43 @@ export async function broadcastNotice(formData: FormData) {
 
     // Revalidate paths if needed
     revalidatePath('/dashboard')
+
+    // ─── EMAIL NOTIFICATION DISPATCH ───
+    try {
+        const service = await createServiceClient()
+        let query = service
+            .from('profiles')
+            .select('id')
+            .eq('is_active', true)
+            .eq('notification_prefs->email', true)
+            .neq('id', user.id) // Don't email the sender
+
+        if (audience === 'department') {
+            query = query.eq('department', profile?.department)
+        }
+
+        const { data: recipients } = await query
+        
+        if (recipients && recipients.length > 0) {
+            const recipientIds = recipients.map(r => r.id)
+            const { data: authUsers } = await service.auth.admin.listUsers()
+            const targetEmails = authUsers.users
+                .filter(u => recipientIds.includes(u.id) && u.email)
+                .map(u => u.email!)
+
+            if (targetEmails.length > 0) {
+                await sendPulseEmail({
+                    to: targetEmails,
+                    subject: `New Notice from ${profile?.full_name || 'System'}`,
+                    title: "New Operations Notice",
+                    message: content,
+                    buttonText: "Read in Pulse Panel"
+                })
+            }
+        }
+    } catch (e) {
+        console.error("Pulse Email dispatch failed:", e)
+    }
 
     return { success: true }
 }
@@ -102,7 +140,7 @@ export async function replyToNotice(parentId: string, content: string) {
     // Verify parent exists and is top-level
     const { data: parentNode } = await supabase
         .from('pulse_items')
-        .select('thread_depth, audience')
+        .select('thread_depth, audience, sender_id')
         .eq('id', parentId)
         .single()
 
@@ -117,7 +155,7 @@ export async function replyToNotice(parentId: string, content: string) {
     // Get sender profile
     const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name')
+        .select('full_name, department')
         .eq('id', user.id)
         .single()
 
@@ -139,7 +177,43 @@ export async function replyToNotice(parentId: string, content: string) {
 
     revalidatePath('/dashboard')
 
+    // ─── EMAIL NOTIFICATION DISPATCH (REPLY) ───
+    try {
+        const service = await createServiceClient()
+        
+        // Find the sender of the original notice to notify them
+        // Also notify the department if it was a department-scoped notice
+        const { data: recipients } = await service
+            .from('profiles')
+            .select('id')
+            .eq('is_active', true)
+            .eq('notification_prefs->email', true)
+            .neq('id', user.id) // Don't email the person replying
+            .or(`id.eq.${parentNode.sender_id},department.eq.${profile?.department}`)
+
+        if (recipients && recipients.length > 0) {
+            const recipientIds = recipients.map(r => r.id)
+            const { data: authUsers } = await service.auth.admin.listUsers()
+            const targetEmails = authUsers.users
+                .filter(u => recipientIds.includes(u.id) && u.email)
+                .map(u => u.email!)
+
+            if (targetEmails.length > 0) {
+                await sendPulseEmail({
+                    to: targetEmails,
+                    subject: `New Reply from ${profile?.full_name || 'Personnel'}`,
+                    title: "Pulse Reply Received",
+                    message: content,
+                    buttonText: "View conversation"
+                })
+            }
+        }
+    } catch (e) {
+        console.error("Pulse Reply Email dispatch failed:", e)
+    }
+
     return { success: true }
+
 }
 
 export async function acknowledgeNotice(itemId: string) {

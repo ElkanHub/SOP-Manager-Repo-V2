@@ -5,6 +5,13 @@ import { headers } from 'next/headers'
 // Only initialize if the key is available
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
+async function getAppUrl() {
+    const headerList = await headers()
+    const host = headerList.get('host')
+    const protocol = headerList.get('x-forwarded-proto') || 'http'
+    return `${protocol}://${host}`
+}
+
 export async function sendApprovalEmail(
     targetEmail: string,
     targetName: string
@@ -15,10 +22,7 @@ export async function sendApprovalEmail(
     }
 
     try {
-        const headerList = await headers()
-        const host = headerList.get('host')
-        const protocol = headerList.get('x-forwarded-proto') || 'http'
-        const appUrl = `${protocol}://${host}`
+        const appUrl = await getAppUrl()
 
         const html = buildEmailTemplate({
             title: "Your Account is Approved",
@@ -32,7 +36,7 @@ export async function sendApprovalEmail(
         })
 
         const { data, error } = await resend.emails.send({
-            from: 'SOP-Guard Pro <system@updates.sop-guard.com>', // MUST BE verified domain or use Resend testing domain
+            from: 'SOP-Guard Pro <system@updates.sop-guard.com>', 
             to: targetEmail,
             subject: 'Account Action Required: Your Access is Approved',
             html: html,
@@ -47,6 +51,47 @@ export async function sendApprovalEmail(
 
     } catch (e: any) {
         console.error("Failed to construct or send approval email:", e)
+        return { success: false, error: e.message }
+    }
+}
+
+export async function sendPulseEmail({
+    to,
+    subject,
+    title,
+    message,
+    buttonText,
+    buttonUrl
+}: {
+    to: string | string[],
+    subject: string,
+    title: string,
+    message: string,
+    buttonText?: string,
+    buttonUrl?: string
+}) {
+    if (!resend) return { success: false, error: "Resend not configured" }
+
+    try {
+        const appUrl = await getAppUrl()
+        const html = buildEmailTemplate({
+            title,
+            messageHtml: `<div style="white-space: pre-wrap;">${message}</div>`,
+            buttonText: buttonText || "View Dashboard",
+            buttonUrl: buttonUrl || `${appUrl}/dashboard`
+        })
+
+        const { data, error } = await resend.emails.send({
+            from: 'SOP-Guard Pro <updates@updates.sop-guard.com>',
+            to,
+            subject: `[SOP Pulse] ${subject}`,
+            html
+        })
+
+        if (error) throw error
+        return { success: true, data }
+    } catch (e: any) {
+        console.error("Pulse email failure:", e)
         return { success: false, error: e.message }
     }
 }

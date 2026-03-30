@@ -3,6 +3,7 @@
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { sendPulseEmail } from './email'
 
 export type SubmitSopResult =
     | { success: true; requestId: string }
@@ -133,6 +134,37 @@ export async function submitSopForApproval(
 
         if (pulseError) {
             console.error('Failed to create pulse item:', pulseError)
+        } else {
+            // ─── EMAIL QA DEPARTMENT ───
+            try {
+                const service = await createServiceClient()
+                const { data: authUsers } = await service.auth.admin.listUsers()
+                const { data: profiles } = await service
+                    .from('profiles')
+                    .select('id')
+                    .eq('department', qaDepartment.name)
+                    .eq('is_active', true)
+                    .eq('notification_prefs->email', true)
+
+                if (profiles && profiles.length > 0) {
+                    const profileIds = profiles.map(p => p.id)
+                    const targetEmails = authUsers.users
+                        .filter(u => profileIds.includes(u.id) && u.email)
+                        .map(u => u.email!)
+
+                    if (targetEmails.length > 0) {
+                        await sendPulseEmail({
+                            to: targetEmails,
+                            subject: `Audit Required: ${formData.title}`,
+                            title: "SOP Approval Required",
+                            message: `A new ${formData.type === 'new' ? 'SOP' : 'revision'} titled "${formData.title}" has been submitted for review by ${profile.full_name || 'System'}.`,
+                            buttonText: "Review in App"
+                        })
+                    }
+                }
+            } catch (e) {
+                console.error("SOP QA Email dispatch failed:", e)
+            }
         }
     }
 
