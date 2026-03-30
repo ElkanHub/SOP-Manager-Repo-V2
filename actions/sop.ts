@@ -263,7 +263,7 @@ export async function resubmitSop(
         .single()
 
     if (qaDepartment) {
-        await supabase
+        const { error: pulseError } = await supabase
             .from('pulse_items')
             .insert({
                 sender_id: user.id,
@@ -275,6 +275,38 @@ export async function resubmitSop(
                 audience: 'department',
                 target_department: qaDepartment.name,
             })
+
+        if (!pulseError) {
+            // ─── EMAIL QA DEPARTMENT ───
+            try {
+                const { data: authUsers } = await supabase.auth.admin.listUsers()
+                const { data: profiles } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('department', qaDepartment.name)
+                    .eq('is_active', true)
+                    .eq('notification_prefs->email', true)
+
+                if (profiles && profiles.length > 0) {
+                    const profileIds = profiles.map(p => p.id)
+                    const targetEmails = authUsers.users
+                        .filter(u => profileIds.includes(u.id) && u.email)
+                        .map(u => u.email!)
+
+                    if (targetEmails.length > 0) {
+                        await sendPulseEmail({
+                            to: targetEmails,
+                            subject: `Audit Required (Resubmission): ${sop?.title}`,
+                            title: "SOP Resubmitted for Review",
+                            message: `The SOP "${sop?.title}" has been resubmitted for approval by ${profile.full_name}.`,
+                            buttonText: "Review SOP"
+                        })
+                    }
+                }
+            } catch (e) {
+                console.error("SOP QA Email dispatch failed:", e)
+            }
+        }
     }
 
     await supabase
@@ -347,7 +379,7 @@ export async function approveSopRequest(
             .single()
 
         if (resultData.result === 'activated') {
-            await supabase
+            const { error: pulseError } = await supabase
                 .from('pulse_items')
                 .insert({
                     recipient_id: request?.submitted_by,
@@ -359,8 +391,24 @@ export async function approveSopRequest(
                     entity_id: request?.sop_id,
                     audience: 'self',
                 })
+            
+            if (!pulseError && request?.submitted_by) {
+                // ─── EMAIL SUBMITTER ───
+                try {
+                    const { data: targetUser } = await supabase.auth.admin.getUserById(request.submitted_by)
+                    if (targetUser?.user?.email) {
+                        await sendPulseEmail({
+                            to: targetUser.user.email,
+                            subject: `SOP Activated: ${request.sop_id}`,
+                            title: "SOP Now Live",
+                            message: `Congratulations! Your SOP submission has been fully approved and is now active in the Library.`,
+                            buttonText: "View SOP"
+                        })
+                    }
+                } catch (e) { console.error("SOP activation email failed:", e) }
+            }
         } else if (resultData.result === 'change_control_issued' && request) {
-            await supabase
+            const { error: pulseError } = await supabase
                 .from('pulse_items')
                 .insert({
                     recipient_id: request.submitted_by,
@@ -372,6 +420,22 @@ export async function approveSopRequest(
                     entity_id: request.sop_id,
                     audience: 'self',
                 })
+
+            if (!pulseError && request.submitted_by) {
+                // ─── EMAIL SUBMITTER ───
+                try {
+                    const { data: targetUser } = await supabase.auth.admin.getUserById(request.submitted_by)
+                    if (targetUser?.user?.email) {
+                        await sendPulseEmail({
+                            to: targetUser.user.email,
+                            subject: `Change Control Issued: ${request.sop_id}`,
+                            title: "Action Required: Sign Change Control",
+                            message: `Your SOP update has been approved by QA. A Change Control document has been issued and requires your signature before the SOP can go live.`,
+                            buttonText: "Sign Document"
+                        })
+                    }
+                } catch (e) { console.error("Change control email failed:", e) }
+            }
         }
 
         revalidatePath('/library')
@@ -442,7 +506,7 @@ export async function requestChangesSop(
         .update({ status: 'changes_requested', updated_at: new Date().toISOString() })
         .eq('id', requestId)
 
-    await supabase
+    const { error: pulseError } = await supabase
         .from('pulse_items')
         .insert({
             recipient_id: request.submitted_by,
@@ -455,6 +519,21 @@ export async function requestChangesSop(
             audience: 'self',
         })
 
+    if (!pulseError && request.submitted_by) {
+        // ─── EMAIL SUBMITTER ───
+        try {
+            const { data: targetUser } = await supabase.auth.admin.getUserById(request.submitted_by)
+            if (targetUser?.user?.email) {
+                await sendPulseEmail({
+                    to: targetUser.user.email,
+                    subject: `Revision Requested: ${request.sop_id}`,
+                    title: "SOP Action Required",
+                    message: `QA has reviewed your SOP and requested the following changes: \n\n${comment}`,
+                    buttonText: "Revise SOP"
+                })
+            }
+        } catch (e) { console.error("SOP revision email failed:", e) }
+    }
     await supabase
         .from('audit_log')
         .insert({
@@ -529,7 +608,7 @@ export async function signChangeControl(changeControlId: string): Promise<SignRe
         .eq('id', changeControlId)
         .single()
 
-    await supabase
+    const { error: pulseError } = await supabase
         .from('pulse_items')
         .insert({
             sender_id: user.id,
@@ -541,6 +620,39 @@ export async function signChangeControl(changeControlId: string): Promise<SignRe
             audience: 'department',
             target_department: profile.department,
         })
+
+    if (!pulseError && profile.department) {
+        // ─── EMAIL DEPARTMENT ───
+        try {
+            const { data: authUsers } = await supabase.auth.admin.listUsers()
+            const { data: profiles } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('department', profile.department)
+                .eq('is_active', true)
+                .eq('notification_prefs->email', true)
+                .neq('id', user.id) // Don't email the person who just signed
+
+            if (profiles && profiles.length > 0) {
+                const profileIds = profiles.map(p => p.id)
+                const targetEmails = authUsers.users
+                    .filter(u => profileIds.includes(u.id) && u.email)
+                    .map(u => u.email!)
+
+                if (targetEmails.length > 0) {
+                    await sendPulseEmail({
+                        to: targetEmails,
+                        subject: `CC Signed: ${changeControl?.sop_id || 'System Update'}`,
+                        title: "Change Control Signature Captured",
+                        message: `${profile.full_name} has signed the Change Control for SOP ${changeControl?.sop_id}.`,
+                        buttonText: "Review CC"
+                    })
+                }
+            }
+        } catch (e) {
+            console.error("CC Signature email failed:", e)
+        }
+    }
 
     await supabase
         .from('audit_log')

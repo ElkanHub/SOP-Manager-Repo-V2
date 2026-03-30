@@ -2,6 +2,7 @@
 
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { sendPulseEmail } from './email'
 
 export type SubmitEquipmentResult = 
     | { success: true; equipmentId: string }
@@ -87,7 +88,7 @@ export async function submitEquipment(
         .single()
 
     if (qaDepartment) {
-        await supabase
+        const { error: pulseError } = await supabase
             .from('pulse_items')
             .insert({
                 sender_id: user.id,
@@ -99,6 +100,39 @@ export async function submitEquipment(
                 audience: 'department',
                 target_department: qaDepartment.name,
             })
+        if (pulseError) {
+            console.error('Failed to create pulse item:', pulseError)
+        } else {
+            // ─── EMAIL QA DEPARTMENT ───
+            try {
+                const { data: authUsers } = await supabase.auth.admin.listUsers()
+                const { data: profiles } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('department', qaDepartment.name)
+                    .eq('is_active', true)
+                    .eq('notification_prefs->email', true)
+
+                if (profiles && profiles.length > 0) {
+                    const profileIds = profiles.map(p => p.id)
+                    const targetEmails = authUsers.users
+                        .filter(u => profileIds.includes(u.id) && u.email)
+                        .map(u => u.email!)
+
+                    if (targetEmails.length > 0) {
+                        await sendPulseEmail({
+                            to: targetEmails,
+                            subject: `Audit Required: ${formData.name}`,
+                            title: "Equipment Approval Required",
+                            message: `A new piece of equipment titled "${formData.name}" (Asset ID: ${formData.assetId}) has been submitted for review by ${profile?.full_name || 'System'}.`,
+                            buttonText: "Review Asset"
+                        })
+                    }
+                }
+            } catch (e) {
+                console.error("Equipment QA Email dispatch failed:", e)
+            }
+        }
     }
 
     await supabase
@@ -185,16 +219,20 @@ export async function rejectEquipment(equipmentId: string, reason: string): Prom
         .select('name, submitted_by')
         .eq('id', equipmentId)
         .single()
+    
+    if (!equipment) {
+        return { success: false, error: 'Equipment not found' }
+    }
 
     await supabase
         .from('equipment')
         .update({ status: 'inactive' })
         .eq('id', equipmentId)
 
-    await supabase
+    const { error: pulseError } = await supabase
         .from('pulse_items')
         .insert({
-            recipient_id: equipment?.submitted_by,
+            recipient_id: equipment.submitted_by,
             sender_id: user.id,
             type: 'approval_update',
             title: 'Equipment Rejected',
@@ -203,6 +241,26 @@ export async function rejectEquipment(equipmentId: string, reason: string): Prom
             entity_id: equipmentId,
             audience: 'self',
         })
+
+    if (pulseError) {
+        console.error('Failed to create pulse item:', pulseError)
+    } else {
+        // ─── EMAIL SUBMITTER ───
+        try {
+            const { data: targetUser } = await supabase.auth.admin.getUserById(equipment.submitted_by)
+            if (targetUser?.user?.email) {
+                await sendPulseEmail({
+                    to: targetUser.user.email,
+                    subject: `Equipment Rejected: ${equipment.name || 'Asset Update'}`,
+                    title: "Asset Action Required",
+                    message: `Your equipment submission for "${equipment.name || 'your asset'}" was rejected with the following reason: ${reason}`,
+                    buttonText: "View Equipment"
+                })
+            }
+        } catch (e) {
+            console.error("Equipment rejection email failed:", e)
+        }
+    }
 
     await supabase
         .from('audit_log')
