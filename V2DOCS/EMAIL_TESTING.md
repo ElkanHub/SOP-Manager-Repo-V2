@@ -12,8 +12,11 @@ Add your Resend API key to your `.env` file:
 RESEND_API_KEY=re_your_api_key_here
 ```
 
+> [!NOTE]
+> **Sandbox Testing**: We have configured the system to use `onboarding@resend.dev` as the sender. This allows you to test immediately using the Resend sandbox.
+> 
 > [!IMPORTANT]
-> If you are using a Resend **Testing Account**, you can only send emails to the address associated with your Resend account. To send to other domains, you must verify your domain in the Resend Dashboard.
+> When using the Resend **Sandbox/Onboarding** address, you can **ONLY** send emails to the single email address used to create your Resend account. To send to other addresses or domains, you must verify a custom domain in the Resend Dashboard.
 
 ---
 

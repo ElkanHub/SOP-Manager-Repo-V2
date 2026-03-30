@@ -36,7 +36,7 @@ export async function sendApprovalEmail(
         })
 
         const { data, error } = await resend.emails.send({
-            from: 'SOP-Guard Pro <system@updates.sop-guard.com>', 
+            from: 'SOP-Guard Pro <onboarding@resend.dev>', 
             to: targetEmail,
             subject: 'Account Action Required: Your Access is Approved',
             html: html,
@@ -82,7 +82,7 @@ export async function sendPulseEmail({
         })
 
         const { data, error } = await resend.emails.send({
-            from: 'SOP-Guard Pro <updates@updates.sop-guard.com>',
+            from: 'SOP-Guard Pro <onboarding@resend.dev>',
             to,
             subject: `[SOP Pulse] ${subject}`,
             html
