@@ -39,7 +39,7 @@ export async function sendApprovalEmail(
             from: 'SOP-Guard Pro <onboarding@resend.dev>', 
             // ⚠️ TESTING: Hardcode to your Resend account email for sandbox testing
             // to: targetEmail, 
-            to: 'REPLACE_WITH_YOUR_RESEND_ACCOUNT_EMAIL@EXAMPLE.COM',
+            to: 'elkanahdonkor@mail.com',
             subject: 'Account Action Required: Your Access is Approved',
             html: html,
         })
@@ -87,7 +87,7 @@ export async function sendPulseEmail({
             from: 'SOP-Guard Pro <onboarding@resend.dev>',
             // ⚠️ TESTING: Hardcode to your Resend account email for sandbox testing
             // to,
-            to: 'REPLACE_WITH_YOUR_RESEND_ACCOUNT_EMAIL@EXAMPLE.COM',
+            to: 'elkanahdonkor@mail.com',
             subject: `[SOP Pulse] ${subject}`,
             html
         })
