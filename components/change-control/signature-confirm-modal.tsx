@@ -1,4 +1,6 @@
 "use client"
+import Image from "next/image"
+
 
 import { useState } from "react"
 import { PenTool, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
@@ -86,18 +88,17 @@ export function SignatureConfirmModal({
                     {signatureUrl ? (
                         <div className="space-y-3">
                             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Authentication Artifact</p>
-                            <div className="border border-border/40 rounded-2xl p-6 bg-white shadow-inner flex items-center justify-center relative overflow-hidden group"
-                                 style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23e5e7eb'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23e5e7eb'/%3E%3C/svg%3E")`,
-                                 }}
-                            >
-                                <img 
-                                    src={signatureUrl} 
-                                    alt="Your signature" 
-                                    className="max-h-20 object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                            <div className="bg-white/80 dark:bg-slate-900/50 rounded-xl p-4 border border-border/50 flex items-center justify-center min-h-[100px] relative overflow-hidden">
+                                <Image
+                                    src={signatureUrl}
+                                    alt="Digital Signature"
+                                    width={200}
+                                    height={80}
+                                    unoptimized={signatureUrl?.startsWith('data:')}
+                                    className="max-h-[80px] w-auto object-contain dark:invert grayscale brightness-0 contrast-200"
                                 />
-                                <div className="absolute top-2 right-2 opacity-10">
-                                     <CheckCircle2 className="w-8 h-8 text-brand-teal" />
+                                <div className="absolute top-2 right-2 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 border border-green-500/20">
+                                    <CheckCircle2 className="w-3 h-3" />
                                 </div>
                             </div>
                         </div>

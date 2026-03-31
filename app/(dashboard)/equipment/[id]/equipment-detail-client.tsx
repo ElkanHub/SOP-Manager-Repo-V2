@@ -6,6 +6,8 @@ import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Loader2, Upload, X } fro
 import Link from "next/link"
 import { QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
+import Image from "next/image"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -457,9 +459,11 @@ export function EquipmentDetailClient({
                                     />
                                     {completionPhoto ? (
                                         <div className="relative inline-block">
-                                            <img 
+                                            <Image 
                                                 src={completionPhoto} 
                                                 alt="PM Completion" 
+                                                width={128} 
+                                                height={128} 
                                                 className="h-32 w-32 object-cover rounded-lg border"
                                             />
                                             <Button

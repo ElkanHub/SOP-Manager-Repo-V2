@@ -1,3 +1,4 @@
+import Image from "next/image"
 import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
@@ -25,7 +26,14 @@ export default function LoginPage() {
                     </div>
                 </div>
             </div>
-            <div className="relative hidden lg:flex items-center justify-center p-12" style={{ backgroundImage: 'url(/auth-img.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+            <div className="relative hidden lg:flex items-center justify-center p-12 overflow-hidden">
+                <Image
+                    src="/auth-img.webp"
+                    alt="Authentication Background"
+                    fill
+                    priority
+                    className="object-cover"
+                />
                 <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/90 to-brand-navy/40"></div>
                 <div className="relative max-w-md text-white">
                     <h2 className="text-3xl font-bold mb-4">Welcome Back</h2>

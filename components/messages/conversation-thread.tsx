@@ -14,6 +14,8 @@ import { ReferencePicker } from "./reference-picker"
 import { sendMessage, editMessage, deleteMessage, markConversationRead, leaveGroup, deleteConversation, updateNotifySetting } from "@/actions/messages"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import Image from "next/image"
+
 
 export function ConversationThread({ conversationId, userId }: { conversationId: string, userId: string }) {
   const [conversation, setConversation] = useState<Conversation | null>(null)
@@ -248,9 +250,15 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
 
   const avatar = conversation.type === 'direct'
     ? (
-      <div className="w-9 h-9 shrink-0 bg-brand-navy rounded-full flex items-center justify-center text-white overflow-hidden">
+      <div className="w-9 h-9 shrink-0 bg-brand-navy rounded-full flex items-center justify-center text-white overflow-hidden relative">
         {otherUser?.avatar_url ? (
-          <img src={otherUser.avatar_url} alt="" className="w-full h-full object-cover" />
+          <Image 
+            src={otherUser.avatar_url} 
+            alt="" 
+            width={36} 
+            height={36} 
+            className="w-full h-full object-cover" 
+          />
         ) : (
           <span className="text-xs font-semibold">{otherUser?.full_name?.substring(0, 2).toUpperCase()}</span>
         )}
@@ -307,9 +315,15 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         {!isGrouped && (
           <div className={cn("flex items-end gap-2 mb-1", isOwn ? "justify-end mr-1" : "ml-1")}>
             {!isOwn && (
-              <div className="w-6 h-6 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center">
+              <div className="w-6 h-6 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center relative">
                 {msg.sender?.avatar_url ? (
-                  <img src={msg.sender.avatar_url} alt="" className="w-full h-full object-cover" />
+                  <Image 
+                    src={msg.sender.avatar_url} 
+                    alt="" 
+                    width={24} 
+                    height={24} 
+                    className="w-full h-full object-cover" 
+                  />
                 ) : (
                   <span className="text-[10px] font-semibold text-slate-600">{msg.sender?.full_name?.substring(0, 2).toUpperCase()}</span>
                 )}

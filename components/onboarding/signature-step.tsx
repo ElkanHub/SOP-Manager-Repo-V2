@@ -6,7 +6,8 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SignatureCanvas from "react-signature-canvas"
 import { createClient } from "@/lib/supabase/client"
-import { Loader2, UploadCloud, Eraser, CheckCircle2 } from "lucide-react"
+import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Sparkles, Upload, X, Eraser, UploadCloud } from "lucide-react"
+import Image from "next/image"
 
 export function SignatureStep({ initialData, onNext }: any) {
     const [signatureUrl, setSignatureUrl] = useState<string | null>(initialData?.signature_url || null)
@@ -193,7 +194,16 @@ export function SignatureStep({ initialData, onNext }: any) {
                             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23e5e7eb'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23e5e7eb'/%3E%3C/svg%3E")`,
                         }}
                     >
-                        {signatureUrl && <img src={signatureUrl} alt="Your Signature" className="max-w-[200px] max-h-[80px] object-contain" />}
+                        {signatureUrl && (
+                          <Image 
+                            src={signatureUrl} 
+                            alt="Your Signature" 
+                            width={200} 
+                            height={80} 
+                            unoptimized={signatureUrl.startsWith('data:')}
+                            className="max-w-[200px] max-h-[80px] object-contain" 
+                          />
+                        )}
                     </div>
 
                     <div className="pt-4">

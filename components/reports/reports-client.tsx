@@ -6,13 +6,35 @@ import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download } from 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import dynamic from "next/dynamic"
 import { useReportStore } from "@/store/report-store"
-import { SopChangeHistoryReport } from "./sop-change-history-report"
-import { AcknowledgementLogReport } from "./acknowledgement-log-report"
-import { PmCompletionReport } from "./pm-completion-report"
-import { PulseNoticeReport } from "./pulse-notice-report"
-import { RiskInsightsReport } from "./risk-insights-report"
 import { Profile } from "@/types/app.types"
+
+const SopChangeHistoryReport = dynamic(() => import("./sop-change-history-report").then(mod => mod.SopChangeHistoryReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
+const AcknowledgementLogReport = dynamic(() => import("./acknowledgement-log-report").then(mod => mod.AcknowledgementLogReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
+const PmCompletionReport = dynamic(() => import("./pm-completion-report").then(mod => mod.PmCompletionReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
+const PulseNoticeReport = dynamic(() => import("./pulse-notice-report").then(mod => mod.PulseNoticeReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
+const RiskInsightsReport = dynamic(() => import("./risk-insights-report").then(mod => mod.RiskInsightsReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
 
 interface ReportsClientProps {
   profile: Profile

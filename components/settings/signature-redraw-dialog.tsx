@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { toast } from "sonner"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -155,7 +157,14 @@ export function SignatureRedrawDialog({
                                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23e5e7eb'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23e5e7eb'/%3E%3C/svg%3E")`,
                             }}
                         >
-                            <img src={currentSignatureUrl} alt="Current signature" className="h-10 object-contain drop-shadow-md" />
+                            <Image 
+                              src={currentSignatureUrl} 
+                              alt="Current signature" 
+                              width={200} 
+                              height={40} 
+                              unoptimized={currentSignatureUrl.startsWith('data:')}
+                              className="h-10 object-contain drop-shadow-md" 
+                            />
                         </div>
                     </div>
                 )}

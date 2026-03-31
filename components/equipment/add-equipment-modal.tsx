@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Upload, CheckCircle2, Loader2, AlertCircle, X } from "lucide-react"
+import { AlertCircle, Upload, X, Loader2, CheckCircle2 } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -302,9 +303,11 @@ export function AddEquipmentModal({
                                     />
                                     {photoUrl ? (
                                         <div className="relative group">
-                                            <img 
+                                            <Image 
                                                 src={photoUrl} 
                                                 alt="Equipment" 
+                                                width={192} 
+                                                height={128} 
                                                 className="h-32 w-48 object-cover rounded-lg border shadow-md"
                                             />
                                             <Button

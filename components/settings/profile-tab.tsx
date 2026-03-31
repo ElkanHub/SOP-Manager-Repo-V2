@@ -10,6 +10,7 @@ import { logoutUser } from "@/actions/auth"
 import { createClient } from "@/lib/supabase/client"
 import type { Profile } from "@/types/app.types"
 import { SignatureRedrawDialog } from "./signature-redraw-dialog"
+import Image from "next/image"
 
 interface ProfileTabProps {
     profile: Profile
@@ -86,7 +87,14 @@ export function ProfileTab({ profile }: ProfileTabProps) {
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
                 <div className="relative group w-20 h-20 rounded-full border-2 border-border overflow-hidden bg-muted flex items-center justify-center shrink-0">
                     {avatarUrl ? (
-                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                        <Image 
+                            src={avatarUrl} 
+                            alt="Avatar" 
+                            width={80} 
+                            height={80} 
+                            className="w-full h-full object-cover"
+                            unoptimized={avatarUrl.startsWith('data:')}
+                        />
                     ) : (
                         <User className="w-9 h-9 text-muted-foreground" />
                     )}
@@ -146,11 +154,14 @@ export function ProfileTab({ profile }: ProfileTabProps) {
                                 minWidth: '120px',
                             }}
                         >
-                            <img
+                            <Image
                                 src={signatureUrl}
                                 alt="Signature preview"
-                                className="h-12 max-w-[200px] object-contain"
+                                width={200}
+                                height={48}
+                                className="h-12 w-auto object-contain"
                                 onError={() => setSigImgError(true)}
+                                unoptimized={signatureUrl.startsWith('data:')}
                             />
                         </div>
                     </div>
