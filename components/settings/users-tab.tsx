@@ -186,24 +186,28 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
 
     return (
         <div className="space-y-6">
-            {pendingUsers.length > 0 && (
-                <div className="mb-8 border border-amber-500/20 bg-amber-500/5 rounded-xl p-4 sm:p-6 pb-2">
-                    <div className="mb-4">
-                        <h3 className="font-semibold text-foreground flex items-center gap-2">
-                            <ShieldCheck className="w-5 h-5 text-amber-500" />
-                            Pending Access Requests
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-1 text-balance">
-                            {pendingUsers.length} user(s) have registered and are awaiting your approval to access the system.
-                        </p>
-                    </div>
+            <div className="mb-8 border border-amber-500/20 bg-amber-500/5 rounded-xl p-4 sm:p-6 pb-2">
+                <div className="mb-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        <ShieldCheck className="w-5 h-5 text-amber-500" />
+                        Pending Access Requests
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1 text-balance">
+                        Users who have recently registered and are awaiting your approval to access the system.
+                    </p>
+                </div>
+                {pendingUsers.length > 0 ? (
                     <DataTable 
                         columns={createColumns('pending')} 
                         data={pendingUsers} 
                         pageSize={10}
                     />
-                </div>
-            )}
+                ) : (
+                    <div className="py-8 text-center bg-background/50 rounded-lg border border-dashed border-amber-500/20 mb-4">
+                        <p className="text-sm text-muted-foreground italic">No pending access requests.</p>
+                    </div>
+                )}
+            </div>
 
             <div>
                 <h3 className="font-semibold text-foreground">Active Users</h3>
@@ -236,13 +240,15 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
     )
 }
 
-function PendingUserActionsCell({ user, onUpdate }: { user: ProfileWithEmail, isPending: boolean, onUpdate: (id: string, patch: Partial<ProfileWithEmail>) => void }) {
+function PendingUserActionsCell({ user, isPending, onUpdate }: { user: ProfileWithEmail, isPending: boolean, onUpdate: (id: string, patch: Partial<ProfileWithEmail>) => void }) {
     const [submittingParams, setSubmittingParams] = useState(false)
+    const isDisabled = isPending || submittingParams
+
     return (
         <div className="flex items-center gap-1 justify-end flex-wrap cursor-default">
             <Button
                 variant="ghost" size="sm" className="h-7 text-xs gap-1 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30 font-bold"
-                disabled={submittingParams}
+                disabled={isDisabled}
                 onClick={async () => {
                     setSubmittingParams(true)
                     const result = await approveUser(user.id)
@@ -254,7 +260,7 @@ function PendingUserActionsCell({ user, onUpdate }: { user: ProfileWithEmail, is
             </Button>
             <Button
                 variant="ghost" size="sm" className="h-7 text-xs gap-1 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 font-bold"
-                disabled={submittingParams}
+                disabled={isDisabled}
                 onClick={async () => {
                     setSubmittingParams(true)
                     const result = await rejectUser(user.id)
