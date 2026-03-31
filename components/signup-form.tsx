@@ -68,9 +68,9 @@ export function SignupForm({
           We've sent you an email with a link to confirm your account.
         </p>
         <div className="bg-brand-navy/5 border border-brand-navy/10 rounded-lg p-4 mt-2">
-            <p className="text-sm text-balance font-medium text-brand-navy">
-                In addition to confirming your email, your account will also require manual approval from a system administrator before you can access the operations system.
-            </p>
+          <p className="text-sm text-balance font-medium text-muted-foreground">
+            In addition to confirming your email, your account will also require manual approval from a system administrator before you can access the operations system.
+          </p>
         </div>
       </div>
     )
