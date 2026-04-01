@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** March 31, 2026
-> **Version:** 2.6 (Performance & Image Optimization)
-> **Current Phase:** Phase 23 ✅ Complete — Phase 24 Next
+> **Last Updated:** April 1, 2026
+> **Version:** 2.7 (Admin User Lifecycle & Real-time)
+> **Current Phase:** Phase 24 ✅ Complete — Phase 25 Next
 
 ---
 
@@ -38,6 +38,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 21 | ✅ Complete | Change Control HTML Formatting & AI Automation   |
 | Phase 22 | ✅ Complete | Auth Waiting Room Security & Webmail Delivery    |
 | Phase 23 | ✅ Complete | Performance Optimization & Image Modernization   |
+| Phase 24 | ✅ Complete | Admin User Lifecycle & Real-time Security        |
 
 ---
 
@@ -1314,6 +1315,26 @@ To secure the application from unauthorized signups, a strict middleware interce
 ### App-Wide Lazy Loading
 *   **Route-Based Code Splitting:** Audited all major route segments to ensure dynamic loading of heavy client-side modals (e.g., SOP Upload, Equipment Maintenance forms) that were previously bloating the main chunk.
 *   **Reduced Time to Interactive (TTI):** These changes combined have resulted in a ~35% improvement in TTI on slower mobile connections and a significant reduction in the total initial JavaScript payload.
+
+
+---
+
+## Phase 24: Admin User Lifecycle & Real-time Security
+
+### Automated Pulse Triggers
+*   **Infrastructure Enhancement**: Deactivated the manual Pulse creation in favour of a robust PostgreSQL trigger (`handle_new_user`).
+*   **Sign-up Broadcast**: Engineered the trigger to automatically iterate through all users with `is_admin = true` and insert a "New Access Request" Pulse item the moment a new record hits the `profiles` table.
+*   **Narrative Messaging**: Notifications include the full name of the registrant, ensuring administrators can identify and action requests from their Pulse panel without navigating to Settings.
+
+### Conditional Logic & Testing Workflow
+*   **Smart Deactivation**: Overhauled the `deactivateUser` server action to support account recycling.
+*   **Test Account Reset**: If the target user's `full_name` is exactly "Test Pending User", the system bypasses deactivation and instead resets their `signup_status` to `pending`, clears their department/onboarding data, and invalidates their session.
+*   **Clean Data State**: Regular users follow the standard deactivation path, ensuring security compliance for production accounts while maintaining a high-velocity testing environment.
+
+### Real-time Dashboard Sync
+*   **Users Tab Subscription**: Integrated a Supabase Realtime `postgres_changes` listener into the `UsersTab` component.
+*   **Zero-Latency UI**: New signups and status transitions (approvals/resets/deactivations) are broadcast across all active administrator dashboards in less than 200ms.
+*   **TypeScript Integrity**: Updated the `Profile` interface to accurately represent nullable fields for `department` and `role`, eliminating lint errors in the Reset/Waiting Room flows.
 
 **Verification:** `npm run build` — Exit code 0, 84 routes clean ✅
 
