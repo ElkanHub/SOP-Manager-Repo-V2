@@ -351,23 +351,58 @@ export async function deactivateUser(targetUserId: string): Promise<SettingsResu
         return { success: false, error: 'You cannot deactivate your own account.' }
     }
 
-    const { error } = await ctx.service
+    // Check if this is the "Test Pending User"
+    const { data: targetProfile } = await ctx.service
         .from('profiles')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .select('full_name')
         .eq('id', targetUserId)
+        .single()
 
-    if (error) return { success: false, error: error.message }
+    const isTestUser = targetProfile?.full_name === 'Test Pending User'
+
+    if (isTestUser) {
+        // Reset to pending instead of deactivating
+        const { error } = await ctx.service
+            .from('profiles')
+            .update({ 
+                signup_status: 'pending',
+                onboarding_complete: false,
+                department: null,
+                role: 'employee',
+                is_active: true,
+                updated_at: new Date().toISOString() 
+            })
+            .eq('id', targetUserId)
+
+        if (error) return { success: false, error: error.message }
+        
+        await ctx.service.from('audit_log').insert({
+            actor_id: ctx.userId,
+            action: 'user_reset_to_pending',
+            entity_type: 'profile',
+            entity_id: targetUserId,
+            metadata: { note: 'Test user reset' },
+        })
+    } else {
+        // Normal deactivation
+        const { error } = await ctx.service
+            .from('profiles')
+            .update({ is_active: false, updated_at: new Date().toISOString() })
+            .eq('id', targetUserId)
+
+        if (error) return { success: false, error: error.message }
+        
+        await ctx.service.from('audit_log').insert({
+            actor_id: ctx.userId,
+            action: 'user_deactivated',
+            entity_type: 'profile',
+            entity_id: targetUserId,
+            metadata: {},
+        })
+    }
 
     // Invalidate user session immediately
     await ctx.service.auth.admin.signOut(targetUserId)
-
-    await ctx.service.from('audit_log').insert({
-        actor_id: ctx.userId,
-        action: 'user_deactivated',
-        entity_type: 'profile',
-        entity_id: targetUserId,
-        metadata: {},
-    })
 
     revalidatePath('/settings')
     return { success: true }

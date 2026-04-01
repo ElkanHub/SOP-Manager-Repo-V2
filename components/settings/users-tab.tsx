@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState, useTransition, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -20,6 +20,7 @@ import { PasswordConfirmModal } from "./password-confirm-modal"
 import {
     changeUserRole, changeUserDepartment, grantAdmin, revokeAdmin, deactivateUser, reactivateUser, approveUser, rejectUser
 } from "@/actions/settings"
+import { createClient } from "@/lib/supabase/client"
 import type { Profile, Department } from "@/types/app.types"
 import { UserAvatar } from "@/components/user-avatar"
 
@@ -44,6 +45,36 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
     function handleUpdate(id: string, patch: Partial<ProfileWithEmail>) {
         setUsers((prev) => prev.map((u) => u.id === id ? { ...u, ...patch } : u))
     }
+
+    // Real-time subscription to catch new signups and profile updates
+    useEffect(() => {
+        const supabase = createClient()
+        const channel = supabase
+            .channel('profiles-changes-v2')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'profiles' },
+                async (payload) => {
+                    if (payload.eventType === 'INSERT') {
+                        const newProfile = payload.new as ProfileWithEmail
+                        setUsers(prev => {
+                            if (prev.some(u => u.id === newProfile.id)) return prev
+                            return [...prev, newProfile]
+                        })
+                    } else if (payload.eventType === 'UPDATE') {
+                        const updatedProfile = payload.new as ProfileWithEmail
+                        setUsers(prev => prev.map(u => u.id === updatedProfile.id ? { ...u, ...updatedProfile } : u))
+                    } else if (payload.eventType === 'DELETE') {
+                        setUsers(prev => prev.filter(u => u.id !== payload.old.id))
+                    }
+                }
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
 
     const activeUsers = users.filter((u) => u.is_active && u.signup_status !== 'pending')
     const inactiveUsers = users.filter((u) => !u.is_active && u.signup_status !== 'pending')
@@ -299,7 +330,19 @@ function UserActionsCell({
         const result = await deactivateUser(user.id)
         setDeactivating(false)
         if (!result.success) { setDeactivateError(result.error); return }
-        onUpdate(user.id, { is_active: false })
+        
+        // Match the backend conditional logic for snappy UI
+        if (user.full_name === 'Test Pending User') {
+            onUpdate(user.id, { 
+                signup_status: 'pending', 
+                onboarding_complete: false, 
+                department: null, 
+                role: 'employee',
+                is_active: true 
+            })
+        } else {
+            onUpdate(user.id, { is_active: false })
+        }
         setDeactivateOpen(false)
     }
 

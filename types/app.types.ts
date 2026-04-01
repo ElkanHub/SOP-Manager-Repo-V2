@@ -8,8 +8,8 @@ export interface NotificationPrefs {
 export interface Profile {
     id: string;
     full_name: string;
-    department: string;
-    role: 'manager' | 'employee';
+    department: string | null;
+    role: ('manager' | 'employee') | null;
     is_admin: boolean;
     is_active: boolean;
     employee_id?: string;
