@@ -1388,5 +1388,14 @@ Implemented a full 4-stage document request workflow allowing any active organiz
 - `reports-client.tsx` — Report 6 "Document Requests" added (access: `qa+admin`)
 - `lib/queries/reports.ts` — `fetchDocumentRequests()` TanStack Query function added
 
-### TypeScript
-- `types/app.types.ts` — `RequestStatus` union type and `DocumentRequest` interface added
+### Bug Fixes & Maintenance
+
+#### Sidebar Realtime Fix (`032_realtime_badges.sql`)
+- Added `equipment` and `sop_approval_requests` to the `supabase_realtime` publication — ensures all sidebar badges update immediately without page refresh
+- Refactored `AppSidebar.tsx` to fix an early-return bug that blocked `document_requests` badges for regular employees
+- Wrapped `fetchCounts` in `useCallback` to ensure stable references for the realtime event listener
+
+#### Build & Type Safety (Hotfixes)
+- **`add-equipment-modal.tsx`**: Fixed "Type 'string | null' is not assignable to type 'string'" build error by enforcing strictly typed `primaryDept` state with an empty string fallback
+- **`AppSidebar.tsx`**: Resolved TypeScript error where `null` was assigned to a strictly typed `PostgrestFilterBuilder`
+- Audit of all `.department` and `.role` accesses across the codebase to ensure compatibility with the updated `Profile` interface (`string | null`)

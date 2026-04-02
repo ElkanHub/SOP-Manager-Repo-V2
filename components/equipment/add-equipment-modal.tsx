@@ -34,19 +34,19 @@ export function AddEquipmentModal({
     const [step, setStep] = useState(1)
     const [assetId, setAssetId] = useState('')
     const [name, setName] = useState('')
-    const [primaryDept, setPrimaryDept] = useState(currentUser.department)
+    const [primaryDept, setPrimaryDept] = useState(currentUser.department || '')
     const [secondaryDepts, setSecondaryDepts] = useState<string[]>([])
     const [serialNumber, setSerialNumber] = useState('')
     const [model, setModel] = useState('')
     const [photoUrl, setPhotoUrl] = useState<string | null>(null)
     const [uploading, setUploading] = useState(false)
-    
+
     const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'quarterly' | 'custom'>('monthly')
     const [customDays, setCustomDays] = useState('')
     const [lastServiced, setLastServiced] = useState('')
     const [linkedSopId, setLinkedSopId] = useState('')
     const [initialAssigneeId, setInitialAssigneeId] = useState('')
-    
+
     const [submitting, setSubmitting] = useState(false)
     const [submitError, setSubmitError] = useState<string | null>(null)
     const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -58,7 +58,7 @@ export function AddEquipmentModal({
             setStep(1)
             setAssetId('')
             setName('')
-            setPrimaryDept(currentUser.department)
+            setPrimaryDept(currentUser.department || '')
             setSecondaryDepts([])
             setSerialNumber('')
             setModel('')
@@ -112,7 +112,7 @@ export function AddEquipmentModal({
     }
 
     const canProceedStep2 = () => {
-        return assetId.trim() !== '' && name.trim() !== ''
+        return assetId.trim() !== '' && name.trim() !== '' && primaryDept !== ''
     }
 
     const canProceedStep3 = () => {
@@ -162,7 +162,7 @@ export function AddEquipmentModal({
                     <div className="h-2 bg-gradient-to-r from-green-400 to-brand-teal" />
                     <div className="p-8 flex flex-col items-center">
                         <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6 animate-in zoom-in duration-500">
-                             <CheckCircle2 className="h-10 w-10 text-green-500 dark:text-green-400" />
+                            <CheckCircle2 className="h-10 w-10 text-green-500 dark:text-green-400" />
                         </div>
                         <DialogTitle className="text-2xl font-bold text-center mb-2">Submitted for Review</DialogTitle>
                         <DialogDescription className="text-center text-muted-foreground max-w-[280px]">
@@ -184,16 +184,16 @@ export function AddEquipmentModal({
                             Professional Asset Registration
                         </DialogDescription>
                     </div>
-                    
+
                     {/* Progress Indicator */}
                     <div className="absolute bottom-0 left-0 w-full h-1 bg-muted/30">
-                        <div 
-                           className="h-full bg-brand-teal transition-all duration-500 ease-in-out" 
-                           style={{ width: `${(step / 3) * 100}%` }}
+                        <div
+                            className="h-full bg-brand-teal transition-all duration-500 ease-in-out"
+                            style={{ width: `${(step / 3) * 100}%` }}
                         />
                     </div>
                     <div className="absolute right-6 top-1/2 -translate-y-1/2 text-sm font-bold text-muted-foreground/40 font-mono">
-                         0{step} / 03
+                        0{step} / 03
                     </div>
                 </DialogHeader>
 
@@ -248,7 +248,7 @@ export function AddEquipmentModal({
 
                             <div className="space-y-2 pt-2">
                                 <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Primary Controlling Department</Label>
-                                <Select value={primaryDept} onValueChange={(v) => setPrimaryDept(v || currentUser.department)}>
+                                <Select value={primaryDept} onValueChange={(v) => setPrimaryDept(v || '')}>
                                     <SelectTrigger className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -272,11 +272,10 @@ export function AddEquipmentModal({
                                                 key={dept.name}
                                                 variant={secondaryDepts.includes(dept.name) ? "default" : "outline"}
                                                 size="sm"
-                                                className={`h-7 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all ${
-                                                    secondaryDepts.includes(dept.name) 
-                                                        ? 'bg-brand-teal hover:bg-teal-600' 
+                                                className={`h-7 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all ${secondaryDepts.includes(dept.name)
+                                                        ? 'bg-brand-teal hover:bg-teal-600'
                                                         : 'hover:bg-brand-teal/5 hover:border-brand-teal/30'
-                                                }`}
+                                                    }`}
                                                 onClick={() => {
                                                     setSecondaryDepts(prev =>
                                                         prev.includes(dept.name)
@@ -303,11 +302,11 @@ export function AddEquipmentModal({
                                     />
                                     {photoUrl ? (
                                         <div className="relative group">
-                                            <Image 
-                                                src={photoUrl} 
-                                                alt="Equipment" 
-                                                width={192} 
-                                                height={128} 
+                                            <Image
+                                                src={photoUrl}
+                                                alt="Equipment"
+                                                width={192}
+                                                height={128}
                                                 className="h-32 w-48 object-cover rounded-lg border shadow-md"
                                             />
                                             <Button
@@ -349,8 +348,8 @@ export function AddEquipmentModal({
                                     className="grid grid-cols-2 sm:grid-cols-3 gap-3"
                                 >
                                     {['daily', 'weekly', 'monthly', 'quarterly', 'custom'].map((freq) => (
-                                        <div 
-                                            key={freq} 
+                                        <div
+                                            key={freq}
                                             className={`flex items-center space-x-2 rounded-xl border p-3 cursor-pointer transition-all ${frequency === freq ? 'border-brand-teal bg-brand-teal/5 ring-1 ring-brand-teal/20' : 'border-border/40 hover:bg-muted/50'}`}
                                             onClick={() => setFrequency(freq as any)}
                                         >
@@ -396,8 +395,8 @@ export function AddEquipmentModal({
                                         </SelectTrigger>
                                         <SelectContent>
                                             {assignableUsers
-                                                .filter(u => 
-                                                    u.department === primaryDept || 
+                                                .filter(u =>
+                                                    u.department === primaryDept ||
                                                     secondaryDepts.includes(u.department)
                                                 )
                                                 .map(user => (
@@ -409,7 +408,8 @@ export function AddEquipmentModal({
                                     </Select>
                                 </div>
                             </div>
-                             <div className="space-y-2 pt-2">
+
+                            <div className="space-y-2 pt-2">
                                 <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Protocol Linkage (Optional SOP)</Label>
                                 {availableSops.length > 0 ? (
                                     <Select value={linkedSopId} onValueChange={(v) => setLinkedSopId(v || '')}>
@@ -444,8 +444,8 @@ export function AddEquipmentModal({
                         <div className="space-y-6 animate-in zoom-in-95 duration-300">
                             <div className="bg-brand-navy/5 dark:bg-card border border-brand-navy/10 rounded-2xl p-6 space-y-4">
                                 <div className="flex items-center justify-between border-b border-border/40 pb-4">
-                                     <h4 className="text-sm font-bold uppercase tracking-widest text-foreground/70">Registration Summary</h4>
-                                     <Badge variant="outline" className="border-brand-teal/30 text-brand-teal bg-brand-teal/5 font-bold text-[10px]">PENDING APPROVAL</Badge>
+                                    <h4 className="text-sm font-bold uppercase tracking-widest text-foreground/70">Registration Summary</h4>
+                                    <Badge variant="outline" className="border-brand-teal/30 text-brand-teal bg-brand-teal/5 font-bold text-[10px]">PENDING APPROVAL</Badge>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 text-xs">
                                     <div className="space-y-1">
@@ -477,12 +477,12 @@ export function AddEquipmentModal({
                                         <p className="font-bold text-foreground/70">{linkedSopId || 'Not Applicable'}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 flex gap-2 items-start mt-2">
-                                     <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                                     <p className="text-[10px] text-amber-800/80 font-medium leading-relaxed">
-                                         This registration will be logged in the facility audit trail. Please ensure all technical specifications are accurate before finalization.
-                                     </p>
+                                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-amber-800/80 font-medium leading-relaxed">
+                                        This registration will be logged in the facility audit trail. Please ensure all technical specifications are accurate before finalization.
+                                    </p>
                                 </div>
                             </div>
 
@@ -499,8 +499,8 @@ export function AddEquipmentModal({
                 <DialogFooter className="p-6 pt-2 border-t border-border/40 bg-muted/10 sm:justify-between items-center gap-4">
                     <div>
                         {step > 1 && (
-                            <Button 
-                                variant="ghost" 
+                            <Button
+                                variant="ghost"
                                 onClick={() => setStep(step - 1)}
                                 className="text-muted-foreground hover:text-foreground font-bold text-xs uppercase tracking-widest"
                             >
@@ -510,7 +510,7 @@ export function AddEquipmentModal({
                     </div>
                     <div className="flex gap-2">
                         {step < 3 ? (
-                            <Button 
+                            <Button
                                 onClick={() => setStep(step + 1)}
                                 disabled={step === 1 ? !canProceedStep2() : !canProceedStep3()}
                                 className="bg-brand-navy hover:bg-brand-navy/90 px-8 rounded-lg shadow-xl font-bold text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
@@ -518,7 +518,7 @@ export function AddEquipmentModal({
                                 Continue
                             </Button>
                         ) : (
-                            <Button 
+                            <Button
                                 onClick={handleSubmit}
                                 disabled={submitting}
                                 className="bg-brand-teal hover:bg-teal-600 px-8 rounded-lg shadow-xl font-bold text-white transition-all active:scale-95 disabled:opacity-30 disabled:grayscale"
