@@ -52,78 +52,85 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     prevUnreadRef.current = unreadConversations
   }, [unreadConversations, profile?.notification_prefs?.message_sound, pathname])
 
+  const fetchCounts = React.useCallback(async () => {
+    if (!user) return
+
+    // 1. Unread Messages
+    const { data: convData } = await supabase
+      .from('conversations')
+      .select(`
+        id,
+        last_message_at,
+        conversation_members!inner(last_read_at)
+      `)
+      .eq('conversation_members.user_id', user.id)
+      .eq('is_archived', false)
+
+    if (convData) {
+      const count = convData.filter((c: any) => {
+        const myMember = (c as any).conversation_members[0];
+        return c.last_message_at && myMember?.last_read_at
+          ? new Date(c.last_message_at) > new Date(myMember.last_read_at)
+          : false;
+      }).length;
+      setUnreadConversations(count);
+    }
+
+    // 2. Pending Approvals (SOPs)
+    if (isQa) {
+      const { count: approvalCount } = await supabase
+        .from('sop_approval_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+      
+      setPendingApprovals(approvalCount || 0)
+    }
+
+    // 3. Pending Equipment (Awaiting QA)
+    let equipQuery = supabase.from('equipment').select('*', { count: 'exact', head: true }).eq('status', 'pending_qa')
+    
+    if (isQa) {
+      // QA sees all pending eq
+    } else if (profile?.role === 'manager') {
+      // Managers only see their department's pending equipment
+      equipQuery = equipQuery.eq('department', profile.department)
+    } else {
+      // Employees don't see equipment queue
+      equipQuery = null
+    }
+    
+    if (equipQuery) {
+      const { count: equipCount } = await equipQuery
+      setPendingEquipmentCount(equipCount || 0)
+    } else {
+      setPendingEquipmentCount(0)
+    }
+
+    // 4. Pending Requests badge
+    if (isQa || profile?.is_admin) {
+      // QA/Admin: all non-fulfilled requests
+      const { count: reqCount } = await supabase
+        .from('document_requests')
+        .select('*', { count: 'exact', head: true })
+        .in('status', ['submitted', 'received', 'approved'])
+      setPendingRequests(reqCount || 0)
+    } else {
+      // Regular users: own in-flight requests (submitted or received - approved is also in-flight but maybe they want to see it until fulfilled)
+      const { count: reqCount } = await supabase
+        .from('document_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('requester_id', user.id)
+        .in('status', ['submitted', 'received', 'approved'])
+      setPendingRequests(reqCount || 0)
+    }
+  }, [user?.id, supabase, isQa, profile?.role, profile?.department, profile?.is_admin])
+
   React.useEffect(() => {
     if (!user) return
 
-    async function fetchCounts() {
-      // 1. Unread Messages
-      const { data: convData } = await supabase
-        .from('conversations')
-        .select(`
-          id,
-          last_message_at,
-          conversation_members!inner(last_read_at)
-        `)
-        .eq('conversation_members.user_id', user.id)
-        .eq('is_archived', false)
-
-      if (convData) {
-        const count = convData.filter((c: any) => {
-          const myMember = (c as any).conversation_members[0];
-          return c.last_message_at && myMember?.last_read_at
-            ? new Date(c.last_message_at) > new Date(myMember.last_read_at)
-            : false;
-        }).length;
-        setUnreadConversations(count);
-      }
-
-      // 2. Pending Approvals (SOPs)
-      if (isQa) {
-        const { count: approvalCount } = await supabase
-          .from('sop_approval_requests')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'pending')
-        
-        setPendingApprovals(approvalCount || 0)
-      }
-
-      // 3. Pending Equipment (Awaiting QA)
-      let equipQuery = supabase.from('equipment').select('*', { count: 'exact', head: true }).eq('status', 'pending_qa')
-      
-      if (!isQa && profile.role === 'manager') {
-        // Managers only see their department's pending equipment
-        equipQuery = equipQuery.eq('department', profile.department)
-      } else if (!isQa) {
-        // Employees don't see pending equipment queue
-        setPendingEquipmentCount(0)
-        return
-      }
-      
-      const { count: equipCount } = await equipQuery
-      setPendingEquipmentCount(equipCount || 0)
-
-      // 4. Pending Requests badge
-      if (isQa || profile.is_admin) {
-        // QA/Admin: all non-fulfilled requests
-        const { count: reqCount } = await supabase
-          .from('document_requests')
-          .select('*', { count: 'exact', head: true })
-          .in('status', ['submitted', 'received', 'approved'])
-        setPendingRequests(reqCount || 0)
-      } else {
-        // Regular users: own in-flight requests
-        const { count: reqCount } = await supabase
-          .from('document_requests')
-          .select('*', { count: 'exact', head: true })
-          .eq('requester_id', user.id)
-          .in('status', ['submitted', 'received'])
-        setPendingRequests(reqCount || 0)
-      }
-    }
-
     fetchCounts()
 
-    // Realtime update for unread count
+    // Realtime update for all badges
     const channel = supabase.channel('sidebar-badges')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchCounts)
@@ -135,7 +142,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user.id, supabase, isQa, profile.role])
+  }, [user?.id, supabase, fetchCounts])
+
 
   const navItems = [
     {
