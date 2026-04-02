@@ -1,6 +1,6 @@
 import { useState } from "react"
 import Link from "next/link"
-import { Bell, FileCheck, ShieldAlert, CheckCircle2, MessageSquare, AlertCircle, CornerDownRight } from "lucide-react"
+import { Bell, FileCheck, ShieldAlert, CheckCircle2, MessageSquare, AlertCircle, CornerDownRight, ClipboardList } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -64,6 +64,11 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
         case 'message':
             Icon = MessageSquare
             colorClass = "bg-brand-teal/10 dark:bg-brand-teal/20 text-brand-teal dark:text-teal-400 border-brand-teal/20 dark:border-brand-teal/30"
+            break
+        case 'request_update':
+        case 'new_signup':
+            Icon = ClipboardList
+            colorClass = "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800"
             break
     }
 

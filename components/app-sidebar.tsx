@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList } from "lucide-react"
 import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
@@ -32,6 +32,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [unreadConversations, setUnreadConversations] = React.useState(0)
   const [pendingApprovals, setPendingApprovals] = React.useState(0)
   const [pendingEquipmentCount, setPendingEquipmentCount] = React.useState(0)
+  const [pendingRequests, setPendingRequests] = React.useState(0)
   const supabase = createClient()
   
   const prevUnreadRef = React.useRef(0)
@@ -100,6 +101,24 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       
       const { count: equipCount } = await equipQuery
       setPendingEquipmentCount(equipCount || 0)
+
+      // 4. Pending Requests badge
+      if (isQa || profile.is_admin) {
+        // QA/Admin: all non-fulfilled requests
+        const { count: reqCount } = await supabase
+          .from('document_requests')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['submitted', 'received', 'approved'])
+        setPendingRequests(reqCount || 0)
+      } else {
+        // Regular users: own in-flight requests
+        const { count: reqCount } = await supabase
+          .from('document_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('requester_id', user.id)
+          .in('status', ['submitted', 'received'])
+        setPendingRequests(reqCount || 0)
+      }
     }
 
     fetchCounts()
@@ -110,6 +129,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sop_approval_requests' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, fetchCounts)
       .subscribe()
 
     return () => {
@@ -150,6 +170,13 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <MessageSquare className="w-5 h-5" />,
       isActive: pathname.startsWith("/messages"),
       badge: unreadConversations,
+    },
+    {
+      title: "Requests",
+      url: "/requests",
+      icon: <ClipboardList className="w-5 h-5" />,
+      isActive: pathname.startsWith("/requests"),
+      badge: pendingRequests,
     },
     {
       title: "Calendar",

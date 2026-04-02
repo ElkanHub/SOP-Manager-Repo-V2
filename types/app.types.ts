@@ -262,3 +262,36 @@ export interface MessageReference {
     department?: string;
     version?: string;
 }
+
+// ─── Document Requests ────────────────────────────────────────────────────────
+
+export type RequestStatus = 'submitted' | 'received' | 'approved' | 'fulfilled'
+
+export interface DocumentRequest {
+  id:                    string
+  requester_id:          string
+  requester_name:        string
+  requester_email:       string
+  requester_department:  string
+  requester_role:        string
+  requester_job_title:   string | null
+  requester_employee_id: string | null
+  request_body:          string
+  status:                RequestStatus
+  reference_number:      string
+  submitted_at:          string
+  received_at:           string | null
+  approved_at:           string | null
+  fulfilled_at:          string | null
+  received_by:           string | null
+  approved_by:           string | null
+  fulfilled_by:          string | null
+  qa_notes:              string | null
+  created_at:            string
+  updated_at:            string
+  // Joined fields (populated in queries)
+  received_by_profile?:  Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+  approved_by_profile?:  Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+  fulfilled_by_profile?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+}
+

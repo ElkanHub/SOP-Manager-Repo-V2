@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 1, 2026
-> **Version:** 2.7 (Admin User Lifecycle & Real-time)
-> **Current Phase:** Phase 24 ✅ Complete — Phase 25 Next
+> **Last Updated:** April 2, 2026
+> **Version:** 2.8 (Document Request Flow)
+> **Current Phase:** Phase 25 ✅ Complete — Phase 26 Next
 
 ---
 
@@ -39,6 +39,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 22 | ✅ Complete | Auth Waiting Room Security & Webmail Delivery    |
 | Phase 23 | ✅ Complete | Performance Optimization & Image Modernization   |
 | Phase 24 | ✅ Complete | Admin User Lifecycle & Real-time Security        |
+| Phase 25 | ✅ Complete | Document Request Flow (QA Lifecycle)             |
 
 ---
 
@@ -1336,6 +1337,56 @@ To secure the application from unauthorized signups, a strict middleware interce
 *   **Zero-Latency UI**: New signups and status transitions (approvals/resets/deactivations) are broadcast across all active administrator dashboards in less than 200ms.
 *   **TypeScript Integrity**: Updated the `Profile` interface to accurately represent nullable fields for `department` and `role`, eliminating lint errors in the Reset/Waiting Room flows.
 
-**Verification:** `npm run build` — Exit code 0, 84 routes clean ✅
+---
 
+## Phase 25: Document Request Flow (QA Lifecycle)
 
+**Status:** ✅ Complete
+**Completed:** April 2, 2026
+
+### Overview
+
+Implemented a full 4-stage document request workflow allowing any active organization member to formally request documents from the QA department. QA Managers manage the entire lifecycle through a dedicated dashboard.
+
+### What Was Built
+
+#### Database (`031_document_requests.sql`)
+- `document_requests` table with immutable lifecycle columns (`submitted_at`, `received_at`, `approved_at`, `fulfilled_at`)
+- `generate_request_reference()` trigger — auto-generates `REQ-YYYY-NNNN` reference numbers on INSERT
+- `update_request_updated_at()` trigger
+- RLS: users can only INSERT their own rows; users SELECT their own, QA Managers SELECT all, Admins SELECT all; **no UPDATE or DELETE policy** for app roles
+- 3 `SECURITY DEFINER` functions: `mark_request_received`, `mark_request_approved`, `mark_request_fulfilled` — each validates `is_qa_manager()` and includes an idempotency guard
+- `pulse_items` type constraint updated to include `'request_update'`
+- Table added to `supabase_realtime` publication
+
+#### Server Actions (`actions/requests.ts`)
+- `submitDocumentRequest` — validates body (10–2000 chars), inserts request using regular client (RLS enforced), notifies all QA Managers via Pulse, writes audit log
+- `markRequestReceived` / `markRequestApproved` / `markRequestFulfilled` — all validate QA Manager status, call SECURITY DEFINER DB functions, notify requester via Pulse
+
+#### Frontend (Components)
+- `components/requests/request-status-pill.tsx` — colour-coded status badge
+- `components/requests/request-timeline.tsx` — vertical 4-stage timeline with teal check marks, amber pulse on current stage
+- `components/requests/request-form-modal.tsx` — 3-step modal: form (auto-filled metadata + textarea) → review → success (shows reference number)
+- `components/requests/requests-client.tsx` — dual view for non-QA (own requests, tab filtering, empty state) and QA (all requests, Pending/Fulfilled tabs, action buttons with error display); real-time subscription for instant updates
+
+#### Pages
+- `app/(dashboard)/requests/page.tsx` — server component with role-scoped data fetching
+- `app/(dashboard)/requests/loading.tsx` — animated skeleton
+- `app/(dashboard)/requests/error.tsx` — error boundary
+
+#### Sidebar (`components/app-sidebar.tsx`)
+- Added **Requests** nav item with `ClipboardList` icon
+- Live badge: QA/Admin see all pending (submitted + received + approved); others see own in-flight requests
+- Listens on `document_requests` table in the existing `sidebar-badges` realtime channel
+
+#### Pulse (`components/pulse/`)
+- `request-update-item.tsx` — amber clipboard icon, body preview, "View Request →" deep link
+- `pulse-item.tsx` — `request_update` and `new_signup` cases added to the type switch
+
+#### Reports (`components/reports/`)
+- `document-requests-report.tsx` — full lifecycle report for QA + Admin: 10 columns, paginated (50/page), date range filter on `submitted_at`, CSV export
+- `reports-client.tsx` — Report 6 "Document Requests" added (access: `qa+admin`)
+- `lib/queries/reports.ts` — `fetchDocumentRequests()` TanStack Query function added
+
+### TypeScript
+- `types/app.types.ts` — `RequestStatus` union type and `DocumentRequest` interface added

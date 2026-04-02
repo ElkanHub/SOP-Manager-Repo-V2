@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, subDays } from "date-fns"
-import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download } from "lucide-react"
+import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download, ClipboardList } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -35,6 +35,11 @@ const RiskInsightsReport = dynamic(() => import("./risk-insights-report").then(m
   loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
 })
 
+const DocumentRequestsReport = dynamic(() => import("./document-requests-report").then(mod => mod.DocumentRequestsReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
 
 interface ReportsClientProps {
   profile: Profile
@@ -42,7 +47,7 @@ interface ReportsClientProps {
   isAdmin: boolean
 }
 
-type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights"
+type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests"
 
 export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
   const [activeReport, setActiveReport] = useState<ReportType>("sop-changes")
@@ -53,15 +58,15 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
     { id: "acknowledgements", label: "Worker Acknowledgements", icon: Users, access: "all" },
     { id: "pm-completion", label: "PM Completion Log", icon: Wrench, access: "qa" },
     { id: "pulse-notices", label: "Pulse / Notice Log", icon: Bell, access: "admin" },
+    { id: "document-requests", label: "Document Requests", icon: ClipboardList, access: "qa+admin" },
   ]
 
   const canAccess = (access: string) => {
+    if (access === "qa+admin" && (isQa || isAdmin)) return true
     if (access.includes("admin") && isAdmin) return true
     if (access.includes("qa") && isQa) return true
     if (access.includes("manager") && profile.role === "manager") return true
-    // Added to handle "all" access type, assuming it means accessible to anyone with any role.
-    // If "all" means truly all users, this logic might need adjustment based on overall app access rules.
-    if (access.includes("all")) return true; 
+    if (access.includes("all")) return true
     return false
   }
 
@@ -147,6 +152,9 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
               )}
               {activeReport === "pulse-notices" && isAdmin && (
                 <PulseNoticeReport dateFrom={dateFrom} dateTo={dateTo} />
+              )}
+              {activeReport === "document-requests" && (isQa || isAdmin) && (
+                <DocumentRequestsReport dateFrom={dateFrom} dateTo={dateTo} />
               )}
             </div>
           </CardContent>

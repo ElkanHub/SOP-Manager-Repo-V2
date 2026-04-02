@@ -107,3 +107,28 @@ export async function fetchPulseNotices({ page, dateFrom, dateTo }: DateParams) 
   if (error) throw error
   return { data: data ?? [], count: count ?? 0, pageSize: PAGE_SIZE }
 }
+
+// --- Document Requests Report ---
+export async function fetchDocumentRequests({ page, dateFrom, dateTo }: DateParams) {
+  const supabase = createClient()
+  const from = page * PAGE_SIZE
+
+  let query = supabase
+    .from('document_requests')
+    .select(
+      `id, reference_number, requester_name, requester_department, requester_role,
+       requester_email, requester_employee_id, request_body,
+       status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes`,
+      { count: 'exact' }
+    )
+    .order('submitted_at', { ascending: false })
+    .range(from, from + PAGE_SIZE - 1)
+
+  if (dateFrom) query = query.gte('submitted_at', dateFrom)
+  if (dateTo) query = query.lte('submitted_at', dateTo + 'T23:59:59')
+
+  const { data, count, error } = await query
+  if (error) throw error
+  return { data: data ?? [], count: count ?? 0, pageSize: PAGE_SIZE }
+}
+
