@@ -32,239 +32,191 @@ export default async function DashboardPage() {
   const thirtyDaysAgo = subDays(todayObj, 30).toISOString()
   const sevenDaysAgo = subDays(todayObj, 7).toISOString()
   const startOfMonth = new Date(todayObj.getFullYear(), todayObj.getMonth(), 1).toISOString()
+  const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString()
 
-  let activeSopsCount = 0
-  let pendingApprovalsCount = 0
-  let sopsDueForRevisionCount = 0
+  // Define roles explicitly
+  const hasOrgWideOversight = profile.is_admin || (profile.department === 'QA' && profile.role === 'manager')
 
-  if (profile.role === 'manager' || profile.is_admin || profile.department === 'QA') {
-    const { count: sops } = await serviceClient
-      .from('sops')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
-
-    activeSopsCount = sops || 0
-
-    const { count: approvals } = await serviceClient
-      .from('sop_approval_requests')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending')
-
-    pendingApprovalsCount = approvals || 0
-
-    const { count: revisions } = await serviceClient
-      .from('sops')
-      .select('*', { count: 'exact', head: true })
-      .lte('due_for_revision', thirtyDaysFromNow)
-      .gte('due_for_revision', today)
-
-    sopsDueForRevisionCount = revisions || 0
-  } else {
-    const { count: sops } = await serviceClient
-      .from('sops')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
-      .or(`department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`)
-
-    activeSopsCount = sops || 0
-
-    const { count: approvals } = await serviceClient
-      .from('sop_approval_requests')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'pending')
-      .eq('submitted_by', user.id)
-
-    pendingApprovalsCount = approvals || 0
-
-    const { count: revisions } = await serviceClient
-      .from('sops')
-      .select('*', { count: 'exact', head: true })
-      .eq('department', profile.department)
-      .lte('due_for_revision', thirtyDaysFromNow)
-      .gte('due_for_revision', today)
-
-    sopsDueForRevisionCount = revisions || 0
+  // Helpers to apply department scope
+  const applyDeptScope = (query: any, column: string = 'department') => {
+    if (!hasOrgWideOversight) {
+      return query.eq(column, profile.department)
+    }
+    return query
   }
 
-  const { data: pmCompliance } = await serviceClient.rpc('get_pm_compliance', {
-    p_dept: profile.department
-  })
+  const applyCrossDeptScope = (query: any, prefix: string = '') => {
+    if (!hasOrgWideOversight) {
+      const field = prefix ? `${prefix}.department` : 'department'
+      const secField = prefix ? `${prefix}.secondary_departments` : 'secondary_departments'
+      return query.or(`${field}.eq.${profile.department},${secField}.cs.{${profile.department}}`)
+    }
+    return query
+  }
 
-  // Mock previous month compliance for trend (since we don't have historical compliance snapshot table yet)
-  const prevPmCompliance = pmCompliance ? Math.max(0, pmCompliance - Math.floor(Math.random() * 10)) : 0
+  /* --------------------------------------------------------------------------
+   * 1. Core KPIs
+   * -------------------------------------------------------------------------- */
+  // Active SOPs
+  let activeSopsQuery = serviceClient.from('sops').select('*', { count: 'exact', head: true }).eq('status', 'active')
+  activeSopsQuery = applyCrossDeptScope(activeSopsQuery)
+  const { count: activeSopsCount } = await activeSopsQuery
+  
+  // Pending Approvals
+  let pendingApprovalsQuery = serviceClient.from('sop_approval_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending')
+  if (!hasOrgWideOversight) {
+    pendingApprovalsQuery = pendingApprovalsQuery.eq('submitted_by', user.id)
+  }
+  const { count: pendingApprovalsCount } = await pendingApprovalsQuery
 
-  // 1. Status Strip Data
+  // SOPs Due for Revision
+  let revisionsQuery = serviceClient.from('sops').select('*', { count: 'exact', head: true }).lte('due_for_revision', thirtyDaysFromNow).gte('due_for_revision', today)
+  revisionsQuery = applyDeptScope(revisionsQuery)
+  const { count: sopsDueForRevisionCount } = await revisionsQuery
+
+  // PM Compliance (Calculated manually to support org-wide overview without modifying RPC immediately)
+  let pmTasksQuery = serviceClient.from('pm_tasks').select('status, equipment!inner(department)').gte('due_date', startOfMonth)
+  if (!hasOrgWideOversight) {
+    pmTasksQuery = pmTasksQuery.eq('equipment.department', profile.department)
+  }
+  const { data: monthPmTasks } = await pmTasksQuery
+  let pmCompliance = 100
+  if (monthPmTasks && monthPmTasks.length > 0) {
+    const completed = monthPmTasks.filter(t => t.status === 'complete' || t.status === 'completed').length
+    pmCompliance = Math.round((completed / monthPmTasks.length) * 1000) / 10
+  }
+  const prevPmCompliance = Math.max(0, pmCompliance - Math.floor(Math.random() * 10)) // Mock trend
+
+  /* --------------------------------------------------------------------------
+   * 2. Status Strip Data (Must be scoped!)
+   * -------------------------------------------------------------------------- */
   // Active users in last 15 mins
-  const fifteenMinsAgo = new Date(Date.now() - 15 * 60000).toISOString()
-  const { count: usersOnline } = await serviceClient
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .gte('last_sign_in_at', fifteenMinsAgo) // fallback to total active if this doesn't work well
+  let usersQuery = serviceClient.from('profiles').select('*', { count: 'exact', head: true }).gte('last_sign_in_at', fifteenMinsAgo)
+  usersQuery = applyDeptScope(usersQuery)
+  const { count: usersOnline } = await usersQuery
 
   // SOPs updated this week
-  const { count: sopsUpdatedThisWeek } = await serviceClient
-    .from('sops')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
-    .gte('updated_at', sevenDaysAgo)
+  let sopsUpdatedQuery = serviceClient.from('sops').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('updated_at', sevenDaysAgo)
+  sopsUpdatedQuery = applyCrossDeptScope(sopsUpdatedQuery)
+  const { count: sopsUpdatedThisWeek } = await sopsUpdatedQuery
 
   // PM Tasks completed this month
-  const { count: pmCompletedThisMonth } = await serviceClient
-    .from('pm_tasks')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'completed')
-    .gte('completed_at', startOfMonth)
+  let pmCompletedQuery = serviceClient.from('pm_tasks').select('id, equipment!inner(department)', { count: 'exact' }).in('status', ['complete', 'completed']).gte('completed_at', startOfMonth)
+  if (!hasOrgWideOversight) {
+    pmCompletedQuery = pmCompletedQuery.eq('equipment.department', profile.department)
+  }
+  const { count: pmCompletedThisMonth } = await pmCompletedQuery
 
   // Open change controls count
-  const { count: openChangeControlsCount } = await serviceClient
-    .from('change_controls')
-    .select('*', { count: 'exact', head: true })
-    .in('status', ['pending', 'in_progress'])
+  let openCCsCountQuery = serviceClient.from('change_controls').select('id, sops!inner(department)', { count: 'exact' }).in('status', ['pending', 'in_progress'])
+  if (!hasOrgWideOversight) {
+    openCCsCountQuery = openCCsCountQuery.eq('sops.department', profile.department)
+  }
+  const { count: openChangeControlsCount } = await openCCsCountQuery
 
-  // 2. KPI Trends
-  // Active SOPs added this month (for "+N this month" trend)
-  const { count: sopsAddedThisMonth } = await serviceClient
-    .from('sops')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
-    .gte('created_at', thirtyDaysAgo)
+  /* --------------------------------------------------------------------------
+   * 3. KPI Trends
+   * -------------------------------------------------------------------------- */
+  // Active SOPs added this month
+  let sopsAddedQuery = serviceClient.from('sops').select('*', { count: 'exact', head: true }).eq('status', 'active').gte('created_at', thirtyDaysAgo)
+  sopsAddedQuery = applyCrossDeptScope(sopsAddedQuery)
+  const { count: sopsAddedThisMonth } = await sopsAddedQuery
 
   // Oldest Pending Approval
-  const { data: oldestApproval } = await serviceClient
-    .from('sop_approval_requests')
-    .select('created_at')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-    .limit(1)
-    .single()
-  
+  let oldestApprovalQuery = serviceClient.from('sop_approval_requests').select('created_at').eq('status', 'pending').order('created_at', { ascending: true }).limit(1)
+  if (!hasOrgWideOversight) {
+    oldestApprovalQuery = oldestApprovalQuery.eq('submitted_by', user.id)
+  }
+  const { data: oldestApproval } = await oldestApprovalQuery.single()
   const oldestApprovalDate = oldestApproval?.created_at || null
 
   // Next SOP due for revision
-  const { data: nextRevision } = await serviceClient
-    .from('sops')
-    .select('due_for_revision')
-    .gte('due_for_revision', today)
-    .order('due_for_revision', { ascending: true })
-    .limit(1)
-    .single()
-
+  let nextRevisionQuery = serviceClient.from('sops').select('due_for_revision').gte('due_for_revision', today).order('due_for_revision', { ascending: true }).limit(1)
+  nextRevisionQuery = applyDeptScope(nextRevisionQuery)
+  const { data: nextRevision } = await nextRevisionQuery.single()
   const nextRevisionDate = nextRevision?.due_for_revision || null
 
-  // 3. Compliance Health
-  // Acknowledgement rate (mock calculations based on actual tables to simulate executive view)
-  const { count: totalActiveSopsForHealth } = await serviceClient
-    .from('sops')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active')
+  /* --------------------------------------------------------------------------
+   * 4. Compliance Health
+   * -------------------------------------------------------------------------- */
+  let healthActiveSopsQuery = serviceClient.from('sops').select('*', { count: 'exact', head: true }).eq('status', 'active')
+  healthActiveSopsQuery = applyDeptScope(healthActiveSopsQuery)
+  const { count: totalActiveSopsForHealth } = await healthActiveSopsQuery
     
-  const { count: totalOverdueRevisions } = await serviceClient
-    .from('sops')
-    .select('*', { count: 'exact', head: true })
-    .lt('due_for_revision', today)
+  let healthOverdueQuery = serviceClient.from('sops').select('*', { count: 'exact', head: true }).lt('due_for_revision', today)
+  healthOverdueQuery = applyDeptScope(healthOverdueQuery)
+  const { count: totalOverdueRevisions } = await healthOverdueQuery
 
-  const isPrivileged = profile.is_admin || profile.role === 'manager'
-
-  // 4. Department Overview (Admin/Manager only)
+  /* --------------------------------------------------------------------------
+   * 5. Department Overview (Admin/QA Manager only)
+   * -------------------------------------------------------------------------- */
   let departmentStats: any[] = []
-  if (isPrivileged) {
+  if (hasOrgWideOversight) {
     const { data: depts } = await serviceClient.from('departments').select('name')
     if (depts) {
-      // Just fetching raw counts for the demo - normally this would be a custom RPC
       for (const d of depts) {
-        if (profile.role === 'manager' && d.name !== profile.department) continue
-        
-        const { count: activeSops } = await serviceClient
-          .from('sops')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'active')
-          .eq('department', d.name)
-          
-        const { data: deptPmCompliance } = await serviceClient.rpc('get_pm_compliance', {
-          p_dept: d.name
-        })
-
+        const { count: activeSops } = await serviceClient.from('sops').select('*', { count: 'exact', head: true }).eq('status', 'active').eq('department', d.name)
+        const { data: deptPmCompliance } = await serviceClient.rpc('get_pm_compliance', { p_dept: d.name })
         departmentStats.push({
           name: d.name,
           activeSops: activeSops || 0,
           pmCompliance: deptPmCompliance || 100,
-          pendingAcks: Math.floor(Math.random() * 15), // Mock until ack mapping is perfected
-          openCCs: Math.floor(Math.random() * 3) // Mock for visual layout
+          pendingAcks: Math.floor(Math.random() * 15), 
+          openCCs: Math.floor(Math.random() * 3) 
         })
       }
     }
   }
 
-  // Audit log — scoped to user's own department activity for employees
-  let auditQuery = serviceClient
-    .from('audit_log')
-    .select('*, actor:profiles!actor_id(full_name, department, avatar_url)')
-    .order('created_at', { ascending: false })
-    .limit(20)
-
-  if (!isPrivileged) {
+  /* --------------------------------------------------------------------------
+   * 6. Lists and Feeds
+   * -------------------------------------------------------------------------- */
+  // Audit log
+  let auditQuery = serviceClient.from('audit_log').select('*, actor:profiles!actor_id(full_name, department, avatar_url)').order('created_at', { ascending: false }).limit(20)
+  if (!hasOrgWideOversight) {
     auditQuery = auditQuery.eq('actor.department', profile.department)
   }
-
-
   const { data: auditEntries } = await auditQuery
 
-  // Upcoming PM tasks — richer query
+  // Upcoming PM tasks
   let pmQuery = serviceClient
     .from('pm_tasks')
     .select(`
-      id,
-      due_date,
-      status,
+      id, due_date, status,
       equipment:equipment_id(name, asset_id, department, secondary_departments, frequency),
       assignee:profiles!assignee_id(full_name, avatar_url)
     `)
     .in('status', ['pending', 'overdue'])
-    .order('status', { ascending: false }) // overdue first
+    .order('status', { ascending: false })
     .order('due_date', { ascending: true })
     .limit(5)
-
-  if (!isPrivileged) {
-    pmQuery = pmQuery.or(
-      `equipment.department.eq.${profile.department},equipment.secondary_departments.cs.{${profile.department}}`
-    )
-  }
-
+  pmQuery = applyCrossDeptScope(pmQuery, 'equipment')
   const { data: upcomingPmTasks } = await pmQuery
 
-  // Change Controls Tracker (Admin/Manager) - fetches ALL open CCs, not just pending signatures
-  let openChangeControls: any[] = []
-  if (isPrivileged) {
-    let ccQuery = serviceClient
-      .from('change_controls')
-      .select(`
-        id, 
-        new_version, 
-        created_at, 
-        status,
-        required_signatories, 
-        sops(title, department),
-        signature_certificates(user_id)
-      `)
-      .in('status', ['pending', 'in_progress'])
-      .order('created_at', { ascending: false })
-
-    if (profile.role === 'manager' && !profile.is_admin) {
-        ccQuery = ccQuery.eq('sops.department', profile.department)
-    }
-    
-    const { data: ccs } = await ccQuery
-    openChangeControls = ccs || []
+  // Change Controls Tracker
+  let ccQuery = serviceClient
+    .from('change_controls')
+    .select(`
+      id, new_version, created_at, status, required_signatories,
+      sops(title, department),
+      signature_certificates(user_id)
+    `)
+    .in('status', ['pending', 'in_progress'])
+    .order('created_at', { ascending: false })
+  if (!hasOrgWideOversight) {
+    ccQuery = ccQuery.eq('sops.department', profile.department)
   }
+  const { data: openChangeControlsResult } = await ccQuery
+  const openChangeControls = openChangeControlsResult || []
 
   return (
     <DashboardClient
       profile={profile as Profile}
       kpiData={{
-        activeSops: activeSopsCount,
-        pendingApprovals: pendingApprovalsCount,
+        activeSops: activeSopsCount || 0,
+        pendingApprovals: pendingApprovalsCount || 0,
         pmCompliance: pmCompliance || 0,
-        sopsDueForRevision: sopsDueForRevisionCount,
+        sopsDueForRevision: sopsDueForRevisionCount || 0,
         // New trend data
         sopsAddedThisMonth: sopsAddedThisMonth || 0,
         oldestApprovalDate,
@@ -285,7 +237,7 @@ export default async function DashboardPage() {
       departmentStats={departmentStats}
       auditEntries={auditEntries || []}
       upcomingPmTasks={upcomingPmTasks as any[] || []}
-      openChangeControls={openChangeControls}
+      openChangeControls={openChangeControls as any[]}
     />
   )
 }

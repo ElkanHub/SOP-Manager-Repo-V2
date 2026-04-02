@@ -177,7 +177,7 @@ export function SopUploadModal({
                 sopId: sopType === 'update' ? selectedSopId : undefined,
                 sopNumber: sopNumber.trim(),
                 title: title.trim(),
-                department: primaryDept,
+                department: primaryDept || '',
                 secondaryDepartments: secondaryDepts,
                 notesToQa: notesToQa.trim() || undefined,
             })

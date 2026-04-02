@@ -98,8 +98,8 @@ export function LibraryPageClient({
         <SopTabStrip />
 
         <SopLibraryTable
-          userDepartment={profile.department}
-          userRole={profile.role}
+          userDepartment={profile.department || ''}
+          userRole={profile.role || 'employee'}
           isAdmin={isAdmin}
           isQa={isQa}
           statusFilter={statusFilter}

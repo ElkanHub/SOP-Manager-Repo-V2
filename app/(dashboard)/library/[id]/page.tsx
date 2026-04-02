@@ -65,7 +65,7 @@ export default async function SopViewerPage({ params }: PageProps) {
 
   const isOwnDept =
     sop.department === profile.department ||
-    (sop.secondary_departments || []).includes(profile.department)
+    (sop.secondary_departments || []).includes(profile.department || '')
 
   const { data: acknowledgement } = await supabase
     .from("sop_acknowledgements")

@@ -55,14 +55,14 @@ export function CalendarClient({ events, equipmentPmDates, profile }: CalendarCl
             onMonthChange={setCurrentMonth}
             events={events}
             equipmentPmDates={equipmentPmDates}
-            userDepartment={profile.department}
+            userDepartment={profile.department || ''}
           />
         </div>
         <div className="lg:col-span-1">
           <UpcomingPanel
             events={events}
             equipmentPmDates={equipmentPmDates}
-            userDepartment={profile.department}
+            userDepartment={profile.department || ''}
           />
         </div>
       </div>

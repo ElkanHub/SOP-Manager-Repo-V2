@@ -60,7 +60,7 @@ export function EquipmentDetailClient({
 
     const isManager = currentUserProfile.role === 'manager'
     const isOwnDept = currentUserProfile.department === equipment.department
-    const isSecondaryDept = equipment.secondary_departments?.includes(currentUserProfile.department)
+    const isSecondaryDept = equipment.secondary_departments?.includes(currentUserProfile.department || '')
 
     const canLogPm = isManager || isOwnDept || isSecondaryDept
 

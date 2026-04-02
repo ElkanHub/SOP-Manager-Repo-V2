@@ -93,8 +93,8 @@ export function EquipmentPageClient({
 
       <div className="px-4 md:px-0">
         <EquipmentTable
-          userDepartment={profile.department}
-          userRole={profile.role}
+          userDepartment={profile.department || ''}
+          userRole={profile.role || 'employee'}
           isAdmin={isAdmin}
           statusFilter={statusFilter}
         />
