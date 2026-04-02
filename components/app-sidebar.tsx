@@ -87,24 +87,22 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     }
 
     // 3. Pending Equipment (Awaiting QA)
-    let equipQuery = supabase.from('equipment').select('*', { count: 'exact', head: true }).eq('status', 'pending_qa')
-    
+    let equipCount = 0
     if (isQa) {
-      // QA sees all pending eq
+      const { count } = await supabase
+        .from('equipment')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending_qa')
+      equipCount = count || 0
     } else if (profile?.role === 'manager') {
-      // Managers only see their department's pending equipment
-      equipQuery = equipQuery.eq('department', profile.department)
-    } else {
-      // Employees don't see equipment queue
-      equipQuery = null
+      const { count } = await supabase
+        .from('equipment')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending_qa')
+        .eq('department', profile.department)
+      equipCount = count || 0
     }
-    
-    if (equipQuery) {
-      const { count: equipCount } = await equipQuery
-      setPendingEquipmentCount(equipCount || 0)
-    } else {
-      setPendingEquipmentCount(0)
-    }
+    setPendingEquipmentCount(equipCount)
 
     // 4. Pending Requests badge
     if (isQa || profile?.is_admin) {
