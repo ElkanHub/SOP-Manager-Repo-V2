@@ -34,28 +34,46 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   const today = new Date()
   const sixtyDaysFromNow = addDays(today, 60)
+  const sixtyDaysAgo = addDays(today, -60)
 
   const { data: events } = await serviceClient
     .from("events")
     .select("*")
-    .or(`visibility.eq.public,department.eq.${profile.department}`)
-    .gte("start_date", today.toISOString().split("T")[0])
+    .or(`visibility.eq.public,department.eq.${profile.department || "unknown"}`)
+    .gte("start_date", sixtyDaysAgo.toISOString().split("T")[0])
     .lte("start_date", sixtyDaysFromNow.toISOString().split("T")[0])
 
-  const { data: equipment } = await serviceClient
-    .from("equipment")
-    .select("id, name, department, secondary_departments, next_due, status")
-    .eq("status", "active")
-    .or(`department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`)
-    .gte("next_due", today.toISOString().split("T")[0])
-    .lte("next_due", sixtyDaysFromNow.toISOString().split("T")[0])
+  // Get visible equipment IDs
+  let equipmentQuery = serviceClient.from("equipment").select("id")
+  
+  if (profile.department) {
+    equipmentQuery = equipmentQuery.or(`department.eq.${profile.department},secondary_departments.cs.{${profile.department}}`)
+  }
 
-  const equipmentPmDates = (equipment || [])
-    .filter((eq) => eq.next_due)
-    .map((eq) => ({
-      date: eq.next_due!,
-      equipment: eq as Equipment,
-    }))
+  const { data: equipment } = await equipmentQuery
+
+  const equipmentIds = (equipment || []).map(eq => eq.id)
+
+  let pmTasks: any[] = []
+  if (equipmentIds.length > 0) {
+    const { data } = await serviceClient
+      .from("pm_tasks")
+      .select(`
+          due_date,
+          equipment(id, name, department, secondary_departments, status)
+      `)
+      .in("equipment_id", equipmentIds)
+      .neq("status", "complete")
+      .gte("due_date", sixtyDaysAgo.toISOString().split("T")[0])
+      .lte("due_date", sixtyDaysFromNow.toISOString().split("T")[0])
+    
+    pmTasks = data || []
+  }
+
+  const equipmentPmDates = pmTasks.map((task: any) => ({
+    date: task.due_date,
+    equipment: task.equipment as Equipment,
+  }))
 
   return (
     <CalendarClient
