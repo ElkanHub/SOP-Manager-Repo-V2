@@ -7,7 +7,7 @@ Every Change Control needs a unique, human-readable reference number in the form
 2. CC draft versioning with CC numbers not version numbers
 When a Manager submits multiple drafts before QA approves, each draft round should be tracked under the CC number (CC-1.1 first submission, CC-1.2 resubmission after changes requested, etc.) rather than version numbers. This clarifies the review thread and makes the audit trail unambiguous. Requires changes to sop_approval_requests, the approval view, and the Change History report.
 
-3. [ ] Specimen tab in Settings — signatures and initials (Admin only)
+3. [x] Specimen tab in Settings — signatures and initials (Admin only)
 A new tab in Settings showing every active user's full name, their stored signature image, and their initials signature. Admin only. Requires a new tab, a query across all active profiles with signature URLs, and a clean display layout. Security consideration: ensure the RLS on this view is tight — only Admins can access this data.
 
 4. Approval locking — one reviewer at a time
