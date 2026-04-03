@@ -174,11 +174,13 @@ export function SopLibraryTable({
           const sop = row.original
           return (
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => { addTab({ id: sop.id, sopNumber: sop.sop_number, title: sop.title }); router.push(`/library/${sop.id}`) }}>
                   Open

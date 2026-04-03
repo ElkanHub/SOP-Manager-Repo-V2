@@ -161,11 +161,13 @@ export function EquipmentTable({ userDepartment, userRole, isAdmin, statusFilter
           return (
             <div onClick={(e) => e.stopPropagation()}>
               <DropdownMenu>
-                <DropdownMenuTrigger>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/50 hover:text-foreground">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/50 hover:text-foreground">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  }
+                />
                 <DropdownMenuContent align="end" className="w-48 border-border/40 shadow-xl backdrop-blur-md">
                   <DropdownMenuItem className="font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 cursor-pointer" onClick={() => router.push(`/equipment/${item.id}`)}>
                     View Full Details
