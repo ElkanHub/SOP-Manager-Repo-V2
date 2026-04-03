@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 2, 2026
-> **Version:** 2.8 (Document Request Flow)
-> **Current Phase:** Phase 25 ✅ Complete — Phase 26 Next
+> **Last Updated:** April 3, 2026
+> **Version:** 2.9 (DataTable Modernization)
+> **Current Phase:** Phase 26 ✅ Complete — Phase 27 Next
 
 ---
 
@@ -40,6 +40,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 23 | ✅ Complete | Performance Optimization & Image Modernization   |
 | Phase 24 | ✅ Complete | Admin User Lifecycle & Real-time Security        |
 | Phase 25 | ✅ Complete | Document Request Flow (QA Lifecycle)             |
+| Phase 26 | ✅ Complete | DataTable Modernization & QA Processing 2.0      |
 
 ---
 
@@ -1399,3 +1400,48 @@ Implemented a full 4-stage document request workflow allowing any active organiz
 - **`add-equipment-modal.tsx`**: Fixed "Type 'string | null' is not assignable to type 'string'" build error by enforcing strictly typed `primaryDept` state with an empty string fallback
 - **`AppSidebar.tsx`**: Resolved TypeScript error where `null` was assigned to a strictly typed `PostgrestFilterBuilder`
 - Audit of all `.department` and `.role` accesses across the codebase to ensure compatibility with the updated `Profile` interface (`string | null`)
+
+---
+
+## Phase 26: DataTable Modernization & QA Processing 2.0
+
+### Completed Tasks
+
+**Document Requests UI Overhaul:**
+- **DataTable Migration:** Converted the legacy card-based Document Requests page into a high-density, professional `DataTable`.
+- **Reference Badges:** Reference numbers are now clickable badges that open the detailed view, using the project's mono-styled UI pattern.
+- **Improved Scannability:** Standardized columns for Requester, Department, Status, and Actions.
+- **Reactive State:** Refactored `RequestsClient` to use `selectedRequestId` and `useMemo`, ensuring the detail modal updates instantly when the underlying record changes (no more stale snapshots).
+
+**QA Processing Workflow 2.0:**
+- **Unified Detail Modal:** Integrated all QA actions (**Mark Received**, **Approve**, **Fulfil**) directly into the `RequestDetailModal` footer.
+- **Contextual Feedback:** Added a fulfilment note `Textarea` for QA managers to provide context during approval/fulfilment without leaving the modal.
+- **"Instant" UI Updates:** Implemented a callback system to update the list state immediately after a server action succeeds, bypassing the 1-2 second delay of the Supabase broadcast.
+
+**Stability & UX Polish:**
+- **Hydration Fixes:** Resolved "Nested Button" and "Hydration Error" issues in `EquipmentTable` and `SopLibraryTable` by correctly using the `render` prop on `DropdownMenuTrigger`.
+- **E-mail Overflow:** Applied `break-all` to requester email fields to prevent layout breakage on long addresses.
+- **Data Completeness:** Updated queries to include `requester_job_title` in the detailed view.
+
+**Components Built/Updated:**
+- `RequestsClient` - Refactored to DataTable + Reactive state.
+- `RequestDetailModal` - Updated with processing controls and note capturing.
+- `EquipmentTable` - Fixed nested button hydration error.
+- `SopLibraryTable` - Fixed nested button hydration error.
+
+### Files Created/Modified
+
+```
+components/requests/
+├── requests-client.tsx               # Refactored to DataTable + Reactive selected state
+└── request-detail-modal.tsx          # Updated with processing actions and notes
+
+components/equipment/
+└── equipment-table.tsx               # Fixed hydration error (asChild substitute)
+
+components/library/
+└── sop-library-table.tsx             # Fixed hydration error (asChild substitute)
+
+actions/
+└── requests.ts                       # Updated actions to return updated data for instant UI sync
+```

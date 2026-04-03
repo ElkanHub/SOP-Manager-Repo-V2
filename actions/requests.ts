@@ -3,8 +3,10 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+import { DocumentRequest } from '@/types/app.types'
+
 export type RequestActionResult =
-  | { success: true; referenceNumber?: string }
+  | { success: true; referenceNumber?: string; data?: DocumentRequest }
   | { success: false; error: string }
 
 // ─── Helper: assert active session ──────────────────────────────────────────
@@ -170,8 +172,22 @@ export async function markRequestReceived(requestId: string): Promise<RequestAct
     })
   }
 
+  // Fetch updated record with profiles for instant UI sync
+  const { data: updated } = await service
+    .from('document_requests')
+    .select(`
+      id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
+      requester_email, requester_employee_id, request_body,
+      status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+      received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
+      approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
+      fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)
+    `)
+    .eq('id', requestId)
+    .single()
+
   revalidatePath('/requests')
-  return { success: true }
+  return { success: true, data: updated as DocumentRequest }
 }
 
 // ─── markRequestApproved ──────────────────────────────────────────────────────
@@ -213,8 +229,22 @@ export async function markRequestApproved(requestId: string, qaNotes?: string): 
     })
   }
 
+  // Fetch updated record with profiles for instant UI sync
+  const { data: updated } = await service
+    .from('document_requests')
+    .select(`
+      id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
+      requester_email, requester_employee_id, request_body,
+      status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+      received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
+      approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
+      fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)
+    `)
+    .eq('id', requestId)
+    .single()
+
   revalidatePath('/requests')
-  return { success: true }
+  return { success: true, data: updated as DocumentRequest }
 }
 
 // ─── markRequestFulfilled ─────────────────────────────────────────────────────
@@ -256,6 +286,20 @@ export async function markRequestFulfilled(requestId: string, qaNotes?: string):
     })
   }
 
+  // Fetch updated record with profiles for instant UI sync
+  const { data: updated } = await service
+    .from('document_requests')
+    .select(`
+      id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
+      requester_email, requester_employee_id, request_body,
+      status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+      received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
+      approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
+      fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)
+    `)
+    .eq('id', requestId)
+    .single()
+
   revalidatePath('/requests')
-  return { success: true }
+  return { success: true, data: updated as DocumentRequest }
 }

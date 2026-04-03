@@ -298,6 +298,7 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
         onOpenChange={setDetailModalOpen}
         request={selectedRequest}
         isQaManager={isQaManager}
+        onUpdate={updateRequest}
       />
     </div>
   )
