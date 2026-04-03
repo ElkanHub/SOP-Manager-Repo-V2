@@ -118,7 +118,10 @@ export async function fetchDocumentRequests({ page, dateFrom, dateTo }: DatePara
     .select(
       `id, reference_number, requester_name, requester_department, requester_role,
        requester_email, requester_employee_id, request_body,
-       status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes`,
+       status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+       received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
+       approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
+       fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)`,
       { count: 'exact' }
     )
     .order('submitted_at', { ascending: false })

@@ -9,7 +9,8 @@ import { Download, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { RequestStatusPill } from '@/components/requests/request-status-pill'
-import { RequestStatus } from '@/types/app.types'
+import { RequestStatus, DocumentRequest } from '@/types/app.types'
+import { RequestDetailModal } from '@/components/requests/request-detail-modal'
 
 interface DocumentRequestsReportProps {
   dateFrom: string | null
@@ -18,9 +19,15 @@ interface DocumentRequestsReportProps {
 
 export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsReportProps) {
   const [page, setPage] = useState(0)
+  const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null)
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const queryClient = useQueryClient()
 
-  useEffect(() => { setPage(0) }, [dateFrom, dateTo])
+  const [prevDates, setPrevDates] = useState({ dateFrom, dateTo })
+  if (dateFrom !== prevDates.dateFrom || dateTo !== prevDates.dateTo) {
+    setPrevDates({ dateFrom, dateTo })
+    setPage(0)
+  }
 
   const queryKey = ['report-document-requests', page, dateFrom, dateTo]
 
@@ -38,7 +45,7 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
     })
   }, [page, dateFrom, dateTo, queryClient])
 
-  const data = result?.data ?? []
+  const data = (result?.data ?? []) as unknown as DocumentRequest[]
   const totalCount = result?.count ?? 0
   const pageSize = result?.pageSize ?? 50
   const totalPages = Math.ceil(totalCount / pageSize)
@@ -47,15 +54,24 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
   const fmt = (d: string | null) =>
     d ? format(new Date(d), 'dd MMM yyyy, HH:mm') : '—'
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<DocumentRequest>[] = [
     {
       accessorKey: 'reference_number',
       header: 'Ref No.',
-      cell: ({ row }) => (
-        <span className="font-mono text-xs font-bold text-amber-600 bg-amber-500/5 px-2 py-1 rounded">
-          {row.getValue('reference_number')}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const req = row.original as DocumentRequest
+        return (
+          <button 
+            onClick={() => {
+              setSelectedRequest(req)
+              setIsDetailModalOpen(true)
+            }}
+            className="font-mono text-xs font-bold text-amber-600 bg-amber-500/5 px-2 py-1 rounded hover:bg-amber-500/10 hover:text-amber-700 transition-colors"
+          >
+            {row.getValue('reference_number')}
+          </button>
+        )
+      },
     },
     {
       accessorKey: 'requester_name',
@@ -133,7 +149,7 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
       'Reference No.', 'Requester Name', 'Email', 'Department', 'Role', 'Employee ID',
       'Submitted At', 'Received At', 'Approved At', 'Fulfilled At', 'Status', 'QA Notes',
     ]
-    const rows = data.map((entry: any) => [
+    const rows = data.map((entry: DocumentRequest) => [
       entry.reference_number || '—',
       entry.requester_name || '—',
       entry.requester_email || '—',
@@ -203,6 +219,12 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
           </div>
         </div>
       )}
+
+      <RequestDetailModal 
+        open={isDetailModalOpen}
+        onOpenChange={setIsDetailModalOpen}
+        request={selectedRequest}
+      />
     </div>
   )
 }
