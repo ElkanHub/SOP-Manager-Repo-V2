@@ -7,22 +7,51 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
+import { User, Mail, Building2, Briefcase, IdCard, FileText, Info, History, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { markRequestReceived, markRequestApproved, markRequestFulfilled } from '@/actions/requests'
+import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { DocumentRequest } from '@/types/app.types'
 import { RequestStatusPill } from './request-status-pill'
-import { User, Mail, Building2, Briefcase, IdCard, FileText, Info, History } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 interface RequestDetailModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   request: DocumentRequest | null
+  isQaManager?: boolean
 }
 
-export function RequestDetailModal({ open, onOpenChange, request }: RequestDetailModalProps) {
+export function RequestDetailModal({ open, onOpenChange, request, isQaManager = false }: RequestDetailModalProps) {
+  const [loading, setLoading] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [qaNote, setQaNote] = useState('')
+
+  useEffect(() => {
+    if (request) {
+      setQaNote(request.qa_notes || '')
+      setError(null)
+      setLoading(null)
+    }
+  }, [request, open])
+
   if (!request) return null
 
+  const run = async (action: () => Promise<{ success: boolean; error?: string }>, label: string) => {
+    setLoading(label)
+    setError(null)
+    const result = await action()
+    if (result.success) {
+      setLoading(null)
+      // We don't close the modal immediately to show the updated status if realtime is fast,
+      // but in a table view, the parent will update.
+    } else {
+      setLoading(null)
+      setError(result.error || 'Something went wrong')
+    }
+  }
 
   const steps = [
     { label: 'Submitted', date: request.submitted_at, profile: null },
@@ -141,17 +170,77 @@ export function RequestDetailModal({ open, onOpenChange, request }: RequestDetai
           )}
         </div>
 
-        <div className="p-6 pt-3 border-t border-border/40 bg-muted/10 flex justify-end items-center gap-4 flex-shrink-0">
-            <div className="mr-auto hidden sm:block">
+        <div className="p-6 pt-3 border-t border-border/40 bg-muted/10 flex flex-col sm:flex-row justify-between items-center gap-4 flex-shrink-0">
+            <div className="mr-auto hidden md:block">
                <p className="text-[9px] text-muted-foreground italic uppercase tracking-widest">Reference No. {request.reference_number}</p>
             </div>
-            <Button 
-                variant="outline" 
-                onClick={() => onOpenChange(false)}
-                className="font-bold text-[10px] uppercase tracking-widest px-8 rounded-lg border-border/60 hover:bg-background"
-            >
-                Close View
-            </Button>
+
+            <div className="flex flex-wrap items-center justify-end gap-3 w-full sm:w-auto">
+                {isQaManager && request.status !== 'fulfilled' && (
+                    <div className="flex flex-wrap items-center gap-2 mr-2">
+                        {request.status === 'submitted' && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="font-bold text-[10px] uppercase tracking-widest rounded-lg border-brand-teal/30 hover:bg-brand-teal/5 text-brand-teal"
+                                onClick={() => run(() => markRequestReceived(request.id), 'received')}
+                                disabled={!!loading}
+                            >
+                                {loading === 'received' ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : null}
+                                Mark Received
+                            </Button>
+                        )}
+                        
+                        {(request.status === 'submitted' || request.status === 'received') && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="font-bold text-[10px] uppercase tracking-widest rounded-lg border-amber-500/30 hover:bg-amber-500/5 text-amber-600"
+                                onClick={() => run(() => markRequestApproved(request.id, qaNote || undefined), 'approved')}
+                                disabled={!!loading}
+                            >
+                                {loading === 'approved' ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : null}
+                                Approve Request
+                            </Button>
+                        )}
+
+                        {request.status === 'approved' && (
+                            <div className="flex items-center gap-2">
+                                <Textarea 
+                                   value={qaNote}
+                                   onChange={(e) => setQaNote(e.target.value)}
+                                   placeholder="Add completion notes..."
+                                   className="h-9 min-h-0 w-48 text-xs py-1 border-brand-teal/20 focus-visible:ring-brand-teal"
+                                />
+                                <Button
+                                    size="sm"
+                                    className="font-bold text-[10px] uppercase tracking-widest rounded-lg bg-brand-teal hover:bg-brand-teal/90 text-white"
+                                    onClick={() => run(() => markRequestFulfilled(request.id, qaNote || undefined), 'fulfilled')}
+                                    disabled={!!loading}
+                                >
+                                    {loading === 'fulfilled' ? <Loader2 className="w-3 h-3 mr-2 animate-spin" /> : null}
+                                    Fulfil
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <Button 
+                    variant="ghost" 
+                    onClick={() => onOpenChange(false)}
+                    className="font-bold text-[10px] uppercase tracking-widest px-6 rounded-lg hover:bg-background border border-transparent hover:border-border/60"
+                >
+                    Close View
+                </Button>
+            </div>
+            
+            {error && (
+                <div className="absolute top-[-40px] left-6 right-6 flex items-center gap-2 text-red-500 bg-background border border-red-200 rounded-md px-3 py-1.5 text-[10px] font-bold shadow-xl animate-in slide-in-from-bottom-2">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{error}</span>
+                </div>
+            )}
         </div>
       </DialogContent>
     </Dialog>

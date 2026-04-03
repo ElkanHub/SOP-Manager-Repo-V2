@@ -21,6 +21,10 @@ import {
 import { formatDistanceToNow, format } from 'date-fns'
 import { markRequestReceived, markRequestApproved, markRequestFulfilled } from '@/actions/requests'
 import { cn } from '@/lib/utils'
+import { DataTable } from '@/components/ui/data-table'
+import { ColumnDef } from '@tanstack/react-table'
+import { useMemo } from 'react'
+import { RequestDetailModal } from './request-detail-modal'
 
 interface RequestsClientProps {
   profile: Profile
@@ -29,189 +33,13 @@ interface RequestsClientProps {
   initialRequests: DocumentRequest[]
 }
 
-// ─── QA Action Row ────────────────────────────────────────────────────────────
-function QaActionRow({
-  request,
-  onUpdate,
-}: {
-  request: DocumentRequest
-  onUpdate: (updated: DocumentRequest) => void
-}) {
-  const [loading, setLoading] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [qaNote, setQaNote] = useState(request.qa_notes || '')
-
-  const run = async (action: () => Promise<{ success: boolean; error?: string }>, label: string) => {
-    setLoading(label)
-    setError(null)
-    const result = await action()
-    setLoading(null)
-    if (!result.success) {
-      setError(result.error || 'Something went wrong')
-    }
-  }
-
-  return (
-    <div className="mt-4 pt-4 border-t border-border/60 space-y-3">
-      {request.status === 'approved' && (
-        <div className="space-y-1">
-          <label className="text-[13px] text-muted-foreground">Add a fulfilment note (optional)</label>
-          <Textarea
-            value={qaNote}
-            onChange={(e) => setQaNote(e.target.value)}
-            maxLength={500}
-            placeholder="e.g. Document issued via email on 2 April 2026"
-            className="h-20 resize-none text-sm"
-          />
-          <div className="text-right text-[11px] text-muted-foreground">{qaNote.length} / 500</div>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 items-center">
-        {/* Received */}
-        {request.status === 'submitted' && (
-          <Button
-            size="sm"
-            onClick={() => run(() => markRequestReceived(request.id), 'received')}
-            disabled={!!loading}
-          >
-            {loading === 'received' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
-            Mark Received
-          </Button>
-        )}
-        {(request.status === 'received' || request.status === 'approved' || request.status === 'fulfilled') && (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold dark:bg-green-900/30 dark:text-green-300">
-            <CheckCircle2 className="w-3 h-3" /> Received
-          </span>
-        )}
-
-        {/* Approved */}
-        {(request.status === 'submitted' || request.status === 'received') && (
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => run(() => markRequestApproved(request.id, qaNote || undefined), 'approved')}
-            disabled={!!loading}
-          >
-            {loading === 'approved' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
-            Mark Approved
-          </Button>
-        )}
-        {(request.status === 'approved' || request.status === 'fulfilled') && (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold dark:bg-green-900/30 dark:text-green-300">
-            <CheckCircle2 className="w-3 h-3" /> Approved
-          </span>
-        )}
-
-        {/* Fulfil */}
-        {request.status === 'approved' && (
-          <Button
-            size="sm"
-            className="bg-brand-teal hover:bg-teal-600 text-white"
-            onClick={() => run(() => markRequestFulfilled(request.id, qaNote || undefined), 'fulfilled')}
-            disabled={!!loading}
-          >
-            {loading === 'fulfilled' ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : null}
-            Fulfil Request
-          </Button>
-        )}
-        {request.status === 'fulfilled' && (
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 text-green-800 text-xs font-semibold dark:bg-green-900/30 dark:text-green-300">
-            <CheckCircle2 className="w-3 h-3" /> Fulfilled
-          </span>
-        )}
-      </div>
-
-      {error && (
-        <div className="flex items-start gap-2 text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md px-3 py-2 text-sm">
-          <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-          <span>{error}</span>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Request Card ─────────────────────────────────────────────────────────────
-function RequestCard({
-  request,
-  isQaManager,
-  onUpdate,
-}: {
-  request: DocumentRequest
-  isQaManager: boolean
-  onUpdate: (updated: DocumentRequest) => void
-}) {
-  const [expanded, setExpanded] = useState(false)
-  const isLongBody = request.request_body.length > 200
-
-  return (
-    <div className="bg-card border border-border rounded-xl p-4 shadow-sm space-y-3 hover:shadow-md transition-shadow">
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2 flex-wrap">
-          <RequestStatusPill status={request.status} size="sm" />
-          <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-            {request.reference_number}
-          </span>
-        </div>
-        <span className="text-xs text-muted-foreground shrink-0">
-          {formatDistanceToNow(new Date(request.submitted_at), { addSuffix: true })}
-        </span>
-      </div>
-
-      {/* QA view: requester info */}
-      {isQaManager && (
-        <div className="text-sm">
-          <p className="font-medium text-foreground">{request.requester_name}</p>
-          <p className="text-xs text-muted-foreground">
-            {request.requester_department} · {request.requester_role}
-            {request.requester_employee_id && ` · ${request.requester_employee_id}`}
-            {request.requester_email && ` · ${request.requester_email}`}
-          </p>
-        </div>
-      )}
-
-      {/* Request body */}
-      <div>
-        <p
-          className={cn(
-            'text-sm text-foreground',
-            !isQaManager && !expanded && isLongBody && 'line-clamp-3'
-          )}
-        >
-          {request.request_body}
-        </p>
-        {!isQaManager && isLongBody && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs text-brand-teal hover:underline mt-1 flex items-center gap-0.5"
-          >
-            {expanded ? <><ChevronUp className="w-3 h-3" />Show less</> : <><ChevronDown className="w-3 h-3" />Show more</>}
-          </button>
-        )}
-      </div>
-
-      {/* Timeline */}
-      <div className="border-t border-border/50 pt-3">
-        <p className="text-xs font-medium text-muted-foreground mb-2">Timeline</p>
-        <RequestTimeline request={request} compact />
-      </div>
-
-      {/* QA Actions */}
-      {isQaManager && request.status !== 'fulfilled' && (
-        <QaActionRow request={request} onUpdate={onUpdate} />
-      )}
-    </div>
-  )
-}
-
-// ─── Main Client ──────────────────────────────────────────────────────────────
 export function RequestsClient({ profile, user, isQaManager, initialRequests }: RequestsClientProps) {
   const [requests, setRequests] = useState<DocumentRequest[]>(initialRequests)
   const [modalOpen, setModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<string>('all')
   const supabase = createClient()
+  const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null)
+  const [detailModalOpen, setDetailModalOpen] = useState(false)
 
   const updateRequest = useCallback((updated: Partial<DocumentRequest> & { id: string }) => {
     setRequests(prev =>
@@ -244,9 +72,104 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
     return () => { supabase.removeChannel(channel) }
   }, [isQaManager, supabase, updateRequest])
 
-  const handleSuccess = () => {
-    // Realtime will update the list; modal shows success state
-  }
+
+  // ─── Table Columns ────────────────────────────────────────────────────────
+  const columns: ColumnDef<DocumentRequest>[] = useMemo(() => [
+    {
+        accessorKey: 'reference_number',
+        header: 'Ref No.',
+        cell: ({ row }) => (
+            <button 
+                onClick={() => {
+                    setSelectedRequest(row.original)
+                    setDetailModalOpen(true)
+                }}
+                className="font-mono text-[11px] font-bold text-amber-600 bg-amber-500/5 px-2 py-1 rounded hover:bg-amber-500/10 transition-colors"
+            >
+                {row.getValue('reference_number')}
+            </button>
+        )
+    },
+    ...(isQaManager ? [
+        {
+            accessorKey: 'requester_name',
+            header: 'Requester',
+            cell: ({ row }: { row: any }) => (
+                <div className="flex flex-col">
+                    <span className="text-sm font-bold text-foreground tracking-tight">{row.getValue('requester_name')}</span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[150px]" title={row.original.requester_email}>
+                        {row.original.requester_email}
+                    </span>
+                </div>
+            )
+        },
+        {
+            accessorKey: 'requester_department',
+            header: 'Dept',
+            cell: ({ row }: { row: any }) => (
+                <span className="text-xs font-medium text-muted-foreground/80">{row.getValue('requester_department')}</span>
+            )
+        }
+    ] : []),
+    {
+        accessorKey: 'request_body',
+        header: 'Request',
+        cell: ({ row }) => (
+            <p className="text-xs text-foreground/80 line-clamp-1 italic max-w-[300px]">
+                &quot;{row.getValue('request_body')}&quot;
+            </p>
+        )
+    },
+    {
+        accessorKey: 'submitted_at',
+        header: 'Submitted',
+        cell: ({ row }) => (
+            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                {formatDistanceToNow(new Date(row.getValue('submitted_at')), { addSuffix: true })}
+            </span>
+        )
+    },
+    {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => <RequestStatusPill status={row.getValue('status')} size="sm" />
+    },
+    {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => {
+            const req = row.original
+            if (!isQaManager || req.status === 'fulfilled') return null
+
+            return (
+                <div className="flex items-center gap-2">
+                    {req.status === 'submitted' && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm"
+                            className="h-7 text-[9px] font-bold uppercase tracking-widest text-brand-teal hover:bg-brand-teal/5 border border-brand-teal/20"
+                            onClick={() => markRequestReceived(req.id)}
+                        >
+                            Mark Received
+                        </Button>
+                    )}
+                    <Button 
+                        variant="ghost" 
+                        size="sm"
+                        className="h-7 text-[9px] font-bold uppercase tracking-widest text-foreground/70 hover:bg-muted border border-border/60"
+                        onClick={() => {
+                            setSelectedRequest(req)
+                            setDetailModalOpen(true)
+                        }}
+                    >
+                        Process
+                    </Button>
+                </div>
+            )
+        }
+    }
+  ], [isQaManager])
+
 
   // ─── Tab filtering ────────────────────────────────────────────────────────
   const TABS = isQaManager
@@ -272,32 +195,29 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
   return (
     <div className="flex flex-col min-h-full">
       {/* Page Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0">
+      <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shrink-0 shadow-sm relative z-10">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <ClipboardList className="h-4 w-4" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-foreground">
-              {isQaManager ? 'Document Requests' : 'My Requests'}
+              {isQaManager ? 'Document Requests Dashboard' : 'My Requests'}
             </h1>
             {isQaManager && pendingCount > 0 && (
-              <p className="text-xs text-muted-foreground">{pendingCount} pending action</p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-amber-600">{pendingCount} pending action{pendingCount > 1 ? 's' : ''}</p>
             )}
           </div>
-          {isQaManager && pendingCount > 0 && (
-            <Badge className="bg-red-500 text-white border-0 text-xs">{pendingCount}</Badge>
-          )}
         </div>
-        <Button onClick={() => setModalOpen(true)} className="gap-2">
+        <Button onClick={() => setModalOpen(true)} className="gap-2 shadow-md bg-brand-teal hover:bg-brand-teal/90 rounded-lg">
           <Plus className="w-4 h-4" />
           New Request
         </Button>
       </div>
 
       {/* Tab strip */}
-      <div className="px-6 pt-4 pb-0">
-        <div className="flex gap-1 overflow-x-auto pb-1">
+      <div className="px-6 pt-4 pb-0 bg-muted/5">
+        <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar">
           {TABS.map(tab => {
             const count = requests.filter(tab.filter).length
             return (
@@ -305,16 +225,16 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
+                  'flex items-center gap-1.5 px-4 py-2 rounded-t-xl text-[11px] font-bold uppercase tracking-widest transition-all',
                   activeTab === tab.id
-                    ? 'bg-background text-foreground shadow-sm border border-border'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    ? 'bg-background text-foreground shadow-[0_-2px_10px_-3px_rgba(0,0,0,0.1)] border-x border-t border-border/60'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                 )}
               >
                 {tab.label}
                 {count > 0 && (
                   <span className={cn(
-                    'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                    'text-[9px] font-bold px-1.5 py-0.5 rounded-full',
                     activeTab === tab.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
                   )}>
                     {count}
@@ -327,33 +247,38 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-6 py-4 space-y-4">
+      <div className="flex-1 px-6 py-4">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-            <ClipboardList className="w-10 h-10 text-muted-foreground/40" />
-            <p className="text-base font-medium text-foreground">
-              {activeTab === 'all' ? 'No requests yet' : 'No requests in this category'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {activeTab === 'all' && !isQaManager
-                ? 'Submit a request to QA using the button above.'
-                : 'Nothing to show here at the moment.'}
-            </p>
+          <div className="flex flex-col items-center justify-center py-20 text-center gap-4 bg-background border border-dashed border-border/60 rounded-2xl">
+            <div className="p-4 bg-muted/10 rounded-full">
+                <ClipboardList className="w-10 h-10 text-muted-foreground/30" />
+            </div>
+            <div className="space-y-1">
+                <p className="text-base font-bold text-foreground">
+                {activeTab === 'all' ? 'No requests logged' : 'No matches found'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                {activeTab === 'all' && !isQaManager
+                    ? 'Submit a document request to QA to get started.'
+                    : 'Try checking another category.'}
+                </p>
+            </div>
             {activeTab === 'all' && !isQaManager && (
-              <Button onClick={() => setModalOpen(true)} variant="outline" className="mt-1">
+              <Button onClick={() => setModalOpen(true)} variant="outline" className="mt-2 text-[10px] font-bold uppercase tracking-widest rounded-xl">
                 <Plus className="w-4 h-4 mr-2" /> New Request
               </Button>
             )}
           </div>
         ) : (
-          filtered.map(req => (
-            <RequestCard
-              key={req.id}
-              request={req}
-              isQaManager={isQaManager}
-              onUpdate={updateRequest}
-            />
-          ))
+          <DataTable 
+             columns={columns}
+             data={filtered}
+             pageSize={20}
+             onRowClick={(row) => {
+                setSelectedRequest(row)
+                setDetailModalOpen(true)
+             }}
+          />
         )}
       </div>
 
@@ -361,7 +286,14 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
         open={modalOpen}
         onOpenChange={setModalOpen}
         profile={profile}
-        onSuccess={handleSuccess}
+        onSuccess={() => {}}
+      />
+
+      <RequestDetailModal 
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        request={selectedRequest}
+        isQaManager={isQaManager}
       />
     </div>
   )
