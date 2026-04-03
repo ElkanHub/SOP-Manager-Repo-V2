@@ -22,9 +22,10 @@ interface RequestDetailModalProps {
   onOpenChange: (open: boolean) => void
   request: DocumentRequest | null
   isQaManager?: boolean
+  onUpdate?: (updated: DocumentRequest) => void
 }
 
-export function RequestDetailModal({ open, onOpenChange, request, isQaManager = false }: RequestDetailModalProps) {
+export function RequestDetailModal({ open, onOpenChange, request, isQaManager = false, onUpdate }: RequestDetailModalProps) {
   const [loading, setLoading] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [qaNote, setQaNote] = useState('')
@@ -39,14 +40,15 @@ export function RequestDetailModal({ open, onOpenChange, request, isQaManager = 
 
   if (!request) return null
 
-  const run = async (action: () => Promise<{ success: boolean; error?: string }>, label: string) => {
+  const run = async (action: () => Promise<{ success: boolean; error?: string; data?: any }>, label: string) => {
     setLoading(label)
     setError(null)
     const result = await action()
     if (result.success) {
       setLoading(null)
-      // We don't close the modal immediately to show the updated status if realtime is fast,
-      // but in a table view, the parent will update.
+      if (onUpdate && result.data) {
+        onUpdate(result.data as DocumentRequest)
+      }
     } else {
       setLoading(null)
       setError(result.error || 'Something went wrong')

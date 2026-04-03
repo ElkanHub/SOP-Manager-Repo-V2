@@ -38,8 +38,12 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
   const [modalOpen, setModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<string>('all')
   const supabase = createClient()
-  const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null)
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
+
+  const selectedRequest = useMemo(() => 
+    requests.find(r => r.id === selectedRequestId) || null,
+  [requests, selectedRequestId])
 
   const updateRequest = useCallback((updated: Partial<DocumentRequest> & { id: string }) => {
     setRequests(prev =>
@@ -81,7 +85,7 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
         cell: ({ row }) => (
             <button 
                 onClick={() => {
-                    setSelectedRequest(row.original)
+                    setSelectedRequestId(row.original.id)
                     setDetailModalOpen(true)
                 }}
                 className="font-mono text-[11px] font-bold text-amber-600 bg-amber-500/5 px-2 py-1 rounded hover:bg-amber-500/10 transition-colors"
@@ -158,7 +162,7 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
                         size="sm"
                         className="h-7 text-[9px] font-bold uppercase tracking-widest text-foreground/70 hover:bg-muted border border-border/60"
                         onClick={() => {
-                            setSelectedRequest(req)
+                            setSelectedRequestId(req.id)
                             setDetailModalOpen(true)
                         }}
                     >
@@ -275,7 +279,7 @@ export function RequestsClient({ profile, user, isQaManager, initialRequests }: 
              data={filtered}
              pageSize={20}
              onRowClick={(row) => {
-                setSelectedRequest(row)
+                setSelectedRequestId(row.id)
                 setDetailModalOpen(true)
              }}
           />
