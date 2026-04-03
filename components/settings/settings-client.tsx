@@ -1,11 +1,12 @@
 "use client"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Bell, Building2, Users, Settings } from "lucide-react"
+import { User, Bell, Building2, Users, Settings, PenTool } from "lucide-react"
 import { ProfileTab } from "./profile-tab"
 import { NotificationsTab } from "./notifications-tab"
 import { DepartmentsTab } from "./departments-tab"
 import { UsersTab } from "./users-tab"
+import { SpecimenTab } from "./specimen-tab"
 import type { Profile, Department } from "@/types/app.types"
 
 interface NotifPrefs {
@@ -77,6 +78,9 @@ export function SettingsClient({
                                 <TabsTrigger value="users" className="gap-1.5 rounded-lg text-xs sm:text-sm px-3 py-1.5">
                                     <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Users
                                 </TabsTrigger>
+                                <TabsTrigger value="specimens" className="gap-1.5 rounded-lg text-xs sm:text-sm px-3 py-1.5">
+                                    <PenTool className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Specimen
+                                </TabsTrigger>
                             </>
                         )}
                     </TabsList>
@@ -101,6 +105,9 @@ export function SettingsClient({
                                 departments={departments}
                                 currentUserId={currentUserId}
                             />
+                        </TabsContent>
+                        <TabsContent value="specimens" className="mt-0">
+                            <SpecimenTab users={users} />
                         </TabsContent>
                     </>
                 )}

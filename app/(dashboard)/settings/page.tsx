@@ -33,25 +33,20 @@ export default async function SettingsPage() {
         redirect('/login?reason=inactive')
     }
 
-    // Generate signed URL for signature if it exists
+    // Generate signed URL for signature and initials if they exist
     let signatureUrl = ""
+    let initialsUrl = ""
     if (profile.signature_url) {
-        // signature_url as stored is the public URL or partial path. 
-        // In this project, it seems we store the public URL, but if the bucket is private, we need to extract the path.
-        // Let's assume the stored URL contains the path or we can derive it.
-        // Actually, if we look at redrawSignature, it stores data.publicUrl.
-        // If data.publicUrl is https://.../storage/v1/object/public/signatures/USER_ID/signature.png
-        // We need the path: USER_ID/signature.png
         const pathMatch = profile.signature_url.match(/signatures\/(.+)$/)
         const sigPath = pathMatch ? pathMatch[1] : `${user.id}/signature.png`
-        
-        const { data: signed } = await service.storage
-            .from('signatures')
-            .createSignedUrl(sigPath, 3600)
-        
-        if (signed?.signedUrl) {
-            signatureUrl = signed.signedUrl
-        }
+        const { data: signed } = await service.storage.from('signatures').createSignedUrl(sigPath, 3600)
+        if (signed?.signedUrl) signatureUrl = signed.signedUrl
+    }
+    if (profile.initials_url) {
+        const pathMatch = profile.initials_url.match(/signatures\/(.+)$/)
+        const sigPath = pathMatch ? pathMatch[1] : `${user.id}/initials.png`
+        const { data: signed } = await service.storage.from('signatures').createSignedUrl(sigPath, 3600)
+        if (signed?.signedUrl) initialsUrl = signed.signedUrl
     }
 
     const isAdmin = profile.is_admin === true
@@ -78,10 +73,39 @@ export default async function SettingsPage() {
                 if (u.email) emailMap.set(u.id, u.email)
             })
 
+            // Batch sign all signatures and initials
+            const pathsToSign: string[] = []
+            allProfiles.forEach(p => {
+                if (p.signature_url) {
+                    const match = p.signature_url.match(/signatures\/(.+)$/)
+                    if (match) pathsToSign.push(match[1])
+                }
+                if (p.initials_url) {
+                    const match = p.initials_url.match(/signatures\/(.+)$/)
+                    if (match) pathsToSign.push(match[1])
+                }
+            })
+
+            let signedUrls: any[] = []
+            if (pathsToSign.length > 0) {
+                const { data } = await service.storage.from('signatures').createSignedUrls(pathsToSign, 3600)
+                signedUrls = data || []
+            }
+
+            const getSignedUrl = (storedUrl?: string) => {
+                if (!storedUrl) return ""
+                const match = storedUrl.match(/signatures\/(.+)$/)
+                if (!match) return ""
+                const path = match[1]
+                return signedUrls.find(s => s.path === path)?.signedUrl || ""
+            }
+
             users = allProfiles.map((p) => ({
                 ...p,
                 notification_prefs: p.notification_prefs ?? { email: true, pulse: true },
                 email: emailMap.get(p.id) ?? "",
+                signature_url: getSignedUrl(p.signature_url),
+                initials_url: getSignedUrl(p.initials_url),
             }))
         }
     }
@@ -90,7 +114,8 @@ export default async function SettingsPage() {
         <SettingsClient
             profile={{
                 ...profile,
-                signature_url: signatureUrl, // Pass the signed URL instead of the stored one
+                signature_url: signatureUrl,
+                initials_url: initialsUrl,
                 notification_prefs: profile.notification_prefs ?? { email: true, pulse: true },
             }}
             isAdmin={isAdmin}
