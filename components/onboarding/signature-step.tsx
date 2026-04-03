@@ -22,6 +22,13 @@ export function SignatureStep({ initialData, onNext }: any) {
     const sigCanvas = useRef<any>(null)
     const [isDrawingEmpty, setIsDrawingEmpty] = useState(true)
 
+    const full_name = initialData?.full_name || "User"
+    const initials = full_name
+        .split(' ')
+        .map((n: string) => n[0]?.toUpperCase())
+        .filter(Boolean)
+        .join('.') + '.'
+
     const supabase = createClient()
 
     // When the user has URLs already, mark as captured
@@ -33,6 +40,27 @@ export function SignatureStep({ initialData, onNext }: any) {
     const clearCanvas = () => {
         sigCanvas.current?.clear()
         setIsDrawingEmpty(true)
+    }
+
+    const generateInitialsBlob = (): Promise<Blob> => {
+        return new Promise((resolve) => {
+            const canvas = document.createElement('canvas')
+            canvas.width = 300
+            canvas.height = 150
+            const ctx = canvas.getContext('2d')
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height)
+                // Use a cursive font stack
+                ctx.font = "italic 70px 'Dancing Script', 'Sacramento', 'Cedarville Cursive', cursive"
+                ctx.fillStyle = "black"
+                ctx.textAlign = "center"
+                ctx.textBaseline = "middle"
+                ctx.fillText(initials, canvas.width / 2, canvas.height / 2)
+            }
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob)
+            }, 'image/png')
+        })
     }
 
     const uploadFile = async (file: File | Blob, type: 'signature' | 'initials') => {
@@ -77,7 +105,10 @@ export function SignatureStep({ initialData, onNext }: any) {
             if (type === 'signature') {
                 setSignatureUrl(bustedUrl)
                 setCapturedSignature(true)
-                if (!capturedInitials) setActiveCaptureTab('initials')
+                
+                // Automatically generate and upload initials as well
+                const initialsBlob = await generateInitialsBlob()
+                await uploadFile(initialsBlob, 'initials')
             } else {
                 setInitialsUrl(bustedUrl)
                 setCapturedInitials(true)
@@ -133,28 +164,22 @@ export function SignatureStep({ initialData, onNext }: any) {
             )}
 
             <div className="flex flex-col gap-4">
-                <div className="flex gap-2 p-1 bg-muted rounded-lg w-fit mx-auto">
-                    <button 
-                        onClick={() => setActiveCaptureTab('signature')}
-                        className={cn(
-                            "px-4 py-1.5 rounded-md text-xs font-bold transition-all",
-                            activeCaptureTab === 'signature' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                        )}
+                <div className="bg-brand-teal/5 border border-brand-teal/10 rounded-lg px-4 py-3 flex items-center justify-between">
+                    <div className="flex flex-col">
+                         <span className="text-xs font-bold text-brand-teal uppercase tracking-wider">Auto-generated Initials</span>
+                         <span className="text-sm border-b border-brand-teal/20 pb-0.5">{initialData?.full_name} &rarr; <span className="font-bold">{initials}</span></span>
+                    </div>
+                    <div 
+                        className="h-10 w-24 bg-white border border-brand-teal/20 rounded flex items-center justify-center p-1 shadow-sm"
+                        style={{
+                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%23fff'/%3E%3Crect x='4' y='0' width='4' height='4' fill='%23f1f5f9'/%3E%3Crect x='0' y='4' width='4' height='4' fill='%23f1f5f9'/%3E%3C/svg%3E")`,
+                        }}
                     >
-                        Full Signature
-                    </button>
-                    <button 
-                        onClick={() => setActiveCaptureTab('initials')}
-                        className={cn(
-                            "px-4 py-1.5 rounded-md text-xs font-bold transition-all",
-                            activeCaptureTab === 'initials' ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-                        )}
-                    >
-                        Initials
-                    </button>
+                        <span className="text-xl font-cursive italic tracking-tight" style={{ fontFamily: "'Dancing Script', 'Sacramento', 'Cedarville Cursive', cursive" }}>{initials}</span>
+                    </div>
                 </div>
 
-                {(activeCaptureTab === 'signature' ? !capturedSignature : !capturedInitials) ? (
+                {!capturedSignature ? (
                     <Tabs defaultValue="draw" className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
                             <TabsTrigger value="draw">Draw {activeCaptureTab === 'signature' ? 'Signature' : 'Initials'}</TabsTrigger>
@@ -185,7 +210,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                                 </Button>
                                 <Button type="button" onClick={handleConfirmDrawing} disabled={isDrawingEmpty || uploading}>
                                     {uploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                                    {uploading ? "Saving..." : `Confirm & Save ${activeCaptureTab === 'signature' ? 'Signature' : 'Initials'}`}
+                                    {uploading ? "Saving..." : "Confirm & Save Signature"}
                                 </Button>
                             </div>
                         </TabsContent>
@@ -197,7 +222,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                                 ) : (
                                     <UploadCloud className="w-8 h-8 text-slate-400 mb-2" />
                                 )}
-                                <h3 className="font-semibold text-sm">Upload {activeCaptureTab} image</h3>
+                                <h3 className="font-semibold text-sm">Upload signature image</h3>
                                 <p className="text-xs text-slate-500 mt-1">PNG or JPG, max 2MB.</p>
 
                                 <input
@@ -216,7 +241,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                             <CheckCircle2 className="w-6 h-6" />
                         </div>
                         <h3 className="text-base font-semibold text-green-800">
-                            {activeCaptureTab === 'signature' ? 'Full Signature' : 'Initials'} Captured
+                            Full Signature Captured
                         </h3>
 
                         <div 
@@ -226,11 +251,11 @@ export function SignatureStep({ initialData, onNext }: any) {
                             }}
                         >
                             <Image 
-                                src={activeCaptureTab === 'signature' ? signatureUrl! : initialsUrl!} 
-                                alt={`Your ${activeCaptureTab}`} 
+                                src={signatureUrl!} 
+                                alt="Your Full Signature" 
                                 width={180} 
                                 height={60} 
-                                unoptimized={activeCaptureTab === 'signature' ? signatureUrl!.startsWith('data:') : initialsUrl!.startsWith('data:')}
+                                unoptimized={signatureUrl!.startsWith('data:')}
                                 className="max-w-[180px] max-h-[60px] object-contain" 
                             />
                         </div>
@@ -239,11 +264,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                             <Button 
                                 variant="ghost" 
                                 onClick={() => { 
-                                    if (activeCaptureTab === 'signature') {
-                                        setCapturedSignature(false); setSignatureUrl(null); 
-                                    } else {
-                                        setCapturedInitials(false); setInitialsUrl(null);
-                                    }
+                                    setCapturedSignature(false); setSignatureUrl(null); 
                                 }} 
                                 size="sm" 
                                 className="text-xs text-slate-600 hover:text-slate-900"
