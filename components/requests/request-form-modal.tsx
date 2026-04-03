@@ -184,7 +184,14 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">From</span>
                     <p className="font-bold text-foreground text-sm">{profile.full_name}</p>
-                    <p className="text-[10px] text-muted-foreground/80 font-medium">{profile.department} · {profile.role?.toUpperCase()}</p>
+                    <p className="text-[10px] text-muted-foreground/80 font-medium">
+                      {[
+                        profile.department, 
+                        profile.job_title,
+                        profile.role ? profile.role.toUpperCase() : null, 
+                        profile.employee_id
+                      ].filter(Boolean).join(' · ')}
+                    </p>
                   </div>
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60">Date</span>
