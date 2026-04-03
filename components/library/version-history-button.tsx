@@ -17,7 +17,7 @@ function VersionHistorySheetButton({
 
   return (
     <>
-      <Button variant="ghost" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(true)} className="text-primary">
         <History className="h-4 w-4 mr-2" />
         Version History
       </Button>
