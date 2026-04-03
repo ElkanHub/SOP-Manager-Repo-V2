@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Sparkles, Upload, X, Eraser, UploadCloud } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { generateInitialsBlob, getInitialsString } from "@/lib/utils/signature-utils"
 
 export function SignatureStep({ initialData, onNext }: any) {
     const [signatureUrl, setSignatureUrl] = useState<string | null>(initialData?.signature_url || null)
@@ -23,11 +24,7 @@ export function SignatureStep({ initialData, onNext }: any) {
     const [isDrawingEmpty, setIsDrawingEmpty] = useState(true)
 
     const full_name = initialData?.full_name || "User"
-    const initials = full_name
-        .split(' ')
-        .map((n: string) => n[0]?.toUpperCase())
-        .filter(Boolean)
-        .join('.') + '.'
+    const initials = getInitialsString(full_name)
 
     const supabase = createClient()
 
@@ -40,27 +37,6 @@ export function SignatureStep({ initialData, onNext }: any) {
     const clearCanvas = () => {
         sigCanvas.current?.clear()
         setIsDrawingEmpty(true)
-    }
-
-    const generateInitialsBlob = (): Promise<Blob> => {
-        return new Promise((resolve) => {
-            const canvas = document.createElement('canvas')
-            canvas.width = 300
-            canvas.height = 150
-            const ctx = canvas.getContext('2d')
-            if (ctx) {
-                ctx.clearRect(0, 0, canvas.width, canvas.height)
-                // Use a cursive font stack
-                ctx.font = "italic 70px 'Dancing Script', 'Sacramento', 'Cedarville Cursive', cursive"
-                ctx.fillStyle = "black"
-                ctx.textAlign = "center"
-                ctx.textBaseline = "middle"
-                ctx.fillText(initials, canvas.width / 2, canvas.height / 2)
-            }
-            canvas.toBlob((blob) => {
-                if (blob) resolve(blob)
-            }, 'image/png')
-        })
     }
 
     const uploadFile = async (file: File | Blob, type: 'signature' | 'initials') => {
@@ -107,7 +83,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                 setCapturedSignature(true)
                 
                 // Automatically generate and upload initials as well
-                const initialsBlob = await generateInitialsBlob()
+                const initialsBlob = await generateInitialsBlob(full_name)
                 await uploadFile(initialsBlob, 'initials')
             } else {
                 setInitialsUrl(bustedUrl)

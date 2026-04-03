@@ -1,19 +1,28 @@
 "use client"
 
-import { useState } from "react"
-import { Search, User as UserIcon } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from "next/image"
+import { useEffect, useState, useRef } from "react"
+import { Search, Loader2, CheckCircle2, ShieldCheck, AlertTriangle } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { generateInitialsBlob } from "@/lib/utils/signature-utils"
+import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import type { Profile } from "@/types/app.types"
 
 interface SpecimenTabProps {
     users: (Profile & { email?: string })[]
 }
 
-export function SpecimenTab({ users }: SpecimenTabProps) {
+export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
     const [searchQuery, setSearchQuery] = useState("")
+    const [users, setUsers] = useState(initialUsers)
+    const [fixing, setFixing] = useState(false)
+    const [fixedCount, setFixedCount] = useState(0)
+    const [totalToFix, setTotalToFix] = useState(0)
+
+    const supabase = createClient()
 
     const filteredUsers = users.filter(user => 
         user.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -21,12 +30,88 @@ export function SpecimenTab({ users }: SpecimenTabProps) {
         user.department?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
+    // Background Auto-Fix Logic
+    useEffect(() => {
+        const missing = users.filter(u => u.is_active && !u.initials_url)
+        if (missing.length > 0 && !fixing) {
+            autoFixInitials(missing)
+        }
+    }, [users, fixing])
+
+    const autoFixInitials = async (toFix: Profile[]) => {
+        setFixing(true)
+        setTotalToFix(toFix.length)
+        let count = 0
+
+        for (const user of toFix) {
+            try {
+                // 1. Generate blob
+                const blob = await generateInitialsBlob(user.full_name)
+                
+                // 2. Upload to storage
+                const filePath = `${user.id}/initials.png`
+                const { error: uploadError } = await supabase.storage
+                    .from('signatures')
+                    .upload(filePath, blob, { upsert: true, contentType: 'image/png' })
+
+                if (uploadError) throw uploadError
+
+                // 3. Get signed URL for the profile (since it's a private bucket)
+                const { data: signed } = await supabase.storage
+                    .from('signatures')
+                    .createSignedUrl(filePath, 3600)
+
+                if (!signed?.signedUrl) throw new Error("Failed to sign initials")
+
+                // 4. Update profile - split the query params for the stored URL
+                const storedUrl = signed.signedUrl.split('?')[0]
+                const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ initials_url: storedUrl })
+                    .eq('id', user.id)
+
+                if (updateError) throw updateError
+
+                // 5. Update local state for immediate feedback
+                setUsers(prev => prev.map(u => u.id === user.id ? { ...u, initials_url: signed.signedUrl } : u))
+                count++
+                setFixedCount(count)
+
+            } catch (err) {
+                console.error(`Failed to fix initials for ${user.full_name}:`, err)
+            }
+        }
+
+        setFixing(false)
+        if (count > 0) {
+            toast.success(`Successfully generated initials for ${count} users.`)
+        }
+    }
+
     return (
         <Card className="border-border shadow-sm">
             <CardHeader className="pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <CardTitle className="text-lg font-bold">Specimen Signatures</CardTitle>
+                        <div className="flex items-center gap-2">
+                             <CardTitle className="text-lg font-bold">Specimen Signatures</CardTitle>
+                             {fixing ? (
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-teal/10 text-brand-teal border border-brand-teal/20 animate-pulse">
+                                     <Loader2 className="h-3 w-3 animate-spin" />
+                                     <span className="text-[10px] font-bold uppercase tracking-wider">Verifying coverage {fixedCount}/{totalToFix}</span>
+                                </div>
+                             ) : totalToFix > 0 ? (
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-100">
+                                     <CheckCircle2 className="h-3 w-3" />
+                                     <span className="text-[10px] font-bold uppercase tracking-wider">100% Coverage Reached</span>
+                                </div>
+                             ) : (
+                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 border border-slate-100">
+                                     <ShieldCheck className="h-3 w-3" />
+                                     <span className="text-[10px] font-bold uppercase tracking-wider">Verified Secure</span>
+                                </div>
+                             )}
+                        </div>
                         <CardDescription>View official signatures and initials for all active personnel.</CardDescription>
                     </div>
                     <div className="relative w-full sm:w-64">
@@ -35,7 +120,7 @@ export function SpecimenTab({ users }: SpecimenTabProps) {
                             placeholder="Search users..."
                             className="pl-9 h-9 text-sm"
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                         />
                     </div>
                 </div>
