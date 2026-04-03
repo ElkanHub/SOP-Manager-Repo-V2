@@ -21,6 +21,8 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
     const [fixing, setFixing] = useState(false)
     const [fixedCount, setFixedCount] = useState(0)
     const [totalToFix, setTotalToFix] = useState(0)
+    const processedIds = useRef<Set<string>>(new Set())
+    const [hasScanned, setHasScanned] = useState(false)
 
     const supabase = createClient()
 
@@ -32,9 +34,16 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
 
     // Background Auto-Fix Logic
     useEffect(() => {
-        const missing = users.filter(u => u.is_active && !u.initials_url)
+        const missing = users.filter(u => 
+            u.is_active && 
+            !u.initials_url && 
+            !processedIds.current.has(u.id)
+        )
+        
         if (missing.length > 0 && !fixing) {
             autoFixInitials(missing)
+        } else if (missing.length === 0 && !fixing) {
+            setHasScanned(true)
         }
     }, [users, fixing])
 
@@ -44,11 +53,10 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
         let count = 0
 
         for (const user of toFix) {
+            processedIds.current.add(user.id)
             try {
-                // 1. Generate blob
+                // ... same logic
                 const blob = await generateInitialsBlob(user.full_name)
-                
-                // 2. Upload to storage
                 const filePath = `${user.id}/initials.png`
                 const { error: uploadError } = await supabase.storage
                     .from('signatures')
@@ -56,14 +64,12 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
 
                 if (uploadError) throw uploadError
 
-                // 3. Get signed URL for the profile (since it's a private bucket)
                 const { data: signed } = await supabase.storage
                     .from('signatures')
                     .createSignedUrl(filePath, 3600)
 
                 if (!signed?.signedUrl) throw new Error("Failed to sign initials")
 
-                // 4. Update profile - split the query params for the stored URL
                 const storedUrl = signed.signedUrl.split('?')[0]
                 const { error: updateError } = await supabase
                     .from('profiles')
@@ -72,11 +78,9 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
 
                 if (updateError) throw updateError
 
-                // 5. Update local state for immediate feedback
                 setUsers(prev => prev.map(u => u.id === user.id ? { ...u, initials_url: signed.signedUrl } : u))
                 count++
                 setFixedCount(count)
-
             } catch (err) {
                 console.error(`Failed to fix initials for ${user.full_name}:`, err)
             }
@@ -98,19 +102,14 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
                              {fixing ? (
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-brand-teal/10 text-brand-teal border border-brand-teal/20 animate-pulse">
                                      <Loader2 className="h-3 w-3 animate-spin" />
-                                     <span className="text-[10px] font-bold uppercase tracking-wider">Verifying coverage {fixedCount}/{totalToFix}</span>
+                                     <span className="text-[10px] font-bold uppercase tracking-wider">Verifying specimens {fixedCount}/{totalToFix}</span>
                                 </div>
-                             ) : totalToFix > 0 ? (
+                             ) : hasScanned && totalToFix > 0 ? (
                                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-green-50 text-green-600 border border-green-100">
                                      <CheckCircle2 className="h-3 w-3" />
-                                     <span className="text-[10px] font-bold uppercase tracking-wider">100% Coverage Reached</span>
+                                     <span className="text-[10px] font-bold uppercase tracking-wider">Sync Complete</span>
                                 </div>
-                             ) : (
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-50 text-slate-400 border border-slate-100">
-                                     <ShieldCheck className="h-3 w-3" />
-                                     <span className="text-[10px] font-bold uppercase tracking-wider">Verified Secure</span>
-                                </div>
-                             )}
+                             ) : null}
                         </div>
                         <CardDescription>View official signatures and initials for all active personnel.</CardDescription>
                     </div>
