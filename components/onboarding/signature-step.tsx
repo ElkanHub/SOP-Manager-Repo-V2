@@ -231,7 +231,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                                 alt="Your Full Signature" 
                                 width={180} 
                                 height={60} 
-                                unoptimized={signatureUrl!.startsWith('data:')}
+                                unoptimized={true}
                                 className="max-w-[180px] max-h-[60px] object-contain" 
                             />
                         </div>
@@ -259,7 +259,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Signature</span>
                         <div className="h-10 w-24 bg-white border border-slate-200 rounded flex items-center justify-center p-1">
                             {signatureUrl ? (
-                                <Image src={signatureUrl} alt="Signature" width={80} height={30} className="object-contain h-full" />
+                                <Image src={signatureUrl} alt="Signature" width={80} height={30} className="object-contain h-full" unoptimized={true} />
                             ) : (
                                 <span className="text-[9px] text-slate-300 italic italic">Missing</span>
                             )}
@@ -269,7 +269,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                         <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Initials</span>
                         <div className="h-10 w-24 bg-white border border-slate-200 rounded flex items-center justify-center p-1">
                             {initialsUrl ? (
-                                <Image src={initialsUrl} alt="Initials" width={80} height={30} className="object-contain h-full" />
+                                <Image src={initialsUrl} alt="Initials" width={80} height={30} className="object-contain h-full" unoptimized={true} />
                             ) : (
                                 <span className="text-[9px] text-slate-300 italic italic">Missing</span>
                             )}

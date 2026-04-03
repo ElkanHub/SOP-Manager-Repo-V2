@@ -22,12 +22,7 @@ export function ProfileTab({ profile }: ProfileTabProps) {
     const [employeeId, setEmployeeId] = useState(profile.employee_id || "")
     const [phone, setPhone] = useState(profile.phone || "")
     const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "")
-    // Strip any stale cache-busting params from the stored URL, then add a fresh one so
-    // the browser doesn't serve a cached copy of a previous signature.
-    const cleanSigUrl = profile.signature_url
-        ? profile.signature_url.split('?')[0] + `?t=${Date.now()}`
-        : ""
-    const [signatureUrl, setSignatureUrl] = useState(cleanSigUrl)
+    const [signatureUrl, setSignatureUrl] = useState(profile.signature_url || "")
     const [sigImgError, setSigImgError] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [saving, setSaving] = useState(false)
@@ -161,7 +156,7 @@ export function ProfileTab({ profile }: ProfileTabProps) {
                                 height={48}
                                 className="h-12 w-auto object-contain"
                                 onError={() => setSigImgError(true)}
-                                unoptimized={signatureUrl.startsWith('data:')}
+                                unoptimized={true}
                             />
                         </div>
                     </div>
