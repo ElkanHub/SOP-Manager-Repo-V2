@@ -84,7 +84,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
+      <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
         {/* ─── Step 1: Form ───────────────────────────────────────── */}
         {step === 'form' && (
           <div className="flex flex-col h-full">
@@ -103,11 +103,13 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
                 <div className="flex items-center justify-between border-b border-border/40 pb-2">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">Requester Details</h4>
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-xs">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                   {[
                     { label: 'Name', value: profile.full_name },
                     { label: 'Department', value: profile.department || '—' },
                     { label: 'Role', value: profile.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : '—' },
+                    { label: 'Job Title', value: profile.job_title || '—' },
+                    { label: 'Employee ID', value: profile.employee_id || '—' },
                     { label: 'Date', value: format(openedAt, "d MMMM yyyy, h:mm a") },
                   ].map(({ label, value }) => (
                     <div key={label} className="space-y-0.5">
