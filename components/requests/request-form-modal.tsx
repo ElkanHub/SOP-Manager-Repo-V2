@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { CheckCircle2, Loader2, ClipboardList } from 'lucide-react'
+import { CheckCircle2, Loader2 } from 'lucide-react'
 import { submitDocumentRequest } from '@/actions/requests'
 import { Profile } from '@/types/app.types'
 import { format } from 'date-fns'
@@ -35,7 +35,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [referenceNumber, setReferenceNumber] = useState<string | null>(null)
-  const openedAt = useRef(new Date())
+  const [openedAt, setOpenedAt] = useState(new Date())
 
   // Reset state when modal opens
   const handleOpenChange = (val: boolean) => {
@@ -48,7 +48,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
           setReferenceNumber(null)
         }, 300)
       } else {
-        openedAt.current = new Date()
+        setOpenedAt(new Date())
       }
       onOpenChange(val)
     }
@@ -83,12 +83,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        className="max-w-lg"
-        onInteractOutside={(e) => {
-          if (isSubmitting || step === 'success') e.preventDefault()
-        }}
-      >
+      <DialogContent className="max-w-lg">
         {/* ─── Step 1: Form ───────────────────────────────────────── */}
         {step === 'form' && (
           <>
@@ -107,7 +102,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
                 { label: 'Role', value: profile.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : '—' },
                 { label: 'Job Title', value: profile.job_title || '—' },
                 { label: 'Employee ID', value: profile.employee_id || '—' },
-                { label: 'Date', value: format(openedAt.current, "d MMMM yyyy, h:mm a") },
+                { label: 'Date', value: format(openedAt, "d MMMM yyyy, h:mm a") },
               ].map(({ label, value }) => (
                 <div key={label} className="flex items-center gap-2 text-[13px]">
                   <span className="text-muted-foreground w-24 shrink-0">{label}:</span>
@@ -175,7 +170,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
                   {profile.role && <span> · {profile.role.charAt(0).toUpperCase() + profile.role.slice(1)}</span>}
                 </div>
                 <div className="text-muted-foreground text-xs">
-                  {format(openedAt.current, "d MMMM yyyy, h:mm a")}
+                  {format(openedAt, "d MMMM yyyy, h:mm a")}
                 </div>
               </div>
               <div className="border-t border-border pt-3">
