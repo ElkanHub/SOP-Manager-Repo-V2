@@ -79,7 +79,9 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
       cell: ({ row }) => (
         <div>
           <div className="text-sm font-semibold">{row.getValue('requester_name')}</div>
-          <div className="text-xs text-muted-foreground">{row.original.requester_email}</div>
+          <div className="text-xs text-muted-foreground truncate max-w-[200px]" title={row.original.requester_email}>
+            {row.original.requester_email}
+          </div>
         </div>
       ),
     },

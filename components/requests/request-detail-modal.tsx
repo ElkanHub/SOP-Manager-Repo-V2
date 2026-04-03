@@ -65,7 +65,7 @@ export function RequestDetailModal({ open, onOpenChange, request }: RequestDetai
                   { label: 'Job Title', value: request.requester_job_title || '—', icon: Briefcase },
                   { label: 'Employee ID', value: request.requester_employee_id || '—', icon: IdCard },
                   { label: 'Role', value: request.requester_role, icon: Info, className: 'capitalize' },
-                  { label: 'Email', value: request.requester_email, icon: Mail },
+                  { label: 'Email', value: request.requester_email, icon: Mail, className: 'break-all' },
                 ].map(({ label, value, className }) => (
                   <div key={label} className="space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/60 block">{label}</span>

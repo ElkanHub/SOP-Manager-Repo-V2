@@ -116,7 +116,7 @@ export async function fetchDocumentRequests({ page, dateFrom, dateTo }: DatePara
   let query = supabase
     .from('document_requests')
     .select(
-      `id, reference_number, requester_name, requester_department, requester_role,
+      `id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
        requester_email, requester_employee_id, request_body,
        status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
        received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
