@@ -176,9 +176,10 @@ export async function markRequestReceived(requestId: string): Promise<RequestAct
   const { data: updated } = await service
     .from('document_requests')
     .select(`
-      id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
+      id, reference_number, requester_id, requester_name, requester_department, requester_role, requester_job_title,
       requester_email, requester_employee_id, request_body,
       status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+      received_by, approved_by, fulfilled_by, created_at, updated_at,
       received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
       approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
       fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)
@@ -186,8 +187,14 @@ export async function markRequestReceived(requestId: string): Promise<RequestAct
     .eq('id', requestId)
     .single()
 
+  if (updated) {
+    if (Array.isArray(updated.received_by_profile)) (updated as any).received_by_profile = updated.received_by_profile[0] || null
+    if (Array.isArray(updated.approved_by_profile)) (updated as any).approved_by_profile = updated.approved_by_profile[0] || null
+    if (Array.isArray(updated.fulfilled_by_profile)) (updated as any).fulfilled_by_profile = updated.fulfilled_by_profile[0] || null
+  }
+
   revalidatePath('/requests')
-  return { success: true, data: updated as DocumentRequest }
+  return { success: true, data: updated as unknown as DocumentRequest }
 }
 
 // ─── markRequestApproved ──────────────────────────────────────────────────────
@@ -233,9 +240,10 @@ export async function markRequestApproved(requestId: string, qaNotes?: string): 
   const { data: updated } = await service
     .from('document_requests')
     .select(`
-      id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
+      id, reference_number, requester_id, requester_name, requester_department, requester_role, requester_job_title,
       requester_email, requester_employee_id, request_body,
       status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+      received_by, approved_by, fulfilled_by, created_at, updated_at,
       received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
       approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
       fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)
@@ -243,8 +251,14 @@ export async function markRequestApproved(requestId: string, qaNotes?: string): 
     .eq('id', requestId)
     .single()
 
+  if (updated) {
+    if (Array.isArray(updated.received_by_profile)) (updated as any).received_by_profile = updated.received_by_profile[0] || null
+    if (Array.isArray(updated.approved_by_profile)) (updated as any).approved_by_profile = updated.approved_by_profile[0] || null
+    if (Array.isArray(updated.fulfilled_by_profile)) (updated as any).fulfilled_by_profile = updated.fulfilled_by_profile[0] || null
+  }
+
   revalidatePath('/requests')
-  return { success: true, data: updated as DocumentRequest }
+  return { success: true, data: updated as unknown as DocumentRequest }
 }
 
 // ─── markRequestFulfilled ─────────────────────────────────────────────────────
@@ -290,9 +304,10 @@ export async function markRequestFulfilled(requestId: string, qaNotes?: string):
   const { data: updated } = await service
     .from('document_requests')
     .select(`
-      id, reference_number, requester_name, requester_department, requester_role, requester_job_title,
+      id, reference_number, requester_id, requester_name, requester_department, requester_role, requester_job_title,
       requester_email, requester_employee_id, request_body,
       status, submitted_at, received_at, approved_at, fulfilled_at, qa_notes,
+      received_by, approved_by, fulfilled_by, created_at, updated_at,
       received_by_profile:profiles!document_requests_received_by_fkey(id, full_name, avatar_url),
       approved_by_profile:profiles!document_requests_approved_by_fkey(id, full_name, avatar_url),
       fulfilled_by_profile:profiles!document_requests_fulfilled_by_fkey(id, full_name, avatar_url)
@@ -300,6 +315,12 @@ export async function markRequestFulfilled(requestId: string, qaNotes?: string):
     .eq('id', requestId)
     .single()
 
+  if (updated) {
+    if (Array.isArray(updated.received_by_profile)) (updated as any).received_by_profile = updated.received_by_profile[0] || null
+    if (Array.isArray(updated.approved_by_profile)) (updated as any).approved_by_profile = updated.approved_by_profile[0] || null
+    if (Array.isArray(updated.fulfilled_by_profile)) (updated as any).fulfilled_by_profile = updated.fulfilled_by_profile[0] || null
+  }
+
   revalidatePath('/requests')
-  return { success: true, data: updated as DocumentRequest }
+  return { success: true, data: updated as unknown as DocumentRequest }
 }
