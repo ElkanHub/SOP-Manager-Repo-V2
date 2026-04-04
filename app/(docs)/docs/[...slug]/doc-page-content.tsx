@@ -25,43 +25,56 @@ const components = {
   h2: (props: any) => (
     <h2 
       id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
-      className="text-22 font-bold text-foreground mt-12 mb-5 pb-3 border-b border-border/60 tracking-tight leading-tight" 
+      className="text-[26px] md:text-[28px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-navy to-brand-blue mt-14 mb-6 pb-4 border-b border-border/50 tracking-tight leading-tight" 
       {...props} 
     />
   ),
   h3: (props: any) => (
     <h3 
       id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
-      className="text-18 font-bold text-foreground/90 mt-8 mb-3 tracking-tight" 
+      className="text-[20px] font-bold text-foreground/90 mt-10 mb-4 tracking-tight" 
       {...props} 
     />
   ),
-  p: (props: any) => <p className="text-[16px] text-muted-foreground leading-[1.8] mb-6 font-sans" {...props} />,
+  h4: (props: any) => (
+    <h4 
+      id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
+      className="text-[16px] font-bold text-foreground/80 mt-8 mb-3 uppercase tracking-wider" 
+      {...props} 
+    />
+  ),
+  p: (props: any) => <p className="text-[16px] text-muted-foreground leading-[1.85] mb-6 font-sans font-medium" {...props} />,
   a: (props: any) => {
     const isInternal = props.href?.startsWith('/') || props.href?.startsWith('./') || props.href?.startsWith('../')
     if (isInternal) {
       return (
         <Link 
-          className="text-brand-blue font-medium decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue" 
+          className="text-brand-teal font-semibold decoration-brand-teal/30 underline-offset-4 hover:underline hover:decoration-brand-teal transition-all" 
           {...props} 
         />
       )
     }
     return (
       <a 
-        className="text-brand-blue font-medium decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue" 
+        className="text-brand-blue font-semibold decoration-brand-blue/30 underline-offset-4 hover:underline hover:decoration-brand-blue transition-all" 
         target="_blank" 
         rel="noopener noreferrer" 
         {...props} 
       />
     )
   },
-  ul: (props: any) => <ul className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-disc pl-5 space-y-2" {...props} />,
-  ol: (props: any) => <ol className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-decimal pl-5 space-y-2" {...props} />,
-  li: (props: any) => <li className="pl-1" {...props} />,
-  strong: (props: any) => <strong className="font-semibold text-foreground" {...props} />,
+  ul: (props: any) => <ul className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-none pl-2 space-y-3 font-medium" {...props} />,
+  ol: (props: any) => <ol className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-decimal pl-6 space-y-3 font-medium marker:text-brand-navy marker:font-bold" {...props} />,
+  li: (props: any) => (
+    <li className="relative pl-6" {...props}>
+      {/* Target un-ordered lists by seeing if their parent is a ul (this is a simple hack via CSS below, but we can just let tailwind handle it if we scope the marker). Instead, we'll use a custom before: pseudo element if it's inside UL. */}
+      <span className="absolute left-0 top-2.5 w-2 h-2 bg-gradient-to-br from-brand-teal to-brand-blue rounded-full shadow-sm" />
+      {props.children}
+    </li>
+  ),
+  strong: (props: any) => <strong className="font-bold text-foreground" {...props} />,
   code: (props: any) => (
-    <code className="bg-muted/80 text-foreground px-1.5 py-0.5 rounded-md text-[0.9em] font-mono border border-border/50" {...props} />
+    <code className="bg-muted px-1.5 py-0.5 rounded-lg text-[0.85em] font-mono font-medium text-brand-navy border border-border/80 shadow-sm" {...props} />
   ),
   pre: (props: any) => (
     <pre className="bg-brand-navy text-slate-100 rounded-2xl p-6 overflow-x-auto text-[13px] mb-8 shadow-soft border border-slate-800/50" {...props} />
