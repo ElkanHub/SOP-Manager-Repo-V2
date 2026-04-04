@@ -5,6 +5,12 @@ export default async function proxy(request: NextRequest) {
 
     console.log('>>> proxy hit:', request.nextUrl.pathname)
 
+    // ─── Public routes: skip ALL auth logic ─────────────────────────────
+    // /m/[token] is the anonymous mobile signing page — must be accessible
+    // without any Supabase session.
+    if (request.nextUrl.pathname.startsWith('/m/')) {
+        return NextResponse.next()
+    }
 
     const { supabase, supabaseResponse } = await updateSession(request)
 

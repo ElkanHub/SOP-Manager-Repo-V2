@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 3, 2026
-> **Version:** 2.9 (DataTable Modernization)
-> **Current Phase:** Phase 26 ✅ Complete — Phase 27 Next
+> **Last Updated:** April 4, 2026
+> **Version:** 3.0 (Mobile Signature QR Flow)
+> **Current Phase:** Phase 27 ✅ Complete — Phase 28 Next
 
 ---
 
@@ -41,6 +41,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 24 | ✅ Complete | Admin User Lifecycle & Real-time Security        |
 | Phase 25 | ✅ Complete | Document Request Flow (QA Lifecycle)             |
 | Phase 26 | ✅ Complete | DataTable Modernization & QA Processing 2.0      |
+| Phase 27 | ✅ Complete | Mobile Signature QR Flow                         |
 
 ---
 
@@ -1445,3 +1446,134 @@ components/library/
 actions/
 └── requests.ts                       # Updated actions to return updated data for instant UI sync
 ```
+
+---
+
+## Phase 27: Mobile Signature QR Flow
+
+**Status:** ✅ Complete
+**Completed:** April 4, 2026
+
+### Overview
+
+Implemented the "Sign with Mobile" feature, allowing users to capture high-quality digital signatures using their smartphone's touchscreen while working on a desktop PC. The flow uses Supabase Realtime to instantly sync the captured signature back to the desktop browser.
+
+### Architecture
+
+```
+Desktop (PC)                              Mobile Phone
+─────────────                             ────────────
+1. INSERT 'pending' record          
+   into mobile_signatures           
+2. Display QR Code (/m/[token])     
+3. Subscribe to Realtime            
+                                    4. Scan QR → Open URL
+                                    5. Fetch record status
+                                    6. User draws signature
+                                    7. UPDATE record (base64 + 'completed')
+8. Realtime fires UPDATE event      
+9. Extract signature_base64         
+10. Upload PNG to Storage           
+11. Update Profile (signature_url)  
+12. Close QR Dialog                 
+```
+
+### What Was Built
+
+#### Database (`036_mobile_signatures.sql`)
+- `mobile_signatures` table with UUID primary key, user reference, base64 text, status check constraint, and 15-minute auto-expiry
+- Performance index on `(status, expires_at)`
+- **Strict RLS policies:**
+  - INSERT: Authenticated users only, restricted to own `user_id`
+  - SELECT: `anon` + `authenticated` can read any record (UUID is the auth token)
+  - UPDATE: `anon` + `authenticated` can only transition `pending` → `completed` on non-expired records, and `signature_base64` must be non-null
+- Table added to `supabase_realtime` publication
+
+#### Middleware (`proxy.ts`)
+- Added early-return bypass for `/m/` routes — skips all auth logic entirely
+- The mobile signing page is publicly accessible; security is enforced by the UUID token and RLS policies
+
+#### Utility (`lib/utils/base64-to-blob.ts`)
+- Manual base64 data URL → Blob converter
+- Avoids `fetch(dataURL)` which is blocked by strict Content-Security-Policy
+- Validates data URL format and extracts MIME type
+
+#### Reusable QR Component (`components/ui/mobile-sign-qr.tsx`)
+- Creates a `mobile_signatures` session record via Supabase
+- Generates and displays QR code using `qrcode.react` (already installed)
+- Supabase Realtime subscription filtered to the specific session ID
+- 15-minute countdown timer with urgency color transitions (green → amber → red)
+- Handles loading, error, and expired states
+- Proper cleanup: unsubscribes from Realtime channel on unmount or cancellation
+- Used by both `SignatureRedrawDialog` and onboarding `SignatureStep`
+
+#### Mobile Signing Page — Server (`app/m/[token]/page.tsx`)
+- Dynamic route with `force-dynamic` (no caching)
+- UUID format validation via regex (prevents invalid lookups)
+- Uses `createServiceClient()` for reliable status/expiry checks
+- Returns Next.js `notFound()` for missing or malformed tokens
+- Passes initial state (expired, completed, expiresAt) to client component
+
+#### Mobile Signing Page — Client (`app/m/[token]/mobile-sign-client.tsx`)
+- Full-screen mobile-optimized layout with SOP-Guard Pro branding
+- `--vh` viewport trick for mobile browser address bar compatibility
+- `react-signature-canvas` with `touch-none` CSS to prevent scroll/zoom during drawing
+- Pen configuration: brand navy color, variable width (1.5–3.5px), velocity filtering
+- Countdown timer with urgency indicators
+- Signature validation: format check (PNG), size limit (5MB)
+- RLS-aware error handling: expired/completed sessions surface friendly messages
+- Success state with security badge confirmation
+- States: ready → submitting → success / expired / completed / error
+
+#### Settings Integration (`components/settings/signature-redraw-dialog.tsx`)
+- Added third tab: **Mobile** (alongside Draw and Upload)
+- Tab displays `MobileSignQR` component when active
+- `handleMobileCaptured()` callback: receives base64 → converts via `base64ToBlob()` → uploads through existing `uploadAndSave()` pipeline
+- Seamless: the existing storage upload, profile update, audit log, and cache-busting URL generation all apply automatically
+
+#### Onboarding Integration (`components/onboarding/signature-step.tsx`)
+- Added third tab: **Mobile** (alongside Draw and Upload)
+- Uses same `MobileSignQR` component and `base64ToBlob` utility
+- Auto-generates initials after mobile signature capture (existing behavior preserved)
+
+### Security Model
+
+| Layer | Protection |
+|-------|------------|
+| **Token** | 128-bit UUID — cannot be guessed or enumerated |
+| **RLS INSERT** | Only authenticated users can create sessions for themselves |
+| **RLS UPDATE** | Anonymous users can only set `status='completed'` on `pending` + non-expired records with non-null `signature_base64` |
+| **Expiry** | 15-minute server-enforced window (DB default + RLS check) |
+| **Middleware** | `/m/` routes bypass auth but have no access to any other data |
+| **Validation** | Server-side UUID regex, format and size checks on signature data |
+| **CSP** | Base64→Blob conversion avoids `fetch(dataURL)` CSP violations |
+
+### Files Created/Modified
+
+```
+supabase/migrations/
+└── 036_mobile_signatures.sql         # NEW — Table, RLS, Realtime
+
+lib/utils/
+└── base64-to-blob.ts                 # NEW — CSP-safe base64 converter
+
+components/ui/
+└── mobile-sign-qr.tsx                # NEW — Reusable QR + Realtime component
+
+app/m/[token]/
+├── page.tsx                          # NEW — Server component (token validation)
+└── mobile-sign-client.tsx            # NEW — Mobile signing UI
+
+proxy.ts                              # MODIFIED — /m/ route bypass
+components/settings/
+└── signature-redraw-dialog.tsx       # MODIFIED — Added Mobile tab
+components/onboarding/
+└── signature-step.tsx                # MODIFIED — Added Mobile tab
+```
+
+### Verification
+
+- `npx tsc --noEmit` — Exit code 0, no type errors ✅
+- Mobile signing page renders correctly for valid/invalid/expired tokens
+- Settings → Signature dialog has 3 tabs: Draw, Upload, Mobile
+- Onboarding signature step has 3 tabs: Draw, Upload, Mobile

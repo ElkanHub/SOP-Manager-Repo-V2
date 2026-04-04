@@ -6,10 +6,12 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Loader2, Eraser, UploadCloud, CheckCircle2 } from "lucide-react"
+import { Loader2, Eraser, UploadCloud, CheckCircle2, Smartphone } from "lucide-react"
 import SignatureCanvas from "react-signature-canvas"
 import { createClient } from "@/lib/supabase/client"
 import { redrawSignature } from "@/actions/settings"
+import { MobileSignQR } from "@/components/ui/mobile-sign-qr"
+import { base64ToBlob } from "@/lib/utils/base64-to-blob"
 
 interface SignatureRedrawDialogProps {
     open: boolean
@@ -29,6 +31,7 @@ export function SignatureRedrawDialog({
     const [uploading, setUploading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [isDrawingEmpty, setIsDrawingEmpty] = useState(true)
+    const [activeTab, setActiveTab] = useState("draw")
     const sigCanvas = useRef<SignatureCanvas>(null)
     const supabase = createClient()
 
@@ -62,6 +65,7 @@ export function SignatureRedrawDialog({
             if (!result.success) throw new Error(result.error)
 
             onSaved(signedUrl)
+            toast.success("Signature updated successfully")
             onClose()
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to save signature")
@@ -89,6 +93,23 @@ export function SignatureRedrawDialog({
         uploadAndSave(file)
     }
 
+    /** Called when the mobile device submits a signature via QR flow */
+    const handleMobileCaptured = async (base64: string) => {
+        try {
+            setUploading(true)
+            setError(null)
+
+            // Convert base64 data URL to Blob (CSP-safe, no fetch(dataURL))
+            const blob = base64ToBlob(base64)
+
+            // Upload to storage and save to profile
+            await uploadAndSave(blob)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to process mobile signature")
+            setUploading(false)
+        }
+    }
+
     return (
         <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
             <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/95">
@@ -102,10 +123,14 @@ export function SignatureRedrawDialog({
                     <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">{error}</div>
                 )}
 
-                <Tabs defaultValue="draw" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 bg-muted/30 p-1 rounded-xl">
-                        <TabsTrigger value="draw" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest transition-all">Draw Signature</TabsTrigger>
-                        <TabsTrigger value="upload" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest transition-all">Upload Image</TabsTrigger>
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1 rounded-xl">
+                        <TabsTrigger value="draw" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest transition-all">Draw</TabsTrigger>
+                        <TabsTrigger value="upload" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest transition-all">Upload</TabsTrigger>
+                        <TabsTrigger value="mobile" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm font-bold text-xs uppercase tracking-widest transition-all flex items-center gap-1">
+                            <Smartphone className="w-3 h-3" />
+                            Mobile
+                        </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="draw" className="space-y-4 pt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -140,6 +165,14 @@ export function SignatureRedrawDialog({
                             <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">PNG (Transparent) or JPG, max 2MB</p>
                             <input type="file" accept="image/png,image/jpeg" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handleFileUpload} disabled={uploading} />
                         </div>
+                    </TabsContent>
+
+                    <TabsContent value="mobile" className="pt-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        <MobileSignQR
+                            userId={userId}
+                            onCaptured={handleMobileCaptured}
+                            onCancel={() => setActiveTab("draw")}
+                        />
                     </TabsContent>
                 </Tabs>
 

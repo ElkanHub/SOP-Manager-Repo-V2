@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import SignatureCanvas from "react-signature-canvas"
 import { createClient } from "@/lib/supabase/client"
-import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Sparkles, Upload, X, Eraser, UploadCloud } from "lucide-react"
+import { AlertCircle, CheckCircle2, ChevronRight, Loader2, Sparkles, Upload, X, Eraser, UploadCloud, Smartphone } from "lucide-react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { generateInitialsBlob, getInitialsString } from "@/lib/utils/signature-utils"
+import { MobileSignQR } from "@/components/ui/mobile-sign-qr"
+import { base64ToBlob } from "@/lib/utils/base64-to-blob"
 
 export function SignatureStep({ initialData, onNext }: any) {
     const [signatureUrl, setSignatureUrl] = useState<string | null>(initialData?.signature_url || null)
@@ -19,6 +21,7 @@ export function SignatureStep({ initialData, onNext }: any) {
     const [capturedSignature, setCapturedSignature] = useState(false)
     const [capturedInitials, setCapturedInitials] = useState(false)
     const [activeCaptureTab, setActiveCaptureTab] = useState<'signature' | 'initials'>('signature')
+    const [captureMethod, setCaptureMethod] = useState<'draw' | 'upload' | 'mobile'>('draw')
 
     const sigCanvas = useRef<any>(null)
     const [isDrawingEmpty, setIsDrawingEmpty] = useState(true)
@@ -125,6 +128,16 @@ export function SignatureStep({ initialData, onNext }: any) {
         uploadFile(file, activeCaptureTab)
     }
 
+    /** Called when the mobile device submits a signature via QR flow */
+    const handleMobileCaptured = async (base64: string) => {
+        try {
+            const blob = base64ToBlob(base64)
+            await uploadFile(blob, 'signature')
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to process mobile signature")
+        }
+    }
+
     return (
         <div className="space-y-6">
             <div className="text-center">
@@ -156,10 +169,14 @@ export function SignatureStep({ initialData, onNext }: any) {
                 </div>
 
                 {!capturedSignature ? (
-                    <Tabs defaultValue="draw" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
+                    <Tabs value={captureMethod} onValueChange={(v) => setCaptureMethod(v as any)} className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="draw">Draw {activeCaptureTab === 'signature' ? 'Signature' : 'Initials'}</TabsTrigger>
                             <TabsTrigger value="upload">Upload Image</TabsTrigger>
+                            <TabsTrigger value="mobile" className="flex items-center gap-1">
+                                <Smartphone className="w-3.5 h-3.5" />
+                                Mobile
+                            </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="draw" className="space-y-4 pt-4">
@@ -209,6 +226,14 @@ export function SignatureStep({ initialData, onNext }: any) {
                                     disabled={uploading}
                                 />
                             </div>
+                        </TabsContent>
+
+                        <TabsContent value="mobile" className="pt-4">
+                            <MobileSignQR
+                                userId={initialData.id}
+                                onCaptured={handleMobileCaptured}
+                                onCancel={() => setCaptureMethod('draw')}
+                            />
                         </TabsContent>
                     </Tabs>
                 ) : (
@@ -261,7 +286,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                             {signatureUrl ? (
                                 <Image src={signatureUrl} alt="Signature" width={80} height={30} className="object-contain h-full" unoptimized={true} />
                             ) : (
-                                <span className="text-[9px] text-slate-300 italic italic">Missing</span>
+                                <span className="text-[9px] text-slate-300 italic">Missing</span>
                             )}
                         </div>
                     </div>
@@ -271,7 +296,7 @@ export function SignatureStep({ initialData, onNext }: any) {
                             {initialsUrl ? (
                                 <Image src={initialsUrl} alt="Initials" width={80} height={30} className="object-contain h-full" unoptimized={true} />
                             ) : (
-                                <span className="text-[9px] text-slate-300 italic italic">Missing</span>
+                                <span className="text-[9px] text-slate-300 italic">Missing</span>
                             )}
                         </div>
                     </div>
