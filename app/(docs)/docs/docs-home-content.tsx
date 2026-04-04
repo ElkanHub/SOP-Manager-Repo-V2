@@ -1,190 +1,358 @@
 "use client"
 import React from 'react'
 import Link from 'next/link'
-import { Rocket, BookOpen, Shield, BookmarkCheck, ClipboardCheck, GitBranch, Cog, CalendarDays, BarChart2, MessageSquare, Settings, Search as SearchIcon } from 'lucide-react'
+import {
+  BookOpen, Shield, ClipboardCheck, GitBranch, Cog, CalendarDays,
+  BarChart2, MessageSquare, Settings, ChevronRight, FileText,
+  BookmarkCheck, ArrowRight, Zap, Users, Database, Lock
+} from 'lucide-react'
 import { Search as DocsSearch } from '@/components/docs'
 import { cn } from '@/lib/utils/cn'
 
-const FEATURES = [
-  { id: 'the-pulse', icon: BookmarkCheck, title: 'The Pulse', description: 'Real-time notifications, notices, and personal to-dos.', href: '/docs/the-pulse/overview', badge: null },
-  { id: 'sop-library', icon: BookOpen, title: 'SOP Library', description: 'Read, search, acknowledge, and submit procedures.', href: '/docs/sop-library/overview', badge: null },
-  { id: 'approvals', icon: ClipboardCheck, title: 'Approvals', description: 'Review and approve SOP submissions.', href: '/docs/approvals/overview', badge: 'QA' },
-  { id: 'change-control', icon: GitBranch, title: 'Change Control', description: 'Manage version changes with digital signatures.', href: '/docs/change-control/overview', badge: null },
-  { id: 'equipment', icon: Cog, title: 'Equipment & PM', description: 'Track assets and schedule preventive maintenance.', href: '/docs/equipment/overview', badge: null },
-  { id: 'calendar', icon: CalendarDays, title: 'Calendar', description: 'View PM schedules and team events.', href: '/docs/calendar/overview', badge: null },
-  { id: 'reports', icon: BarChart2, title: 'Reports', description: 'Audit trails, compliance logs, and AI insights.', href: '/docs/reports/overview', badge: null },
-  { id: 'messaging', icon: MessageSquare, title: 'Messaging', description: 'Direct messages and group chats with record references.', href: '/docs/messaging/overview', badge: null },
-  { id: 'settings', icon: Settings, title: 'Settings & Admin', description: 'Profile, users, departments, and organisation setup.', href: '/docs/settings/your-profile', badge: 'Admin' },
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const GETTING_STARTED = [
+  { title: 'What is SOP-Guard Pro?', href: '/docs/getting-started/introduction' },
+  { title: 'Quickstart Guide', href: '/docs/getting-started/quickstart' },
+  { title: 'Completing Your Onboarding', href: '/docs/getting-started/onboarding' },
+  { title: 'Understanding Your Role', href: '/docs/getting-started/understanding-your-role' },
 ]
+
+const POPULAR_ARTICLES = [
+  { title: 'Role Permissions Matrix', href: '/docs/reference/role-permissions-matrix' },
+  { title: 'SOP Status Reference', href: '/docs/reference/sop-status-reference' },
+  { title: 'Approval Workflows', href: '/docs/approvals/approval-workflows' },
+  { title: 'Your Digital Signature', href: '/docs/settings/your-signature' },
+  { title: 'Keyboard Shortcuts', href: '/docs/reference/keyboard-shortcuts' },
+  { title: 'Glossary', href: '/docs/reference/glossary' },
+]
+
+const DIRECTORY: CategoryBlock[] = [
+  {
+    category: "Compliance & Document Control",
+    modules: [
+      {
+        id: 'sop-library', icon: BookOpen, title: 'SOP Library',
+        desc: 'Read, search, acknowledge, and submit SOPs.',
+        links: [
+          { label: 'Overview', href: '/docs/sop-library/overview' },
+          { label: 'Reading SOPs', href: '/docs/sop-library/reading-sops' },
+          { label: 'Acknowledging a SOP', href: '/docs/sop-library/acknowledging-sops' },
+          { label: 'Submitting for Approval', href: '/docs/sop-library/submitting-sops' },
+          { label: 'Searching Cross-Department', href: '/docs/sop-library/searching-cross-department' },
+          { label: 'Version History', href: '/docs/sop-library/version-history' },
+        ]
+      },
+      {
+        id: 'approvals', icon: ClipboardCheck, title: 'QA Approvals', badge: 'QA',
+        desc: 'Review submissions, request changes, and activate documents.',
+        links: [
+          { label: 'Overview', href: '/docs/approvals/overview' },
+          { label: 'Reviewing a Submission', href: '/docs/approvals/reviewing-a-submission' },
+          { label: 'Requesting Changes', href: '/docs/approvals/requesting-changes' },
+          { label: 'Approval Workflows', href: '/docs/approvals/approval-workflows' },
+          { label: 'Approving & Activating', href: '/docs/approvals/approving-and-activating' },
+        ]
+      },
+      {
+        id: 'change-control', icon: GitBranch, title: 'Change Control',
+        desc: 'Manage versioned changes with digital signatures.',
+        links: [
+          { label: 'Overview', href: '/docs/change-control/overview' },
+          { label: 'Understanding the Diff', href: '/docs/change-control/understanding-the-diff' },
+          { label: 'Signing a Change Control', href: '/docs/change-control/signing-a-change-control' },
+          { label: 'Waiving a Signature', href: '/docs/change-control/signature-waiver' },
+          { label: 'Deadlines & Escalation', href: '/docs/change-control/deadlines-and-escalation' },
+        ]
+      },
+    ]
+  },
+  {
+    category: "Operations & Analytics",
+    modules: [
+      {
+        id: 'equipment', icon: Cog, title: 'Equipment & PM',
+        desc: 'Track assets and schedule preventive maintenance.',
+        links: [
+          { label: 'Overview', href: '/docs/equipment/overview' },
+          { label: 'Adding Equipment', href: '/docs/equipment/adding-equipment' },
+          { label: 'Asset Detail Page', href: '/docs/equipment/asset-detail' },
+          { label: 'Logging PM Completion', href: '/docs/equipment/logging-pm-completion' },
+          { label: 'Reassigning Tasks', href: '/docs/equipment/reassigning-tasks' },
+        ]
+      },
+      {
+        id: 'reports', icon: BarChart2, title: 'Reports & Logs',
+        desc: 'Audit trails, compliance logs, and AI-powered insights.',
+        links: [
+          { label: 'Overview', href: '/docs/reports/overview' },
+          { label: 'SOP Change History', href: '/docs/reports/sop-change-history' },
+          { label: 'Acknowledgement Log', href: '/docs/reports/acknowledgement-log' },
+          { label: 'PM Completion Log', href: '/docs/reports/pm-completion-log' },
+          { label: 'Notice Log', href: '/docs/reports/notice-log' },
+          { label: 'AI Risk Insights', href: '/docs/reports/ai-risk-insights' },
+        ]
+      },
+      {
+        id: 'calendar', icon: CalendarDays, title: 'Company Calendar',
+        desc: 'View PM schedules, events, and team deadlines.',
+        links: [
+          { label: 'Overview', href: '/docs/calendar/overview' },
+          { label: 'PM Dates on the Calendar', href: '/docs/calendar/pm-dates' },
+          { label: 'Creating Events', href: '/docs/calendar/creating-events' },
+        ]
+      },
+    ]
+  },
+  {
+    category: "Communication & Administration",
+    modules: [
+      {
+        id: 'the-pulse', icon: BookmarkCheck, title: 'The Pulse',
+        desc: 'Real-time work feed, notices, and personal to-dos.',
+        links: [
+          { label: 'Overview', href: '/docs/the-pulse/overview' },
+          { label: 'Notification Types', href: '/docs/the-pulse/notification-types' },
+          { label: 'Sending Notices', href: '/docs/the-pulse/notices-and-replies' },
+          { label: 'Personal To-Dos', href: '/docs/the-pulse/personal-todos' },
+        ]
+      },
+      {
+        id: 'messaging', icon: MessageSquare, title: 'Messaging',
+        desc: 'Direct messages, group chats, and record references.',
+        links: [
+          { label: 'Overview', href: '/docs/messaging/overview' },
+          { label: 'Direct Messages', href: '/docs/messaging/direct-messages' },
+          { label: 'Group Conversations', href: '/docs/messaging/group-conversations' },
+          { label: 'Mentioning Someone', href: '/docs/messaging/mentions' },
+          { label: 'Referencing Records', href: '/docs/messaging/referencing-records' },
+          { label: 'Notifications & Muting', href: '/docs/messaging/notifications-and-muting' },
+        ]
+      },
+      {
+        id: 'settings', icon: Settings, title: 'Settings & Admin', badge: 'Admin',
+        desc: 'Profile, users, departments, and system configuration.',
+        links: [
+          { label: 'Your Profile', href: '/docs/settings/your-profile' },
+          { label: 'Your Signature', href: '/docs/settings/your-signature' },
+          { label: 'Notification Preferences', href: '/docs/settings/notification-preferences' },
+          { label: 'Managing Departments', href: '/docs/settings/departments' },
+          { label: 'Managing Users', href: '/docs/settings/user-management' },
+          { label: 'Deactivating Users', href: '/docs/settings/deactivating-users' },
+        ]
+      },
+    ]
+  }
+]
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TYPES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+interface ModuleLink { label: string; href: string }
+interface Module { id: string; icon: React.ElementType; title: string; desc: string; badge?: string; links: ModuleLink[] }
+interface CategoryBlock { category: string; modules: Module[] }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENT
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export function DocsHomeContent() {
   return (
-    <div className="min-h-screen bg-background transition-colors duration-300">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-b from-[#081B33] via-[#0D2B55] to-[#0A2342] py-24 px-8 overflow-hidden border-b border-border/10">
-        {/* Subtle background effects */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl opacity-20 pointer-events-none">
-          <div className="absolute inset-0 bg-radial-gradient from-brand-teal via-transparent to-transparent opacity-20" />
-        </div>
-        <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent shadow-[0_-4px_20px_rgba(0,194,168,0.1)]" />
+    <div className="min-h-screen bg-background font-sans">
 
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h1 className="font-[var(--font-dm-sans)] text-[44px] md:text-[52px] font-bold text-white leading-[1.1] tracking-tightest mb-6 drop-shadow-sm">
-            Knowledge <span className="text-brand-teal">Base</span>
-          </h1>
-          <p className="text-19 text-white/70 max-w-2xl mx-auto leading-relaxed font-medium mb-12">
-            Everything you need to use SOP-Guard Pro confidently — from your first day to advanced organisation setup.
-          </p>
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      <section className="border-b border-border bg-background">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 pt-16 pb-14">
 
-          {/* Search Bar - Center and glow */}
-          <div className="max-w-xl mx-auto mb-20 relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-brand-teal/20 to-brand-blue/20 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 transition duration-500" />
-            <div className="relative">
+          {/* Title row */}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
+            <div>
+              <h1 className="text-[32px] md:text-[40px] font-extrabold text-foreground tracking-tight leading-[1.15] mb-3">
+                SOP-Guard Pro Documentation
+              </h1>
+              <p className="text-[16px] text-muted-foreground max-w-lg leading-relaxed">
+                Comprehensive guides for every feature, workflow, and administrative task. Find answers fast with search or browse by category below.
+              </p>
+            </div>
+            <div className="w-full md:w-[360px] shrink-0">
               <DocsSearch variant="large" />
             </div>
           </div>
 
-          {/* Quick Start Cards - Glassmorphism */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <Link
-              href="/docs/getting-started/quickstart"
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tr-none p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-teal/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-brand-teal mb-6 shadow-inner ring-1 ring-white/20 group-hover:bg-brand-teal group-hover:text-white transition-colors duration-300">
-                <Rocket size={24} />
+          {/* Two-column quick access */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Getting Started */}
+            <div className="bg-card border border-border rounded-lg p-5">
+              <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                <Zap size={14} className="text-brand-teal" />
+                Getting Started
+              </h2>
+              <div className="space-y-1">
+                {GETTING_STARTED.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center justify-between py-2 px-3 -mx-3 rounded-md text-[14px] font-medium text-foreground hover:bg-muted/60 transition-colors group"
+                  >
+                    {link.title}
+                    <ArrowRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </Link>
+                ))}
               </div>
-              <p className="text-18 font-bold text-white tracking-tight mb-2">Quickstart guide</p>
-              <p className="text-14 text-white/50 leading-relaxed group-hover:text-white/70 transition-colors">Up and running with Pro in &lt; 10 minutes.</p>
-            </Link>
+            </div>
 
-            <Link
-              href="#features"
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tr-none p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-blue/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-brand-teal mb-6 shadow-inner ring-1 ring-white/20 group-hover:bg-brand-teal group-hover:text-white transition-colors duration-300">
-                <BookOpen size={24} />
+            {/* Popular Articles */}
+            <div className="bg-card border border-border rounded-lg p-5">
+              <h2 className="text-[13px] font-bold text-muted-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                <FileText size={14} className="text-brand-blue" />
+                Popular Articles
+              </h2>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                {POPULAR_ARTICLES.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="py-2 px-2 -mx-2 rounded-md text-[14px] font-medium text-foreground hover:bg-muted/60 transition-colors truncate"
+                  >
+                    {link.title}
+                  </Link>
+                ))}
               </div>
-              <p className="text-18 font-bold text-white tracking-tight mb-2">Feature guides</p>
-              <p className="text-14 text-white/50 leading-relaxed group-hover:text-white/70 transition-colors">Deep dives into every module and tool.</p>
-            </Link>
+            </div>
+          </div>
 
-            <Link
-              href="/docs/admin/first-setup"
-              className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl rounded-tr-none p-8 hover:bg-white/10 hover:border-white/20 hover:scale-[1.02] hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-brand-teal/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-              <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-brand-teal mb-6 shadow-inner ring-1 ring-white/20 group-hover:bg-brand-teal group-hover:text-white transition-colors duration-300">
-                <Shield size={24} />
-              </div>
-              <p className="text-18 font-bold text-white tracking-tight mb-2">Admin setup</p>
-              <p className="text-14 text-white/50 leading-relaxed group-hover:text-white/70 transition-colors">Strategic configuration for admins.</p>
-            </Link>
+          {/* Stats strip */}
+          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 text-[13px] text-muted-foreground">
+            <span className="flex items-center gap-1.5"><FileText size={13} /> <strong className="text-foreground">60+</strong> articles</span>
+            <span className="flex items-center gap-1.5"><Database size={13} /> <strong className="text-foreground">12</strong> modules</span>
+            <span className="flex items-center gap-1.5"><Users size={13} /> <strong className="text-foreground">4</strong> role tiers</span>
+            <span className="flex items-center gap-1.5"><Lock size={13} /> <strong className="text-foreground">RLS</strong> secured</span>
           </div>
         </div>
       </section>
 
-      {/* Feature Grid */}
-      <section id="features" className="py-24 px-8 bg-muted/20">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-36 font-bold text-foreground tracking-tightest mb-4">
-              Explore by <span className="text-brand-blue">Feature</span>
-            </h2>
-            <p className="text-18 text-muted-foreground max-w-2xl mx-auto font-medium">
-              Dive into detailed guides for every corner of the SOP-Guard Pro ecosystem.
+      {/* ── MODULE DIRECTORY ──────────────────────────────────────────── */}
+      <section className="bg-muted/20">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-16 space-y-16">
+          {DIRECTORY.map(cat => (
+            <div key={cat.category}>
+              <h2 className="text-[20px] font-bold text-foreground tracking-tight mb-6 pb-3 border-b border-border">
+                {cat.category}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {cat.modules.map(mod => (
+                  <ModuleCard key={mod.id} module={mod} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── ADMIN QUICK-ACCESS ────────────────────────────────────────── */}
+      <section className="border-t border-border bg-background">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-12">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div>
+              <h3 className="text-[18px] font-bold text-foreground mb-1 flex items-center gap-2">
+                <Shield size={18} className="text-purple-600 dark:text-purple-400" />
+                Administrator Resources
+              </h3>
+              <p className="text-[14px] text-muted-foreground">
+                First-time setup, role system internals, audit logs, and system health monitoring.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'First-Time Setup', href: '/docs/admin/first-setup' },
+                { label: 'Role System', href: '/docs/admin/role-system-explained' },
+                { label: 'Audit Logs', href: '/docs/admin/audit-log' },
+                { label: 'System Health', href: '/docs/admin/system-health' },
+              ].map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="px-4 py-2 border border-border rounded-lg text-[13px] font-semibold text-foreground hover:bg-muted/50 transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER CTA ────────────────────────────────────────────────── */}
+      <section className="border-t border-border bg-card">
+        <div className="max-w-6xl mx-auto px-6 md:px-10 py-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div>
+            <h4 className="text-[16px] font-bold text-foreground mb-1">Can't find what you need?</h4>
+            <p className="text-[14px] text-muted-foreground">
+              Reach out to our support team for configuration help and troubleshooting.
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {FEATURES.map(feature => (
-              <Link
-                key={feature.id}
-                href={feature.href}
-                className="group relative bg-card border border-border/60 rounded-none p-8 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] hover:border-brand-blue/30 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-full overflow-hidden"
-              >
-                <div className="flex items-center justify-between mb-8">
-                  <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center text-brand-blue group-hover:bg-brand-blue/10 group-hover:text-brand-blue transition-colors duration-300">
-                    <feature.icon size={22} />
-                  </div>
-                  {feature.badge && (
-                    <span className={cn(
-                      "text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest shadow-sm",
-                      feature.badge === 'QA' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
-                    )}>
-                      {feature.badge}
-                    </span>
-                  )}
-                </div>
-                <div className="absolute top-10 right-20 w-50 h-5 bg-gradient-to-br from-brand-teal/10 to-transparent rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500" />
-                <h3 className="text-20 font-bold text-foreground group-hover:text-brand-blue transition-colors tracking-tight mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-15 text-muted-foreground leading-relaxed group-hover:text-foreground transition-colors flex-1">
-                  {feature.description}
-                </p>
-                <div className="mt-8 pt-6 border-t border-border/40 flex items-center justify-between">
-                  <span className="text-13 font-bold text-brand-blue flex items-center gap-1 group-hover:gap-2 transition-all">
-                    View Documentation <ChevronRight size={14} />
-                  </span>
-                  <div className="w-8 h-8 rounded-full bg-muted/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ChevronRight size={14} className="text-muted-foreground" />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Help Footer */}
-      <section className="bg-background border-t border-border py-24 text-center relative overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-blue/5 blur-[120px] rounded-full -z-10" />
-        <div className="max-w-3xl mx-auto px-6 relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-blue/10 text-brand-blue text-12 font-bold uppercase tracking-widest mb-6 border border-brand-blue/20">
-            <MessageSquare size={14} />
-            Support Center
-          </div>
-          <h4 className="text-32 font-bold text-foreground mb-4 tracking-tightest">Still have questions?</h4>
-          <p className="text-muted-foreground mb-10 text-18 font-medium max-w-xl mx-auto leading-relaxed">
-            Our specialized support team is here to help you configure SOP-Guard Pro for your specific operational needs.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="mailto:support@sopguard.com"
-              className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 rounded-2xl bg-brand-navy dark:bg-brand-teal text-white font-bold hover:bg-brand-blue hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-soft"
-            >
-              Email Support
-            </a>
-            <Link
-              href="/docs/getting-started/quickstart"
-              className="w-full sm:w-auto inline-flex items-center justify-center px-10 py-4 rounded-2xl bg-background text-foreground border border-border font-bold hover:bg-muted transition-all duration-300"
-            >
-              Open Ticket
-            </Link>
-          </div>
+          <a
+            href="mailto:support@sopguard.com"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-foreground text-background text-[14px] font-semibold hover:opacity-90 transition-opacity shrink-0"
+          >
+            <MessageSquare size={16} />
+            Contact Support
+          </a>
         </div>
       </section>
     </div>
   )
 }
 
-function ChevronRight({ size, className }: { size: number, className?: string }) {
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODULE CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function ModuleCard({ module }: { module: Module }) {
+  const Icon = module.icon
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
+    <div className="flex flex-col bg-card border border-border rounded-lg overflow-hidden hover:border-brand-blue/40 transition-colors">
+      {/* Header strip */}
+      <div className="px-5 pt-5 pb-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center text-brand-blue dark:text-brand-teal">
+              <Icon size={18} />
+            </div>
+            <h3 className="text-[15px] font-bold text-foreground tracking-tight">{module.title}</h3>
+          </div>
+          {module.badge && (
+            <span className={cn(
+              "text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border",
+              module.badge === 'QA'
+                ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
+                : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-400 dark:border-purple-500/20'
+            )}>
+              {module.badge}
+            </span>
+          )}
+        </div>
+        <p className="text-[13px] text-muted-foreground leading-relaxed">{module.desc}</p>
+      </div>
+
+      {/* Links list */}
+      <div className="border-t border-border bg-muted/20 px-5 py-3 flex-1">
+        <div className="space-y-0.5">
+          {module.links.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="flex items-center gap-2 py-1.5 text-[13px] text-muted-foreground hover:text-brand-blue dark:hover:text-brand-teal font-medium transition-colors group"
+            >
+              <ChevronRight size={12} className="text-border group-hover:text-brand-blue dark:group-hover:text-brand-teal transition-colors shrink-0" />
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
