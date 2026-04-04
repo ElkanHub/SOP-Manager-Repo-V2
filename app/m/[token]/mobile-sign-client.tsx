@@ -23,11 +23,10 @@ export function MobileSignClient({ token, initialExpired, initialCompleted, expi
         return Math.max(0, Math.floor((new Date(expiresAt).getTime() - Date.now()) / 1000))
     })
     const sigCanvas = useRef<SignatureCanvas>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
     const supabase = createClient()
 
     // ─── Viewport height fix for mobile browsers ─────────────────────────
-    // Mobile browsers have dynamic address bars that change the viewport.
-    // We use a CSS custom property to get the true available height.
     useEffect(() => {
         function setVH() {
             const vh = window.innerHeight * 0.01
@@ -41,6 +40,53 @@ export function MobileSignClient({ token, initialExpired, initialCompleted, expi
             window.removeEventListener('orientationchange', setVH)
         }
     }, [])
+
+    // ─── Canvas resize: sync internal buffer to container size ───────────
+    // react-signature-canvas defaults its internal <canvas> to 300×150.
+    // CSS w-full/h-full only stretches the visual, the drawing area stays
+    // tiny. We must manually set the canvas width/height attributes to
+    // match the container's actual pixel dimensions.
+    useEffect(() => {
+        function resizeCanvas() {
+            const container = containerRef.current
+            const canvas = sigCanvas.current
+            if (!container || !canvas) return
+
+            const canvasEl = canvas.getCanvas()
+            const rect = container.getBoundingClientRect()
+            const dpr = window.devicePixelRatio || 1
+
+            // Set the canvas buffer to the container's CSS size × device pixel ratio
+            canvasEl.width = rect.width * dpr
+            canvasEl.height = rect.height * dpr
+
+            // Scale the drawing context so 1 CSS px = 1 drawing unit
+            const ctx = canvasEl.getContext('2d')
+            if (ctx) {
+                ctx.scale(dpr, dpr)
+            }
+
+            // Set the CSS display size to fill the container exactly
+            canvasEl.style.width = `${rect.width}px`
+            canvasEl.style.height = `${rect.height}px`
+
+            // Clear any previous drawing (resize wipes the buffer anyway)
+            canvas.clear()
+            setIsDrawingEmpty(true)
+        }
+
+        // Run after a short delay so the flex layout has settled
+        const timer = setTimeout(resizeCanvas, 100)
+
+        window.addEventListener('resize', resizeCanvas)
+        window.addEventListener('orientationchange', resizeCanvas)
+
+        return () => {
+            clearTimeout(timer)
+            window.removeEventListener('resize', resizeCanvas)
+            window.removeEventListener('orientationchange', resizeCanvas)
+        }
+    }, [status]) // re-run when status changes (e.g. from loading to ready)
 
     // ─── Countdown timer ─────────────────────────────────────────────────
     useEffect(() => {
@@ -202,6 +248,7 @@ export function MobileSignClient({ token, initialExpired, initialCompleted, expi
             {/* Canvas area */}
             <div className="flex-1 flex flex-col px-4 py-3 gap-3">
                 <div
+                    ref={containerRef}
                     className="flex-1 border-2 border-slate-200 rounded-2xl overflow-hidden relative bg-white shadow-inner touch-none"
                     style={{ minHeight: '200px' }}
                 >
@@ -212,8 +259,15 @@ export function MobileSignClient({ token, initialExpired, initialCompleted, expi
                         maxWidth={3.5}
                         velocityFilterWeight={0.7}
                         canvasProps={{
-                            className: "w-full h-full cursor-crosshair",
-                            style: { touchAction: 'none' }
+                            style: {
+                                touchAction: 'none',
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                cursor: 'crosshair',
+                            }
                         }}
                         onBegin={() => {
                             setIsDrawingEmpty(false)
