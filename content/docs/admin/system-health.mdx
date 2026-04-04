@@ -1,0 +1,42 @@
+---
+title: "System Health & Backups"
+description: "Monitoring the health and security of the SOP-Guard Pro deployment."
+section: "admin"
+order: 6
+role: "admin"
+---
+
+<RoleAccess roles={["admin"]} />
+
+SOP-Guard Pro uses Supabase as its primary backend infrastructure, seamlessly handling the database, storage, authentication, and real-time synchronisation. Because of this managed architecture, most traditional "system health" tasks are automated.
+
+---
+
+## Automatic Backups
+
+Your data—including SOP versions, equipment registries, user profiles, and audit logs—is stored in your connected Supabase PostgreSQL database.
+
+- **Continuous Backups**: Supabase automatically handles daily backups (PITR - Point in Time Recovery available on Pro plans).
+- **Storage Buckets**: Uploaded SOP files and signature certificates are housed in Supabase Storage buckets, which are highly redundant and protected against data loss.
+
+You do not need to manually run backups from the SOP-Guard Pro admin panel.
+
+---
+
+## Storage Constraints
+
+<Callout type="warning">
+  Storage size is dictated by your Supabase tier. If you have many large `.docx` files or high-resolution equipment images, monitor your Supabase dashboard to ensure you do not exceed your logical storage limit.
+</Callout>
+
+Administrators can optimize storage by:
+- Requiring compressed `.png` image uploads.
+- Purging unused or deprecated system files directly from the Supabase bucket (WARNING: Do not delete active SOP versions).
+
+---
+
+## Security Health
+
+The application secures itself using internal **Row-Level Security (RLS)** protocols rather than server-side application logic. This means that even if a user tries to artificially manipulate queries, the database itself will cleanly reject unauthorized actions.
+
+If users report access issues despite having the correct Role and Department, double-check that their account status is not set to **Deactivated** in the User Management view.

@@ -32,10 +32,14 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
 
   // Dynamic content structure derived from MDX files
   const pages = [
-    { slug: "admin/audit-logs", title: "Audit Logs", section: "admin", order: 2, role: "admin" },
+    { slug: "admin/audit-log", title: "Audit Logs", section: "admin", order: 5, role: "admin" },
+    { slug: "admin/first-setup", title: "First-Time Setup", section: "admin", order: 2, role: "admin" },
+    { slug: "admin/granting-admin-access", title: "Granting Admin Access", section: "admin", order: 4, role: "admin" },
     { slug: "admin/overview", title: "Admin Console Overview", section: "admin", order: 1, role: "admin" },
-    { slug: "admin/system-health", title: "System Health & Backups", section: "admin", order: 3, role: "admin" },
+    { slug: "admin/role-system-explained", title: "Role System Explained", section: "admin", order: 3, role: "admin" },
+    { slug: "admin/system-health", title: "System Health & Backups", section: "admin", order: 6, role: "admin" },
     { slug: "approvals/approval-workflows", title: "Approval Workflows", section: "approvals", order: 4, role: "qa" },
+    { slug: "approvals/approving-and-activating", title: "Approving & Activating", section: "approvals", order: 5, role: "qa" },
     { slug: "approvals/overview", title: "QA Approvals Overview", section: "approvals", order: 1, role: "qa" },
     { slug: "approvals/requesting-changes", title: "Requesting Changes", section: "approvals", order: 3, role: "qa" },
     { slug: "approvals/reviewing-a-submission", title: "Reviewing a Submission", section: "approvals", order: 2, role: "qa" },

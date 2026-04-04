@@ -1,0 +1,48 @@
+---
+title: "Approval Workflows"
+description: "Understanding the document routing and QA lifecycle."
+section: "approvals"
+order: 4
+role: "qa"
+---
+
+<RoleAccess roles={["qa"]} />
+
+SOP-Guard Pro enforces a strict, multi-stage approval lifecycle for all documents to guarantee compliance and quality control. This is the end-to-end journey of an SOP submission.
+
+---
+
+## 1. Draft Phase
+
+When a Manager uploads a new SOP, it is initially categorized as **Draft**. 
+- It is only visible to the submitter and other Managers inside that specific department.
+- The document can be freely edited, updated, or deleted without any audit trail consequences.
+
+## 2. Pending QA
+
+When the submitter clicks **Submit for Approval**, the SOP is locked and its status changes to **Pending QA**.
+- The Quality Assurance team receives a notification.
+- QA personnel use the Request Modal to review the document details.
+- QA can either **Approve**, **Reject**, or **Request Changes**.
+
+If changes are requested, the SOP bounces back to the submitter, and a threaded conversation begins within the modal. This loop continues until QA provides an approval.
+
+## 3. Pending Change Control (CC)
+
+<Callout type="info">
+  SOPs that only have grammatical corrections may not require a full Change Control, depending on organizational procedures, though the platform defaults to requiring one for compliance.
+</Callout>
+
+Once QA approves the document, it enters the **Pending CC** state.
+- The system generates an official Change Control certificate.
+- The Change Control routes to all required Managers in the designated Department.
+- The system captures immutable Digital Signatures from each requested Manager.
+
+## 4. Active
+
+Only after QA has approved the payload, AND all required Managers have signed the Change Control document, does the SOP become **Active**.
+- The old version (if updating an existing SOP) is marked as **Superseded**.
+- The new active SOP immediately appears in the general Library.
+- Acknowledgement pulse notifications are blasted to all involved Employees.
+
+This robust workflow ensures that unverified procedures are never enacted by ground-level employees without proper administrative oversight.

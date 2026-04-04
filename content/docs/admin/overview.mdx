@@ -1,0 +1,37 @@
+---
+title: "Admin Console Overview"
+description: "A summary of the central command center for managing the SOP-Guard Pro platform."
+section: "admin"
+order: 1
+role: "admin"
+---
+
+<RoleAccess roles={["admin"]} />
+
+The **Admin Console** is the centralized hub where administrative users can configure the platform, manage system-wide settings, and monitor operational health. This section of the knowledge base explains how to perform top-level tasks.
+
+---
+
+## Administrative Responsibilities
+
+Unlike standard Managers or QA personnel who handle document workflows and equipment, **Admins** manage the infrastructure of the application itself.
+
+Your primary responsibilities include:
+- **User and Role Management**: Defining who has access to what, modifying roles, and granting or revoking administrative access.
+- **Department Configuration**: Setting up the logical layout of the organisation's teams.
+- **Compliance Monitoring**: Reviewing immutable Audit Logs, which track all significant security and data changes within the system.
+
+## Navigation Options
+
+The Admin features are accessed directly from the **Settings** menu. Use the sidebar to navigate to:
+
+- `Users` - Manage accounts, roles, and admin grants.
+- `Departments` - Create or rename operational units.
+- `Audit Logs` - View strict system activity records.
+
+<QuickNav links={[
+  { label: 'First-Time Setup', href: '/docs/admin/first-setup', description: 'Configure a fresh installation' },
+  { label: 'Role System', href: '/docs/admin/role-system-explained', description: 'Understand how roles and admins interact' },
+  { label: 'Granting Access', href: '/docs/admin/granting-admin-access', description: 'How to safely elevate user privileges' },
+  { label: 'Audit Logs', href: '/docs/admin/audit-log', description: 'Understand the immutable security logs' }
+]} />
