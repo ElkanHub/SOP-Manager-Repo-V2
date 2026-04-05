@@ -10,7 +10,7 @@
 
 This feature touches many existing parts of the app. Before writing any code:
 
-1. Read `BUILD.md` in full — understand the existing architecture, naming conventions, and ground rules.
+1. Read `BUILD-v2.2.md` in full — understand the existing architecture, naming conventions, and ground rules.
 2. Read the existing `actions/` files to understand the server action pattern used throughout the app.
 3. Read `components/app-sidebar.tsx` to understand how nav items and badges are added.
 4. Read the existing `reports/` components to understand the report page pattern before adding Training reports.
