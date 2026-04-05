@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 4, 2026
-> **Version:** 3.0 (Mobile Signature QR Flow)
-> **Current Phase:** Phase 27 ✅ Complete — Phase 28 Next
+> **Last Updated:** April 5, 2026
+> **Version:** 3.1 (Documentation & Mobile Tables)
+> **Current Phase:** Phase 28 ✅ Complete — Phase 29 Next
 
 ---
 
@@ -42,6 +42,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 25 | ✅ Complete | Document Request Flow (QA Lifecycle)             |
 | Phase 26 | ✅ Complete | DataTable Modernization & QA Processing 2.0      |
 | Phase 27 | ✅ Complete | Mobile Signature QR Flow                         |
+| Phase 28 | ✅ Complete | Documentation Modernization & Responsive Tables  |
 
 ---
 
@@ -1577,3 +1578,57 @@ components/onboarding/
 - Mobile signing page renders correctly for valid/invalid/expired tokens
 - Settings → Signature dialog has 3 tabs: Draw, Upload, Mobile
 - Onboarding signature step has 3 tabs: Draw, Upload, Mobile
+
+---
+
+## Phase 28: Documentation Modernization & Content Audit
+
+**Status:** ✅ Complete
+**Completed:** April 5, 2026
+
+### Overview
+
+Completed a comprehensive audit and modernization of the SOP-Guard Pro documentation portal (`/docs`). The objective was to transform the documentation from a "playful" format into a highly-dense, enterprise-grade knowledge base, and to ensure all writing was purely user-action focused. Additionally, fixed critical responsiveness bugs with markdown tables on mobile devices.
+
+### What Was Built & Fixed
+
+#### Landing Page Redesign
+- Rebuilt `docs-home-content.tsx` from scratch
+- Removed "playful" gradients, floating blobs, and loose aesthetics
+- Implemented an info-dense module directory showing all sub-sections clearly
+- Added a rigid, professional Stripe/Vercel-inspired layout with clean typography
+
+#### Content Audit (58 Files)
+- Audited **every single MDX file** in the project across 12 sections
+- **Stripped Technical Jargon:** Removed all references to "Supabase Realtime", "Row Level Security (RLS)", "is_active flags", "append-only audit logs", database fields, and internal code logic.
+- **Rewrote for Users:** Redesigned explanation structures to reflect exactly what users *see* and *do* rather than how the system accomplishes it behind the scenes.
+- **Expanded Thin Content:** Fleshed out sparse placeholder pages (e.g., `asset-detail.mdx`, `calendar/overview.mdx`, `your-profile.mdx`) with comprehensive step-by-step guidance.
+- Fixed terminology mapping (e.g. removed mentions of "Google Gemini" substituting with general "AI generated summaries").
+
+#### Responsive Tables & Markdown Engine
+- **Bug Fix:** Fixed an issue where the `PermissionsTable` and markdown tables were locking up and unable to scroll horizontally on mobile devices.
+- **Table Renderer Upgrades:** Added `min-w-[600px]` to force tables to be wider than the viewport, correctly triggering `overflow-x-auto` to allow sideways swiping.
+- **MDX Markdown Support:** Installed `remark-gfm` via NPM and injected it into `MDXRemote` to correctly parse and render GitHub-Flavored Markdown tables (which core markdown does not support).
+- Mapped explicit `thead`, `tbody`, `tr`, `th`, and `td` elements into the MDX component map in `doc-page-content.tsx` to handle responsive styling correctly with stripe-coloring (`even:bg-muted/20`).
+
+### Files Created/Modified
+
+```
+app/(docs)/docs/
+├── docs-home-content.tsx             # Complete redesign of landing page
+└── [...slug]/doc-page-content.tsx    # Added remark-gfm + table mappings
+
+content/docs/
+└── (Many)                            # Audited and rewrote all 58 .mdx files
+
+components/docs/
+└── PermissionsTable.tsx              # Added overflow-x-auto and min-w-[600px]
+
+package.json                          # Installed remark-gfm plugin
+```
+
+### Verification
+- `npm run build` / `npx tsc --noEmit` — Exit code 0, no type errors ✅
+- All documentation pages render without missing components
+- Tables successfully scroll horizontally on mobile emulators without breaking
+- No jargon remains in any user-facing documentation
