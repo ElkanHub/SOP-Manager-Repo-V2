@@ -17,7 +17,7 @@ async function checkAuthAndProfile() {
     const client = await createClient()
 
     const { data: { user } } = await client.auth.getUser()
-    if (!user) return { error: 'Not authenticated' }
+    if (!user) return { error: 'Not authenticated' as const }
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -26,12 +26,12 @@ async function checkAuthAndProfile() {
         .single()
 
     if (!profile || !profile.is_active) {
-        return { error: 'User is not active' }
+        return { error: 'User is not active' as const }
     }
 
     const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
 
-    return { user, profile, isQa: !!isQa, supabase }
+    return { error: undefined, user, profile, isQa: !!isQa, supabase }
 }
 
 // ─── MODULE MANAGEMENT ──────────────────────────────────────────────────

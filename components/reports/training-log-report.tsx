@@ -102,5 +102,5 @@ export function TrainingLogReport({ dateFrom, dateTo, isQa }: { dateFrom: string
         }
     ]
 
-    return <DataTable columns={columns} data={data} searchKey="action" isLoading={loading} />
+    return <DataTable columns={columns} data={data} isLoading={loading} />
 }

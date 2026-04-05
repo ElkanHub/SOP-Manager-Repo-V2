@@ -50,9 +50,11 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
     return (
         <div className="w-full max-w-6xl mx-auto space-y-6 p-4 md:p-8 animate-in fade-in zoom-in-95 duration-300">
             <div className="flex items-center gap-2 mb-4">
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/training"><ArrowLeft className="h-5 w-5" /></Link>
-                </Button>
+                <Link href="/training">
+                    <Button variant="ghost" size="icon">
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                </Link>
                 <h2 className="text-xl font-medium text-muted-foreground mr-auto">Back to Hub</h2>
             </div>
 

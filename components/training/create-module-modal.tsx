@@ -94,7 +94,7 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
 
                     <div className="space-y-2">
                         <Label htmlFor="sop">Source SOP <span className="text-destructive">*</span></Label>
-                        <Select value={sopId} onValueChange={setSopId} disabled={isLoading}>
+                        <Select value={sopId} onValueChange={(val) => setSopId(val || "")} disabled={isLoading}>
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select an Active SOP" />
                             </SelectTrigger>

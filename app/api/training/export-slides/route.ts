@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
             // Assuming basic paragraph breaks mapping to pptx lists/lines
             const bodyLines = s.body.split('\n').filter((l: string) => l.trim() !== '')
             
-            const textOptions = {
+            const textOptions: any = {
                 x: 0.5, y: 2.0, w: '90%', h: 3.0,
                 fontSize: 16,
                 color: '444444',
@@ -70,9 +70,9 @@ export async function GET(request: NextRequest) {
             slide.addText(`Slide ${s.order}`, { x: '85%', y: '92%', w: '10%', fontSize: 10, color: '888888', align: 'right' })
         }
 
-        const buffer = await pres.write('nodebuffer')
+        const buffer = await pres.write({ outputType: 'nodebuffer' })
 
-        return new NextResponse(buffer, {
+        return new NextResponse(buffer as any, {
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                 'Content-Disposition': `attachment; filename="${mod.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_training.pptx"`
