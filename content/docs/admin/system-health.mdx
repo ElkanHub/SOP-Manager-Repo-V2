@@ -1,6 +1,6 @@
 ---
 title: "System Health & Backups"
-description: "Monitoring the health and security of the SOP-Guard Pro deployment."
+description: "How your data is protected and stored."
 section: "admin"
 order: 6
 role: "admin"
@@ -8,35 +8,50 @@ role: "admin"
 
 <RoleAccess roles={["admin"]} />
 
-SOP-Guard Pro uses Supabase as its primary backend infrastructure, seamlessly handling the database, storage, authentication, and real-time synchronisation. Because of this managed architecture, most traditional "system health" tasks are automated.
+SOP-Guard Pro stores all of your organisation's data securely in the cloud. This page explains how your data is protected and what you should be aware of as an administrator.
 
 ---
 
 ## Automatic Backups
 
-Your data—including SOP versions, equipment registries, user profiles, and audit logs—is stored in your connected Supabase PostgreSQL database.
+Your data is backed up automatically every day. This includes:
 
-- **Continuous Backups**: Supabase automatically handles daily backups (PITR - Point in Time Recovery available on Pro plans).
-- **Storage Buckets**: Uploaded SOP files and signature certificates are housed in Supabase Storage buckets, which are highly redundant and protected against data loss.
+- All SOP documents and their version history
+- Equipment records and maintenance logs
+- User profiles and signatures
+- Audit logs and compliance records
 
-You do not need to manually run backups from the SOP-Guard Pro admin panel.
+You do not need to run backups manually — this is handled by the platform infrastructure.
 
 ---
 
-## Storage Constraints
+## Where Your Data is Stored
+
+All data is stored across two systems:
+
+- **Database** — User profiles, SOP metadata, equipment records, maintenance logs, approvals, and audit trails
+- **File Storage** — Uploaded SOP documents (.docx files), equipment photos, maintenance completion photos, and digital signatures
+
+Both systems are hosted in secure cloud infrastructure with encryption at rest and in transit.
+
+---
+
+## Storage Considerations
 
 <Callout type="warning">
-  Storage size is dictated by your Supabase tier. If you have many large `.docx` files or high-resolution equipment images, monitor your Supabase dashboard to ensure you do not exceed your logical storage limit.
+  If your organisation uploads many large SOP documents or high-resolution equipment photos, keep an eye on your storage usage. Contact your platform provider if you approach your storage limit.
 </Callout>
 
-Administrators can optimize storage by:
-- Requiring compressed `.png` image uploads.
-- Purging unused or deprecated system files directly from the Supabase bucket (WARNING: Do not delete active SOP versions).
+To keep storage manageable:
+- Use compressed images (PNG or JPG) when uploading equipment photos
+- Avoid uploading unnecessarily large Word documents with embedded high-resolution images
 
 ---
 
-## Security Health
+## Account Access Issues
 
-The application secures itself using internal **Row-Level Security (RLS)** protocols rather than server-side application logic. This means that even if a user tries to artificially manipulate queries, the database itself will cleanly reject unauthorized actions.
+If a user reports that they cannot access the platform despite having the correct role and department, check the following:
 
-If users report access issues despite having the correct Role and Department, double-check that their account status is not set to **Deactivated** in the User Management view.
+1. **Is their account active?** — Go to **Settings** → **Users** and confirm their status is not set to Deactivated
+2. **Have they completed onboarding?** — New users must complete all 4 onboarding steps before they can access the main app
+3. **Is their department correct?** — The wrong department means they may not see the SOPs or equipment they expect

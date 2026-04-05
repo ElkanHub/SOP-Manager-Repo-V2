@@ -29,8 +29,8 @@ const permissions: PermissionRow[] = [
 
 export function PermissionsTable() {
   return (
-    <div className="my-8 overflow-hidden rounded-2xl border border-border shadow-sm">
-      <table className="w-full border-collapse text-left text-13">
+    <div className="my-8 overflow-x-auto rounded-2xl border border-border shadow-sm">
+      <table className="w-full min-w-[600px] border-collapse text-left text-13">
         <thead>
           <tr className="bg-brand-navy text-white">
             <th className="px-4 py-3 font-semibold border-r border-white/10">Action</th>

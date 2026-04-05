@@ -1,50 +1,55 @@
 ---
 title: "The Audit Log"
-description: "Understanding the permanent activity record."
+description: "A permanent record of important actions taken in the system."
 section: "admin"
-order: 4
+order: 5
 role: "qa"
 ---
 
 <RoleAccess roles={["qa", "admin"]} />
 
-The audit log is an **append-only** record of all significant actions.
+The Audit Log is a permanent, unchangeable record of every important action taken in SOP-Guard Pro. It exists so your organisation can always prove who did what and when — essential for compliance and investigations.
 
 ---
 
-## What Is Recorded
+## What Gets Recorded
 
-- SOP submissions and approvals
-- Equipment additions and approvals
-- Change Control issuances and signatures
-- User account changes
-- Admin grants and revocations
-- Department changes
+The following actions are logged automatically:
+
+- **SOP activity** — Submissions, approvals, rejections, and version changes
+- **Equipment activity** — New equipment additions and approvals
+- **Change Control activity** — When Change Controls are issued, signed, or waived
+- **User changes** — Account creations, role changes, admin grants, and deactivations
+- **Department changes** — When departments are created or modified
 
 ---
 
 ## What Is NOT Recorded
 
-- Messages and to-dos
+Everyday actions like the following are not tracked in the Audit Log:
+
+- Messages and personal to-dos
 - Calendar events
-- Session activity (login/logout)
-- View actions
+- Logging in and out
+- Simply viewing a record
 
 ---
 
-## Access
+## Who Can Access the Audit Log
 
-- **QA Managers** — Full access
-- **Admins** — Full access
+- **QA Managers** — Full access to all audit records
+- **Administrators** — Full access to all audit records
 
----
-
-## Using for Audits
-
-Export via **Reports** for external analysis. The data is in CSV format for easy import.
+Other users cannot see the Audit Log.
 
 ---
 
-## Append-Only Guarantee
+## Using the Audit Log
 
-The audit log is enforced at the database level — no UPDATE or DELETE policies exist. Records cannot be modified or removed.
+You can browse audit entries directly in the app, or export them via **Reports** for external analysis. The exported data is available in CSV format, which can be opened in Excel or any spreadsheet tool.
+
+---
+
+## Why Records Cannot Be Changed
+
+Once something is written to the Audit Log, it can never be edited or deleted — not even by administrators. This is by design. A tamper-proof record is a key requirement for regulatory compliance. If an auditor asks "who approved this SOP on March 15th?", the answer is always available and trustworthy.

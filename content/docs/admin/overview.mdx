@@ -1,6 +1,6 @@
 ---
 title: "Admin Console Overview"
-description: "A summary of the central command center for managing the SOP-Guard Pro platform."
+description: "What administrators can do in SOP-Guard Pro."
 section: "admin"
 order: 1
 role: "admin"
@@ -8,30 +8,44 @@ role: "admin"
 
 <RoleAccess roles={["admin"]} />
 
-The **Admin Console** is the centralized hub where administrative users can configure the platform, manage system-wide settings, and monitor operational health. This section of the knowledge base explains how to perform top-level tasks.
+As an Administrator, you have access to features that help you manage the organisation's structure and keep the platform running smoothly.
 
 ---
 
-## Administrative Responsibilities
+## What Administrators Do
 
-Unlike standard Managers or QA personnel who handle document workflows and equipment, **Admins** manage the infrastructure of the application itself.
+Unlike Managers and QA personnel who work with documents and equipment day-to-day, Administrators handle the setup and configuration of the platform:
 
-Your primary responsibilities include:
-- **User and Role Management**: Defining who has access to what, modifying roles, and granting or revoking administrative access.
-- **Department Configuration**: Setting up the logical layout of the organisation's teams.
-- **Compliance Monitoring**: Reviewing immutable Audit Logs, which track all significant security and data changes within the system.
+- **Manage Users** — View all users, change their roles or departments, grant or revoke admin access, and deactivate accounts when people leave
+- **Manage Departments** — Create new departments and set their display colours
+- **Review Audit Logs** — See a permanent record of all significant actions taken in the system
+- **Monitor System Health** — Understand how your data is stored and protected
 
-## Navigation Options
+---
 
-The Admin features are accessed directly from the **Settings** menu. Use the sidebar to navigate to:
+## Where to Find Admin Features
 
-- `Users` - Manage accounts, roles, and admin grants.
-- `Departments` - Create or rename operational units.
-- `Audit Logs` - View strict system activity records.
+Admin features are accessed through the **Settings** page (the gear icon in the sidebar). When you open Settings, you will see tabs for:
+
+- **My Profile** — Your personal information (available to everyone)
+- **Signature** — Your digital signature (available to everyone)
+- **Notifications** — Your notification preferences (available to everyone)
+- **Departments** — Create and manage departments (admin only)
+- **Users** — Manage all user accounts (admin only)
+
+The Departments and Users tabs are only visible to administrators.
+
+---
+
+## Key Points
+
+<Callout type="info">
+  Admin is an extra permission, not a separate role. You are still an Employee or Manager with all the usual capabilities — admin access simply adds the ability to manage users, departments, and view audit logs on top of your existing role.
+</Callout>
 
 <QuickNav links={[
-  { label: 'First-Time Setup', href: '/docs/admin/first-setup', description: 'Configure a fresh installation' },
-  { label: 'Role System', href: '/docs/admin/role-system-explained', description: 'Understand how roles and admins interact' },
-  { label: 'Granting Access', href: '/docs/admin/granting-admin-access', description: 'How to safely elevate user privileges' },
-  { label: 'Audit Logs', href: '/docs/admin/audit-log', description: 'Understand the immutable security logs' }
+  { label: 'First-Time Setup', href: '/docs/admin/first-setup', description: 'Set up the platform from scratch' },
+  { label: 'Role System', href: '/docs/admin/role-system-explained', description: 'How roles and admin access work together' },
+  { label: 'Granting Admin Access', href: '/docs/admin/granting-admin-access', description: 'Give or remove admin privileges' },
+  { label: 'Audit Logs', href: '/docs/admin/audit-log', description: 'View the permanent activity record' }
 ]} />

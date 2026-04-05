@@ -1,6 +1,6 @@
 ---
 title: "The Role System Explained"
-description: "Understanding the three-attribute identity model."
+description: "How user roles and admin access work together in SOP-Guard Pro."
 section: "admin"
 order: 2
 role: "admin"
@@ -8,24 +8,32 @@ role: "admin"
 
 <RoleAccess roles={["admin"]} />
 
-Every user has three profile attributes:
+Every user in SOP-Guard Pro has three profile attributes that define what they can see and do:
 
-1. **Department** — Team they belong to
-2. **Role** — Employee or Manager
-3. **is_admin** — true or false
+1. **Department** — The team they belong to
+2. **Role** — Either Employee or Manager
+3. **Admin Flag** — Whether they have administrative access (yes or no)
 
-These combine to create the effective tiers.
-
----
-
-## Key Points
-
-- **Admin is a flag** — not a role. It adds admin capabilities but does not change operational permissions.
-- **QA is a department** — a QA Manager is simply someone in the QA department with Manager role.
-- **Admin does not override role** — An Admin+Employee still cannot sign Change Controls.
+These three things combine to determine a user's full set of permissions.
 
 ---
 
-## Permissions Table
+## Key Points to Remember
 
-<PermissionsTable />
+- **Admin is an extra permission, not a role.** Adding admin access to someone gives them user management and department management capabilities, but it does not change their operational permissions. An admin who is an Employee still cannot sign Change Controls — that requires the Manager role.
+
+- **QA is a department, not a special role.** A QA Manager is simply a user who is in the QA department AND has the Manager role. There is no separate "QA" button to toggle — it is the combination of department and role that grants approval authority.
+
+- **Admin does not override role limitations.** If an admin needs to perform Manager-level actions (like submitting SOPs or signing Change Controls), their role must also be set to Manager.
+
+---
+
+## Permissions Summary
+
+| User Type | What They Can Do |
+|-----------|-----------------|
+| Employee | Read SOPs, acknowledge them, complete maintenance tasks, send notices and messages |
+| Manager | Everything an Employee can, plus submit SOPs, sign Change Controls, add equipment, reassign tasks |
+| Admin + Employee | Employee abilities, plus manage users, departments, and view audit logs |
+| Admin + Manager | Manager abilities, plus administrative capabilities |
+| QA Manager | See all SOPs and equipment across all departments, approve submissions |

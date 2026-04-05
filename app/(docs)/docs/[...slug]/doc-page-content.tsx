@@ -9,6 +9,7 @@ import { TableOfHeaders } from './table-of-headers'
 import { Breadcrumbs } from '@/components/docs/Breadcrumbs'
 
 // MDX Components
+import remarkGfm from 'remark-gfm'
 import { Callout, RoleBadge, RoleAccess, StepList, Step, KeyboardShortcut, StatusBadge, ScreenCaption, QuickNav, PermissionsTable } from '@/components/docs'
 
 const components = {
@@ -80,15 +81,24 @@ const components = {
     <pre className="bg-brand-navy text-slate-100 rounded-2xl p-6 overflow-x-auto text-[13px] mb-8 shadow-soft border border-slate-800/50" {...props} />
   ),
   table: (props: any) => (
-    <div className="overflow-x-auto mb-8 rounded-2xl border border-border shadow-sm bg-card">
-      <table className="w-full border-collapse" {...props} />
+    <div className="overflow-x-auto mb-8 rounded-2xl border border-border shadow-sm bg-card w-full">
+      <table className="w-full min-w-[600px] border-collapse table-auto" {...props} />
     </div>
   ),
+  thead: (props: any) => (
+    <thead {...props} />
+  ),
+  tbody: (props: any) => (
+    <tbody className="divide-y divide-border/40" {...props} />
+  ),
+  tr: (props: any) => (
+    <tr className="even:bg-muted/20" {...props} />
+  ),
   th: (props: any) => (
-    <th className="bg-muted/50 px-4 py-3 text-left text-[12px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border" {...props} />
+    <th className="bg-muted/50 px-5 py-3 text-left text-[12px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border whitespace-nowrap" {...props} />
   ),
   td: (props: any) => (
-    <td className="px-4 py-3.5 text-[14px] text-muted-foreground border-b border-border/40 last:border-0" {...props} />
+    <td className="px-5 py-3.5 text-[14px] text-muted-foreground leading-relaxed" {...props} />
   ),
 }
 
@@ -142,7 +152,11 @@ export async function DocPageContent({ frontmatter, content }: DocPageContentPro
 
       {/* MDX Content */}
       <div className="prose-slate max-w-none">
-        <MDXRemote source={content} components={components} />
+        <MDXRemote 
+          source={content} 
+          components={components} 
+          options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+        />
       </div>
 
       {/* Page Footer */}

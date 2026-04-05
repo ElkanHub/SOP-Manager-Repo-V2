@@ -1,6 +1,6 @@
 ---
 title: "Deactivating and Reactivating Users"
-description: "Offboarding users while preserving data."
+description: "How to remove access when someone leaves, while keeping their records."
 section: "settings"
 order: 6
 role: "admin"
@@ -8,46 +8,48 @@ role: "admin"
 
 <RoleAccess roles={["admin"]} />
 
-Deactivate users when they leave the organisation.
+When someone leaves your organisation or no longer needs access, you deactivate their account instead of deleting it. This keeps all of their historical data intact.
 
 ---
 
-## What Deactivation Does
+## What Happens When You Deactivate Someone
 
-- `is_active` is set to `false`
-- User cannot log in
-- Current session is terminated immediately
-- User sees a "deactivated" message on login
-
----
-
-## What It Does NOT Do
-
-- Does NOT delete the user
-- Does NOT remove historical data
-- All acknowledgements, signatures, and audit logs are preserved
-
----
-
-## How to Deactivate
-
-1. Go to **Settings** → **Users**
-2. Find the user
-3. Click **Deactivate**
-4. Confirm
-
----
-
-## Reactivation
-
-1. Find the (inactive) user
-2. Click **Reactivate**
-3. User can log in again
-
----
-
-## Compliance
+- They are immediately logged out of the app
+- They cannot sign in again
+- They see a message saying their account has been deactivated if they try
+- All of their existing records stay in the system — acknowledgements, signatures, maintenance logs, and audit trail entries are all preserved
 
 <Callout type="info">
-  SOP-Guard Pro uses soft-delete for users — nobody is ever permanently removed. This is intentional: regulatory compliance requires that records of who signed what and who performed which maintenance tasks are preserved indefinitely, even after someone leaves the organisation.
+  Accounts are never permanently deleted. This is by design — regulations often require that records of who signed what and who performed which tasks are kept indefinitely, even after someone leaves.
 </Callout>
+
+---
+
+## How to Deactivate a User
+
+1. Go to **Settings** → **Users**
+2. Find the user in the table
+3. Open their action menu (three dots)
+4. Click **Deactivate**
+5. Confirm the action
+
+---
+
+## How to Reactivate a User
+
+If someone returns or was deactivated by mistake:
+
+1. Go to **Settings** → **Users**
+2. Find the deactivated user (they will appear greyed out)
+3. Open their action menu (three dots)
+4. Click **Reactivate**
+5. They can now log in again with their existing credentials
+
+---
+
+## When to Deactivate
+
+- When an employee leaves the company
+- When a contractor's engagement ends
+- When someone moves to a role that no longer requires platform access
+- As a temporary measure during investigations or extended leave

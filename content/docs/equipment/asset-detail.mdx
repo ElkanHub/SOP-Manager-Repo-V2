@@ -1,35 +1,73 @@
 ---
 title: "Asset Detail Page"
-description: "Viewing complete equipment information."
+description: "What you see when you click on a piece of equipment."
 section: "equipment"
 order: 3
 role: "all"
 ---
 
-Click any equipment row to view its complete details.
+When you click on any equipment row in the Equipment Registry, you open its detail page. This page shows you everything about that piece of equipment and its maintenance history.
 
 ---
 
-## Left Column
+## Equipment Information
 
-Shows metadata:
-- Asset ID and Name
-- Department badges
-- Status
-- Serial Number and Model
-- Linked SOP (if any)
-- QR Code for quick scanning
+At the top of the page, you will see the key details:
 
----
-
-## Right Column
-
-- **Next Service card** — Shows upcoming PM due date with urgency colour
-- **Log PM Completion button** — Record that maintenance was done
-- **Service History** — Table of all PM tasks, completed and pending
+- **Asset ID** — The unique identifier (e.g., EQ-001)
+- **Name** — What the equipment is called
+- **Department** — Which team is responsible for it (shown as a coloured badge)
+- **Status** — Whether it is Active, Pending QA, or Deactivated
+- **Serial Number** — The manufacturer's serial number (if provided)
+- **Model** — The equipment model (if provided)
+- **Photo** — An image of the equipment (if uploaded)
 
 ---
 
-## Secondary Departments
+## Next Service Card
 
-If you belong to a secondary department for this asset, you can still view and log PM — you are an authorized user even though it is not your primary department.
+This card shows you when the next maintenance task is due. It uses colour coding to help you plan:
+
+- **Green** — Due date is more than 3 days away
+- **Amber** — Due within the next 3 days
+- **Red** — Overdue — maintenance is past due
+
+---
+
+## Logging Maintenance (PM) Completion
+
+If maintenance has been done, you can log it directly from this page:
+
+1. Click the **Log PM Completion** button
+2. Add your notes describing what was done (required)
+3. Optionally upload a photo of the completed work
+4. Click **Complete**
+
+After logging, the system automatically calculates the next due date based on the equipment's maintenance frequency and creates a new task for the next cycle.
+
+---
+
+## Service History
+
+Below the next service card, you will see a table listing every maintenance event for this equipment:
+
+- **Date** — When the task was due or completed
+- **Status** — Completed, Pending, or Overdue
+- **Completed By** — Who logged the completion
+- **Notes** — What was done
+
+This gives you a complete maintenance timeline for compliance and reference.
+
+---
+
+## Linked SOP
+
+If there is a procedure linked to this equipment, you will see a link to it. Click to open the SOP directly in the Library viewer — useful when you need to reference the maintenance procedure while working.
+
+---
+
+## Who Can See This Page
+
+- Everyone in the equipment's primary department
+- Users who belong to any of the equipment's secondary departments
+- QA Managers (who can see all equipment across all departments)

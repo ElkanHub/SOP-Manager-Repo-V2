@@ -1,73 +1,85 @@
 ---
 title: "What is SOP-Guard Pro?"
-description: "An industrial compliance platform for managing Standard Operating Procedures and preventive maintenance."
+description: "A platform for managing Standard Operating Procedures and preventive maintenance."
 section: "getting-started"
 order: 1
 role: "all"
 ---
 
-SOP-Guard Pro is an industrial compliance platform designed for managing **Standard Operating Procedures (SOPs)** and **Preventive Maintenance (PM)** tasks. It is not a document editor — instead, it serves as a governance and distribution system that ensures the right procedures reach the right people at the right time, with full audit trails and digital signatures for changes.
+SOP-Guard Pro is a platform for managing **Standard Operating Procedures (SOPs)** and **Preventive Maintenance (PM)** tasks. It is not a document editor — instead, it helps your organisation make sure the right procedures reach the right people at the right time. Every document change is tracked, and digital signatures are required before updates go live.
 
-## Two Central Hubs
+---
 
-SOP-Guard Pro is built on a **star-centralized architecture**. Two modules form the centre of everything:
+## How the App is Organised
 
-1. **The SOP Library** — The central repository for all procedures. Every SOP lives here, organized by department. Users read, search, and acknowledge SOPs from this central hub.
+SOP-Guard Pro has two main areas:
 
-2. **The Equipment Registry** — The register of all maintained assets. Each piece of equipment has its own record, linked to the PM tasks that keep it running.
+1. **The SOP Library** — Where all your procedures live. Every SOP is here, organised by department. You read, search, and acknowledge SOPs from this central place.
 
-Every other module in the platform orbits one of these two hubs:
-- Approvals and Change Control manage the lifecycle of SOPs
-- The Pulse delivers notifications about both SOPs and equipment
-- Reports draw data from both hubs
-- Messaging lets team members discuss any record in either hub
+2. **The Equipment Registry** — Where all your maintained assets are stored. Each piece of equipment has its own record, linked to the maintenance tasks that keep it running.
 
-> **Note:** There are no department pages or department-specific sections. Department is an attribute of a person and a tag on a record — not a destination in the app.
+Everything else in the platform supports these two areas:
+- **Approvals** and **Change Control** manage the review and sign-off process for SOPs
+- **The Pulse** sends you notifications about SOPs and equipment that need your attention
+- **Reports** collect data from both areas for compliance tracking
+- **Messaging** lets you discuss any record with your team
+
+> **Note:** There are no separate department pages in the app. Your department is part of your profile — it controls which SOPs and equipment you see, but there is no "department homepage".
+
+---
 
 ## Who Uses SOP-Guard Pro?
 
-The platform has four user types:
+There are four types of users:
 
-- **Employees** read and acknowledge SOPs, complete PM tasks assigned to them, and receive notices. They represent the largest user group.
+- **Employees** — Read and acknowledge SOPs, complete maintenance tasks, and receive notices. This is the most common user type.
 
-- **Managers** do everything an Employee can do, plus submit SOPs for approval, sign Change Controls when SOPs are updated, add equipment to the registry, and reassign PM tasks.
+- **Managers** — Everything an Employee can do, plus submit SOPs for approval, sign Change Controls when SOPs are updated, add equipment, and reassign maintenance tasks.
 
-- **QA Managers** (Quality Assurance) are the gatekeepers of the system. They are the only users who can approve SOP submissions and equipment additions before they go live. A QA Manager is simply a user in the QA department with the Manager role.
+- **QA Managers** — The quality gatekeepers. They approve SOP submissions and equipment additions before anything goes live. A QA Manager is simply a user in the QA department with the Manager role.
 
-- **Administrators** manage the organisation's structure — adding departments, inviting users, and configuring settings. Admin is a flag that can be added to either Employee or Manager accounts.
+- **Administrators** — Manage the organisation's setup — adding departments, inviting users, and configuring settings. Admin is an extra permission that can be added to either Employee or Manager accounts.
+
+---
 
 ## The Pulse — Your Work Feed
 
-The Pulse is the **primary interface** for knowing what needs your attention. It lives on the right side of every page and shows:
+The Pulse is the panel on the right side of the screen that keeps you informed about everything that needs your attention. It shows:
 
-- **Priority items** — approvals waiting for you, Change Control signatures due, overdue PM tasks
-- **Today's items** — PM tasks due today, SOPs that have been updated, approval responses
-- **Notices** — broadcast announcements from managers and admins
-- **Personal to-dos** — items you have added for yourself
+- **Priority items** — Approvals waiting for you, Change Control signatures due, overdue maintenance tasks
+- **Today's items** — Tasks due today, SOPs that have been updated
+- **Notices** — Announcements from managers and admins
+- **Personal to-dos** — Items you have added for yourself
 
-The Pulse updates in real-time. When something needs your attention, it appears here — you do not need to check specific pages to stay on top of your work.
+The Pulse updates automatically. When something new arrives, it appears here — you do not need to check different pages to stay on top of your work.
 
-## The Compliance Guarantee
+---
 
-Every Active SOP in the system has been reviewed and approved by a QA Manager. This is not a setting that can be changed — it is **built into the platform's fundamental design**:
+## How Quality is Guaranteed
 
-- When a Manager submits a new SOP, it enters the QA review queue
+Every Active SOP in the system has been reviewed and approved by a QA Manager. This cannot be changed — it is built into how the platform works:
+
+- When a Manager submits a new SOP, it goes into the QA review queue
 - A QA Manager reviews it and either requests changes or approves it
-- Only after QA approval does an SOP become Active
+- Only after QA approval does an SOP become available to everyone
 
-The same process applies to equipment — new assets must be approved by QA before they enter the maintenance rotation.
+The same process applies to equipment — new assets must be approved by QA before they enter the maintenance schedule.
+
+---
 
 ## What SOP-Guard Pro Does NOT Do
 
-- **Document editing** — SOPs are written in Microsoft Word and uploaded as `.docx` files. SOP-Guard Pro renders them read-only.
+- **Document editing** — SOPs are written in Microsoft Word and uploaded as `.docx` files. SOP-Guard Pro shows them in a read-only viewer.
 
 - **Email replacement** — For team conversation, use the built-in Messaging system. For time-sensitive announcements, use Notices via the Pulse.
 
 - **HR management** — User accounts are managed here, but the platform does not track HR data like contracts, leave, or performance.
 
-- **Arbitrary file storage** — Only SOP documents, equipment photos, and PM completion photos are supported.
+- **General file storage** — Only SOP documents, equipment photos, and maintenance completion photos are supported.
+
+---
 
 ## Where to Go Next
 
-- **[Quickstart guide](/docs/getting-started/quickstart)** — Get up and running in 10 minutes
-- **[Understanding your role](/docs/getting-started/understanding-your-role)** — Learn what you can and cannot do
+- **[Quickstart Guide](/docs/getting-started/quickstart)** — Get up and running in 10 minutes
+- **[Understanding Your Role](/docs/getting-started/understanding-your-role)** — Learn what you can and cannot do based on your role
