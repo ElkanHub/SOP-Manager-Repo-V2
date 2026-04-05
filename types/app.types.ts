@@ -296,3 +296,132 @@ export interface DocumentRequest {
   fulfilled_by_profile?: Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
 }
 
+// ─── Training ────────────────────────────────────────────────────────
+
+export type TrainingModuleStatus = 'draft' | 'published' | 'archived'
+export type TrainingAssignmentStatus = 'not_started' | 'in_progress' | 'completed'
+export type QuestionnaireStatus = 'draft' | 'published'
+export type QuestionType = 'multiple_choice' | 'true_false' | 'short_answer' | 'fill_blank'
+export type CompletionMethod = 'digital' | 'paper_recorded'
+
+export interface QuestionOption {
+  id:         string    // 'a' | 'b' | 'c' | 'd' or 'true' | 'false'
+  text:       string
+  is_correct: boolean
+}
+
+export interface TrainingModule {
+  id:                       string
+  title:                    string
+  description:              string | null
+  created_by:               string
+  department:               string
+  sop_id:                   string
+  sop_version:              string
+  status:                   TrainingModuleStatus
+  needs_review:             boolean
+  is_mandatory:             boolean
+  deadline:                 string | null
+  slide_deck:               TrainingSlide[] | null
+  slide_deck_generated_at:  string | null
+  created_at:               string
+  updated_at:               string
+  // Joined
+  sop?:                     Pick<SopRecord, 'id' | 'sop_number' | 'title' | 'version' | 'status'>
+  creator?:                 Pick<Profile, 'id' | 'full_name' | 'avatar_url'>
+  assignee_count?:          number
+  completion_count?:        number
+  questionnaire_count?:     number
+}
+
+export interface TrainingSlide {
+  id:        string           // uuid generated client-side
+  type:      'title' | 'objectives' | 'content' | 'summary' | 'edge_cases' | 'resources'
+  title:     string
+  body:      string           // plain text, may contain \n for line breaks
+  notes?:    string           // presenter notes (optional)
+  order:     number
+}
+
+export interface TrainingAssignment {
+  id:           string
+  module_id:    string
+  assignee_id:  string
+  assigned_by:  string
+  assigned_at:  string
+  status:       TrainingAssignmentStatus
+  completed_at: string | null
+  // Joined
+  assignee?:    Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'department' | 'role'>
+  module?:      Pick<TrainingModule, 'id' | 'title' | 'sop_id' | 'is_mandatory' | 'deadline'>
+}
+
+export interface TrainingQuestionnaire {
+  id:             string
+  module_id:      string
+  title:          string
+  description:    string | null
+  passing_score:  number
+  status:         QuestionnaireStatus
+  version:        number
+  created_at:     string
+  updated_at:     string
+  // Joined
+  questions?:     TrainingQuestion[]
+  attempt_count?: number
+}
+
+export interface TrainingQuestion {
+  id:               string
+  questionnaire_id: string
+  question_text:    string
+  question_type:    QuestionType
+  options:          QuestionOption[] | null
+  correct_answer:   string | null
+  sop_section_ref:  string | null
+  display_order:    number
+}
+
+export interface TrainingAttempt {
+  id:                     string
+  questionnaire_id:       string
+  questionnaire_version:  number
+  respondent_id:          string
+  module_id:              string
+  sop_id:                 string
+  sop_version:            string
+  started_at:             string
+  submitted_at:           string | null
+  score:                  number | null
+  passed:                 boolean | null
+  completion_method:      CompletionMethod
+  paper_scan_url:         string | null
+  created_at:             string
+  // Joined
+  respondent?:            Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'department'>
+  answers?:               TrainingAnswer[]
+}
+
+export interface TrainingAnswer {
+  id:           string
+  attempt_id:   string
+  question_id:  string
+  answer_value: string | null
+  is_correct:   boolean | null
+}
+
+export interface TrainingLogEntry {
+  id:               string
+  actor_id:         string
+  action:           string
+  module_id:        string | null
+  questionnaire_id: string | null
+  attempt_id:       string | null
+  target_user_id:   string | null
+  metadata:         Record<string, unknown> | null
+  created_at:       string
+  // Joined
+  actor?:           Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'department'>
+  target_user?:     Pick<Profile, 'id' | 'full_name' | 'department'>
+  module?:          Pick<TrainingModule, 'id' | 'title'>
+}

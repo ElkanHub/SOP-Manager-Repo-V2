@@ -41,6 +41,11 @@ const DocumentRequestsReport = dynamic(() => import("./document-requests-report"
   loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
 })
 
+const TrainingLogReport = dynamic(() => import("./training-log-report").then(mod => mod.TrainingLogReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
 
 interface ReportsClientProps {
   profile: Profile
@@ -48,7 +53,7 @@ interface ReportsClientProps {
   isAdmin: boolean
 }
 
-type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests"
+type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests" | "training-log"
 
 export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
   const [activeReport, setActiveReport] = useState<ReportType>("sop-changes")
@@ -60,6 +65,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
     { id: "pm-completion", label: "PM Completion Log", icon: Wrench, access: "qa", color: "text-orange-600" },
     { id: "pulse-notices", label: "Pulse / Notice Log", icon: Bell, access: "admin", color: "text-indigo-600" },
     { id: "document-requests", label: "Document Requests", icon: ClipboardList, access: "qa+admin", color: "text-amber-600" },
+    { id: "training-log", label: "Training Log", icon: FileBarChart, access: "manager", color: "text-emerald-600" },
   ]
 
   const canAccess = (access: string) => {
@@ -156,6 +162,9 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
               )}
               {activeReport === "document-requests" && (isQa || isAdmin) && (
                 <DocumentRequestsReport dateFrom={dateFrom} dateTo={dateTo} />
+              )}
+              {activeReport === "training-log" && (isQa || isAdmin || profile.role === "manager") && (
+                <TrainingLogReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} />
               )}
             </div>
           </CardContent>

@@ -43,6 +43,34 @@ export default async function CalendarPage({ searchParams }: PageProps) {
     .gte("start_date", sixtyDaysAgo.toISOString().split("T")[0])
     .lte("start_date", oneEightyDaysFromNow.toISOString().split("T")[0])
 
+  // Fetch training assignments with deadlines
+  const { data: trainingAssignments } = await serviceClient
+    .from("training_assignments")
+    .select(`
+      id,
+      module:training_modules!inner(id, title, description, deadline, department)
+    `)
+    .eq("assignee_id", user.id)
+    .eq("status", "in_progress")
+    .not("training_modules.deadline", "is", null)
+
+  const trainingEvents = (trainingAssignments || []).map((t: any) => {
+    const mod = Array.isArray(t.module) ? t.module[0] : t.module
+    return {
+      id: `train-${t.id}`,
+      title: `Training Due: ${mod.title}`,
+      description: "Mandatory training completion deadline.",
+      start_date: mod.deadline,
+      end_date: mod.deadline,
+      event_type: "other",
+      visibility: "private",
+      department: mod.department,
+      created_by: user.id
+    }
+  })
+
+  const mergedEvents = [...(events || []), ...trainingEvents]
+
   // 1. Get visible equipment
   let equipmentQuery = serviceClient
     .from("equipment")
@@ -112,7 +140,7 @@ export default async function CalendarPage({ searchParams }: PageProps) {
 
   return (
     <CalendarClient
-      events={events || []}
+      events={mergedEvents}
       equipmentPmDates={equipmentPmDates}
       profile={profile as Profile}
     />

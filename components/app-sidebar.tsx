@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap } from "lucide-react"
 import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +33,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [pendingApprovals, setPendingApprovals] = React.useState(0)
   const [pendingEquipmentCount, setPendingEquipmentCount] = React.useState(0)
   const [pendingRequests, setPendingRequests] = React.useState(0)
+  const [pendingTraining, setPendingTraining] = React.useState(0)
+  const [reviewModules, setReviewModules] = React.useState(0)
   const supabase = createClient()
   
   const prevUnreadRef = React.useRef(0)
@@ -121,6 +123,22 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         .in('status', ['submitted', 'received', 'approved'])
       setPendingRequests(reqCount || 0)
     }
+
+    // 5. Training
+    const { count: trCount } = await supabase
+      .from('training_assignments')
+      .select('*', { count: 'exact', head: true })
+      .eq('assignee_id', user.id)
+      .neq('status', 'completed')
+    setPendingTraining(trCount || 0)
+
+    if (profile?.role === 'manager' || profile?.is_admin || isQa) {
+      const { count: revCount } = await supabase
+        .from('training_modules')
+        .select('*', { count: 'exact', head: true })
+        .eq('needs_review', true)
+      setReviewModules(revCount || 0)
+    }
   }, [user?.id, supabase, isQa, profile?.role, profile?.department, profile?.is_admin])
 
   React.useEffect(() => {
@@ -135,6 +153,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sop_approval_requests' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'training_assignments' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'training_modules' }, fetchCounts)
       .subscribe()
 
     return () => {
@@ -162,6 +182,20 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <ClipboardCheck className="w-5 h-5" />,
       isActive: pathname.startsWith("/approvals"),
       badge: pendingApprovals,
+    }] : []),
+    {
+      title: "My Training",
+      url: "/training/my-training",
+      icon: <GraduationCap className="w-5 h-5" />,
+      isActive: pathname.startsWith("/training/my-training"),
+      badge: pendingTraining,
+    },
+    ...((profile?.role === 'manager' || profile?.is_admin || isQa) ? [{
+      title: "Training Hub",
+      url: "/training",
+      icon: <BookOpen className="w-5 h-5" />,
+      isActive: pathname.startsWith("/training") && !pathname.startsWith("/training/my-training"),
+      badge: reviewModules,
     }] : []),
     {
       title: "Equipment",

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import Link from "next/link"
-import { Bell, FileCheck, ShieldAlert, CheckCircle2, MessageSquare, AlertCircle, CornerDownRight, ClipboardList } from "lucide-react"
+import { Bell, FileCheck, ShieldAlert, CheckCircle2, MessageSquare, AlertCircle, CornerDownRight, ClipboardList, GraduationCap } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -69,6 +69,16 @@ export function PulseItem({ item, currentUser, replies = [] }: { item: any; curr
         case 'new_signup':
             Icon = ClipboardList
             colorClass = "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+            break
+        case 'training_assigned':
+        case 'training_completed':
+            Icon = GraduationCap
+            colorClass = "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+            break
+        case 'training_due':
+        case 'training_needs_review':
+            Icon = GraduationCap
+            colorClass = "bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/20"
             break
     }
 
