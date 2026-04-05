@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, subDays } from "date-fns"
-import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download, ClipboardList } from "lucide-react"
+import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download, ClipboardList, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -65,7 +65,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
     { id: "pm-completion", label: "PM Completion Log", icon: Wrench, access: "qa", color: "text-orange-600" },
     { id: "pulse-notices", label: "Pulse / Notice Log", icon: Bell, access: "admin", color: "text-indigo-600" },
     { id: "document-requests", label: "Document Requests", icon: ClipboardList, access: "qa+admin", color: "text-amber-600" },
-    { id: "training-log", label: "Training Log", icon: FileBarChart, access: "manager", color: "text-emerald-600" },
+    { id: "training-log", label: "Training Log", icon: GraduationCap, access: "manager", color: "text-emerald-600" },
   ]
 
   const canAccess = (access: string) => {
@@ -84,7 +84,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
       {/* Page Header */}
       <div className="mb-6 flex items-start gap-3 border-b border-border bg-card px-6 py-4 shrink-0 rounded-none overflow-hidden shadow-sm">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-inner">
-          <FileBarChart className="h-4 w-4" />
+          <GraduationCap className="h-4 w-4" />
         </div>
         <div>
           <h1 className="text-lg font-bold text-foreground">Intelligence & Reports</h1>

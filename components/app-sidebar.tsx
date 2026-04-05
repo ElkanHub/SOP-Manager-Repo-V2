@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell } from "lucide-react"
 import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
@@ -36,20 +36,20 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [pendingTraining, setPendingTraining] = React.useState(0)
   const [reviewModules, setReviewModules] = React.useState(0)
   const supabase = createClient()
-  
+
   const prevUnreadRef = React.useRef(0)
 
   // Sound notification effect
   React.useEffect(() => {
     // Check if unreadCount increased and sound is enabled
     if (unreadConversations > prevUnreadRef.current) {
-        const soundEnabled = profile?.notification_prefs?.message_sound
-        const shouldPlay = soundEnabled && (document.hidden || !pathname.startsWith('/messages'))
-        
-        if (shouldPlay) {
-            const audio = new Audio('/sounds/mixkit-bubble-pop-up-alert-notification-2357.wav')
-            audio.play().catch(err => console.log('Audio playback prevented:', err))
-        }
+      const soundEnabled = profile?.notification_prefs?.message_sound
+      const shouldPlay = soundEnabled && (document.hidden || !pathname.startsWith('/messages'))
+
+      if (shouldPlay) {
+        const audio = new Audio('/sounds/mixkit-bubble-pop-up-alert-notification-2357.wav')
+        audio.play().catch(err => console.log('Audio playback prevented:', err))
+      }
     }
     prevUnreadRef.current = unreadConversations
   }, [unreadConversations, profile?.notification_prefs?.message_sound, pathname])
@@ -84,7 +84,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         .from('sop_approval_requests')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending')
-      
+
       setPendingApprovals(approvalCount || 0)
     }
 
@@ -186,14 +186,14 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     {
       title: "My Training",
       url: "/training/my-training",
-      icon: <GraduationCap className="w-5 h-5" />,
+      icon: <Dumbbell className="w-5 h-5" />,
       isActive: pathname.startsWith("/training/my-training"),
       badge: pendingTraining,
     },
     ...((profile?.role === 'manager' || profile?.is_admin || isQa) ? [{
       title: "Training Hub",
       url: "/training",
-      icon: <BookOpen className="w-5 h-5" />,
+      icon: <GraduationCap className="w-5 h-5" />,
       isActive: pathname.startsWith("/training") && !pathname.startsWith("/training/my-training"),
       badge: reviewModules,
     }] : []),
