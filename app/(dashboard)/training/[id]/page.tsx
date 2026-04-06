@@ -4,7 +4,8 @@ import ModuleDetailClient from './module-detail-client'
 
 export const metadata = { title: 'Module Details | SOP Manager' }
 
-export default async function ModulePage({ params }: { params: { id: string } }) {
+export default async function ModulePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const client = await createClient()
     const { data: { user } } = await client.auth.getUser()
 
@@ -32,7 +33,7 @@ export default async function ModulePage({ params }: { params: { id: string } })
             sop:sops(id, title, version, status, sop_number, file_url),
             creator:profiles(id, full_name, avatar_url)
         `)
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
     if (!moduleData) notFound()
@@ -46,16 +47,16 @@ export default async function ModulePage({ params }: { params: { id: string } })
     const [qRes, assignRes, attemptRes, deptRes] = await Promise.all([
         serviceClient.from('training_questionnaires')
             .select(`*, questions:training_questions(*)`)
-            .eq('module_id', params.id)
+            .eq('module_id', id)
             .order('created_at', { ascending: false }),
             
         serviceClient.from('training_assignments')
             .select(`*, assignee:profiles(id, full_name, avatar_url, department)`)
-            .eq('module_id', params.id),
+            .eq('module_id', id),
 
         serviceClient.from('training_attempts')
             .select(`*, respondent:profiles(id, full_name, department)`)
-            .eq('module_id', params.id)
+            .eq('module_id', id)
             .order('submitted_at', { ascending: false }),
             
         serviceClient.from('profiles')

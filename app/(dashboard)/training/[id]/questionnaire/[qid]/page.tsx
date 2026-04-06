@@ -4,7 +4,8 @@ import QuestionnairePageClient from './questionnaire-page-client'
 
 export const metadata = { title: 'Assessment | SOP Manager' }
 
-export default async function QuestionnairePage({ params }: { params: { id: string, qid: string } }) {
+export default async function QuestionnairePage({ params }: { params: Promise<{ id: string, qid: string }> }) {
+    const { id, qid } = await params;
     const client = await createClient()
     const { data: { user } } = await client.auth.getUser()
 
@@ -16,7 +17,7 @@ export default async function QuestionnairePage({ params }: { params: { id: stri
     const { data: assignment } = await serviceClient
         .from('training_assignments')
         .select('*')
-        .eq('module_id', params.id)
+        .eq('module_id', id)
         .eq('assignee_id', user.id)
         .single()
 
@@ -25,8 +26,8 @@ export default async function QuestionnairePage({ params }: { params: { id: stri
     const { data: attempt } = await serviceClient
         .from('training_attempts')
         .select('id, submitted_at, score, passed')
-        .eq('module_id', params.id)
-        .eq('questionnaire_id', params.qid)
+        .eq('module_id', id)
+        .eq('questionnaire_id', qid)
         .eq('respondent_id', user.id)
         .single()
 
@@ -39,7 +40,7 @@ export default async function QuestionnairePage({ params }: { params: { id: stri
             training_modules(title, description, slide_deck),
             questions:training_questions(*)
         `)
-        .eq('id', params.qid)
+        .eq('id', qid)
         .single()
 
     if (!questionnaire) notFound()

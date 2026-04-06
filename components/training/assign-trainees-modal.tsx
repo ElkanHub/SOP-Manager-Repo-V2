@@ -8,6 +8,7 @@ import { assignTrainees } from "@/actions/training"
 import { toast } from "sonner"
 import { Loader2, Users } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
+import { cn } from "@/lib/utils"
 
 interface Props {
     isOpen: boolean

@@ -145,7 +145,7 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
                                         <Select value={department} onValueChange={setDepartment} disabled={isLoading}>
                                             <SelectTrigger className="w-full bg-muted/30 border-border/50">
                                                 <SelectValue placeholder="Select Department" />
-                                            </Trigger>
+                                            </SelectTrigger>
                                             <SelectContent>
                                                 {deps.map(d => (
                                                     <SelectItem key={d} value={d}>{d}</SelectItem>
