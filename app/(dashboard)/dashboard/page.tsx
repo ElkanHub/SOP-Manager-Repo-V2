@@ -26,6 +26,8 @@ export default async function DashboardPage() {
     redirect("/onboarding")
   }
 
+  const { data: isQa } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
+
   const todayObj = new Date()
   const today = todayObj.toISOString().split('T')[0]
   const thirtyDaysFromNow = addDays(todayObj, 30).toISOString().split('T')[0]
@@ -212,6 +214,7 @@ export default async function DashboardPage() {
   return (
     <DashboardClient
       profile={profile as Profile}
+      isQa={isQa || false}
       kpiData={{
         activeSops: activeSopsCount || 0,
         pendingApprovals: pendingApprovalsCount || 0,

@@ -224,12 +224,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <Calendar className="w-5 h-5" />,
       isActive: pathname.startsWith("/calendar"),
     },
-    {
+    ...(isQa || profile?.is_admin ? [{
       title: "Reports",
       url: "/reports",
       icon: <FileBarChart className="w-5 h-5" />,
       isActive: pathname.startsWith("/reports"),
-    },
+    }] : []),
   ]
 
   return (

@@ -103,6 +103,7 @@ interface OpenCC {
 
 interface DashboardClientProps {
   profile: Profile
+  isQa?: boolean
   kpiData: KpiData
   statusStripData: StatusStripData
   complianceHealth: ComplianceHealth
@@ -114,6 +115,7 @@ interface DashboardClientProps {
 
 export function DashboardClient({
   profile,
+  isQa = false,
   kpiData,
   statusStripData,
   complianceHealth,
@@ -269,7 +271,7 @@ export function DashboardClient({
           </Card>
         </Link>
 
-        <Link href={profile.role === 'manager' || profile.is_admin ? "/approvals" : "/library"}>
+        <Link href={isQa ? "/approvals" : "/library"}>
           <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
             <CardContent className="pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
@@ -396,19 +398,21 @@ export function DashboardClient({
               </div>
             </div>
           </Button>
-          <Link href="/reports" className="w-full">
-            <Button variant="ghost" className="w-full justify-start h-auto py-3 px-4 hover:bg-purple-500/5 hover:text-purple-600 group">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-500/10 p-2 rounded-lg group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                  <BarChart3 className="w-4 h-4" />
+          {(isQa || profile.is_admin) && (
+            <Link href="/reports" className="w-full">
+              <Button variant="ghost" className="w-full justify-start h-auto py-3 px-4 hover:bg-purple-500/5 hover:text-purple-600 group">
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-500/10 p-2 rounded-lg group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                    <BarChart3 className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col items-start text-left">
+                    <span className="text-sm font-semibold">View Reports</span>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Analytics & audits</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-start text-left">
-                  <span className="text-sm font-semibold">View Reports</span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Analytics & audits</span>
-                </div>
-              </div>
-            </Button>
-          </Link>
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
 
