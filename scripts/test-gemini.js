@@ -23,6 +23,10 @@ async function testGemini() {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: "Hello, respond with 'KEY_WORKS' and nothing else.",
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 500,
+      }
     });
 
     const responseText = response.text.trim();

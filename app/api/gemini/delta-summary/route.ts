@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 // @ts-ignore
 import * as mammoth from 'mammoth'
+import { GoogleGenAI } from '@google/genai'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -70,32 +71,21 @@ ${diffContext}
 
 Provide the concise summary in basic bullet points using • :`
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 500,
-                    }
-                })
+        const ai = new GoogleGenAI({ apiKey: geminiApiKey })
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: prompt,
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 500,
             }
-        )
+        })
 
-        if (!response.ok) {
-            const error = await response.text()
-            console.error('Gemini API error:', error)
-            return NextResponse.json({ error: 'Failed to generate summary' }, { status: 500 })
-        }
-
-        const data = await response.json()
-        const summary = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
+        const summary = response.text || ''
 
         return NextResponse.json({ summary })
     } catch (error: any) {
+
         console.error('Delta summary error:', error)
         return NextResponse.json({ error: error.message || 'Failed to generate summary' }, { status: 500 })
     }
