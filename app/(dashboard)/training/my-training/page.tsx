@@ -27,7 +27,7 @@ export default async function MyTrainingPage() {
         .select(`
             *,
             module:training_modules(
-                id, title, description, department, is_mandatory, deadline, status, sop_id, sop_version,
+                id, title, description, department, is_mandatory, deadline, status, sop_id, sop_version, slide_deck,
                 sop:sops(sop_number),
                 questionnaires:training_questionnaires(id, status, version)
             )

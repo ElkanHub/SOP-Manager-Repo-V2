@@ -48,7 +48,7 @@ export async function createTrainingModule(data: {
     if (auth.error) return { success: false, error: auth.error }
     const { user, profile, isQa, supabase } = auth
 
-    if (profile.role !== 'manager') {
+    if (profile.role !== 'manager' && profile.role !== 'admin') {
         return { success: false, error: 'Only managers can create training modules' }
     }
 
@@ -295,13 +295,24 @@ export async function createQuestionnaire(data: { moduleId: string; title: strin
     if (!mod) return { success: false, error: 'Module not found' }
     if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can manage questionnaires' }
 
+    // Get the latest version for this module to properly increment
+    const { data: latestQ } = await supabase
+        .from('training_questionnaires')
+        .select('version')
+        .eq('module_id', data.moduleId)
+        .order('version', { ascending: false })
+        .limit(1)
+        .single()
+
+    const nextVersion = latestQ ? latestQ.version + 1 : 1
+
     const { data: qData, error } = await supabase.from('training_questionnaires').insert({
         module_id: data.moduleId,
         title: data.title,
         description: data.description || null,
         passing_score: data.passingScore,
         status: 'draft',
-        version: 1
+        version: nextVersion
     }).select('id').single()
 
     if (error) return { success: false, error: error.message }
@@ -356,18 +367,26 @@ export async function startAttempt(questionnaireId: string, moduleId: string) {
     const { data: q } = await supabase.from('training_questionnaires').select('status, version').eq('id', questionnaireId).single()
     if (q?.status !== 'published') return { success: false, error: 'Questionnaire is not published' }
 
-    // Check existing incomplete attempt
+    // Check existing attempts
     const { data: existing } = await supabase.from('training_attempts')
-        .select('id, submitted_at')
+        .select('id, submitted_at, passed')
         .eq('questionnaire_id', questionnaireId)
         .eq('respondent_id', user.id)
         .eq('questionnaire_version', q.version)
     
     if (existing && existing.length > 0) {
-        if (existing[0].submitted_at !== null) {
-            return { success: false, error: 'You have already submitted an attempt for this version' }
+        // Find any in-progress (unsubmitted) attempt
+        const inProgress = existing.find(e => e.submitted_at === null)
+        if (inProgress) {
+            return { success: true, attemptId: inProgress.id }
         }
-        return { success: true, attemptId: existing[0].id }
+        
+        // If a passed attempt exists, block retry
+        const passedAttempt = existing.find(e => e.passed === true)
+        if (passedAttempt) {
+            return { success: false, error: 'You have already passed this assessment' }
+        }
+        // If all prior attempts failed, allow new attempt (fall through)
     }
 
     const { data: attempt, error } = await supabase.from('training_attempts').insert({
@@ -445,7 +464,13 @@ export async function submitAttempt(attemptId: string, answers: { questionId: st
 
     const now = new Date().toISOString()
     await supabase.from('training_attempts').update({ submitted_at: now, score: score, passed: passed }).eq('id', attemptId)
-    await supabase.from('training_assignments').update({ status: 'completed', completed_at: now }).eq('module_id', attempt.module_id).eq('assignee_id', user.id)
+    
+    if (passed) {
+        await supabase.from('training_assignments').update({ status: 'completed', completed_at: now }).eq('module_id', attempt.module_id).eq('assignee_id', user.id)
+    } else {
+        // Allow retry — reset to not_started so they can attempt again
+        await supabase.from('training_assignments').update({ status: 'not_started' }).eq('module_id', attempt.module_id).eq('assignee_id', user.id)
+    }
 
     await supabase.from('training_log').insert({ actor_id: user.id, action: 'attempt_submitted', module_id: attempt.module_id, attempt_id: attemptId, metadata: { score, passed } })
     await supabase.from('audit_log').insert({ actor_id: user.id, action: 'training_completed', entity_type: 'training_attempt', entity_id: attemptId })

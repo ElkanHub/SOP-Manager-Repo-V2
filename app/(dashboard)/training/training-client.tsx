@@ -26,8 +26,8 @@ export default function TrainingClient({ modules, activeSops, profile, isQa }: P
 
     const filteredModules = modules.filter(m => 
         m.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        m.sop?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        m.department.toLowerCase().includes(searchQuery.toLowerCase())
+        m.sop?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.department?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     const activeCount = modules.filter(m => m.status === 'published').length
