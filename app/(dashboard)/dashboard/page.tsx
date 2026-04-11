@@ -186,12 +186,12 @@ export default async function DashboardPage() {
     .select(`
       id, due_date, status,
       equipment:equipment_id(name, asset_id, department, secondary_departments, frequency),
-      assignee:profiles!assignee_id(full_name, avatar_url)
+      assignee:profiles!assigned_to(full_name, avatar_url)
     `)
     .in('status', ['pending', 'overdue'])
     .order('status', { ascending: false })
     .order('due_date', { ascending: true })
-    .limit(5)
+    .limit(20)
   pmQuery = applyCrossDeptScope(pmQuery, 'equipment')
   const { data: upcomingPmTasks } = await pmQuery
 

@@ -610,54 +610,56 @@ export function DashboardClient({
               </Link>
             </div>
           </CardHeader>
-          <CardContent className="pt-4 flex-1">
-            {upcomingPmTasks.length > 0 ? (
-              <div className="space-y-3">
-                {upcomingPmTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={`flex items-center justify-between p-3.5 group hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-all border border-border/50 hover:shadow-md border-l-4 ${getUrgencyBorder(task.due_date, task.status)}`}
-                  >
-                    <div className="flex items-center gap-4">
-                      {task.assignee ? (
-                        <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
-                          <AvatarImage src={task.assignee.avatar_url} />
-                          <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-bold">
-                            {getInitials(task.assignee.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-700">
-                          <Users className="h-4 w-4 text-slate-400" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                          {task.equipment.name}
-                          {task.equipment.frequency && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase font-semibold tracking-wider">
-                              {task.equipment.frequency}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-                          {task.equipment.asset_id} • {task.assignee?.full_name || 'Unassigned'}
+          <CardContent className="pt-4 flex-1 overflow-hidden">
+            <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {upcomingPmTasks.length > 0 ? (
+                <div className="space-y-3">
+                  {upcomingPmTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`flex items-center justify-between p-3.5 group hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl transition-all border border-border/50 hover:shadow-md border-l-4 ${getUrgencyBorder(task.due_date, task.status)}`}
+                    >
+                      <div className="flex items-center gap-4">
+                        {task.assignee ? (
+                          <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
+                            <AvatarImage src={task.assignee.avatar_url} />
+                            <AvatarFallback className="bg-slate-100 text-slate-600 text-[10px] font-bold">
+                              {getInitials(task.assignee.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <div className="h-9 w-9 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-dashed border-slate-300 dark:border-slate-700">
+                            <Users className="h-4 w-4 text-slate-400" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            {task.equipment.name}
+                            {task.equipment.frequency && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 uppercase font-semibold tracking-wider">
+                                {task.equipment.frequency}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                            {task.equipment.asset_id} • {task.assignee?.full_name || 'Unassigned'}
+                          </div>
                         </div>
                       </div>
+                      <div className={`text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-md border ${getDueSoonColor(task.due_date, task.status)}`}>
+                        {task.status === 'overdue' ? 'Overdue' : new Date(task.due_date).toLocaleDateString()}
+                      </div>
                     </div>
-                    <div className={`text-[10px] uppercase tracking-widest font-bold px-2.5 py-1 rounded-md border ${getDueSoonColor(task.due_date, task.status)}`}>
-                      {task.status === 'overdue' ? 'Overdue' : new Date(task.due_date).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
-                <p className="text-sm font-semibold text-slate-500">No pending maintenance</p>
-                <p className="text-xs text-slate-400 mt-1">All equipment is currently up to date.</p>
-              </div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center py-12">
+                  <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
+                  <p className="text-sm font-semibold text-slate-500">No pending maintenance</p>
+                  <p className="text-xs text-slate-400 mt-1">All equipment is currently up to date.</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -668,45 +670,47 @@ export function DashboardClient({
               Live Audit Trail
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4 flex-1">
-            {auditEntries.length > 0 ? (
-              <div className="relative">
-                <div className="absolute left-[19px] top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-800" />
-                <div className="space-y-4 relative">
-                  {auditEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className="flex items-start gap-4 group"
-                    >
-                      <div className="w-10 h-10 rounded-full bg-background border-2 border-background flex items-center justify-center overflow-hidden shadow-sm relative z-10 shrink-0">
-                        <Avatar className="h-full w-full">
-                          <AvatarImage src={entry.actor?.avatar_url} />
-                          <AvatarFallback className="bg-brand-navy dark:bg-brand-teal text-white text-[10px] font-bold">
-                            {getInitials(entry.actor?.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                      <div className="flex-1 min-w-0 bg-slate-50/50 dark:bg-slate-800/20 p-3 rounded-xl border border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-700 transition-colors">
-                        <div className="text-sm leading-snug">
-                          <span className="font-bold text-slate-800 dark:text-slate-200">{entry.actor?.full_name || 'System'}</span>
-                          <span className="text-slate-600 dark:text-slate-400 ml-1.5">{getActionLabel(entry.action)}</span>
+          <CardContent className="pt-4 flex-1 overflow-hidden">
+            <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {auditEntries.length > 0 ? (
+                <div className="relative">
+                  <div className="absolute left-[19px] top-2 bottom-2 w-px bg-slate-200 dark:bg-slate-800" />
+                  <div className="space-y-4 relative">
+                    {auditEntries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-start gap-4 group"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-background border-2 border-background flex items-center justify-center overflow-hidden shadow-sm relative z-10 shrink-0">
+                          <Avatar className="h-full w-full">
+                            <AvatarImage src={entry.actor?.avatar_url} />
+                            <AvatarFallback className="bg-brand-navy dark:bg-brand-teal text-white text-[10px] font-bold">
+                              {getInitials(entry.actor?.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
                         </div>
-                        <div className="mt-1 flex items-center justify-between">
-                          <div className="text-xs font-semibold text-brand-teal max-w-[70%] truncate">
-                            {getEntityLabel(entry.entity_type)}
+                        <div className="flex-1 min-w-0 bg-slate-50/50 dark:bg-slate-800/20 p-3 rounded-xl border border-transparent group-hover:border-slate-200 dark:group-hover:border-slate-700 transition-colors">
+                          <div className="text-sm leading-snug">
+                            <span className="font-bold text-slate-800 dark:text-slate-200">{entry.actor?.full_name || 'System'}</span>
+                            <span className="text-slate-600 dark:text-slate-400 ml-1.5">{getActionLabel(entry.action)}</span>
                           </div>
-                          <div className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold flex shrink-0 ml-2">
-                            {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                          <div className="mt-1 flex items-center justify-between">
+                            <div className="text-xs font-semibold text-brand-teal max-w-[70%] truncate">
+                              {getEntityLabel(entry.entity_type)}
+                            </div>
+                            <div className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold flex shrink-0 ml-2">
+                              {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <p className="text-slate-500 text-center py-8">No recent activity</p>
-            )}
+              ) : (
+                <p className="text-slate-500 text-center py-12">No recent activity</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
