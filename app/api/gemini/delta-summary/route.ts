@@ -6,14 +6,14 @@ import { GoogleGenAI } from '@google/genai'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
-    
+
     const { data: { user }, error: authError } = await client.auth.getUser()
     if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const serviceClient = await createServiceClient()
-    
+
     const { data: profile } = await serviceClient
         .from('profiles')
         .select('is_active, is_admin')
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
             const { data: oldFile } = await serviceClient.storage
                 .from('documents')
                 .download(old_file_url)
-            
+
             if (oldFile) {
                 const oldBuffer = Buffer.from(await oldFile.arrayBuffer())
                 const [oldTextResult, newTextResult] = await Promise.all([
@@ -75,7 +75,7 @@ Provide the concise summary in basic bullet points using • :`
         const response = await ai.models.generateContent({
             model: "gemini-3-flash-preview",
             contents: prompt,
-            generationConfig: {
+            config: {
                 temperature: 0.7,
                 maxOutputTokens: 500,
             }
