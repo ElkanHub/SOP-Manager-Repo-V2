@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 5, 2026
-> **Version:** 3.1 (Documentation & Mobile Tables)
-> **Current Phase:** Phase 28 ✅ Complete — Phase 29 Next
+> **Last Updated:** April 11, 2026
+> **Version:** 3.2 (Training Hub Hardening)
+> **Current Phase:** Phase 29 ✅ Complete — Phase 30 Next
 
 ---
 
@@ -43,6 +43,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 26 | ✅ Complete | DataTable Modernization & QA Processing 2.0      |
 | Phase 27 | ✅ Complete | Mobile Signature QR Flow                         |
 | Phase 28 | ✅ Complete | Documentation Modernization & Responsive Tables  |
+| Phase 29 | ✅ Complete | Training Hub Bug Fixes & Hardening                |
 
 ---
 
@@ -1632,3 +1633,67 @@ package.json                          # Installed remark-gfm plugin
 - All documentation pages render without missing components
 - Tables successfully scroll horizontally on mobile emulators without breaking
 - No jargon remains in any user-facing documentation
+
+---
+
+## Phase 29: Training Hub Bug Fixes & Hardening
+
+**Status:** ✅ Complete
+**Completed:** April 11, 2026
+
+### Overview
+
+Comprehensive code audit and bug fixing of the entire Training Hub feature. Identified and resolved **6 bugs** spanning role authorization, data integrity, null safety, and critical business logic errors in the assessment flow.
+
+### Bugs Found & Fixed
+
+#### 1. Role Authorization Inconsistency (Critical)
+- **Problem:** The training page server component (`page.tsx`) allows both `manager` and `admin` roles to access the Training Hub. However, the API routes (`generate-slides`, `generate-questionnaire`) and the `createTrainingModule` server action only checked for `role === 'manager'`. Admin users could see the UI but every action would fail with a 403 error.
+- **Fix:** Updated all three authorization checks to allow both `manager` and `admin` roles.
+- **Files:** `app/api/training/generate-slides/route.ts`, `app/api/training/generate-questionnaire/route.ts`, `actions/training.ts`
+
+#### 2. Search Filter Crash on Null SOP (Critical)
+- **Problem:** The training list search filter called `.toLowerCase()` on `m.sop?.title` which could be `undefined` when an SOP was deleted. This crashed the entire Training Hub page.
+- **Fix:** Added proper optional chaining: `m.sop?.title?.toLowerCase()` and `m.department?.toLowerCase()`.
+- **File:** `app/(dashboard)/training/training-client.tsx`
+
+#### 3. Missing `sop_id` and `slide_deck` in My Training Query (Medium)
+- **Problem:** The "View SOP" button on the My Training completed section navigates to `/library/${a.module.sop_id}`, but `sop_id` was not included in the Supabase select query. This caused navigation to `/library/undefined`. Also missing `slide_deck` which is needed for the trainee study/quiz flow.
+- **Fix:** Added `sop_id` and `slide_deck` to the `training_modules` nested select.
+- **File:** `app/(dashboard)/training/my-training/page.tsx`
+
+#### 4. Questionnaire Version Always Hardcoded to 1 (Data Integrity)
+- **Problem:** The `createQuestionnaire` server action always set `version: 1` regardless of how many questionnaires already existed for a module. This caused duplicate version numbers and broke the version-based sorting in the UI.
+- **Fix:** Added a query to find the latest existing version and increment it (`nextVersion = latestQ ? latestQ.version + 1 : 1`).
+- **File:** `actions/training.ts` → `createQuestionnaire()`
+
+#### 5. Failed Assessments Incorrectly Marked as Complete (Critical Logic)
+- **Problem:** The `submitAttempt` action always marked the `training_assignment` as `completed` with a `completed_at` timestamp, even when the trainee **failed** the assessment. This falsely reported compliance and prevented retries.
+- **Fix:** Only mark `completed` when `passed === true`. On failure, reset the assignment status to `not_started` to enable retry.
+- **File:** `actions/training.ts` → `submitAttempt()`
+
+#### 6. Retries Blocked After Failed Assessment (Critical Logic)
+- **Problem:** The `startAttempt` function checked for any existing submitted attempt and blocked with "You have already submitted an attempt for this version" — regardless of whether the user passed or failed. Combined with bug #5, failed trainees were permanently locked out.
+- **Fix:** Refactored the existing attempt check to only block retries when a **passed** attempt exists. Failed attempts now allow the user to start a fresh attempt.
+- **File:** `actions/training.ts` → `startAttempt()`
+
+### Files Modified
+
+```
+app/api/training/
+├── generate-slides/route.ts          # Role check fix (manager → manager|admin)
+└── generate-questionnaire/route.ts   # Role check fix (manager → manager|admin)
+
+app/(dashboard)/training/
+├── training-client.tsx               # Null-safe search filter
+└── my-training/page.tsx              # Added sop_id, slide_deck to query
+
+actions/
+└── training.ts                       # 4 fixes: role check, version increment,
+                                      #   completion logic, retry logic
+```
+
+### Verification
+
+- `npx tsc --noEmit` — Exit code 0, no type errors ✅
+- All changes consistent across server components, API routes, server actions, and client components ✅
