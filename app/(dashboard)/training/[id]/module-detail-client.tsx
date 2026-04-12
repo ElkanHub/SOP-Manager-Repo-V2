@@ -199,7 +199,7 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                 <SlidePresenter
                     slides={moduleData.slide_deck}
                     moduleTitle={moduleData.title}
-                    sopNumber={moduleData.sop?.sop_number}
+                    sopNumber={moduleData.sop?.sop_number || undefined}
                     isOpen={isPresenting}
                     onClose={() => setIsPresenting(false)}
                 />

@@ -593,3 +593,110 @@ export async function updateSlide(moduleId: string, slideId: string, updates: { 
     revalidatePath(`/training/${moduleId}`)
     return { success: true }
 }
+
+export async function reorderSlides(moduleId: string, orderedSlideIds: string[]) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, isQa, supabase } = auth
+
+    const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
+    if (!mod) return { success: false, error: 'Module not found' }
+    if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
+    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can reorder slides' }
+    if (!mod.slide_deck) return { success: false, error: 'Slide deck not generated yet' }
+
+    const deck = (mod.slide_deck as any[]) || []
+
+    // Build a new ordered deck from the given IDs, renumbering automatically
+    const reordered: any[] = []
+    for (let i = 0; i < orderedSlideIds.length; i++) {
+        const slide = deck.find(s => s.id === orderedSlideIds[i])
+        if (slide) {
+            reordered.push({ ...slide, order: i + 1 })
+        }
+    }
+
+    if (reordered.length !== deck.length) {
+        return { success: false, error: 'Slide ID mismatch — some slides could not be found' }
+    }
+
+    const { error } = await supabase.from('training_modules').update({ slide_deck: reordered, updated_at: new Date().toISOString() }).eq('id', moduleId)
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/training/${moduleId}`)
+    return { success: true }
+}
+
+export async function addSlide(moduleId: string, slide: { type: string; title: string; body: string; notes?: string }, insertAfterOrder?: number) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, isQa, supabase } = auth
+
+    const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
+    if (!mod) return { success: false, error: 'Module not found' }
+    if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
+    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can add slides' }
+
+    const deck = (mod.slide_deck as any[]) || []
+
+    const newSlide = {
+        id: crypto.randomUUID(),
+        type: slide.type,
+        title: slide.title,
+        body: slide.body,
+        notes: slide.notes || '',
+        order: 0 // will be set below
+    }
+
+    // Insert at the right position
+    if (insertAfterOrder !== undefined && insertAfterOrder >= 0) {
+        // Find the index of the slide with the given order
+        const sortedDeck = [...deck].sort((a, b) => a.order - b.order)
+        const insertIndex = sortedDeck.findIndex(s => s.order === insertAfterOrder)
+        if (insertIndex !== -1) {
+            sortedDeck.splice(insertIndex + 1, 0, newSlide)
+        } else {
+            sortedDeck.push(newSlide)
+        }
+        // Renumber all slides
+        sortedDeck.forEach((s, i) => { s.order = i + 1 })
+        const { error } = await supabase.from('training_modules').update({ slide_deck: sortedDeck, updated_at: new Date().toISOString() }).eq('id', moduleId)
+        if (error) return { success: false, error: error.message }
+    } else {
+        // Append at the end
+        newSlide.order = deck.length + 1
+        deck.push(newSlide)
+        const { error } = await supabase.from('training_modules').update({ slide_deck: deck, updated_at: new Date().toISOString() }).eq('id', moduleId)
+        if (error) return { success: false, error: error.message }
+    }
+
+    revalidatePath(`/training/${moduleId}`)
+    return { success: true, slideId: newSlide.id }
+}
+
+export async function deleteSlide(moduleId: string, slideId: string) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, isQa, supabase } = auth
+
+    const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
+    if (!mod) return { success: false, error: 'Module not found' }
+    if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
+    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can delete slides' }
+    if (!mod.slide_deck) return { success: false, error: 'Slide deck not generated yet' }
+
+    let deck = (mod.slide_deck as any[]) || []
+    if (deck.length <= 1) return { success: false, error: 'Cannot delete the last remaining slide' }
+
+    deck = deck.filter(s => s.id !== slideId)
+    // Renumber
+    deck.sort((a, b) => a.order - b.order)
+    deck.forEach((s, i) => { s.order = i + 1 })
+
+    const { error } = await supabase.from('training_modules').update({ slide_deck: deck, updated_at: new Date().toISOString() }).eq('id', moduleId)
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/training/${moduleId}`)
+    return { success: true }
+}
+
