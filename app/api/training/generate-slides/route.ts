@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-    if (!profile?.is_active || profile.role !== 'manager') {
+    if (!profile?.is_active || (profile.role !== 'manager' && profile.role !== 'admin')) {
         return NextResponse.json({ error: 'Only managers can generate training modules' }, { status: 403 })
     }
 
