@@ -29,30 +29,37 @@ const SLIDE_TYPE_CONFIG: Record<string, { icon: any; gradient: string; label: st
 export default function SlidePresenter({ slides, moduleTitle, sopNumber, isOpen, onClose }: Props) {
     const [currentIndex, setCurrentIndex] = useState(0)
     const [showNotes, setShowNotes] = useState(false)
-    const [isAnimating, setIsAnimating] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
 
     const sortedSlides = [...slides].sort((a, b) => a.order - b.order)
     const currentSlide = sortedSlides[currentIndex]
     const total = sortedSlides.length
 
+    // Use refs so the keyboard listener never goes stale
+    const totalRef = useRef(total)
+    totalRef.current = total
+    const onCloseRef = useRef(onClose)
+    onCloseRef.current = onClose
+
     const goNext = useCallback(() => {
-        if (currentIndex < total - 1 && !isAnimating) {
-            setIsAnimating(true)
-            setCurrentIndex(prev => prev + 1)
-            setTimeout(() => setIsAnimating(false), 300)
-        }
-    }, [currentIndex, total, isAnimating])
+        setCurrentIndex(prev => (prev < totalRef.current - 1 ? prev + 1 : prev))
+    }, [])
 
     const goPrev = useCallback(() => {
-        if (currentIndex > 0 && !isAnimating) {
-            setIsAnimating(true)
-            setCurrentIndex(prev => prev - 1)
-            setTimeout(() => setIsAnimating(false), 300)
-        }
-    }, [currentIndex, isAnimating])
+        setCurrentIndex(prev => (prev > 0 ? prev - 1 : prev))
+    }, [])
 
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Reset index when presenter opens
+    useEffect(() => {
+        if (isOpen) {
+            setCurrentIndex(0)
+            setShowNotes(false)
+        }
+    }, [isOpen])
+
+    // Keyboard handler — stable ref, registered once
+    const handlerRef = useRef<(e: KeyboardEvent) => void>(() => {})
+    handlerRef.current = (e: KeyboardEvent) => {
         switch (e.key) {
             case "ArrowRight":
             case "ArrowDown":
@@ -69,7 +76,7 @@ export default function SlidePresenter({ slides, moduleTitle, sopNumber, isOpen,
                 break
             case "Escape":
                 e.preventDefault()
-                onClose()
+                onCloseRef.current()
                 break
             case "n":
             case "N":
@@ -82,21 +89,21 @@ export default function SlidePresenter({ slides, moduleTitle, sopNumber, isOpen,
                 break
             case "End":
                 e.preventDefault()
-                setCurrentIndex(total - 1)
+                setCurrentIndex(totalRef.current - 1)
                 break
         }
-    }, [goNext, goPrev, onClose, total])
+    }
 
     useEffect(() => {
         if (!isOpen) return
-        setCurrentIndex(0)
-        document.addEventListener("keydown", handleKeyDown)
+        const listener = (e: KeyboardEvent) => handlerRef.current(e)
+        document.addEventListener("keydown", listener)
         document.body.style.overflow = "hidden"
         return () => {
-            document.removeEventListener("keydown", handleKeyDown)
+            document.removeEventListener("keydown", listener)
             document.body.style.overflow = ""
         }
-    }, [isOpen, handleKeyDown])
+    }, [isOpen])
 
     // Request browser fullscreen
     useEffect(() => {
