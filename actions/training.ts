@@ -122,7 +122,7 @@ export async function publishTrainingModule(moduleId: string) {
         return { success: false, error: 'Only the creator or QA can publish this module' }
     }
 
-    if (!mod.slide_deck) {
+    if (!mod.slide_deck || (Array.isArray(mod.slide_deck) && mod.slide_deck.length === 0)) {
         return { success: false, error: 'Cannot publish without generating the slide deck first' }
     }
 

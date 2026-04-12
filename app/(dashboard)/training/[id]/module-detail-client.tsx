@@ -23,7 +23,7 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
     const [isPresenting, setIsPresenting] = useState(false)
 
     const handlePublish = async () => {
-        if (!moduleData.slide_deck) {
+        if (!moduleData.slide_deck || (Array.isArray(moduleData.slide_deck) && moduleData.slide_deck.length === 0)) {
             toast.error("Please generate the Slide Deck first!")
             return
         }
@@ -34,11 +34,20 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
         }
 
         setIsPublishing(true)
-        const res = await publishTrainingModule(moduleData.id)
-        setIsPublishing(false)
-
-        if (res.error) toast.error(res.error)
-        else toast.success("Module published successfully!")
+        try {
+            const res = await publishTrainingModule(moduleData.id)
+            if (res.error) {
+                toast.error(res.error)
+            } else {
+                toast.success("Module published successfully!")
+                router.refresh()
+            }
+        } catch (error: any) {
+            console.error(error)
+            toast.error(error.message || "An unexpected error occurred while publishing")
+        } finally {
+            setIsPublishing(false)
+        }
     }
 
     const handleExportDeck = () => {

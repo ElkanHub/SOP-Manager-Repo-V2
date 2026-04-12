@@ -67,8 +67,12 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
         const res = await publishQuestionnaire(qId)
         setIsPublishing(null)
 
-        if (res.error) toast.error(res.error)
-        else toast.success("Questionnaire published and locked!")
+        if (res.error) {
+            toast.error(res.error)
+        } else {
+            toast.success("Questionnaire published and locked!")
+            router.refresh()
+        }
     }
 
     const handleExport = (qId: string) => {

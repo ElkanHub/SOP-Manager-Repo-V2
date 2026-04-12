@@ -42,6 +42,7 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
             toast.success(`Successfully assigned ${res.assigned} trainees!`)
             onOpenChange(false)
             setSelectedIds([])
+            router.refresh()
         }
     }
 
