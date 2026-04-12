@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
-    if (!profile?.is_active || (profile.role !== 'manager' && profile.role !== 'admin')) {
+    if (!profile?.is_active || profile.role !== 'manager') {
         return NextResponse.json({ error: 'Only managers can generate training modules' }, { status: 403 })
     }
 
@@ -103,7 +103,7 @@ Rules for the Slide Deck:
 
         const data = await response.json()
         const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
-        
+
         let slideDeck: TrainingSlide[] = []
         try {
             slideDeck = JSON.parse(textResponse)
@@ -115,8 +115,8 @@ Rules for the Slide Deck:
         // Save generated slide deck to module
         const { error: updateError } = await serviceClient
             .from('training_modules')
-            .update({ 
-                slide_deck: slideDeck, 
+            .update({
+                slide_deck: slideDeck,
                 slide_deck_generated_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             })

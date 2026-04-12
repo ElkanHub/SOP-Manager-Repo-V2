@@ -43,7 +43,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 26 | ✅ Complete | DataTable Modernization & QA Processing 2.0      |
 | Phase 27 | ✅ Complete | Mobile Signature QR Flow                         |
 | Phase 28 | ✅ Complete | Documentation Modernization & Responsive Tables  |
-| Phase 29 | ✅ Complete | Training Hub Bug Fixes & Hardening                |
+| Phase 29 | ✅ Complete | Training Hub Bug Fixes & Hardening               |
 
 ---
 
@@ -1540,15 +1540,15 @@ Desktop (PC)                              Mobile Phone
 
 ### Security Model
 
-| Layer | Protection |
-|-------|------------|
-| **Token** | 128-bit UUID — cannot be guessed or enumerated |
-| **RLS INSERT** | Only authenticated users can create sessions for themselves |
+| Layer          | Protection                                                                                                            |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **Token**      | 128-bit UUID — cannot be guessed or enumerated                                                                        |
+| **RLS INSERT** | Only authenticated users can create sessions for themselves                                                           |
 | **RLS UPDATE** | Anonymous users can only set `status='completed'` on `pending` + non-expired records with non-null `signature_base64` |
-| **Expiry** | 15-minute server-enforced window (DB default + RLS check) |
-| **Middleware** | `/m/` routes bypass auth but have no access to any other data |
-| **Validation** | Server-side UUID regex, format and size checks on signature data |
-| **CSP** | Base64→Blob conversion avoids `fetch(dataURL)` CSP violations |
+| **Expiry**     | 15-minute server-enforced window (DB default + RLS check)                                                             |
+| **Middleware** | `/m/` routes bypass auth but have no access to any other data                                                         |
+| **Validation** | Server-side UUID regex, format and size checks on signature data                                                      |
+| **CSP**        | Base64→Blob conversion avoids `fetch(dataURL)` CSP violations                                                         |
 
 ### Files Created/Modified
 
