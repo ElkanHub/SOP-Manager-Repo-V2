@@ -1,18 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { GoogleGenerativeAI } from "@google/generative-ai"
 // @ts-ignore
 import * as mammoth from 'mammoth'
-import { TrainingQuestion, QuestionOption } from '@/types/app.types'
+import { TrainingQuestion } from '@/types/app.types'
+
+// Initialize the SDK
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
     const { data: { user }, error: authError } = await client.auth.getUser()
+    
     if (authError || !user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const serviceClient = await createServiceClient()
 
+    // 1. Role Authorization
     const { data: profile } = await serviceClient
         .from('profiles')
         .select('is_active, role')
@@ -30,10 +36,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY
-    if (!geminiApiKey) {
-        return NextResponse.json({ error: 'Gemini API not configured' }, { status: 500 })
-    }
+    // 2. Demo Mode Safety Toggle
+    const IS_DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
     try {
         const { data: sop } = await serviceClient
@@ -44,6 +48,14 @@ export async function POST(request: NextRequest) {
 
         if (!sop || !sop.file_url) return NextResponse.json({ error: 'SOP file not found' }, { status: 404 })
 
+        // --- EMERGENCY DEMO MOCK ---
+        if (IS_DEMO_MODE) {
+            const mockQuestions = generateMockQuestions(questionnaireId, questionCount);
+            await saveQuestionsToDb(serviceClient, questionnaireId, mockQuestions, moduleId, user.id);
+            return NextResponse.json({ success: true, count: mockQuestions.length, mode: 'demo' })
+        }
+
+        // --- SDK REAL PROCESSING ---
         const { data: file, error: fileError } = await serviceClient.storage
             .from('documents')
             .download(sop.file_url)
@@ -54,85 +66,83 @@ export async function POST(request: NextRequest) {
         const textResult = await mammoth.extractRawText({ buffer })
         const documentText = textResult.value
 
-        const systemInstruction = `You are an expert instructional designer and technical assessor. 
-Your task is to generate a comprehensive testing questionnaire based ON THE PROVIDED SOP DOCUMENT.
-You MUST reply with ONLY a raw JSON array of question objects. Do not include markdown codeblocks.
+        // Setup Model with System Instructions
+        const model = genAI.getGenerativeModel({
+            model: "gemini-3-flash-preview",
+            systemInstruction: `You are an expert instructional designer and technical assessor for Atlantic Lifesciences Limited.
+            Generate a questionnaire based ON THE PROVIDED SOP.
+            Output ONLY a raw JSON array of objects.`,
+        });
 
-Generate EXACTLY ${questionCount} questions. Make sure questions strictly test the critical logic, thresholds, or policies in the document.
+        const generationConfig = {
+            temperature: 0.2,
+            responseMimeType: "application/json",
+        };
 
-Each question object must have exactly this shape:
-{
-  "question_text": "Text of the actual question",
-  "question_type": "multiple_choice" | "true_false",
-  "options": [{ "id": "a", "text": "Option 1", "is_correct": boolean }, ...],
-  "sop_section_ref": "Short description of which section this pertains to"
-}
-
-Rules:
-1. For 'multiple_choice', provide exactly 4 options. Use 'a', 'b', 'c', 'd' as ids. Only ONE option should be is_correct=true.
-2. For 'true_false', provide exactly 2 options. Use 'true', 'false' as ids. Only ONE option should be is_correct=true.
-3. Randomly distribute the position of the correct answer for multiple-choice questions.
-4. Ensure the question and the correct answer are strictly verifiable in the SOP text.`
-
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: systemInstruction }] },
-                    contents: [{ parts: [{ text: `Here is the SOP document:\n\n${documentText}` }] }],
-                    generationConfig: {
-                        temperature: 0.2,
-                        responseMimeType: "application/json",
-                    }
-                })
-            }
-        )
-
-        if (!response.ok) {
-            const error = await response.text()
-            console.error('Gemini API error:', error)
-            return NextResponse.json({ error: 'Failed to generate questionnaire' }, { status: 500 })
-        }
-
-        const data = await response.json()
-        const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+        const prompt = `Generate EXACTLY ${questionCount} questions from this SOP. 
+        Each object must have: question_text, question_type (multiple_choice or true_false), 
+        options (array with ids 'a' to 'd' and is_correct boolean), and sop_section_ref.
         
-        let questions: any[] = []
-        try {
-            questions = JSON.parse(textResponse)
-        } catch (e) {
-            console.error('Failed to parse Gemini JSON:', textResponse)
-            return NextResponse.json({ error: 'Model returned invalid JSON' }, { status: 500 })
-        }
+        SOP Content:
+        ${documentText}`;
 
-        // Prepare inserts
-        const dbInserts = questions.map((q, index) => ({
-            questionnaire_id: questionnaireId,
-            question_text: q.question_text,
-            question_type: q.question_type,
-            options: q.options,
-            sop_section_ref: q.sop_section_ref || null,
-            display_order: index + 1
-        }))
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig,
+        });
 
-        // Clear existing questions for this questionnaire to prevent double up if regenerated
-        await serviceClient.from('training_questions').delete().eq('questionnaire_id', questionnaireId)
+        const textResponse = result.response.text();
+        const questions = JSON.parse(textResponse);
 
-        const { error: insertError } = await serviceClient
-            .from('training_questions')
-            .insert(dbInserts)
-
-        if (insertError) throw new Error(insertError.message)
-
-        await serviceClient.from('training_log').insert({
-            actor_id: user.id, action: 'questionnaire_generated', module_id: moduleId, questionnaire_id: questionnaireId
-        })
+        // 3. Database Operations
+        await saveQuestionsToDb(serviceClient, questionnaireId, questions, moduleId, user.id);
 
         return NextResponse.json({ success: true, count: questions.length })
+
     } catch (error: any) {
         console.error('Generate questionnaire error:', error)
         return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
     }
+}
+
+// Helper: Save Questions to Supabase
+async function saveQuestionsToDb(supabase: any, questionnaireId: string, questions: any[], moduleId: string, userId: string) {
+    const dbInserts = questions.map((q: any, index: number) => ({
+        questionnaire_id: questionnaireId,
+        question_text: q.question_text,
+        question_type: q.question_type,
+        options: q.options,
+        sop_section_ref: q.sop_section_ref || null,
+        display_order: index + 1
+    }));
+
+    // Clean up old version
+    await supabase.from('training_questions').delete().eq('questionnaire_id', questionnaireId);
+
+    // Insert new questions
+    const { error: insertError } = await supabase.from('training_questions').insert(dbInserts);
+    if (insertError) throw new Error(insertError.message);
+
+    // Log action
+    await supabase.from('training_log').insert({
+        actor_id: userId, 
+        action: 'questionnaire_generated', 
+        module_id: moduleId, 
+        questionnaire_id: questionnaireId
+    });
+}
+
+// Helper: Mock Questions for Demo Day
+function generateMockQuestions(questionnaireId: string, count: number) {
+    return Array.from({ length: count }).map((_, i) => ({
+        question_text: `Demo Question ${i + 1}: What is the primary safety protocol for this procedure?`,
+        question_type: "multiple_choice",
+        options: [
+            { id: "a", text: "Wear PPE", is_correct: true },
+            { id: "b", text: "Ignore labels", is_correct: false },
+            { id: "c", text: "Work alone", is_correct: false },
+            { id: "d", text: "Skip testing", is_correct: false }
+        ],
+        sop_section_ref: "Safety & Compliance Section"
+    }));
 }
