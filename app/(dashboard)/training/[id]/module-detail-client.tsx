@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlayCircle, Presentation, Users, FileCheck, CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Download, Trash } from "lucide-react"
+import { PlayCircle, Presentation, Users, FileCheck, CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Download, Trash, Monitor } from "lucide-react"
 import { publishTrainingModule, archiveTrainingModule } from "@/actions/training"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -14,11 +14,13 @@ import Link from "next/link"
 import QuestionnaireEditor from "@/components/training/questionnaire-editor"
 import AssignTraineesModal from "@/components/training/assign-trainees-modal"
 import SlideDeckEditor from "@/components/training/slide-deck-editor"
+import SlidePresenter from "@/components/training/slide-presenter"
 
 export default function ModuleDetailClient({ moduleData, questionnaires, assignments, attempts, availableUsers, profile, isQa }: any) {
     const router = useRouter()
     const [isPublishing, setIsPublishing] = useState(false)
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
+    const [isPresenting, setIsPresenting] = useState(false)
 
     const handlePublish = async () => {
         if (!moduleData.slide_deck) {
@@ -125,9 +127,14 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                             <p className="text-sm text-muted-foreground mt-1">Generate presentation slides automatically from the source SOP text.</p>
                         </div>
                         {moduleData.slide_deck && (
-                            <Button variant="outline" onClick={handleExportDeck} className="gap-2">
-                                <Download className="h-4 w-4" /> Export PPTX
-                            </Button>
+                            <div className="flex items-center gap-2">
+                                <Button variant="default" onClick={() => setIsPresenting(true)} className="gap-2 bg-primary hover:bg-primary/90">
+                                    <Monitor className="h-4 w-4" /> Present
+                                </Button>
+                                <Button variant="outline" onClick={handleExportDeck} className="gap-2">
+                                    <Download className="h-4 w-4" /> Export PPTX
+                                </Button>
+                            </div>
                         )}
                     </div>
                     {/* Slide Deck component will handle AI generation and editing */}
@@ -187,6 +194,16 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                 availableUsers={availableUsers}
                 moduleId={moduleData.id}
             />
+
+            {moduleData.slide_deck && (
+                <SlidePresenter
+                    slides={moduleData.slide_deck}
+                    moduleTitle={moduleData.title}
+                    sopNumber={moduleData.sop?.sop_number}
+                    isOpen={isPresenting}
+                    onClose={() => setIsPresenting(false)}
+                />
+            )}
         </div>
     )
 }

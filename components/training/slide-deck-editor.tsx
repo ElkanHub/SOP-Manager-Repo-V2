@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Loader2, Wand2, Save, MoreVertical, LayoutTemplate } from "lucide-react"
+import { Loader2, Wand2, Save, LayoutTemplate, Presentation } from "lucide-react"
 import { updateSlide } from "@/actions/training"
 import { toast } from "sonner"
 import { Card, CardContent } from "@/components/ui/card"
+import SlidePresenter from "@/components/training/slide-presenter"
 
 interface Props {
     moduleData: any
@@ -20,6 +21,7 @@ export default function SlideDeckEditor({ moduleData }: Props) {
     const [editingSlideId, setEditingSlideId] = useState<string | null>(null)
     const [editData, setEditData] = useState({ title: "", body: "", notes: "" })
     const [isSaving, setIsSaving] = useState(false)
+    const [isPresenting, setIsPresenting] = useState(false)
 
     const handleGenerate = async () => {
         setIsGenerating(true)
@@ -86,10 +88,21 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                 <p className="text-sm text-blue-600 dark:text-blue-400">
                     <strong>Generated on:</strong> {new Date(moduleData.slide_deck_generated_at).toLocaleString()}
                 </p>
-                <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating} className="gap-2 text-blue-600 hover:text-blue-700">
-                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                    Regenerate
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="default" 
+                        size="sm" 
+                        onClick={() => setIsPresenting(true)} 
+                        className="gap-2 bg-primary hover:bg-primary/90"
+                    >
+                        <Presentation className="h-4 w-4" />
+                        Present Fullscreen
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating} className="gap-2 text-blue-600 hover:text-blue-700">
+                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                        Regenerate
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -130,6 +143,15 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                     </Card>
                 ))}
             </div>
+
+            {/* Fullscreen Slide Presenter */}
+            <SlidePresenter 
+                slides={slides}
+                moduleTitle={moduleData.title}
+                sopNumber={moduleData.sop?.sop_number}
+                isOpen={isPresenting}
+                onClose={() => setIsPresenting(false)}
+            />
         </div>
     )
 }
