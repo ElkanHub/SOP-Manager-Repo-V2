@@ -108,19 +108,19 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
 
             {moduleData.status === 'published' && (
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
-                    <Card className="bg-card">
+                    <Card className="bg-card rounded-none">
                         <CardHeader className="pb-2"><CardDescription>Total Assigned</CardDescription><CardTitle className="text-2xl">{assignments.length}</CardTitle></CardHeader>
                     </Card>
-                    <Card className="bg-card">
+                    <Card className="bg-card rounded-none">
                         <CardHeader className="pb-2"><CardDescription>Not Started</CardDescription><CardTitle className="text-2xl">{notStartedCount}</CardTitle></CardHeader>
                     </Card>
-                    <Card className="bg-card">
+                    <Card className="bg-card rounded-none">
                         <CardHeader className="pb-2"><CardDescription>In Progress</CardDescription><CardTitle className="text-2xl">{activeCount}</CardTitle></CardHeader>
                     </Card>
-                    <Card className="bg-card">
+                    <Card className="bg-card rounded-none">
                         <CardHeader className="pb-2"><CardDescription>Completed</CardDescription><CardTitle className="text-2xl">{completedCount}</CardTitle></CardHeader>
                     </Card>
-                    <Card className="bg-card">
+                    <Card className="bg-card rounded-none">
                         <CardHeader className="pb-2"><CardDescription>Completion Rate</CardDescription><CardTitle className="text-2xl">{completionRate}%</CardTitle></CardHeader>
                     </Card>
                 </div>

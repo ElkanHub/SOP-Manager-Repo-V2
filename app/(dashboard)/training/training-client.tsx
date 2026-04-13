@@ -48,7 +48,7 @@ export default function TrainingClient({ modules, activeSops, profile, isQa }: P
 
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-card border-border/50 shadow-sm backdrop-blur-sm">
+                <Card className="bg-card border-border/50 rounded-none shadow-sm backdrop-blur-sm">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-sm font-medium flex items-center gap-2">
                             <BookOpen className="h-4 w-4 text-blue-400" /> Total Modules
@@ -56,7 +56,7 @@ export default function TrainingClient({ modules, activeSops, profile, isQa }: P
                         <CardTitle className="text-3xl">{modules.length}</CardTitle>
                     </CardHeader>
                 </Card>
-                <Card className="bg-card border-border/50 shadow-sm backdrop-blur-sm">
+                <Card className="bg-card border-border/50 rounded-none shadow-sm backdrop-blur-sm">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-sm font-medium flex items-center gap-2">
                             <Clock className="h-4 w-4 text-emerald-400" /> Published
@@ -64,7 +64,7 @@ export default function TrainingClient({ modules, activeSops, profile, isQa }: P
                         <CardTitle className="text-3xl">{activeCount}</CardTitle>
                     </CardHeader>
                 </Card>
-                <Card className="bg-card border-border/50 shadow-sm backdrop-blur-sm">
+                <Card className="bg-card border-border/50 rounded-none shadow-sm backdrop-blur-sm">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-sm font-medium flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-amber-500" /> Needs Review
