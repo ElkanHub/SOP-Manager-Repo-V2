@@ -32,9 +32,20 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
         const el = document.getElementById(`cert-${assignment.id}`)
         if (!el) return
 
-        el.style.display = 'block'
-        const canvas = await html2canvas(el, { scale: 2 })
-        el.style.display = 'none'
+        el.classList.remove('hidden')
+        el.style.position = 'fixed'
+        el.style.left = '-9999px'
+        el.style.top = '0'
+        
+        // Let React/DOM update before canvas
+        await new Promise(resolve => setTimeout(resolve, 50))
+        
+        const canvas = await html2canvas(el, { scale: 2, useCORS: true })
+        
+        el.classList.add('hidden')
+        el.style.position = ''
+        el.style.left = ''
+        el.style.top = ''
 
         const imgData = canvas.toDataURL('image/png')
         const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
@@ -143,7 +154,7 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
                                                 {passingAttempt && <span>Score: {passingAttempt.score}%</span>}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-3 w-full md:w-auto">
                                             <Button variant="outline" size="sm" onClick={() => router.push(`/library/${a.module.sop_id}`)} className="gap-2 text-xs">
                                                 <FileCheck className="h-3.5 w-3.5" /> View SOP
                                             </Button>
@@ -162,7 +173,7 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
                                                             <div className="text-3xl font-bold text-slate-800 mb-4">{a.module.title}</div>
                                                             <div className="text-lg text-slate-600 mb-16">{a.module.sop?.sop_number} | Version {a.module.sop_version}</div>
                                                             
-                                                            <div className="flex justify-between w-full max-w-4xl mt-auto pt-16">
+                                                            <div className="flex flex-col sm:flex-row justify-between w-full max-w-4xl mt-auto pt-16 gap-6 sm:gap-0">
                                                                 <div className="text-center">
                                                                     <div className="text-lg font-bold border-b border-black w-48 mb-2 pb-1 inline-block">{new Date(a.completed_at).toLocaleDateString()}</div>
                                                                     <div className="text-sm font-semibold uppercase text-slate-500 tracking-wider">Date of Completion</div>

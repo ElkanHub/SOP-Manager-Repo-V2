@@ -26,7 +26,7 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
         setSelectedIds(prev => prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id])
     }
 
-    const selectAll = () => setSelectedIds(availableUsers.map(u => u.id))
+    const selectAll = () => setSelectedIds(availableUsers.filter(u => !u.isAssigned).map(u => u.id))
     const selectNone = () => setSelectedIds([])
 
     const handleAssign = async () => {
@@ -48,7 +48,7 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
+            <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98 max-h-[90vh] flex flex-col">
                 <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-navy/10 via-brand-teal/5 to-transparent border-b border-border/50 relative">
                     <div className="space-y-1">
                         <DialogTitle className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
@@ -60,7 +60,7 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
                     </div>
                 </DialogHeader>
 
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 flex-1 overflow-y-auto">
                     {/* Selection Summary */}
                     <div className="bg-brand-navy/5 dark:bg-card border border-brand-navy/10 rounded-2xl p-4 flex items-center justify-between">
                         <div className="space-y-0.5">
@@ -79,24 +79,25 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
                         </div>
                     </div>
 
-                    <div className="h-[340px] overflow-y-auto rounded-2xl border border-border/40 divide-y divide-border/20 bg-background/50 custom-scrollbar shadow-inner relative">
+                    <div className="h-[40vh] min-h-[200px] overflow-y-auto rounded-2xl border border-border/40 divide-y divide-border/20 bg-background/50 custom-scrollbar shadow-inner relative">
                         {availableUsers.length === 0 ? (
                             <div className="p-12 text-center text-muted-foreground h-full flex flex-col items-center justify-center space-y-3">
                                 <Users className="h-8 w-8 opacity-20" />
-                                <p className="text-xs font-bold uppercase tracking-widest opacity-50 underline underline-offset-4">Department Fully Assigned</p>
+                                <p className="text-xs font-bold uppercase tracking-widest opacity-50 underline underline-offset-4">No personnel available</p>
                             </div>
                         ) : (
                             availableUsers.map(u => (
-                                <label key={u.id} className="flex items-center p-4 hover:bg-brand-navy/5 cursor-pointer group transition-all duration-200">
+                                <label key={u.id} className={cn("flex items-center p-4 transition-all duration-200", u.isAssigned ? "opacity-60 cursor-not-allowed bg-muted/20" : "hover:bg-brand-navy/5 cursor-pointer group")}>
                                     <div className="relative flex items-center justify-center">
                                         <Checkbox 
-                                            checked={selectedIds.includes(u.id)} 
-                                            onCheckedChange={() => toggleUser(u.id)}
+                                            checked={u.isAssigned || selectedIds.includes(u.id)} 
+                                            onCheckedChange={() => !u.isAssigned && toggleUser(u.id)}
+                                            disabled={u.isAssigned}
                                             className="h-5 w-5 rounded-md border-border/60 data-[state=checked]:bg-brand-teal data-[state=checked]:border-brand-teal transition-colors"
                                         />
                                     </div>
                                     <div className="ml-4 flex-1">
-                                        <p className="font-bold text-sm text-foreground group-hover:text-brand-navy transition-colors">{u.full_name}</p>
+                                        <p className={cn("font-bold text-sm text-foreground transition-colors", !u.isAssigned && "group-hover:text-brand-navy")}>{u.full_name}</p>
                                         <div className="flex gap-2 mt-0.5">
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">{u.department}</span>
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-brand-teal/80">· {u.role}</span>
@@ -104,11 +105,13 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
                                     </div>
                                     <div className={cn(
                                         "ml-auto px-3 py-1 rounded-full border text-[9px] font-bold uppercase tracking-[0.1em] transition-all",
-                                        selectedIds.includes(u.id) 
-                                            ? "bg-brand-teal/10 border-brand-teal/30 text-brand-teal shadow-sm" 
-                                            : "opacity-0 group-hover:opacity-100 bg-muted/50 border-border/40 text-muted-foreground"
+                                        u.isAssigned 
+                                            ? "bg-muted text-muted-foreground border-border" 
+                                            : selectedIds.includes(u.id) 
+                                                ? "bg-brand-teal/10 border-brand-teal/30 text-brand-teal shadow-sm" 
+                                                : "opacity-0 group-hover:opacity-100 bg-muted/50 border-border/40 text-muted-foreground"
                                     )}>
-                                        {selectedIds.includes(u.id) ? "Selected" : "Add Trainee"}
+                                        {u.isAssigned ? "Already Assigned" : selectedIds.includes(u.id) ? "Selected" : "Add Trainee"}
                                     </div>
                                 </label>
                             ))

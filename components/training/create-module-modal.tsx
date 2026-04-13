@@ -74,7 +74,7 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
+            <DialogContent className="sm:max-w-xl md:max-w-2xl w-[95vw] p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98 max-h-[90vh] flex flex-col">
                 <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-navy/10 via-brand-teal/5 to-transparent border-b border-border/50 relative">
                     <div className="space-y-1">
                         <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">Create Training Module</DialogTitle>
@@ -84,8 +84,8 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
                     </div>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="flex flex-col">
-                    <div className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                    <div className="p-6 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
                         {/* Source Metadata */}
                         <div className="bg-brand-navy/5 dark:bg-card border border-brand-navy/10 rounded-2xl p-4 space-y-4">
                             <div className="flex items-center justify-between border-b border-border/40 pb-2">

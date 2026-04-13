@@ -56,6 +56,7 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
 
     const activeCount = assignments.filter((a:any) => a.status === 'in_progress').length
     const completedCount = assignments.filter((a:any) => a.status === 'completed').length
+    const notStartedCount = assignments.filter((a:any) => a.status === 'not_started').length
     const completionRate = assignments.length > 0 ? Math.round((completedCount / assignments.length) * 100) : 0
 
     return (
@@ -106,9 +107,12 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
             </div>
 
             {moduleData.status === 'published' && (
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mt-6">
                     <Card className="bg-card">
-                        <CardHeader className="pb-2"><CardDescription>Total Assignees</CardDescription><CardTitle className="text-2xl">{assignments.length}</CardTitle></CardHeader>
+                        <CardHeader className="pb-2"><CardDescription>Total Assigned</CardDescription><CardTitle className="text-2xl">{assignments.length}</CardTitle></CardHeader>
+                    </Card>
+                    <Card className="bg-card">
+                        <CardHeader className="pb-2"><CardDescription>Not Started</CardDescription><CardTitle className="text-2xl">{notStartedCount}</CardTitle></CardHeader>
                     </Card>
                     <Card className="bg-card">
                         <CardHeader className="pb-2"><CardDescription>In Progress</CardDescription><CardTitle className="text-2xl">{activeCount}</CardTitle></CardHeader>

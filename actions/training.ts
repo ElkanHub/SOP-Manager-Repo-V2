@@ -204,13 +204,13 @@ export async function assignTrainees(moduleId: string, assigneeIds: string[]) {
         return { success: false, error: 'Module must be published to assign trainees' }
     }
 
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can assign trainees' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can assign trainees' }
 
     // Department scope enforcement
     const { data: targets } = await supabase.from('profiles').select('id, department').in('id', assigneeIds).eq('is_active', true)
     if (!targets || targets.length === 0) return { success: false, error: 'No valid active users found' }
 
-    const validAssigneeIds = isQa 
+    const validAssigneeIds = (isQa || profile.role === 'admin') 
         ? targets.map(t => t.id) 
         : targets.filter(t => t.department === profile.department).map(t => t.id)
 
@@ -225,7 +225,9 @@ export async function assignTrainees(moduleId: string, assigneeIds: string[]) {
         assigned_by: user.id
     }))
 
-    const { error: insertError } = await supabase
+    const serviceSupabase = await createServiceClient()
+
+    const { error: insertError } = await serviceSupabase
         .from('training_assignments')
         // Supabase-js lacks a true ON CONFLICT DO NOTHING for arbitrary keys in single insert standard, but because we have unique constraints, we can use `ON CONFLICT (module_id, assignee_id) DO NOTHING` via RPC or handle it by checking existance.
         .upsert(assignmentsToInsert, { onConflict: 'module_id,assignee_id', ignoreDuplicates: true })

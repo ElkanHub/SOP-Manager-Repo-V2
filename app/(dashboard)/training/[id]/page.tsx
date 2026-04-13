@@ -51,7 +51,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             .order('created_at', { ascending: false }),
             
         serviceClient.from('training_assignments')
-            .select(`*, assignee:profiles(id, full_name, avatar_url, department)`)
+            .select(`*, assignee:profiles!training_assignments_assignee_id_fkey(id, full_name, avatar_url, department)`)
             .eq('module_id', id),
 
         serviceClient.from('training_attempts')
@@ -69,9 +69,9 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
     if (!isQa) {
         availableUsers = availableUsers.filter(u => u.department === profile.department)
     }
-    // exclude already assigned
+    // mark already assigned users
     const assignedIds = new Set(assignRes.data?.map(a => a.assignee_id) || [])
-    availableUsers = availableUsers.filter(u => !assignedIds.has(u.id))
+    availableUsers = availableUsers.map(u => ({ ...u, isAssigned: assignedIds.has(u.id) }))
 
     return (
         <ModuleDetailClient 
