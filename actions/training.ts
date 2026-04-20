@@ -109,7 +109,7 @@ export async function createTrainingModule(data: {
 export async function publishTrainingModule(moduleId: string) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase
         .from('training_modules')
@@ -118,7 +118,7 @@ export async function publishTrainingModule(moduleId: string) {
         .single()
 
     if (!mod) return { success: false, error: 'Module not found' }
-    if (!isQa && mod.created_by !== user.id) {
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) {
         return { success: false, error: 'Only the creator or QA can publish this module' }
     }
 
@@ -143,29 +143,35 @@ export async function publishTrainingModule(moduleId: string) {
 
     if (updateError) return { success: false, error: updateError.message }
 
-    // Notify non-started assignees
-    const { data: assignees } = await supabase
-        .from('training_assignments')
-        .select('assignee_id')
-        .eq('module_id', moduleId)
-        .eq('status', 'not_started')
+    // Auxiliary operations — wrapped in try-catch so a logging/notification
+    // failure doesn't undo the successful status change.
+    try {
+        // Notify non-started assignees
+        const { data: assignees } = await supabase
+            .from('training_assignments')
+            .select('assignee_id')
+            .eq('module_id', moduleId)
+            .eq('status', 'not_started')
 
-    if (assignees && assignees.length > 0) {
-        const pulseItems = assignees.map(a => ({
-            recipient_id: a.assignee_id,
-            sender_id: user.id,
-            type: 'training_assigned',
-            title: 'New Training Available',
-            body: `The module "${mod.title}" is now published and available for you to complete.`,
-            entity_type: 'training_module',
-            entity_id: moduleId,
-            audience: 'self'
-        }))
-        await supabase.from('pulse_items').insert(pulseItems)
+        if (assignees && assignees.length > 0) {
+            const pulseItems = assignees.map(a => ({
+                recipient_id: a.assignee_id,
+                sender_id: user.id,
+                type: 'training_assigned',
+                title: 'New Training Available',
+                body: `The module "${mod.title}" is now published and available for you to complete.`,
+                entity_type: 'training_module',
+                entity_id: moduleId,
+                audience: 'self'
+            }))
+            await supabase.from('pulse_items').insert(pulseItems)
+        }
+
+        await supabase.from('training_log').insert({ actor_id: user.id, action: 'module_published', module_id: moduleId })
+        await supabase.from('audit_log').insert({ actor_id: user.id, action: 'training_module_published', entity_type: 'training_module', entity_id: moduleId })
+    } catch (auxError) {
+        console.error('Module published but auxiliary operations failed:', auxError)
     }
-
-    await supabase.from('training_log').insert({ actor_id: user.id, action: 'module_published', module_id: moduleId })
-    await supabase.from('audit_log').insert({ actor_id: user.id, action: 'training_module_published', entity_type: 'training_module', entity_id: moduleId })
 
     revalidatePath(`/training/${moduleId}`)
     revalidatePath('/training')
@@ -175,11 +181,11 @@ export async function publishTrainingModule(moduleId: string) {
 export async function archiveTrainingModule(moduleId: string) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by').eq('id', moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can archive this module' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can archive this module' }
 
     await supabase.from('training_modules').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', moduleId)
     await supabase.from('training_log').insert({ actor_id: user.id, action: 'module_archived', module_id: moduleId })
@@ -291,11 +297,11 @@ export async function assignTrainees(moduleId: string, assigneeIds: string[]) {
 export async function createQuestionnaire(data: { moduleId: string; title: string; description?: string; passingScore: number }) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by').eq('id', data.moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can manage questionnaires' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can manage questionnaires' }
 
     // Get the latest version for this module to properly increment
     const { data: latestQ } = await supabase
@@ -327,7 +333,7 @@ export async function createQuestionnaire(data: { moduleId: string; title: strin
 export async function publishQuestionnaire(questionnaireId: string) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: q } = await supabase.from('training_questionnaires')
         .select('module_id, status, training_modules(created_by)')
@@ -338,8 +344,10 @@ export async function publishQuestionnaire(questionnaireId: string) {
     if (q.status !== 'draft') return { success: false, error: 'Once published, questionnaires cannot be edited' }
     
     // cast via any because training_modules relationship is singular but TS might type differently
-    const creatorId = (q.training_modules as any).created_by
-    if (!isQa && creatorId !== user.id) return { success: false, error: 'Only the module creator or QA can publish' }
+    const trainingModules = q.training_modules as any
+    const creatorId = trainingModules?.created_by
+    if (!creatorId) return { success: false, error: 'Could not determine module creator' }
+    if (!isQa && profile.role !== 'admin' && creatorId !== user.id) return { success: false, error: 'Only the module creator or QA can publish' }
 
     const { count } = await supabase.from('training_questions').select('id', { count: 'exact', head: true }).eq('questionnaire_id', questionnaireId)
     if (!count || count < 3) return { success: false, error: 'Questionnaire must have at least 3 questions to publish' }
@@ -347,7 +355,12 @@ export async function publishQuestionnaire(questionnaireId: string) {
     const { error } = await supabase.from('training_questionnaires').update({ status: 'published', updated_at: new Date().toISOString() }).eq('id', questionnaireId)
     if (error) return { success: false, error: error.message }
 
-    await supabase.from('training_log').insert({ actor_id: user.id, action: 'questionnaire_published', module_id: q.module_id, questionnaire_id: questionnaireId })
+    try {
+        await supabase.from('training_log').insert({ actor_id: user.id, action: 'questionnaire_published', module_id: q.module_id, questionnaire_id: questionnaireId })
+    } catch (auxError) {
+        console.error('Questionnaire published but log insert failed:', auxError)
+    }
+
     revalidatePath(`/training/${q.module_id}`)
     return { success: true }
 }
@@ -520,11 +533,11 @@ export async function submitAttempt(attemptId: string, answers: { questionId: st
 export async function recordPaperCompletion(data: { moduleId: string; respondentId: string; questionnaireId: string; paperScanUrl?: string }) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by, sop_id, sop_version').eq('id', data.moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can record paper completions' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only the creator or QA can record paper completions' }
 
     const { data: q } = await supabase.from('training_questionnaires').select('version').eq('id', data.questionnaireId).single()
     if (!q) return { success: false, error: 'Questionnaire not found' }
@@ -574,12 +587,12 @@ export async function recordPaperCompletion(data: { moduleId: string; respondent
 export async function updateSlide(moduleId: string, slideId: string, updates: { title?: string; body?: string; notes?: string }) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
     if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can edit slides' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can edit slides' }
 
     if (!mod.slide_deck) return { success: false, error: 'Slide deck not generated yet' }
 
@@ -599,12 +612,12 @@ export async function updateSlide(moduleId: string, slideId: string, updates: { 
 export async function reorderSlides(moduleId: string, orderedSlideIds: string[]) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
     if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can reorder slides' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can reorder slides' }
     if (!mod.slide_deck) return { success: false, error: 'Slide deck not generated yet' }
 
     const deck = (mod.slide_deck as any[]) || []
@@ -632,12 +645,12 @@ export async function reorderSlides(moduleId: string, orderedSlideIds: string[])
 export async function addSlide(moduleId: string, slide: { type: string; title: string; body: string; notes?: string }, insertAfterOrder?: number) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
     if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can add slides' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can add slides' }
 
     const deck = (mod.slide_deck as any[]) || []
 
@@ -679,12 +692,12 @@ export async function addSlide(moduleId: string, slide: { type: string; title: s
 export async function deleteSlide(moduleId: string, slideId: string) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
-    const { user, isQa, supabase } = auth
+    const { user, profile, isQa, supabase } = auth
 
     const { data: mod } = await supabase.from('training_modules').select('created_by, status, slide_deck').eq('id', moduleId).single()
     if (!mod) return { success: false, error: 'Module not found' }
     if (mod.status === 'archived') return { success: false, error: 'Archived modules cannot be edited' }
-    if (!isQa && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can delete slides' }
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) return { success: false, error: 'Only creator or QA can delete slides' }
     if (!mod.slide_deck) return { success: false, error: 'Slide deck not generated yet' }
 
     let deck = (mod.slide_deck as any[]) || []

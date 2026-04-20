@@ -64,14 +64,19 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
 
     const handlePublish = async (qId: string) => {
         setIsPublishing(qId)
-        const res = await publishQuestionnaire(qId)
-        setIsPublishing(null)
-
-        if (res.error) {
-            toast.error(res.error)
-        } else {
-            toast.success("Questionnaire published and locked!")
-            router.refresh()
+        try {
+            const res = await publishQuestionnaire(qId)
+            if (res.error) {
+                toast.error(res.error)
+            } else {
+                toast.success("Questionnaire published and locked!")
+                router.refresh()
+            }
+        } catch (error: any) {
+            console.error('Questionnaire publish error:', error)
+            toast.error(error.message || "An unexpected error occurred while publishing the questionnaire")
+        } finally {
+            setIsPublishing(null)
         }
     }
 
