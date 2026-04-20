@@ -1,8 +1,17 @@
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 import { buildEmailTemplate } from '@/lib/email-templates'
 import { headers } from 'next/headers'
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
+const transport = nodemailer.createTransport({
+    host: process.env.MAILTRAP_HOST || "sandbox.smtp.mailtrap.io",
+    port: parseInt(process.env.MAILTRAP_PORT || "2525", 10),
+    auth: {
+        user: process.env.MAILTRAP_USER,
+        pass: process.env.MAILTRAP_PASS
+    }
+})
+
+const defaultFrom = process.env.MAILTRAP_FROM_EMAIL || 'onboarding@example.com'
 
 async function getAppUrl() {
     const headerList = await headers()
@@ -15,13 +24,13 @@ export async function sendApprovalEmail(
     targetEmail: string,
     targetName: string
 ) {
-    if (!resend) {
-        console.warn('[Email] RESEND_API_KEY is not configured. Skipping email.')
+    if (!process.env.MAILTRAP_USER || !process.env.MAILTRAP_PASS) {
+        console.warn('[Email] Mailtrap credentials not configured. Skipping email.')
         return { success: false, error: 'Email delivery not configured' }
     }
 
-    // ── DEBUG: confirm key is loading ─────────────────────────────
-    console.log('[Email] API key present:', !!process.env.RESEND_API_KEY)
+    // ── DEBUG: confirm credentials are loading ─────────────────────────────
+    console.log('[Email] Mailtrap configured:', !!process.env.MAILTRAP_USER)
     console.log('[Email] Sending approval email to:', targetEmail)
     // ─────────────────────────────────────────────────────────────
 
@@ -41,22 +50,15 @@ export async function sendApprovalEmail(
             buttonUrl: `${appUrl}/onboarding`,
         })
 
-        const { data, error } = await resend.emails.send({
-            from: 'SOP-Guard Pro <onboarding@resend.dev>',
-            // ── TESTING: replace with the email registered on your Resend account
-            // Once you verify a custom domain, switch back to: to: targetEmail
-            to: 'your-resend-account-email@gmail.com',
+        const info = await transport.sendMail({
+            from: `SOP-Guard Pro <${defaultFrom}>`,
+            to: targetEmail,
             subject: 'Your SOP-Guard Pro access has been approved',
             html,
         })
 
-        if (error) {
-            console.error('[Email] Resend delivery failed:', error)
-            return { success: false, error: error.message }
-        }
-
-        console.log('[Email] Approval email sent successfully. Resend ID:', data?.id)
-        return { success: true, data }
+        console.log('[Email] Approval email sent successfully. Message ID:', info.messageId)
+        return { success: true, data: { id: info.messageId } }
 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error'
@@ -80,9 +82,9 @@ export async function sendPulseEmail({
     buttonText?: string
     buttonUrl?: string
 }) {
-    if (!resend) {
-        console.warn('[Email] RESEND_API_KEY is not configured. Skipping pulse email.')
-        return { success: false, error: 'Resend not configured' }
+    if (!process.env.MAILTRAP_USER || !process.env.MAILTRAP_PASS) {
+        console.warn('[Email] Mailtrap credentials not configured. Skipping pulse email.')
+        return { success: false, error: 'Mailtrap not configured' }
     }
 
     // ── DEBUG ──────────────────────────────────────────────────────
@@ -100,22 +102,15 @@ export async function sendPulseEmail({
             buttonUrl: buttonUrl || `${appUrl}/dashboard`,
         })
 
-        const { data, error } = await resend.emails.send({
-            from: 'SOP-Guard Pro <onboarding@resend.dev>',
-            // ── TESTING: replace with the email registered on your Resend account
-            // Once you verify a custom domain, switch back to: to
-            to: 'your-resend-account-email@gmail.com',
+        const info = await transport.sendMail({
+            from: `SOP-Guard Pro <${defaultFrom}>`,
+            to: Array.isArray(to) ? to.join(', ') : to,
             subject: `[SOP-Guard Pro] ${subject}`,
             html,
         })
 
-        if (error) {
-            console.error('[Email] Pulse email delivery failed:', error)
-            return { success: false, error: error.message }
-        }
-
-        console.log('[Email] Pulse email sent successfully. Resend ID:', data?.id)
-        return { success: true, data }
+        console.log('[Email] Pulse email sent successfully. Message ID:', info.messageId)
+        return { success: true, data: { id: info.messageId } }
 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error'

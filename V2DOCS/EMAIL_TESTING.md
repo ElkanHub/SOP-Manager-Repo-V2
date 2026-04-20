@@ -1,22 +1,26 @@
 # SOP-Guard Pro — Email Delivery Testing Guide
 
-This guide outlines how to verify and test the newly integrated Resend email delivery system across both the **Auth Waiting Room** and the **Pulse Notification** modules.
+This guide outlines how to verify and test the newly integrated Mailtrap email delivery system across both the **Auth Waiting Room** and the **Pulse Notification** modules.
 
 ## 1. Prerequisites (Environment Setup)
 
-Before testing, ensure your local environment contains the necessary Resend API key:
+Before testing, ensure your local environment contains the necessary Mailtrap SMTP credentials:
 
 ### `.env` configuration
-Add your Resend API key to your `.env` file:
+Add your Mailtrap settings to your `.env` or `.env.local` file:
 ```bash
-RESEND_API_KEY=re_your_api_key_here
+MAILTRAP_HOST=sandbox.smtp.mailtrap.io
+MAILTRAP_PORT=2525
+MAILTRAP_USER=your_mailtrap_user_here
+MAILTRAP_PASS=your_mailtrap_password_here
+MAILTRAP_FROM_EMAIL=onboarding@your-domain.com
 ```
 
 > [!NOTE]
-> **Sandbox Testing**: We have configured the system to use `onboarding@resend.dev` as the sender. This allows you to test immediately using the Resend sandbox.
+> **Sandbox Testing**: If using the Mailtrap Sandbox for testing, Mailtrap catches all outbound emails and displays them in your virtual inbox without sending them to the actual recipients. You do not need to worry about spamming real users while developing.
 > 
 > [!IMPORTANT]
-> When using the Resend **Sandbox/Onboarding** address, you can **ONLY** send emails to the single email address used to create your Resend account. To send to other addresses or domains, you must verify a custom domain in the Resend Dashboard.
+> When you migrate to Production Mailtrap Email Sending, ensure you verify your sender domain in the Mailtrap Dashboard, update your `MAILTRAP_HOST` (e.g. to `send.smtp.mailtrap.io`), and use your real sending credentials.
 
 ---
 
@@ -26,7 +30,7 @@ This verifies that new users receive an email once an Admin grants them access.
 
 1.  **Signup as a Test User**:
     - Go to `/signup`.
-    - Register with a valid email address (if using a Resend verified domain) or your own account email.
+    - Register with any email address.
     - You will be redirected to the `/waiting-room`.
 2.  **Login as Admin**:
     - Open a private/incognito window or logout.
@@ -37,7 +41,7 @@ This verifies that new users receive an email once an Admin grants them access.
     - Locate your test user and click **Approve**.
 4.  **Verification**:
     - The test user's screen should automatically refresh and move to `/onboarding`.
-    - Check the inbox for the test user. You should receive a branded "Your Account is Approved" email.
+    - Check your Mailtrap Inbox. You should receive a branded "Your Account is Approved" email.
 
 ---
 
@@ -52,16 +56,17 @@ This verifies that operational notices and replies trigger real-time email alert
     - Open the **Pulse Panel** (Bell icon in TopNav or right-side handle).
     - Post a new **Notice** to "Everyone" or your specific "Department".
 3.  **Verification**:
-    - All other active users in that audience who have email enabled will receive a "New Operations Notice" email.
+    - All other active users in that audience who have email enabled will have an email generated for them.
+    - Check your Mailtrap Inbox. You should see a "New Operations Notice" email for each recipient.
     - *Note: The system purposefully skips sending an email to the person who posted the notice.*
 4.  **Test Replies**:
     - As a second user, reply to the notice.
-    - The original author of the notice should receive a "Pulse Reply Received" email alert.
+    - Check your Mailtrap Inbox to see if the original author of the notice receives a "Pulse Reply Received" email alert.
 
 ---
 
 ## 4. Troubleshooting
 
-- **Check Server Logs**: If an email fails to send, check the terminal running `npm run dev`. We have added `console.error` logs for Resend delivery failures.
-- **Resend Dashboard**: Visit [resend.com/emails](https://resend.com/emails) to see a live log of every email the API attempted to send, including delivery status and bounce reports.
-- **Spam Folder**: During initial setup with unverified domains, branded emails may occasionally land in spam. Verify your sender domain in Resend to improve deliverability.
+- **Check Server Logs**: If an email fails to send, check the terminal running `npm run dev`. We have added `console.error` logs for Mailtrap delivery failures.
+- **Mailtrap Dashboard**: Visit your Mailtrap account to see a live log of every email the SMTP transport attempted to send.
+- **Spam Folder**: During actual production sending with unverified domains, branded emails may occasionally land in spam. Verify your sender domain in Mailtrap to improve deliverability.
