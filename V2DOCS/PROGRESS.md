@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 11, 2026
-> **Version:** 3.2 (Training Hub Hardening)
-> **Current Phase:** Phase 29 ✅ Complete — Phase 30 Next
+> **Last Updated:** April 20, 2026
+> **Version:** 3.3 (Training Publish Fix)
+> **Current Phase:** Phase 30 ✅ Complete — Phase 31 Next
 
 ---
 
@@ -44,6 +44,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 27 | ✅ Complete | Mobile Signature QR Flow                         |
 | Phase 28 | ✅ Complete | Documentation Modernization & Responsive Tables  |
 | Phase 29 | ✅ Complete | Training Hub Bug Fixes & Hardening               |
+| Phase 30 | ✅ Complete | Training Publish Button Fix                      |
 
 ---
 
@@ -1697,3 +1698,49 @@ actions/
 
 - `npx tsc --noEmit` — Exit code 0, no type errors ✅
 - All changes consistent across server components, API routes, server actions, and client components ✅
+
+---
+
+## Phase 30: Training Publish Button Fix
+
+**Status:** ✅ Complete
+**Completed:** April 20, 2026
+
+### Overview
+
+Diagnosed and resolved the root causes of the non-functional publish buttons across the Training Hub. Both the **Publish Module** button (module detail view) and the **Publish & Lock** button (questionnaire editor) were failing silently due to missing error handling and unsafe property access patterns that caused unhandled exceptions.
+
+### Bugs Found & Fixed
+
+#### 1. Missing Try-Catch on Questionnaire Publish Handler (Critical)
+- **Problem:** The `handlePublish` function in `questionnaire-editor.tsx` had no `try-catch` wrapper. If the `publishQuestionnaire` server action threw an error (e.g. from a null reference or insert constraint violation), the spinner would freeze forever and the user would receive zero feedback — making the button appear completely non-functional.
+- **Fix:** Added `try-catch-finally` block matching the robust pattern already used in the module publish handler. The `finally` block ensures `setIsPublishing(null)` always runs, preventing permanent spinner freeze.
+- **File:** `components/training/questionnaire-editor.tsx`
+
+#### 2. Unsafe Property Access on Training Modules Relationship (Critical)
+- **Problem:** In the `publishQuestionnaire` server action, the code accessed `(q.training_modules as any).created_by` directly without null safety. If the Supabase relationship join returned `null` (e.g. orphaned questionnaire, deleted module), this would throw `TypeError: Cannot read property 'created_by' of null`, crashing the entire server action.
+- **Fix:** Added optional chaining (`trainingModules?.created_by`) and an explicit null guard that returns a clear error message: `"Could not determine module creator"`.
+- **File:** `actions/training.ts` → `publishQuestionnaire()`
+
+#### 3. Unprotected Auxiliary Operations in Both Publish Actions (Medium)
+- **Problem:** In both `publishTrainingModule` and `publishQuestionnaire` server actions, the auxiliary operations after the primary status update (`training_log` insert, `audit_log` insert, `pulse_items` notifications) were not wrapped in try-catch. If any of these failed (constraint violation, connection issue, etc.), the entire server action would throw an unhandled error — even though the actual status update had already succeeded. This made it appear as though publishing failed when it actually completed.
+- **Fix:** Wrapped all post-update auxiliary operations in try-catch blocks so that a logging or notification failure cannot block or roll back the primary publish operation. Errors are logged to console for debugging.
+- **Files:** `actions/training.ts` → `publishTrainingModule()`, `publishQuestionnaire()`
+
+### Files Modified
+
+```
+components/training/
+└── questionnaire-editor.tsx           # Added try-catch-finally to publish handler
+
+actions/
+└── training.ts                        # 3 fixes: null safety on relationship access,
+                                       #   try-catch on module publish auxiliaries,
+                                       #   try-catch on questionnaire publish log insert
+```
+
+### Verification
+
+- Both publish buttons now provide proper toast feedback on success and failure ✅
+- Spinner correctly resets via `finally` blocks even when errors occur ✅
+- Auxiliary operation failures (logs, notifications) no longer block successful publish ✅
