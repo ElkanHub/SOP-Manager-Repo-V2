@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { PanelRightClose, PanelRightOpen } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ThePulse } from "./the-pulse"
 
 interface PulseWrapperProps {
@@ -164,26 +165,35 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
                     ${isOpen ? 'right-80' : 'right-0'}
                 `}
             >
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={togglePulse}
-                    className="h-16 w-8 rounded-l-md border-l border-t border-b bg-muted/60 hover:bg-muted text-muted-foreground shadow-sm relative"
-                    title={isOpen ? "Close Pulse" : "Open Pulse"}
-                >
-                    {isOpen ? (
-                        <PanelRightClose className="h-5 w-5" />
-                    ) : (
-                        <>
-                            <PanelRightOpen className="h-5 w-5" />
-                            {badgeCount > 0 && (
-                                <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
-                                    {badgeCount > 9 ? '9+' : badgeCount}
-                                </span>
-                            )}
-                        </>
-                    )}
-                </Button>
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={togglePulse}
+                                className="h-16 w-8 rounded-l-md border-l border-t border-b bg-muted/60 hover:bg-muted text-muted-foreground shadow-sm relative"
+                                aria-label={isOpen ? "Close Pulse" : "Open Pulse"}
+                            />
+                        }
+                    >
+                        {isOpen ? (
+                            <PanelRightClose className="h-5 w-5" />
+                        ) : (
+                            <>
+                                <PanelRightOpen className="h-5 w-5" />
+                                {badgeCount > 0 && (
+                                    <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
+                                        {badgeCount > 9 ? '9+' : badgeCount}
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                        {isOpen ? "Close Pulse" : "Open Pulse — notices & updates"}
+                    </TooltipContent>
+                </Tooltip>
             </div>
 
             {/* Overlay Pulse Panel - Fixed position, slides over content */}

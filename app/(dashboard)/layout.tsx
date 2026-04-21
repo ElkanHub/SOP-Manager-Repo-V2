@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { AppSidebar } from "@/components/app-sidebar"
 import { TopNav } from "@/components/shell/top-nav"
 import { SidebarProvider } from "@/components/ui/sidebar"
+import { TooltipProvider } from "@/components/ui/tooltip"
 import { PulseWrapper } from "@/components/pulse/pulse-wrapper"
 
 export default async function DashboardLayout({
@@ -36,21 +37,23 @@ export default async function DashboardLayout({
 
     return (
         <SidebarProvider>
-            <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
-                <TopNav user={user} profile={profile} />
+            <TooltipProvider delay={300}>
+                <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
+                    <TopNav user={user} profile={profile} />
 
-                <div className="flex flex-1 overflow-hidden">
-                    <AppSidebar user={user} profile={profile} isQa={isQa || false} />
+                    <div className="flex flex-1 overflow-hidden">
+                        <AppSidebar user={user} profile={profile} isQa={isQa || false} />
 
-                    {/* Main Content Area */}
-                    <main className="flex-1 overflow-y-auto p-0 md:p-6 relative z-10 bg-background">
-                        {children}
-                    </main>
+                        {/* Main Content Area */}
+                        <main className="flex-1 overflow-y-auto p-0 md:p-6 relative z-10 bg-background">
+                            {children}
+                        </main>
 
-                    {/* The Pulse Right Sidebar */}
-                    <PulseWrapper profile={profile} user={user} />
+                        {/* The Pulse Right Sidebar */}
+                        <PulseWrapper profile={profile} user={user} />
+                    </div>
                 </div>
-            </div>
+            </TooltipProvider>
         </SidebarProvider>
     )
 }

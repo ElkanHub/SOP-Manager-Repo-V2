@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSidebar } from "@/components/ui/sidebar"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { GlobalSearch } from "./global-search"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { createClient } from "@/lib/supabase/client"
@@ -113,15 +114,23 @@ export function TopNav({ user, profile }: TopNavProps) {
     return (
         <header className="sticky top-0 z-50 flex h-14 w-full shrink-0 items-center gap-4 bg-gradient-to-r from-brand-navy to-brand-blue border-b border-white/10 px-4 shadow-sm">
             <div className="flex items-center gap-4 lg:hidden">
-                <div className="group relative">
-                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={toggleSidebar} aria-label="Toggle navigation menu">
+                <Tooltip>
+                    <TooltipTrigger
+                        render={
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-white hover:bg-white/10"
+                                onClick={toggleSidebar}
+                                aria-label="Toggle navigation menu"
+                            />
+                        }
+                    >
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Toggle Sidebar</span>
-                    </Button>
-                    <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
-                        Open menu
-                    </span>
-                </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom">Open menu</TooltipContent>
+                </Tooltip>
                 <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-white">
                     <GalleryVerticalEnd className="h-5 w-5" />
                     <span className="hidden sm:inline-block">SOP-Guard Pro</span>
@@ -139,19 +148,21 @@ export function TopNav({ user, profile }: TopNavProps) {
                 </div>
 
                 <nav className="flex items-center gap-2">
-                    <div className="group relative">
-                        <ThemeToggle />
-                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
-                            Toggle theme
-                        </span>
-                    </div>
-                    <div className="group relative">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-white hover:bg-white/10 relative"
-                            onClick={handleBellClick}
-                            aria-label="Open Pulse notifications"
+                    <Tooltip>
+                        <TooltipTrigger render={<ThemeToggle />} />
+                        <TooltipContent side="bottom">Toggle theme</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-white hover:bg-white/10 relative"
+                                    onClick={handleBellClick}
+                                    aria-label="Open Pulse notifications"
+                                />
+                            }
                         >
                             <Bell className="h-5 w-5" />
                             {notifCount > 0 && (
@@ -160,27 +171,37 @@ export function TopNav({ user, profile }: TopNavProps) {
                                 </span>
                             )}
                             <span className="sr-only">Toggle notifications</span>
-                        </Button>
-                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
-                            Notifications
-                        </span>
-                    </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Notifications</TooltipContent>
+                    </Tooltip>
                     {/* docsPage */}
-                    <div className="group relative">
-                        <Link href="/docs" aria-label="Documentation">
-                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
-                                <Book className="h-5 w-5" />
-                            </Button>
-                        </Link>
-                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
-                            Documentation
-                        </span>
-                    </div>
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Link
+                                    href="/docs"
+                                    aria-label="Documentation"
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 transition-colors"
+                                />
+                            }
+                        >
+                            <Book className="h-5 w-5" />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">Documentation</TooltipContent>
+                    </Tooltip>
 
 
                     {/* Direct Link to Settings */}
-                    <div className="group relative ml-2">
-                        <Link href="/settings" className="block transition-transform hover:scale-105 active:scale-95" aria-label="Settings and profile">
+                    <Tooltip>
+                        <TooltipTrigger
+                            render={
+                                <Link
+                                    href="/settings"
+                                    aria-label="Settings and profile"
+                                    className="ml-2 inline-block transition-transform hover:scale-105 active:scale-95"
+                                />
+                            }
+                        >
                             <UserAvatar
                                 name={profile?.full_name}
                                 image={profile?.avatar_url}
@@ -188,11 +209,9 @@ export function TopNav({ user, profile }: TopNavProps) {
                                 className="h-8 w-8 border border-white/20 hover:border-white/50 transition-colors"
                             />
                             <span className="sr-only">Settings</span>
-                        </Link>
-                        <span className="pointer-events-none absolute right-0 top-full z-50 mt-1.5 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
-                            Settings &amp; profile
-                        </span>
-                    </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" align="end">Settings &amp; profile</TooltipContent>
+                    </Tooltip>
                 </nav>
             </div>
         </header>
