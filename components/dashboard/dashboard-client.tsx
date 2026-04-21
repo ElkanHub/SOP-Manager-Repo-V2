@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { usePresenceStore } from "@/store/presence-store"
+import { RollingNumber } from "@/components/ui/rolling-number"
 
 interface KpiData {
   activeSops: number
@@ -243,7 +244,11 @@ export function DashboardClient({
       <div className="bg-slate-100 dark:bg-slate-800/50 border-y border-border px-4 md:px-6 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-slate-700 dark:text-slate-300">{displayedUsersOnline}</span> Active Now
+          <RollingNumber
+            value={displayedUsersOnline}
+            className="text-slate-700 dark:text-slate-300"
+          />{" "}
+          Online Now
         </div>
         <div className="hidden sm:block w-px h-4 bg-slate-300 dark:bg-slate-700" />
         <div className="flex items-center gap-2">
