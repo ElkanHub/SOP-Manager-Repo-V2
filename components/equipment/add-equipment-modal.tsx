@@ -217,7 +217,7 @@ export function AddEquipmentModal({
                                     <Input
                                         id="name"
                                         value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        onChange={(e) => setName(e.target.value.toUpperCase())}
                                         placeholder="e.g., Forklift #1"
                                         className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
                                     />

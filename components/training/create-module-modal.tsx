@@ -112,7 +112,7 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
                                     id="title" 
                                     placeholder="e.g. Cleanroom Entry Procedures Training" 
                                     value={title} 
-                                    onChange={e => setTitle(e.target.value)} 
+                                    onChange={e => setTitle(e.target.value.toUpperCase())}
                                     disabled={isLoading}
                                     className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all font-medium"
                                 />

@@ -93,7 +93,7 @@ export function NewEventModal({ open, onOpenChange, initialDate }: NewEventModal
             <Input
               id="title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => setTitle(e.target.value.toUpperCase())}
               placeholder="e.g. Quarterly Compliance Audit"
               className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all font-medium"
             />

@@ -79,7 +79,7 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
 
             <div className="space-y-6">
                 <h2 className="text-xl font-semibold border-b border-border/50 pb-2 flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-amber-500" /> Pending Assignments
+                    <Clock className="h-5 w-5 text-amber-500" /> Pending Modules
                 </h2>
                 {pending.length === 0 ? (
                     <div className="py-8 text-center text-muted-foreground flex flex-col items-center">
@@ -134,7 +134,7 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
 
             <div className="space-y-6 pt-4">
                 <h2 className="text-xl font-semibold border-b border-border/50 pb-2 flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Completed
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" /> Completed Modules
                 </h2>
                 {completed.length === 0 ? (
                     <p className="text-muted-foreground text-center py-8">No completed assignments yet.</p>

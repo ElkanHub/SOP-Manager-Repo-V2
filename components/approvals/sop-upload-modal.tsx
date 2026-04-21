@@ -362,7 +362,7 @@ export function SopUploadModal({
                                         <Input
                                             id="title"
                                             value={title}
-                                            onChange={(e) => setTitle(e.target.value)}
+                                            onChange={(e) => setTitle(e.target.value.toUpperCase())}
                                             placeholder="Core Operational Procedure..."
                                             className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
                                         />
