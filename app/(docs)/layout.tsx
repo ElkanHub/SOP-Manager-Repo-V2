@@ -28,7 +28,7 @@ export default function DocsLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className={`${dmSans.variable} ${dmMono.variable} font-sans min-h-screen bg-white`}>
+    <div className={`${dmSans.variable} ${dmMono.variable} font-sans min-h-screen bg-background`}>
       <DocsShell>{children}</DocsShell>
     </div>
   )

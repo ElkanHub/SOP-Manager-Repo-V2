@@ -66,15 +66,15 @@ export function PermissionsTable() {
 
 function renderCell(val: boolean | string) {
   if (val === true) {
-    return <CheckCircle2 className="h-4 w-4 text-green-600 mx-auto" />
+    return <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mx-auto" />
   }
   if (val === false) {
-    return <span className="text-slate-300">—</span>
+    return <span className="text-muted-foreground/40">—</span>
   }
   return (
     <div className="flex flex-col items-center gap-1">
-      <CheckCircle2 className="h-4 w-4 text-amber-500 mx-auto" />
-      <span className="text-[10px] text-slate-500 leading-none">{val}</span>
+      <CheckCircle2 className="h-4 w-4 text-amber-500 dark:text-amber-400 mx-auto" />
+      <span className="text-[10px] text-muted-foreground leading-none">{val}</span>
     </div>
   )
 }

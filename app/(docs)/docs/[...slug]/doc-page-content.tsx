@@ -26,7 +26,7 @@ const components = {
   h2: (props: any) => (
     <h2 
       id={props.children?.toString().toLowerCase().replace(/\s+/g, '-')} 
-      className="text-[26px] md:text-[28px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-navy to-brand-blue mt-14 mb-6 pb-4 border-b border-border/50 tracking-tight leading-tight" 
+      className="text-[26px] md:text-[28px] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-navy to-brand-blue dark:from-brand-teal dark:to-brand-blue mt-14 mb-6 pb-4 border-b border-border/50 tracking-tight leading-tight"
       {...props} 
     />
   ),
@@ -65,7 +65,7 @@ const components = {
     )
   },
   ul: (props: any) => <ul className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-none pl-2 space-y-3 font-medium" {...props} />,
-  ol: (props: any) => <ol className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-decimal pl-6 space-y-3 font-medium marker:text-brand-navy marker:font-bold" {...props} />,
+  ol: (props: any) => <ol className="text-[16px] text-muted-foreground leading-[1.8] mb-6 list-decimal pl-6 space-y-3 font-medium marker:text-brand-navy dark:marker:text-brand-teal marker:font-bold" {...props} />,
   li: (props: any) => (
     <li className="relative pl-6" {...props}>
       {/* Target un-ordered lists by seeing if their parent is a ul (this is a simple hack via CSS below, but we can just let tailwind handle it if we scope the marker). Instead, we'll use a custom before: pseudo element if it's inside UL. */}
@@ -75,7 +75,7 @@ const components = {
   ),
   strong: (props: any) => <strong className="font-bold text-foreground" {...props} />,
   code: (props: any) => (
-    <code className="bg-muted px-1.5 py-0.5 rounded-lg text-[0.85em] font-mono font-medium text-brand-navy border border-border/80 shadow-sm" {...props} />
+    <code className="bg-muted px-1.5 py-0.5 rounded-lg text-[0.85em] font-mono font-medium text-brand-navy dark:text-brand-teal border border-border/80 shadow-sm" {...props} />
   ),
   pre: (props: any) => (
     <pre className="bg-brand-navy text-slate-100 rounded-2xl p-6 overflow-x-auto text-[13px] mb-8 shadow-soft border border-slate-800/50" {...props} />
@@ -115,10 +115,10 @@ interface DocPageContentProps {
 
 export async function DocPageContent({ frontmatter, content }: DocPageContentProps) {
   const roleBadgeColors: Record<string, string> = {
-    employee: 'bg-slate-100 text-slate-600 border-slate-200',
-    manager: 'bg-blue-50 text-blue-700 border-blue-100',
-    qa: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    admin: 'bg-purple-50 text-purple-700 border-purple-100',
+    employee: 'bg-muted text-muted-foreground border-border',
+    manager: 'bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200/50 dark:border-blue-500/20',
+    qa: 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-500/20',
+    admin: 'bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-200/50 dark:border-purple-500/20',
   }
 
   return (
