@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ReferencePicker } from "./reference-picker"
+import { SopReadModal } from "@/components/library/sop-read-modal"
 import { sendMessage, editMessage, deleteMessage, markConversationRead, leaveGroup, deleteConversation, updateNotifySetting } from "@/actions/messages"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -29,6 +30,8 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
   const [loading, setLoading] = useState(true)
   const [isMuted, setIsMuted] = useState(false)
   const [profileModalUser, setProfileModalUser] = useState<Profile | null>(null)
+  const [sopRefs, setSopRefs] = useState<Record<string, { sop_number: string; title: string }>>({})
+  const [readSop, setReadSop] = useState<{ id: string; sop_number?: string; title?: string } | null>(null)
 
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -142,6 +145,38 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
       supabase.removeChannel(presenceChannel)
     }
   }, [conversationId, userId, supabase])
+
+  // Hydrate SOP references referenced in messages so we can render
+  // the sop_number/title and open a quick read view on click.
+  useEffect(() => {
+    const missing = Array.from(
+      new Set(
+        messages
+          .filter((m) => m.reference_type === "sop" && m.reference_id && !sopRefs[m.reference_id])
+          .map((m) => m.reference_id as string)
+      )
+    )
+    if (missing.length === 0) return
+
+    let active = true
+    ;(async () => {
+      const { data } = await supabase
+        .from("sops")
+        .select("id, sop_number, title")
+        .in("id", missing)
+      if (!active || !data) return
+      setSopRefs((prev) => {
+        const next = { ...prev }
+        for (const s of data) {
+          next[s.id] = { sop_number: s.sop_number, title: s.title }
+        }
+        return next
+      })
+    })()
+    return () => {
+      active = false
+    }
+  }, [messages, supabase, sopRefs])
 
   // Debounced typing broadcast
   useEffect(() => {
@@ -370,18 +405,52 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
               {msg.is_edited && <div className={cn("text-[10px] text-right mt-1.5 opacity-60", isOwn ? "text-white" : "text-muted-foreground")}>Edited</div>}
 
               {/* Reference Card */}
-              {msg.reference_type && msg.reference_id && (
-                <div className={cn(
-                  "mt-2 border rounded-lg px-3 py-2 flex items-start gap-3",
-                  isOwn ? "bg-white/10 border-white/20" : "bg-background border-border/50"
-                )}>
-                  <FileText className={cn("w-[16px] h-[16px] mt-0.5", isOwn ? "text-white" : "text-brand-teal")} />
-                  <div className="flex-1 min-w-0">
-                    <div className={cn("text-[10px] uppercase font-bold tracking-wider", isOwn ? "text-white/70" : "text-muted-foreground")}>{msg.reference_type.replace('_', ' ')}</div>
-                    <div className="text-[13px] font-semibold mt-0.5 truncate">Reference: {msg.reference_id.substring(0, 8)}</div>
-                  </div>
-                </div>
-              )}
+              {msg.reference_type && msg.reference_id && (() => {
+                const isSop = msg.reference_type === 'sop'
+                const sopInfo = isSop ? sopRefs[msg.reference_id] : undefined
+                const clickable = isSop
+                const handleOpen = () => {
+                  if (!isSop || !msg.reference_id) return
+                  setReadSop({
+                    id: msg.reference_id,
+                    sop_number: sopInfo?.sop_number,
+                    title: sopInfo?.title,
+                  })
+                }
+                return (
+                  <button
+                    type="button"
+                    onClick={clickable ? handleOpen : undefined}
+                    disabled={!clickable}
+                    className={cn(
+                      "mt-2 w-full text-left border rounded-lg px-3 py-2 flex items-start gap-3 transition-colors",
+                      isOwn ? "bg-white/10 border-white/20" : "bg-background border-border/50",
+                      clickable && (isOwn ? "hover:bg-white/20 cursor-pointer" : "hover:bg-brand-teal/5 hover:border-brand-teal/40 cursor-pointer")
+                    )}
+                  >
+                    <FileText className={cn("w-[16px] h-[16px] mt-0.5 shrink-0", isOwn ? "text-white" : "text-brand-teal")} />
+                    <div className="flex-1 min-w-0">
+                      <div className={cn(
+                        "text-[10px] uppercase font-bold tracking-wider",
+                        isOwn ? "text-white/70" : "text-muted-foreground"
+                      )}>
+                        {isSop ? (sopInfo?.sop_number || 'SOP') : msg.reference_type.replace('_', ' ')}
+                      </div>
+                      <div className="text-[13px] font-semibold mt-0.5 truncate">
+                        {isSop ? (sopInfo?.title || 'Loading SOP…') : `Reference: ${msg.reference_id.substring(0, 8)}`}
+                      </div>
+                      {clickable && (
+                        <div className={cn(
+                          "text-[10px] mt-1 uppercase tracking-wider font-bold",
+                          isOwn ? "text-white/60" : "text-brand-teal"
+                        )}>
+                          Tap to open read view →
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )
+              })()}
             </>
           )}
 
@@ -494,12 +563,17 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
         )}
 
         {reference && (
-          <div className="bg-muted/50 border-l-2 border-blue-500 rounded-r-md px-3 py-2 mb-2 flex items-center justify-between">
-            <div>
-              <span className="text-[12px] font-semibold text-blue-500">Attached Reference</span>
-              <span className="text-[12px] text-muted-foreground truncate ml-2">{reference.type}: {reference.id.substring(0, 8)}</span>
+          <div className="bg-muted/50 border-l-2 border-brand-teal rounded-r-md px-3 py-2 mb-2 flex items-center justify-between">
+            <div className="min-w-0 flex items-center gap-2">
+              <FileText className="w-3.5 h-3.5 text-brand-teal shrink-0" />
+              <span className="text-[12px] font-semibold text-brand-teal shrink-0">Attached:</span>
+              <span className="text-[12px] text-muted-foreground truncate">
+                {reference.type === 'sop'
+                  ? `${reference.sop_number || 'SOP'} — ${reference.title || ''}`
+                  : `${reference.type}: ${reference.id.substring(0, 8)}`}
+              </span>
             </div>
-            <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={() => setReference(null)}>X</Button>
+            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 shrink-0" onClick={() => setReference(null)}>X</Button>
           </div>
         )}
 
@@ -528,7 +602,24 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
       <ReferencePicker
         isOpen={isReferencePickerOpen}
         onClose={() => setIsReferencePickerOpen(false)}
-        onSelect={(ref) => { setReference(ref); setIsReferencePickerOpen(false) }}
+        onSelect={(ref) => {
+          setReference(ref)
+          setIsReferencePickerOpen(false)
+          if (ref?.type === 'sop' && ref.id) {
+            setSopRefs((prev) => ({
+              ...prev,
+              [ref.id]: { sop_number: ref.sop_number, title: ref.title },
+            }))
+          }
+        }}
+      />
+
+      <SopReadModal
+        sopId={readSop?.id || null}
+        sopNumber={readSop?.sop_number}
+        sopTitle={readSop?.title}
+        open={!!readSop}
+        onOpenChange={(open) => { if (!open) setReadSop(null) }}
       />
 
       <Dialog open={!!profileModalUser} onOpenChange={(open) => !open && setProfileModalUser(null)}>

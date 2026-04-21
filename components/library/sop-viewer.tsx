@@ -23,7 +23,7 @@ export function SopViewer({ fileUrl, className }: SopViewerProps) {
   const officeViewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`
 
   return (
-    <div className={cn("w-full h-full bg-white flex flex-col overflow-hidden relative", className)}>
+    <div className={cn("w-full h-full min-h-[75vh] bg-white flex flex-col overflow-hidden relative", className)}>
       {/* We use an iframe directly to render the Microsoft Office Web Viewer */}
       <iframe
         src={officeViewerUrl}
