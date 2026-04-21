@@ -347,7 +347,7 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                                 {editingSlideId === s.id ? (
                                     /* ─── EDIT MODE ─── */
                                     <div className="p-4 space-y-3">
-                                        <Input value={editData.title} onChange={e => setEditData({...editData, title: e.target.value})} className="font-bold text-lg" placeholder="Slide Title" />
+                                        <Input value={editData.title} onChange={e => setEditData({...editData, title: e.target.value.toUpperCase()})} className="font-bold text-lg" placeholder="Slide Title" />
                                         <Textarea value={editData.body} onChange={e => setEditData({...editData, body: e.target.value})} rows={6} placeholder="Slide content. Use line breaks for paragraphs, start lines with • or - for bullet points." />
                                         <Input placeholder="Presenter Notes (optional)" value={editData.notes} onChange={e => setEditData({...editData, notes: e.target.value})} className="text-xs text-muted-foreground bg-muted/30" />
                                         <div className="flex justify-between pt-2">
@@ -467,7 +467,7 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                             <label className="text-sm font-medium">Title <span className="text-destructive">*</span></label>
                             <Input
                                 value={newSlideData.title}
-                                onChange={e => setNewSlideData({...newSlideData, title: e.target.value})}
+                                onChange={e => setNewSlideData({...newSlideData, title: e.target.value.toUpperCase()})}
                                 placeholder="e.g. Safety Precautions"
                             />
                         </div>

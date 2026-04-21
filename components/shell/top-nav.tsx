@@ -113,10 +113,15 @@ export function TopNav({ user, profile }: TopNavProps) {
     return (
         <header className="sticky top-0 z-50 flex h-14 w-full shrink-0 items-center gap-4 bg-gradient-to-r from-brand-navy to-brand-blue border-b border-white/10 px-4 shadow-sm">
             <div className="flex items-center gap-4 lg:hidden">
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={toggleSidebar}>
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle Sidebar</span>
-                </Button>
+                <div className="group relative">
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/10" onClick={toggleSidebar} aria-label="Toggle navigation menu">
+                        <Menu className="h-5 w-5" />
+                        <span className="sr-only">Toggle Sidebar</span>
+                    </Button>
+                    <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
+                        Open menu
+                    </span>
+                </div>
                 <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-white">
                     <GalleryVerticalEnd className="h-5 w-5" />
                     <span className="hidden sm:inline-block">SOP-Guard Pro</span>
@@ -134,39 +139,60 @@ export function TopNav({ user, profile }: TopNavProps) {
                 </div>
 
                 <nav className="flex items-center gap-2">
-                    <ThemeToggle />
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-white hover:bg-white/10 relative" 
-                        onClick={handleBellClick}
-                    >
-                        <Bell className="h-5 w-5" />
-                        {notifCount > 0 && (
-                            <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
-                                {notifCount > 9 ? '9+' : notifCount}
-                            </span>
-                        )}
-                        <span className="sr-only">Toggle notifications</span>
-                    </Button>
-                    {/* docsPage */}
-                    <Link href="/docs">
-                        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
-                            <Book className="h-5 w-5" />
+                    <div className="group relative">
+                        <ThemeToggle />
+                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
+                            Toggle theme
+                        </span>
+                    </div>
+                    <div className="group relative">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-white hover:bg-white/10 relative"
+                            onClick={handleBellClick}
+                            aria-label="Open Pulse notifications"
+                        >
+                            <Bell className="h-5 w-5" />
+                            {notifCount > 0 && (
+                                <span className="absolute top-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
+                                    {notifCount > 9 ? '9+' : notifCount}
+                                </span>
+                            )}
+                            <span className="sr-only">Toggle notifications</span>
                         </Button>
-                    </Link>
+                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
+                            Notifications
+                        </span>
+                    </div>
+                    {/* docsPage */}
+                    <div className="group relative">
+                        <Link href="/docs" aria-label="Documentation">
+                            <Button variant="ghost" size="icon" className="text-white hover:bg-white/10 relative">
+                                <Book className="h-5 w-5" />
+                            </Button>
+                        </Link>
+                        <span className="pointer-events-none absolute left-1/2 top-full z-50 mt-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
+                            Documentation
+                        </span>
+                    </div>
 
 
                     {/* Direct Link to Settings */}
-                    <Link href="/settings" className="ml-2 transition-transform hover:scale-105 active:scale-95">
-                        <UserAvatar
-                            name={profile?.full_name}
-                            image={profile?.avatar_url}
-                            size="sm"
-                            className="h-8 w-8 border border-white/20 hover:border-white/50 transition-colors"
-                        />
-                        <span className="sr-only">Settings</span>
-                    </Link>
+                    <div className="group relative ml-2">
+                        <Link href="/settings" className="block transition-transform hover:scale-105 active:scale-95" aria-label="Settings and profile">
+                            <UserAvatar
+                                name={profile?.full_name}
+                                image={profile?.avatar_url}
+                                size="sm"
+                                className="h-8 w-8 border border-white/20 hover:border-white/50 transition-colors"
+                            />
+                            <span className="sr-only">Settings</span>
+                        </Link>
+                        <span className="pointer-events-none absolute right-0 top-full z-50 mt-1.5 whitespace-nowrap rounded-md bg-brand-navy px-2.5 py-1 text-[11px] font-semibold text-white shadow-lg opacity-0 group-hover:opacity-100 transition-opacity" role="tooltip">
+                            Settings &amp; profile
+                        </span>
+                    </div>
                 </nav>
             </div>
         </header>

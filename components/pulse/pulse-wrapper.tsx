@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { PanelRightClose, PanelRightOpen } from "lucide-react"
+import { ChevronRight, Megaphone } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { ThePulse } from "./the-pulse"
@@ -164,26 +164,34 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
                     ${isOpen ? 'right-80' : 'right-0'}
                 `}
             >
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={togglePulse}
-                    className="h-12 w-6 rounded-l-md border-l border-t border-b bg-card shadow-md hover:bg-muted relative"
-                    title={isOpen ? "Close Pulse" : "Open Pulse"}
-                >
-                    {isOpen ? (
-                        <PanelRightClose className="h-4 w-4" />
-                    ) : (
-                        <>
-                            <PanelRightOpen className="h-4 w-4" />
-                            {badgeCount > 0 && (
-                                <span className="absolute -top-1.5 -left-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white shadow-sm ring-1 ring-white/20">
-                                    {badgeCount > 9 ? '9+' : badgeCount}
-                                </span>
-                            )}
-                        </>
-                    )}
-                </Button>
+                <div className="group relative flex items-center">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={togglePulse}
+                        aria-label={isOpen ? "Close Pulse notifications" : "Open Pulse notifications"}
+                        className="h-20 w-10 rounded-l-lg border-l-2 border-t-2 border-b-2 border-brand-teal/40 bg-brand-teal text-white shadow-lg hover:bg-brand-teal/90 hover:w-11 transition-all relative"
+                    >
+                        {isOpen ? (
+                            <ChevronRight className="h-6 w-6" />
+                        ) : (
+                            <>
+                                <Megaphone className="h-6 w-6" />
+                                {badgeCount > 0 && (
+                                    <span className="absolute -top-1.5 -left-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-md ring-2 ring-white">
+                                        {badgeCount > 9 ? '9+' : badgeCount}
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </Button>
+                    <span
+                        className="pointer-events-none absolute right-full mr-2 whitespace-nowrap rounded-md bg-brand-navy px-3 py-1.5 text-xs font-semibold text-white shadow-lg opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200"
+                        role="tooltip"
+                    >
+                        {isOpen ? "Close Pulse panel" : "Open Pulse — Notices, To-dos & Updates"}
+                    </span>
+                </div>
             </div>
 
             {/* Overlay Pulse Panel - Fixed position, slides over content */}
