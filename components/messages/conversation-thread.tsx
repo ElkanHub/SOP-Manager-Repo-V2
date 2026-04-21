@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MoreHorizontal, UserPlus, Settings, Paperclip, Send, FileText, Cog, GitBranch, BellOff } from "lucide-react"
+import { MoreHorizontal, UserPlus, Settings, Paperclip, Send, FileText, Cog, GitBranch, BellOff, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import { format, isSameDay } from "date-fns"
@@ -18,7 +18,7 @@ import { toast } from "sonner"
 import Image from "next/image"
 
 
-export function ConversationThread({ conversationId, userId }: { conversationId: string, userId: string }) {
+export function ConversationThread({ conversationId, userId, onBack }: { conversationId: string, userId: string, onBack?: () => void }) {
   const [conversation, setConversation] = useState<Conversation | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [typingUsers, setTypingUsers] = useState<any[]>([])
@@ -478,6 +478,17 @@ export function ConversationThread({ conversationId, userId }: { conversationId:
     <div className="flex-1 flex flex-col h-full bg-background border-l">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 h-14 border-b shrink-0">
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 shrink-0 md:hidden -ml-1 text-muted-foreground"
+            onClick={onBack}
+            aria-label="Back to conversations"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+        )}
         {avatar}
         <div className="flex flex-col flex-1 min-w-0">
           <h2 className="text-[14px] font-semibold text-foreground truncate">{displayTitle}</h2>

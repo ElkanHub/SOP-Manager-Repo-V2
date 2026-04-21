@@ -222,7 +222,11 @@ export function MessagesClient({ userId, initialActiveId }: { userId: string, in
         activeConversationId ? "flex" : "hidden"
       )}>
         {activeConversationId ? (
-          <ConversationThread conversationId={activeConversationId} userId={userId} />
+          <ConversationThread
+            conversationId={activeConversationId}
+            userId={userId}
+            onBack={() => setActive(null)}
+          />
         ) : (
           <EmptyState 
             title="Select a conversation" 
