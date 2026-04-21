@@ -5,6 +5,7 @@ import { TopNav } from "@/components/shell/top-nav"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { PulseWrapper } from "@/components/pulse/pulse-wrapper"
+import { PresenceTracker } from "@/components/presence/presence-tracker"
 
 export default async function DashboardLayout({
     children,
@@ -52,6 +53,11 @@ export default async function DashboardLayout({
                         {/* The Pulse Right Sidebar */}
                         <PulseWrapper profile={profile} user={user} />
                     </div>
+
+                    {/* Global presence tracker — emits this user's presence on
+                        a shared Realtime channel so dashboards can show live
+                        online counts. Unmounts on logout / tab close. */}
+                    <PresenceTracker userId={user.id} department={profile.department ?? null} />
                 </div>
             </TooltipProvider>
         </SidebarProvider>

@@ -30,6 +30,7 @@ import { getInitials } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
+import { usePresenceStore } from "@/store/presence-store"
 
 interface KpiData {
   activeSops: number
@@ -96,6 +97,7 @@ interface OpenCC {
   new_version: string
   created_at: string
   status: string
+  deadline?: string | null
   sops: { title: string; department: string }
   required_signatories: any[]
   signature_certificates: any[]
@@ -128,6 +130,18 @@ export function DashboardClient({
   const [kpi, setKpi] = useState(kpiData)
   const [auditEntries, setAuditEntries] = useState(initialAuditEntries)
   const [loading, setLoading] = useState(true)
+
+  // Live presence: count online users from the shared Realtime channel.
+  // QA managers + admins see the org-wide count; everyone else sees only
+  // their own department. Until the first presence sync arrives we fall
+  // back to the server-rendered value to avoid a flash of "0".
+  const hasOrgWideOversight = profile.is_admin || (profile.department === 'QA' && profile.role === 'manager')
+  const presenceSynced = usePresenceStore((s) => s.synced)
+  const onlineUsers = usePresenceStore((s) => s.onlineUsers)
+  const liveUsersOnline = hasOrgWideOversight
+    ? onlineUsers.length
+    : onlineUsers.filter((u) => u.department === profile.department).length
+  const displayedUsersOnline = presenceSynced ? liveUsersOnline : statusStripData.usersOnline
 
   useEffect(() => {
     setLoading(false)
@@ -229,7 +243,7 @@ export function DashboardClient({
       <div className="bg-slate-100 dark:bg-slate-800/50 border-y border-border px-4 md:px-6 py-2.5 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-slate-700 dark:text-slate-300">{statusStripData.usersOnline}</span> Systems Online
+          <span className="text-slate-700 dark:text-slate-300">{displayedUsersOnline}</span> Active Now
         </div>
         <div className="hidden sm:block w-px h-4 bg-slate-300 dark:bg-slate-700" />
         <div className="flex items-center gap-2">
@@ -493,7 +507,7 @@ export function DashboardClient({
                   const signedCount = cc.signature_certificates?.length || 0;
                   const progressPct = requiredCount > 0 ? (signedCount / requiredCount) * 100 : 0;
                   const isActionRequired = !cc.signature_certificates?.some((c: any) => c.user_id === profile.id) && cc.required_signatories?.some((s: any) => s.user_id === profile.id);
-                  const isOverdue = isPast(new Date(cc.created_at)) && addDays(new Date(cc.created_at), 14) < new Date(); // Mock 14-day SLA
+                  const isOverdue = cc.deadline ? isPast(new Date(cc.deadline)) : false;
                   
                   return (
                     <div key={cc.id} className={`flex flex-col p-4 rounded-xl border ${isActionRequired ? 'border-amber-300 bg-amber-50/30 dark:border-amber-700/50 dark:bg-amber-900/10' : 'border-border bg-card'} gap-3 transition-colors hover:border-slate-300`}>
