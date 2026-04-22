@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useLayoutEffect } from "react"
+import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -21,8 +22,7 @@ import {
 import { startAttempt } from "@/actions/training"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import html2canvas from "html2canvas"
-import { jsPDF } from "jspdf"
+import { downloadWithProgress } from "@/lib/utils/download"
 
 // What portion of the module is "done" given the current assignment state.
 // Kept intentionally coarse — we don't persist slide/question-level progress.
@@ -55,44 +55,20 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
         }
     }
 
-    // Captures the same DOM node used for the preview. During capture the node
-    // is temporarily forced to its print dimensions so html2canvas produces a
-    // clean landscape-A4 image; the preview's responsive scaling is restored
-    // after.
+    // Certificates are rendered server-side as a clean branded PDF via jsPDF.
+    // DOM capture via html2canvas doesn't work here because the project uses
+    // oklch() CSS colors, which html2canvas can't parse.
     const handleDownloadCertificate = async () => {
-        if (!certPreview || !certRef.current) return
-        const node = certRef.current
-
-        const prevTransform = node.style.transform
-        const prevWidth = node.style.width
-        const prevHeight = node.style.height
-
-        node.style.transform = "none"
-        node.style.width = "1122px"
-        node.style.height = "793px"
-
-        toast.info("Generating certificate...")
-        try {
-            const canvas = await html2canvas(node, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: "#ffffff",
-            })
-            const imgData = canvas.toDataURL("image/png")
-            const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
-            pdf.addImage(imgData, "PNG", 0, 0, 297, 210)
-            pdf.save(
-                `${certPreview.assignment.module.title.replace(/\s+/g, "_")}_Certificate.pdf`,
-            )
-            toast.success("Certificate downloaded!")
-        } catch (e) {
-            console.error(e)
-            toast.error("Failed to generate certificate")
-        } finally {
-            node.style.transform = prevTransform
-            node.style.width = prevWidth
-            node.style.height = prevHeight
-        }
+        if (!certPreview) return
+        const safe = String(certPreview.assignment.module.title || 'training')
+            .replace(/[^a-z0-9\s]/gi, '')
+            .replace(/\s+/g, '_')
+            .toLowerCase()
+        await downloadWithProgress({
+            url: `/api/training/certificate?attemptId=${certPreview.attempt.id}`,
+            filename: `${safe}_certificate.pdf`,
+            label: 'Generating certificate',
+        })
     }
 
     const pending = assignments.filter((a: any) => a.status !== "completed")
@@ -333,74 +309,110 @@ function CertificateModal({
     onClose: () => void
     onDownload: () => void
 }) {
-    // Scale container width to fit viewport. CSS `transform: scale()` with a
-    // `width: min(100%, 1122px)` wrapper works cleanly; we rely on the
-    // intrinsic aspect ratio to set the container height.
-    return (
+    // Close on Escape for accessibility.
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "Escape") onClose()
+        }
+        window.addEventListener("keydown", handler)
+        return () => window.removeEventListener("keydown", handler)
+    }, [onClose])
+
+    // Lock body scroll while the modal is open.
+    useEffect(() => {
+        const prev = document.body.style.overflow
+        document.body.style.overflow = "hidden"
+        return () => { document.body.style.overflow = prev }
+    }, [])
+
+    // SSR guard — portal target only exists in the browser.
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => { setMounted(true) }, [])
+    if (!mounted) return null
+
+    // Portal into document.body so the modal escapes any ancestor stacking
+    // context (e.g. the dashboard <main> is `relative z-10`, which would
+    // otherwise trap our z-[60] under the TopNav).
+    return createPortal(
         <div
-            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in"
+            className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-sm flex flex-col animate-in fade-in"
+            style={{ height: "100dvh" }}
             role="dialog"
+            aria-modal="true"
             aria-label="Training certificate"
         >
-            <div className="w-full max-w-5xl flex items-center justify-between mb-3 sm:mb-4 text-white">
-                <div className="text-sm sm:text-base font-semibold flex items-center gap-2">
-                    <Award className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400" />
-                    Certificate of Completion
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button size="sm" variant="secondary" onClick={onDownload} className="gap-2">
-                        <Download className="h-4 w-4" /> Download PDF
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={onClose}
-                        className="text-white hover:bg-white/10 gap-2"
-                        aria-label="Close"
-                    >
-                        <X className="h-4 w-4" />
-                    </Button>
+            {/* Header — non-scrolling flex child so the Close button is ALWAYS visible */}
+            <div className="shrink-0 bg-slate-950/85 backdrop-blur-md border-b border-white/10">
+                <div className="w-full max-w-5xl mx-auto flex items-center justify-between gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-white">
+                    <div className="text-sm sm:text-base font-semibold flex items-center gap-2 min-w-0">
+                        <Award className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400 shrink-0" />
+                        <span className="truncate">Certificate of Completion</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={onDownload}
+                            className="gap-1.5 sm:gap-2 h-8 sm:h-9 text-xs sm:text-sm"
+                        >
+                            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">Download PDF</span>
+                            <span className="sm:hidden">PDF</span>
+                        </Button>
+                        <Button
+                            size="icon"
+                            variant="secondary"
+                            onClick={onClose}
+                            className="h-8 w-8 sm:h-9 sm:w-9 shrink-0"
+                            aria-label="Close"
+                        >
+                            <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            {/* Scaling wrapper: width caps at 1122px, then scales down on small
-                screens using aspect-ratio to preserve height. */}
+            {/* Body — the only scrolling region. `min-h-0` is essential: without it,
+                a flex-1 child with overflow-y-auto still expands to its content's
+                intrinsic height (min-content), pushing the cert past the viewport. */}
             <div
-                className="w-full max-w-5xl mx-auto relative"
-                style={{ aspectRatio: "1122 / 793" }}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain"
+                onClick={(e) => {
+                    if (e.target === e.currentTarget) onClose()
+                }}
             >
-                <div
-                    className="absolute inset-0 overflow-hidden rounded-md shadow-2xl bg-white"
-                >
-                    {/* Intrinsic-size cert, scaled via CSS transform to fit the
-                        wrapper. We size the inner element to the exact print
-                        dimensions and let transform-origin top-left scale it. */}
+                <div className="min-h-full flex flex-col items-center justify-center p-3 sm:p-6 gap-3">
                     <div
-                        ref={certRef}
-                        className="origin-top-left bg-white text-black relative"
-                        style={{
-                            width: "1122px",
-                            height: "793px",
-                            transform: "scale(var(--cert-scale))",
-                            // Scale so the native 1122px width fits the wrapper.
-                            // We compute via CSS using 100cqw if container queries
-                            // were available — fall back to inline style on mount.
-                            ["--cert-scale" as any]: "1",
-                        }}
+                        className="w-full max-w-5xl mx-auto relative"
+                        style={{ aspectRatio: "1122 / 793" }}
                     >
-                        <CertificateContent
-                            fullName={profile.full_name}
-                            moduleTitle={assignment.module.title}
-                            sopNumber={assignment.module.sop?.sop_number}
-                            sopVersion={assignment.module.sop_version}
-                            completedAt={assignment.completed_at}
-                            score={Number(attempt.score)}
-                        />
+                        <div className="absolute inset-0 overflow-hidden rounded-md shadow-2xl bg-white">
+                            <div
+                                ref={certRef}
+                                className="origin-top-left bg-white text-black relative"
+                                style={{
+                                    width: "1122px",
+                                    height: "793px",
+                                    transform: "scale(var(--cert-scale))",
+                                    ["--cert-scale" as any]: "1",
+                                }}
+                            >
+                                <CertificateContent
+                                    fullName={profile.full_name}
+                                    moduleTitle={assignment.module.title}
+                                    sopNumber={assignment.module.sop?.sop_number}
+                                    sopVersion={assignment.module.sop_version}
+                                    completedAt={assignment.completed_at}
+                                    score={Number(attempt.score)}
+                                />
+                            </div>
+                            <CertificateScaleController targetRef={certRef} />
+                        </div>
                     </div>
-                    <CertificateScaleController targetRef={certRef} />
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body,
     )
 }
 

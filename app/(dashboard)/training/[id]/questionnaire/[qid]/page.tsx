@@ -19,17 +19,25 @@ export default async function QuestionnairePage({ params }: { params: Promise<{ 
         .select('*')
         .eq('module_id', id)
         .eq('assignee_id', user.id)
-        .single()
+        .maybeSingle()
 
     if (!assignment) redirect('/training/my-training')
 
-    const { data: attempt } = await serviceClient
+    // Pick the user's most relevant attempt. Users can have multiple attempts
+    // for the same questionnaire (e.g. a failed submitted attempt + a new
+    // in-progress retake), so .single() here would throw on the second row.
+    // Prefer an open (unsubmitted) attempt; otherwise fall back to the most
+    // recent attempt so the user can see their prior submitted result.
+    const { data: attempts } = await serviceClient
         .from('training_attempts')
-        .select('id, submitted_at, score, passed')
+        .select('id, submitted_at, score, passed, started_at')
         .eq('module_id', id)
         .eq('questionnaire_id', qid)
         .eq('respondent_id', user.id)
-        .single()
+        .order('started_at', { ascending: false })
+
+    const attempt =
+        attempts?.find((a) => a.submitted_at === null) ?? attempts?.[0]
 
     if (!attempt) redirect('/training/my-training')
 
@@ -41,7 +49,7 @@ export default async function QuestionnairePage({ params }: { params: Promise<{ 
             questions:training_questions(*)
         `)
         .eq('id', qid)
-        .single()
+        .maybeSingle()
 
     if (!questionnaire) notFound()
 
