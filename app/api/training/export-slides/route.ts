@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 // @ts-ignore
 import pptxgen from 'pptxgenjs'
 
@@ -61,14 +61,32 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: mod } = await client
+    const serviceClient = await createServiceClient()
+
+    const { data: profile } = await serviceClient
+        .from('profiles')
+        .select('is_active, role')
+        .eq('id', user.id)
+        .single()
+    if (!profile?.is_active) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const { data: mod, error: modError } = await serviceClient
         .from('training_modules')
         .select('title, department, sop_version, slide_deck, sop:sops(sop_number)')
         .eq('id', moduleId)
-        .single()
+        .maybeSingle()
 
-    if (!mod || !mod.slide_deck) {
-        return NextResponse.json({ error: 'Slide deck not found' }, { status: 404 })
+    if (modError) {
+        console.error('Module fetch error:', modError)
+        return NextResponse.json({ error: 'Failed to load training module' }, { status: 500 })
+    }
+    if (!mod) {
+        return NextResponse.json({ error: 'Training module not found' }, { status: 404 })
+    }
+    if (!mod.slide_deck || (Array.isArray(mod.slide_deck) && mod.slide_deck.length === 0)) {
+        return NextResponse.json({ error: 'This module has no slides yet. Generate a slide deck first.' }, { status: 400 })
     }
 
     const sopNumber = (mod.sop as any)?.sop_number || ''

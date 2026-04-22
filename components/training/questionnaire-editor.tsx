@@ -50,6 +50,7 @@ import {
 } from "@/actions/training"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { downloadWithProgress } from "@/lib/utils/download"
 
 // ─── Types ────────────────────────────────────────────────────────────
 type QuestionType = "multiple_choice" | "true_false" | "short_answer" | "fill_blank"
@@ -228,8 +229,14 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
         }
     }
 
-    const handleExport = (qId: string) =>
-        window.open(`/api/training/export-questionnaire?questionnaireId=${qId}`, "_blank")
+    const handleExport = (qId: string, title: string) => {
+        const safe = String(title || 'assessment').replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, '_').toLowerCase()
+        downloadWithProgress({
+            url: `/api/training/export-questionnaire?questionnaireId=${qId}`,
+            filename: `${safe}.pdf`,
+            label: 'Exporting assessment',
+        })
+    }
 
     return (
         <div className="space-y-6">
@@ -369,7 +376,7 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
                                         {q.status === "published" && (
                                             <Button
                                                 variant="outline"
-                                                onClick={() => handleExport(q.id)}
+                                                onClick={() => handleExport(q.id, q.title)}
                                                 className="w-full gap-2"
                                             >
                                                 <Download className="h-4 w-4" /> Export Paper PDF

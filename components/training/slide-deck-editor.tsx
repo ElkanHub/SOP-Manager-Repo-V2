@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { updateSlide, reorderSlides, addSlide, deleteSlide } from "@/actions/training"
 import { toast } from "sonner"
+import { downloadWithProgress } from "@/lib/utils/download"
 import { Card, CardContent } from "@/components/ui/card"
 import SlidePresenter from "@/components/training/slide-presenter"
 
@@ -348,7 +349,14 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/api/training/export-slides?moduleId=${moduleData.id}`, '_blank')}
+                        onClick={() => {
+                            const safe = String(moduleData.title || 'training').replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, '_').toLowerCase()
+                            downloadWithProgress({
+                                url: `/api/training/export-slides?moduleId=${moduleData.id}`,
+                                filename: `${safe}_training.pptx`,
+                                label: 'Exporting slide deck',
+                            })
+                        }}
                         className="gap-2"
                     >
                         <Download className="h-4 w-4" /> Export PPTX

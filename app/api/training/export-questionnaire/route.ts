@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { jsPDF } from 'jspdf'
 
 // ─── Brand palette (RGB for jsPDF) ──────────────────────────────────────
@@ -31,24 +31,43 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: q } = await client
+    const serviceClient = await createServiceClient()
+
+    const { data: profile } = await serviceClient
+        .from('profiles')
+        .select('is_active, role')
+        .eq('id', user.id)
+        .single()
+    if (!profile?.is_active) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    const { data: q, error: qError } = await serviceClient
         .from('training_questionnaires')
         .select('title, description, passing_score, version, training_modules(title, department, sop:sops(sop_number, version))')
         .eq('id', questionnaireId)
-        .single()
+        .maybeSingle()
 
+    if (qError) {
+        console.error('Questionnaire fetch error:', qError)
+        return NextResponse.json({ error: 'Failed to load questionnaire' }, { status: 500 })
+    }
     if (!q) {
         return NextResponse.json({ error: 'Questionnaire not found' }, { status: 404 })
     }
 
-    const { data: questions } = await client
+    const { data: questions, error: questionsError } = await serviceClient
         .from('training_questions')
         .select('*')
         .eq('questionnaire_id', questionnaireId)
         .order('display_order', { ascending: true })
 
+    if (questionsError) {
+        console.error('Questions fetch error:', questionsError)
+        return NextResponse.json({ error: 'Failed to load questions' }, { status: 500 })
+    }
     if (!questions || questions.length === 0) {
-        return NextResponse.json({ error: 'No questions available' }, { status: 400 })
+        return NextResponse.json({ error: 'This questionnaire has no questions yet.' }, { status: 400 })
     }
 
     try {
