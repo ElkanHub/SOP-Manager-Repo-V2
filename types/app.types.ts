@@ -425,3 +425,105 @@ export interface TrainingLogEntry {
   target_user?:     Pick<Profile, 'id' | 'full_name' | 'department'>
   module?:          Pick<TrainingModule, 'id' | 'title'>
 }
+
+// ─── Request Forms ─────────────────────────────────────────────────────────────
+
+export type RequestFieldType =
+  | 'short_text'
+  | 'long_text'
+  | 'number'
+  | 'date'
+  | 'dropdown'
+  | 'radio'
+  | 'checkbox_single'
+  | 'checkbox_multi'
+  | 'note_display'
+
+export interface RequestFieldConfig {
+  options?: string[]
+  min?: number
+  max?: number
+  placeholder?: string
+}
+
+export interface RequestFormField {
+  id:          string
+  form_id:     string
+  position:    number
+  label:       string
+  helper_text: string | null
+  field_type:  RequestFieldType
+  is_required: boolean
+  config:      RequestFieldConfig
+  created_at:  string
+}
+
+export interface RequestForm {
+  id:                       string
+  title:                    string
+  description:              string | null
+  target_department:        string | null
+  is_published:             boolean
+  is_archived:              boolean
+  version:                  number
+  created_by:               string
+  created_by_name:          string
+  created_by_department:    string
+  created_by_role:          string
+  created_by_job_title:     string | null
+  created_by_employee_id:   string | null
+  last_modified_by:         string | null
+  last_modified_by_name:    string | null
+  published_at:             string | null
+  published_by:             string | null
+  archived_at:              string | null
+  archived_by:              string | null
+  created_at:               string
+  updated_at:               string
+  fields?:                  RequestFormField[]
+}
+
+export type RequestSubmissionStatus =
+  | 'submitted'
+  | 'received'
+  | 'approved'
+  | 'fulfilled'
+  | 'rejected'
+
+export interface RequestFormSubmission {
+  id:                     string
+  form_id:                string
+  form_snapshot:          {
+    title:       string
+    description: string | null
+    fields:      Array<Pick<RequestFormField, 'id' | 'position' | 'label' | 'helper_text' | 'field_type' | 'is_required' | 'config'>>
+  }
+  answers:                Record<string, unknown>
+  requester_id:           string
+  requester_name:         string
+  requester_email:        string
+  requester_department:   string
+  requester_role:         string
+  requester_job_title:    string | null
+  requester_employee_id:  string | null
+  status:                 RequestSubmissionStatus
+  submitted_at:           string
+  received_at:            string | null
+  approved_at:            string | null
+  fulfilled_at:           string | null
+  rejected_at:            string | null
+  received_by:            string | null
+  approved_by:            string | null
+  fulfilled_by:           string | null
+  rejected_by:            string | null
+  qa_notes:               string | null
+  reference_number:       string
+  created_at:             string
+  updated_at:             string
+  // Joined
+  form?:                  Pick<RequestForm, 'id' | 'title'>
+  received_by_profile?:   Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+  approved_by_profile?:   Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+  fulfilled_by_profile?:  Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+  rejected_by_profile?:   Pick<Profile, 'id' | 'full_name' | 'avatar_url'> | null
+}

@@ -14,7 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles } from "lucide-react"
 import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
@@ -106,22 +106,33 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     }
     setPendingEquipmentCount(equipCount)
 
-    // 4. Pending Requests badge
+    // 4. Pending Requests badge (new + legacy tables)
     if (isQa || profile?.is_admin) {
-      // QA/Admin: all non-fulfilled requests
-      const { count: reqCount } = await supabase
-        .from('document_requests')
-        .select('*', { count: 'exact', head: true })
-        .in('status', ['submitted', 'received', 'approved'])
-      setPendingRequests(reqCount || 0)
+      const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
+        supabase
+          .from('request_form_submissions')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['submitted', 'received']),
+        supabase
+          .from('document_requests')
+          .select('*', { count: 'exact', head: true })
+          .in('status', ['submitted', 'received', 'approved']),
+      ])
+      setPendingRequests((rfsCount || 0) + (legacyCount || 0))
     } else {
-      // Regular users: own in-flight requests (submitted or received - approved is also in-flight but maybe they want to see it until fulfilled)
-      const { count: reqCount } = await supabase
-        .from('document_requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('requester_id', user.id)
-        .in('status', ['submitted', 'received', 'approved'])
-      setPendingRequests(reqCount || 0)
+      const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
+        supabase
+          .from('request_form_submissions')
+          .select('*', { count: 'exact', head: true })
+          .eq('requester_id', user.id)
+          .in('status', ['submitted', 'received', 'approved']),
+        supabase
+          .from('document_requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('requester_id', user.id)
+          .in('status', ['submitted', 'received', 'approved']),
+      ])
+      setPendingRequests((rfsCount || 0) + (legacyCount || 0))
     }
 
     // 5. Training
@@ -153,6 +164,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sop_approval_requests' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'request_form_submissions' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'training_assignments' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'training_modules' }, fetchCounts)
       .subscribe()
@@ -215,9 +227,15 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       title: "Requests",
       url: "/requests",
       icon: <ClipboardList className="w-5 h-5" />,
-      isActive: pathname.startsWith("/requests"),
+      isActive: pathname === "/requests" || (pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub")),
       badge: pendingRequests,
     },
+    ...(isQa ? [{
+      title: "Request Hub",
+      url: "/requests/hub",
+      icon: <Sparkles className="w-5 h-5" />,
+      isActive: pathname.startsWith("/requests/hub"),
+    }] : []),
     {
       title: "Calendar",
       url: "/calendar",
