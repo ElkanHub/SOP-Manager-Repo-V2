@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { GoogleGenerativeAI } from "@google/generative-ai"
 // @ts-ignore
 import * as mammoth from 'mammoth'
 import { TrainingQuestion } from '@/types/app.types'
-
-// Initialize the SDK
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { generateJson, friendlyAiMessage } from '@/lib/ai/client'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -66,33 +63,27 @@ export async function POST(request: NextRequest) {
         const textResult = await mammoth.extractRawText({ buffer })
         const documentText = textResult.value
 
-        // Setup Model with System Instructions
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
-            systemInstruction: `You are an expert instructional designer and technical assessor for Atlantic Lifesciences Limited.
-            Generate a questionnaire based ON THE PROVIDED SOP.
-            Output ONLY a raw JSON array of objects.`,
-        });
+        const systemInstruction = `You are an expert instructional designer and technical assessor for Atlantic Lifesciences Limited.
+Generate a questionnaire based ON THE PROVIDED SOP.
+Output ONLY a raw JSON array of objects.`
 
-        const generationConfig = {
+        const prompt = `Generate EXACTLY ${questionCount} questions from this SOP.
+Each object must have: question_text, question_type (multiple_choice or true_false),
+options (array with ids 'a' to 'd' and is_correct boolean), and sop_section_ref.
+
+SOP Content:
+${documentText}`
+
+        const { data: questions } = await generateJson<any[]>({
+            purpose: 'training-questionnaire',
+            tier: 'fast',
+            prompt,
+            systemInstruction,
             temperature: 0.2,
-            responseMimeType: "application/json",
-        };
-
-        const prompt = `Generate EXACTLY ${questionCount} questions from this SOP. 
-        Each object must have: question_text, question_type (multiple_choice or true_false), 
-        options (array with ids 'a' to 'd' and is_correct boolean), and sop_section_ref.
-        
-        SOP Content:
-        ${documentText}`;
-
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig,
-        });
-
-        const textResponse = result.response.text();
-        const questions = JSON.parse(textResponse);
+            maxOutputTokens: 4096,
+            actorId: user.id,
+            validate: (v): v is any[] => Array.isArray(v),
+        })
 
         // 3. Database Operations
         await saveQuestionsToDb(serviceClient, questionnaireId, questions, moduleId, user.id);
@@ -102,13 +93,9 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         console.error('Generate questionnaire error:', error)
         const msg = String(error?.message || '')
-        let userMessage = "We couldn't generate the questionnaire. Please try again in a moment."
+        let userMessage = friendlyAiMessage(error)
         if (/retrieve target document|not found|storage/i.test(msg)) {
             userMessage = "We couldn't read the SOP document. Please check that the file is available and try again."
-        } else if (/JSON|parse/i.test(msg)) {
-            userMessage = "The AI response was incomplete. Please try generating again."
-        } else if (/quota|rate|429|503|overloaded/i.test(msg)) {
-            userMessage = "The AI service is busy right now. Please wait a moment and try again."
         } else if (/insert|database/i.test(msg)) {
             userMessage = "The questions were generated but couldn't be saved. Please try again."
         }

@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** April 22, 2026
-> **Version:** 3.6 (Reports & Audit Trail Hardening)
-> **Current Phase:** Phase 39 ✅ Complete — Phase 40 Next
+> **Version:** 3.7 (Central AI Client & SDK Consolidation)
+> **Current Phase:** Phase 40 ✅ Complete — Phase 41 Next
 
 ---
 
@@ -54,6 +54,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 37 | ✅ Complete | Equipment Public QR Flow                         |
 | Phase 38 | ✅ Complete | Calendar Revamp, Requests Cleanup & Build Fixes  |
 | Phase 39 | ✅ Complete | Reports & Audit Trail Hardening                  |
+| Phase 40 | ✅ Complete | Central AI Client & SDK Consolidation            |
 
 ---
 
@@ -2110,3 +2111,111 @@ components/dashboard/dashboard-client.tsx          # "Full trail →" link on au
 - Creating/deleting calendar events, broadcasting pulse notices, and creating/deleting/leaving conversations all produce `audit_log` rows ✅
 - Row cap: an export of > 10,000 matching rows truncates to 10,000 without error ✅
 - Dashboard "Full trail →" link renders for admins + QA manager and routes to `/reports` ✅
+
+---
+
+## Phase 40: Central AI Client & SDK Consolidation
+
+**Status:** ✅ Complete
+**Completed:** April 22, 2026
+
+### Overview
+
+Centralized every AI call in the app behind a single module (`lib/ai/client.ts`). Model IDs, API key reads, timeouts, error mapping, and audit logging now live in one place — swapping models, tuning temperatures, or switching providers is a single-file change. Consolidated two Gemini SDKs down to one. Migrated all four AI-calling routes to the new client. Redesign of the Risk Insights analysis itself is proposed separately (see "Next: Risk Assessment Redesign" below) — it was not rebuilt in this phase because the approach warrants a design discussion first.
+
+### The problem we fixed
+
+Before this phase, the AI surface was scattered:
+
+- **Two Gemini SDKs** were both installed (`@google/genai` and `@google/generative-ai`) and used by different routes. Two API call patterns, two error shapes, two surface areas to keep current.
+- **Three different model IDs** hardcoded across four files (`gemini-2.0-flash` in one, `gemini-3-flash-preview` in three — and `gemini-3-flash-preview` is a preview name that may not resolve in every workspace). Changing a model meant editing every route.
+- **Four separate reads** of `process.env.GEMINI_API_KEY`, each with its own fallback behavior.
+- **No shared timeout, retry, or rate-limit handling.** Each route re-implemented error detection with brittle regex strings.
+- **No call-level audit trail** — a risk insight burned tokens and left no record of who invoked it, what model ran, how long it took, or whether it failed.
+
+### `lib/ai/client.ts` (new)
+
+Single module exporting:
+
+- `generateText(options)` — prose / Markdown responses.
+- `generateJson<T>(options)` — structured output; `responseMimeType: 'application/json'` is set on the request, replies are parsed with a salvage regex fallback, and an optional `validate` type-guard enforces shape.
+- `isAiConfigured()` — safe boot-time check.
+- `friendlyAiMessage(err)` — maps `AIError` codes to user-facing copy so routes stop reinventing the regex-string-matching fallback.
+- `AIError` with codes: `AI_NOT_CONFIGURED`, `AI_TIMEOUT`, `AI_RATE_LIMITED`, `AI_UPSTREAM_ERROR`, `AI_PARSE_ERROR`, `AI_VALIDATION_ERROR`.
+
+Callers choose a **tier** (`"fast"` or `"quality"`), not a model string. The tier-to-model mapping is env-overridable:
+
+```
+AI_MODEL_FAST      (default: gemini-2.0-flash)
+AI_MODEL_QUALITY   (default: gemini-2.5-pro)
+GEMINI_API_KEY     (unchanged)
+```
+
+Changing a model is a one-line env update, no code deploy.
+
+Every call:
+
+- has a 60s default timeout (`Promise.race` with a cancellable timer);
+- maps provider errors (`quota|rate|429|503|overloaded`) to `AI_RATE_LIMITED`;
+- writes an `ai_call_succeeded` or `ai_call_failed` row to `audit_log` via the Phase 39 `logAudit()` helper, with `{ purpose, model, tier, latency_ms, error_code? }` in metadata.
+
+The audit entries give us, for free, a running log of AI cost drivers (purpose + latency + success rate by model) that we can query out of `/reports → Audit Trail` by filtering on `action=ai_call_succeeded`.
+
+### Routes migrated
+
+All four AI routes were rewritten to call the central client; none of them import a Gemini SDK directly anymore.
+
+- `app/api/gemini/delta-summary/route.ts` — `generateText`, tier `fast`, purpose `delta-summary`.
+- `app/api/gemini/risk-insights/route.ts` — `generateJson<RiskInsight>` with a runtime validator (`risk_level` enum + `insights: string[]`), tier `fast`, purpose `risk-insights`.
+- `app/api/training/generate-questionnaire/route.ts` — `generateJson<any[]>` with `Array.isArray` validator, tier `fast`, purpose `training-questionnaire`.
+- `app/api/training/generate-slides/route.ts` — `generateJson<TrainingSlide[]>`, tier `fast`, purpose `training-slides`.
+
+The brittle per-route regex error-mapping is gone; routes now call `friendlyAiMessage(err)` and add any route-specific overrides (e.g. "couldn't read the SOP document" for storage failures) on top.
+
+### SDK cleanup
+
+- Removed `@google/generative-ai` (v0.24.1) from `package.json`. Kept `@google/genai` (latest) as the single provider SDK. Run `npm install` after pulling to prune `node_modules`.
+- No runtime imports of the removed SDK remain (verified via grep).
+
+### Files Touched
+
+```
+lib/ai/client.ts                                        # NEW — single source of truth for AI calls
+app/api/gemini/delta-summary/route.ts                   # Rewritten: uses generateText
+app/api/gemini/risk-insights/route.ts                   # Rewritten: uses generateJson + validator
+app/api/training/generate-questionnaire/route.ts        # Migrated: uses generateJson
+app/api/training/generate-slides/route.ts               # Migrated: uses generateJson
+package.json                                            # Dropped @google/generative-ai
+```
+
+### Verification
+
+- `npx tsc --noEmit` passes ✅
+- No remaining imports of `@google/generative-ai` anywhere in `app/`, `actions/`, `components/`, or `lib/` ✅
+- Every AI purpose writes an `ai_call_succeeded` / `ai_call_failed` audit row with `{ purpose, model, tier, latency_ms }` ✅
+- Switching models requires only `AI_MODEL_FAST` / `AI_MODEL_QUALITY` env update — no code change ✅
+
+---
+
+### Next: Risk Assessment Redesign (proposal, not yet implemented)
+
+The existing `/api/gemini/risk-insights` prompt is weak even after the client refactor — it sends the last 100 raw audit rows as free text and asks the model to find patterns. The model does most of the real work, which is both expensive (tokens) and imprecise (hallucination-prone). A better shape:
+
+**1. Do the work in SQL first; let the AI narrate.**
+Compute the risk signals deterministically — `overdue_pm_count`, `avg_overdue_days`, `overdue_cc_count`, `sops_unack_by_dept`, `top_actors_by_failed_audit_count`, `sops_due_for_revision_in_30d`, `ai_failure_rate_last_7d`, etc. — with a single SQL function or cached materialized view. The AI's job shrinks from "analyze 100 rows" to "given these 10 metrics, write three executive-level insights." **Why this wins:** pre-computed metrics are free to read, the prompt gets ~10× smaller (every input token billed; this is the single biggest lever), and the risk score itself becomes reproducible — run the function again, get the same number. Hallucination risk drops because the model isn't inventing counts.
+
+**2. Two-phase call with tier routing.**
+Phase 1 uses `tier: "fast"` (Flash) on the summarized metrics to get `risk_level` + top signals. Phase 2 only runs when `risk_level === "high"` and uses `tier: "quality"` (Pro) for a deeper narrative on the contributing factors. Most calls stay on the cheap model; we pay for quality only when it matters.
+
+**3. Cache at the data layer, not the UI layer.**
+Today React Query caches for 5 min per client. Replace with a `risk_assessment_snapshots` table keyed by `{ scope, generated_at }` — org-wide and per-department rows regenerated every 6 hours by a cron (existing `/api/cron/` pattern) and served from DB on demand. Users reading the dashboard hit DB, not the model. **Cost impact:** at ~20 QA/Admin users checking 3× per day, that's ~60 generations/day → drops to ~4/day (every 6h × 1 org scope). ~15× token reduction.
+
+**4. Structured output with a strict schema.**
+Define a Gemini `responseSchema` (already supported by the new client's `schema` option) so the model returns `{ risk_level, signals: [{ name, severity, count, blurb }], insights: [string] }`. Signals become clickable chips in the UI that deep-link to the matching report filter (e.g. clicking "14 overdue PMs" opens the PM report pre-filtered). The audit log entry becomes genuinely actionable instead of prose that rots.
+
+**5. Hard token caps.**
+`maxOutputTokens: 400` is enough for exec-level insights; today's 500 is fine but the *input* is unbounded (raw audit dump grows with activity). A pre-computed metrics payload stays ~2 KB regardless of workspace size. Add `maxInputTokens` guard (truncate + flag) so one busy month can't 10× the bill.
+
+Rough numbers for a mid-sized workspace: today ~1–2¢ per risk-insights click × ~20 clicks/day ≈ **$3–6/month just from risk insights**. The redesign would push that to **~$0.10–0.30/month** while producing tighter, clickable, reproducible output. Plus the snapshots table doubles as a historical series ("risk trending up over the quarter") — a feature we don't have today.
+
+If you want me to proceed with the redesign, confirm and I'll ship it as Phase 41 with: metric-aggregator SQL function + migration, two-phase call using the central client's tier routing, `risk_assessment_snapshots` cache table with a cron refresh, structured schema + deep-link UI, and PROGRESS.md update.

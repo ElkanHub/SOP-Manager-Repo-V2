@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai"
 // @ts-ignore
 import * as mammoth from 'mammoth'
 import { TrainingSlide } from '@/types/app.types'
-
-// Initialize the Gemini SDK
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { generateJson, friendlyAiMessage } from '@/lib/ai/client'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -68,35 +65,26 @@ export async function POST(request: NextRequest) {
         const textResult = await mammoth.extractRawText({ buffer })
         const documentText = textResult.value
 
-        // Setup the model with System Instructions
-        const model = genAI.getGenerativeModel({
-            model: "gemini-3-flash-preview",
-            systemInstruction: `You are an expert instructional designer for Atlantic Lifesciences. 
-            Your task is to convert a Standard Operating Procedure (SOP) into a training slide deck.
-            You must return a valid JSON array of objects.`,
-        });
+        const systemInstruction = `You are an expert instructional designer for Atlantic Lifesciences.
+Your task is to convert a Standard Operating Procedure (SOP) into a training slide deck.
+You must return a valid JSON array of objects.`
 
-        const generationConfig = {
+        const prompt = `Convert the following SOP document into a slide deck.
+Each slide must have: id (UUID), type (title, objectives, content, summary, or edge_cases), title, body, notes, and order (number).
+
+SOP Content:
+${documentText}`
+
+        const { data: slideDeck } = await generateJson<TrainingSlide[]>({
+            purpose: 'training-slides',
+            tier: 'fast',
+            prompt,
+            systemInstruction,
             temperature: 0.1,
-            topP: 0.95,
-            topK: 64,
             maxOutputTokens: 8192,
-            responseMimeType: "application/json",
-        };
-
-        const prompt = `Convert the following SOP document into a slide deck. 
-        Each slide must have: id (UUID), type (title, objectives, content, summary, or edge_cases), title, body, notes, and order (number).
-        
-        SOP Content:
-        ${documentText}`;
-
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig,
-        });
-
-        const responseText = result.response.text();
-        const slideDeck: TrainingSlide[] = JSON.parse(responseText);
+            actorId: user.id,
+            validate: (v): v is TrainingSlide[] => Array.isArray(v),
+        })
 
         // 3. Save to Database
         await saveSlideDeck(serviceClient, moduleId, slideDeck);
@@ -113,13 +101,9 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
         console.error('Generation Error:', error)
         const msg = String(error?.message || '')
-        let userMessage = "We couldn't generate the slide deck. Please try again in a moment."
+        let userMessage = friendlyAiMessage(error)
         if (/retrieve document|not found|storage/i.test(msg)) {
             userMessage = "We couldn't read the SOP document. Please check that the file is available and try again."
-        } else if (/JSON|parse/i.test(msg)) {
-            userMessage = "The AI response was incomplete. Please try generating again."
-        } else if (/quota|rate|429|503|overloaded/i.test(msg)) {
-            userMessage = "The AI service is busy right now. Please wait a moment and try again."
         } else if (/Database update/i.test(msg)) {
             userMessage = "The slides were generated but couldn't be saved. Please try again."
         }

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 // @ts-ignore
 import * as mammoth from 'mammoth'
-import { GoogleGenAI } from '@google/genai'
+import { generateText, friendlyAiMessage, isAiConfigured } from '@/lib/ai/client'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -31,9 +31,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Missing document parameters' }, { status: 400 })
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY
-    if (!geminiApiKey) {
-        return NextResponse.json({ error: 'Gemini API not configured' }, { status: 500 })
+    if (!isAiConfigured()) {
+        return NextResponse.json({ error: 'AI features are not configured' }, { status: 500 })
     }
 
     try {
@@ -71,22 +70,18 @@ ${diffContext}
 
 Provide the concise summary in basic bullet points using • :`
 
-        const ai = new GoogleGenAI({ apiKey: geminiApiKey })
-        const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents: prompt,
-            config: {
-                temperature: 0.7,
-                maxOutputTokens: 500,
-            }
+        const { data: summary } = await generateText({
+            purpose: 'delta-summary',
+            tier: 'fast',
+            prompt,
+            temperature: 0.7,
+            maxOutputTokens: 500,
+            actorId: user.id,
         })
-
-        const summary = response.text || ''
 
         return NextResponse.json({ summary })
     } catch (error: any) {
-
         console.error('Delta summary error:', error)
-        return NextResponse.json({ error: error.message || 'Failed to generate summary' }, { status: 500 })
+        return NextResponse.json({ error: friendlyAiMessage(error) }, { status: 500 })
     }
 }
