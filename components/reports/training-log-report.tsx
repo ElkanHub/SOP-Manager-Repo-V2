@@ -18,7 +18,7 @@ interface TrainingLogEntry {
     metadata?: any
 }
 
-export function TrainingLogReport({ dateFrom, dateTo, isQa }: { dateFrom: string | null; dateTo: string | null; isQa: boolean }) {
+export function TrainingLogReport({ dateFrom, dateTo, isQa }: { dateFrom: string | null; dateTo: string | null; isQa: boolean; isAdmin: boolean }) {
     const [data, setData] = useState<TrainingLogEntry[]>([])
     const [loading, setLoading] = useState(true)
 

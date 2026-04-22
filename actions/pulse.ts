@@ -3,6 +3,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendPulseEmail } from "./email"
+import { logAudit } from "@/lib/audit"
 
 export async function broadcastNotice(formData: FormData) {
     const supabase = await createClient()
@@ -26,7 +27,7 @@ export async function broadcastNotice(formData: FormData) {
         .eq('id', user.id)
         .single()
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
         .from('pulse_items')
         .insert({
             sender_id: user.id,
@@ -36,10 +37,24 @@ export async function broadcastNotice(formData: FormData) {
             audience,
             target_department: audience === 'department' ? (profile?.department || null) : null,
         })
+        .select('id')
+        .single()
 
     if (error) {
         return { error: error.message }
     }
+
+    await logAudit({
+        actorId: user.id,
+        action: 'pulse_notice_broadcast',
+        entityType: 'pulse_item',
+        entityId: inserted?.id,
+        metadata: {
+            audience,
+            target_department: audience === 'department' ? (profile?.department || null) : null,
+            content_length: content.length,
+        },
+    })
 
     // Revalidate paths if needed
     revalidatePath('/dashboard')

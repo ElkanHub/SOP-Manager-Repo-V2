@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { fetchDocumentRequests } from '@/lib/queries/reports'
+import { exportReportCsv } from '@/actions/audit'
 import { Button } from '@/components/ui/button'
-import { Download, ClipboardList, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Download, ClipboardList, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { DataTable } from '@/components/ui/data-table'
 import { ColumnDef } from '@tanstack/react-table'
 import { RequestStatusPill } from '@/components/requests/request-status-pill'
@@ -15,9 +16,10 @@ import { RequestDetailModal } from '@/components/requests/request-detail-modal'
 interface DocumentRequestsReportProps {
   dateFrom: string | null
   dateTo: string | null
+  isAdmin: boolean
 }
 
-export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsReportProps) {
+export function DocumentRequestsReport({ dateFrom, dateTo, isAdmin }: DocumentRequestsReportProps) {
   const [page, setPage] = useState(0)
   const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -146,33 +148,22 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
     },
   ]
 
-  const buildCsv = () => {
-    const headers = [
-      'Reference No.', 'Requester Name', 'Email', 'Department', 'Role', 'Employee ID',
-      'Submitted At', 'Received At', 'Approved At', 'Fulfilled At', 'Status', 'QA Notes',
-    ]
-    const rows = data.map((entry: DocumentRequest) => [
-      entry.reference_number || '—',
-      entry.requester_name || '—',
-      entry.requester_email || '—',
-      entry.requester_department || '—',
-      entry.requester_role || '—',
-      entry.requester_employee_id || '—',
-      fmt(entry.submitted_at),
-      fmt(entry.received_at),
-      fmt(entry.approved_at),
-      fmt(entry.fulfilled_at),
-      entry.status || '—',
-      entry.qa_notes || '—',
-    ])
-    const csv = [headers, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `document-requests-${format(new Date(), 'yyyy-MM-dd')}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportReportCsv({ reportType: 'document-requests', dateFrom, dateTo })
+      if (!res.success) { alert(res.error || 'Export failed'); return }
+      const blob = new Blob([res.csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = res.filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -187,15 +178,17 @@ export function DocumentRequestsReport({ dateFrom, dateTo }: DocumentRequestsRep
             <p className="text-sm text-muted-foreground">All document requests submitted to QA, with full lifecycle tracking</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={buildCsv}
-          disabled={data.length === 0}
-          className="rounded-xl border-amber-500/20 hover:bg-amber-500/5 hover:text-amber-600 shadow-sm group/btn"
-        >
-          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-          Export Dataset (.csv)
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={data.length === 0 || exporting}
+            className="rounded-xl border-amber-500/20 hover:bg-amber-500/5 hover:text-amber-600 shadow-sm group/btn"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
+            Export Dataset (.csv)
+          </Button>
+        )}
       </div>
 
       <DataTable

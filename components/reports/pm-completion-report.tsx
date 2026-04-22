@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query"
 import { fetchPmCompletions } from "@/lib/queries/reports"
+import { exportReportCsv } from "@/actions/audit"
 import { Button } from "@/components/ui/button"
-import { Download, Wrench, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, Wrench, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
 
@@ -13,9 +14,10 @@ interface PmCompletionReportProps {
   dateFrom: string | null
   dateTo: string | null
   isQa: boolean
+  isAdmin: boolean
 }
 
-export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionReportProps) {
+export function PmCompletionReport({ dateFrom, dateTo, isQa, isAdmin }: PmCompletionReportProps) {
   const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
 
@@ -103,25 +105,22 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
     },
   ]
 
-  const buildCsv = () => {
-    const headers = ["Asset ID", "Asset Name", "Dept", "Assigned To", "Completed By", "Completion Date", "Notes"]
-    const rows = data.map((entry: any) => [
-      entry.equipment?.asset_id || "-",
-      entry.equipment?.name || "-",
-      entry.equipment?.department || "-",
-      entry.assigned_to_user?.full_name || "-",
-      entry.completed_by_user?.full_name || "-",
-      entry.completed_at ? format(new Date(entry.completed_at), "yyyy-MM-dd HH:mm:ss") : "-",
-      entry.notes || "-",
-    ])
-    const csv = [headers, ...rows].map((row) => row.map((v) => `"${v}"`).join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `pm-completion-${format(new Date(), "yyyy-MM-dd")}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportReportCsv({ reportType: "pm-completion", dateFrom, dateTo })
+      if (!res.success) { alert(res.error || "Export failed"); return }
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = res.filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -136,15 +135,17 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa }: PmCompletionRepor
             <p className="text-sm text-muted-foreground">Historical records of preventive maintenance tasks and asset upkeep</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={buildCsv}
-          disabled={data.length === 0}
-          className="rounded-xl border-orange-500/20 hover:bg-orange-500/5 hover:text-orange-500 shadow-sm group/btn"
-        >
-          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-          Export Dataset (.csv)
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={data.length === 0 || exporting}
+            className="rounded-xl border-orange-500/20 hover:bg-orange-500/5 hover:text-orange-500 shadow-sm group/btn"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
+            Export Dataset (.csv)
+          </Button>
+        )}
       </div>
 
       <DataTable

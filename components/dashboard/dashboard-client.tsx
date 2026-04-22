@@ -680,11 +680,19 @@ export function DashboardClient({
         </Card>
 
         <Card className="shadow-sm border-slate-200 dark:border-slate-800 flex flex-col">
-          <CardHeader className="pb-3 border-b border-border/50">
+          <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-slate-700 dark:text-slate-300">
               <Activity className="w-4 h-4 text-purple-500" />
               Live Audit Trail
             </CardTitle>
+            {hasOrgWideOversight && (
+              <Link
+                href="/reports"
+                className="text-[10px] font-semibold uppercase tracking-widest text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 transition-colors"
+              >
+                Full trail →
+              </Link>
+            )}
           </CardHeader>
           <CardContent className="pt-4 flex-1 overflow-hidden">
             <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">

@@ -5,8 +5,9 @@ import { format } from "date-fns"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { keepPreviousData } from "@tanstack/react-query"
 import { fetchSopChanges } from "@/lib/queries/reports"
+import { exportReportCsv } from "@/actions/audit"
 import { Button } from "@/components/ui/button"
-import { Download, FileText, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, FileText, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
@@ -16,9 +17,10 @@ interface SopChangeHistoryReportProps {
   dateFrom: string | null
   dateTo: string | null
   isQa: boolean
+  isAdmin: boolean
 }
 
-export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHistoryReportProps) {
+export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopChangeHistoryReportProps) {
   const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
 
@@ -122,31 +124,22 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
     },
   ]
 
-  const buildCsv = () => {
-    const headers = ["CC Ref", "SOP Number", "Document Title", "Department", "From Version", "New Version", "Status", "Signatures", "Created Date"]
-    const rows = data.map((entry) => {
-      const ccRef = `CC-${new Date(entry.created_at).getFullYear()}-${entry.id.slice(0, 4).toUpperCase()}`
-      const sops = entry.sops as any
-      return [
-        ccRef,
-        sops?.sop_number || "-",
-        sops?.title || "-",
-        sops?.department || "-",
-        entry.old_version || "v0.0",
-        entry.new_version || "-",
-        entry.status || "-",
-        entry.signatories?.length?.toString() || "0",
-        format(new Date(entry.created_at), "yyyy-MM-dd HH:mm:ss"),
-      ]
-    })
-    const csv = [headers, ...rows].map((row) => row.map((v) => `"${v}"`).join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `change-control-log-${format(new Date(), "yyyy-MM-dd")}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportReportCsv({ reportType: "sop-changes", dateFrom, dateTo })
+      if (!res.success) { alert(res.error || "Export failed"); return }
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = res.filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -161,15 +154,17 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa }: SopChangeHist
             <p className="text-sm text-muted-foreground">Comprehensive tracking of all active and historic document updates</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={buildCsv}
-          disabled={data.length === 0}
-          className="rounded-xl border-brand-teal/20 hover:bg-brand-teal/5 hover:text-brand-teal shadow-sm group/btn"
-        >
-          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-          Export Dataset (.csv)
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={data.length === 0 || exporting}
+            className="rounded-xl border-brand-teal/20 hover:bg-brand-teal/5 hover:text-brand-teal shadow-sm group/btn"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
+            Export Dataset (.csv)
+          </Button>
+        )}
       </div>
 
       <DataTable

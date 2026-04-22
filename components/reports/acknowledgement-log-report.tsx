@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query"
 import { fetchAcknowledgements } from "@/lib/queries/reports"
+import { exportReportCsv } from "@/actions/audit"
 import { Button } from "@/components/ui/button"
-import { Download, Users, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, Users, ShieldCheck, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
@@ -14,9 +15,10 @@ interface AcknowledgementLogReportProps {
   dateFrom: string | null
   dateTo: string | null
   isQa: boolean
+  isAdmin: boolean
 }
 
-export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: AcknowledgementLogReportProps) {
+export function AcknowledgementLogReport({ dateFrom, dateTo, isQa, isAdmin }: AcknowledgementLogReportProps) {
   const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
 
@@ -104,24 +106,22 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
     },
   ]
 
-  const buildCsv = () => {
-    const headers = ["SOP No.", "SOP Title", "Employee Name", "Dept", "Version", "Acknowledged At"]
-    const rows = data.map((entry: any) => [
-      entry.sop?.sop_number || "-",
-      entry.sop?.title || "-",
-      entry.user?.full_name || "Unknown",
-      entry.user?.department || "-",
-      entry.version,
-      format(new Date(entry.acknowledged_at), "yyyy-MM-dd HH:mm:ss"),
-    ])
-    const csv = [headers, ...rows].map((row) => row.map((v) => `"${v}"`).join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `acknowledgements-${format(new Date(), "yyyy-MM-dd")}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportReportCsv({ reportType: "acknowledgements", dateFrom, dateTo })
+      if (!res.success) { alert(res.error || "Export failed"); return }
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = res.filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -136,15 +136,17 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa }: Acknowledge
             <p className="text-sm text-muted-foreground">Detailed log of SOP reading and comprehension sign-offs</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={buildCsv}
-          disabled={data.length === 0}
-          className="rounded-xl border-blue-500/20 hover:bg-blue-500/5 hover:text-blue-500 shadow-sm group/btn"
-        >
-          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-          Export Dataset (.csv)
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={data.length === 0 || exporting}
+            className="rounded-xl border-blue-500/20 hover:bg-blue-500/5 hover:text-blue-500 shadow-sm group/btn"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
+            Export Dataset (.csv)
+          </Button>
+        )}
       </div>
 
       <DataTable

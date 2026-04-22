@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** April 22, 2026
-> **Version:** 3.5 (Calendar Revamp, Requests Cleanup & Build Fixes)
-> **Current Phase:** Phase 38 ✅ Complete — Phase 39 Next
+> **Version:** 3.6 (Reports & Audit Trail Hardening)
+> **Current Phase:** Phase 39 ✅ Complete — Phase 40 Next
 
 ---
 
@@ -53,6 +53,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 36 | ✅ Complete | Pulse, Tooltips, Global Avatar & Presence        |
 | Phase 37 | ✅ Complete | Equipment Public QR Flow                         |
 | Phase 38 | ✅ Complete | Calendar Revamp, Requests Cleanup & Build Fixes  |
+| Phase 39 | ✅ Complete | Reports & Audit Trail Hardening                  |
 
 ---
 
@@ -2022,3 +2023,90 @@ app/api/training/certificate/route.ts          # charSpacing → charSpace (jsPD
 - `initialDate` in the event modal updates correctly when opening for different days in one session ✅
 - Removing the QA Hub button does not affect QA users' ability to reach the hub (sidebar link still present) ✅
 - Training certificate PDF generation compiles without TypeScript errors ✅
+
+---
+
+## Phase 39: Reports & Audit Trail Hardening
+
+**Status:** ✅ Complete
+**Completed:** April 22, 2026
+
+### Overview
+
+Turned the Reports page into the single source of truth for auditing and management. Added a centralized audit helper, backfilled missing audit writes across five action surfaces, introduced a dedicated Audit Trail report with server-side filtering/pagination/CSV export, and locked CSV export down to admins with every export recorded in the audit log itself.
+
+### Audit Infrastructure
+
+- **`lib/audit.ts` (new)** — single `logAudit({ action, entityType, entityId, metadata, actorId })` helper. Uses the service client, fire-and-forget (errors logged + swallowed so an audit failure never breaks the user flow). Also exports `logReportExport()` for the export-tracking wrapper. Server-only: pulled in via `createServiceClient()` which transitively imports `next/headers`, so any accidental client import breaks the build.
+- **Migration `040_audit_log_hardening.sql`** — added `audit_log_created_at_idx` (DESC, for the time-scan browsing the Audit Trail report does) and `audit_log_action_created_idx` for filter-by-action queries. Added explicit RESTRICTIVE policies rejecting INSERT/UPDATE/DELETE from non-service roles so the intent is readable in the schema (pre-existing behavior — RLS was already denying these by omission — but now explicit).
+- **Backfilled audit writes** on five previously silent surfaces:
+  - `actions/events.ts` — `event_created`, `event_deleted`
+  - `actions/pulse.ts` — `pulse_notice_broadcast`
+  - `actions/messages.ts` — `conversation_group_created`, `conversation_direct_created`, `conversation_direct_deleted`, `conversation_left` (per-message events deliberately excluded — would flood the log)
+  - **Why these:** calendar events, notices, and conversations alter shared state that QA/Admin need to reconstruct during incident review, and all were writing without a trace before.
+
+### Audit Trail Report (new)
+
+- **`/reports` → "Audit Trail" tab** (now the default tab). QA + Admin can view; only Admin can export.
+- Server-side fetch via `actions/audit.ts → fetchAuditTrail()`, paginated (50/page), with filters for **actor, entity type, action, date range**.
+- Timeline UI with per-entry avatar, action label, entity badge, relative + absolute timestamps, and an expandable metadata panel (JSON) for entries with structured payloads.
+- Facet dropdowns are derived from a 2k-row recent sample (cheap over the new `created_at` index); swapping in a dedicated facet table or RPC is a one-line change in `fetchAuditFacets()` when volume grows.
+- Prefetches the next page on navigation (same pattern as the other reports).
+
+### CSV Exports (admin-only, logged)
+
+- New server action `exportReportCsv({ reportType, dateFrom, dateTo, extra })` in `actions/audit.ts`. Gates by `is_admin()` via RPC, fetches through the service client with a hard 10,000-row cap, and logs a `report_exported` entry to `audit_log` with `{ report_type, row_count, filters }`.
+- Wired into **all six reports** that had CSV buttons: SOP Change History, Worker Acknowledgements, PM Completion, Pulse/Notice Log, Document Requests, Audit Trail.
+- Export buttons are **no longer rendered for non-admin QA users** — previously any QA manager could pull full datasets silently.
+- Client-side `buildCsv()` functions (which bypassed auditing) removed from every report; clients now call the server action, which returns the CSV string for Blob download.
+
+### Dashboard Integration
+
+- Added a **"Full trail →"** link to the existing Live Audit Trail card header (visible only to admins and the QA manager — the same `hasOrgWideOversight` gate already used for the feed scope). Takes the user straight to `/reports` where the Audit Trail tab is the default view.
+- Left the existing realtime 20-entry feed intact so the dashboard remains a glanceable activity monitor; the full trail is a click away.
+
+### Security Posture
+
+- Every report-facing export path now has: role check (server) → data fetch (service client) → audit log write. Three independent safeguards, where previously we had one (RLS) and data egress was invisible.
+- `audit_log` writes remain service-client-only — SECURITY DEFINER RPCs (approve_sop_request, complete_pm_task, etc.) continue to write via ownership bypass; nothing changed there.
+- CSV export row cap (10k) prevents accidental or malicious full-table pulls from timing out the serverless function or generating runaway files.
+
+### Files Touched
+
+```
+supabase/migrations/040_audit_log_hardening.sql    # NEW — indexes + RESTRICTIVE policies
+lib/audit.ts                                       # NEW — logAudit / logReportExport helpers
+actions/audit.ts                                   # NEW — fetchAuditTrail, fetchAuditFacets,
+                                                   #         exportReportCsv, recordReportExport
+actions/events.ts                                  # Audit: event_created, event_deleted
+actions/pulse.ts                                   # Audit: pulse_notice_broadcast
+actions/messages.ts                                # Audit: conversation lifecycle events
+components/reports/audit-trail-report.tsx          # NEW — filtered, paginated, expandable timeline
+components/reports/reports-client.tsx              # Tab registration, default tab = audit trail,
+                                                   #   isAdmin prop threaded to every report
+components/reports/sop-change-history-report.tsx   # Server export + admin gate
+components/reports/acknowledgement-log-report.tsx  # Server export + admin gate
+components/reports/pm-completion-report.tsx        # Server export + admin gate
+components/reports/pulse-notice-report.tsx         # Server export + admin gate
+components/reports/document-requests-report.tsx    # Server export + admin gate
+components/reports/training-log-report.tsx         # Prop signature updated (no CSV yet)
+components/dashboard/dashboard-client.tsx          # "Full trail →" link on audit card
+```
+
+### Performance & Cost Notes
+
+- Audit browsing hits the new `created_at DESC` index; keyset pagination with `range()` on an indexed column scales to millions of rows without table scans.
+- Facet sampling (2k rows) is a single indexed scan, memoized in React Query for 5 minutes.
+- Report exports are server-side — data flows serverless function → CSV string → Blob on the client, so no Supabase round-trip egress past the service function and no client-side assembly of 10k-row tables.
+- No new recurring cost: every new surface is on the same Supabase + Next runtime, no third-party services added.
+
+### Verification
+
+- `npx tsc --noEmit` passes ✅
+- Audit Trail tab loads and paginates with filters applied ✅
+- Expanding a row with metadata shows formatted JSON ✅
+- Non-admin QA user: **no Export button visible** on any report tab ✅
+- Admin user: Export button visible, CSV download works, and a `report_exported` entry appears in the audit log with `row_count` and filters recorded ✅
+- Creating/deleting calendar events, broadcasting pulse notices, and creating/deleting/leaving conversations all produce `audit_log` rows ✅
+- Row cap: an export of > 10,000 matching rows truncates to 10,000 without error ✅
+- Dashboard "Full trail →" link renders for admins + QA manager and routes to `/reports` ✅

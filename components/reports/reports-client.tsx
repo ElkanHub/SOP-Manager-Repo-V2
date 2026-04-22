@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, subDays } from "date-fns"
-import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download, ClipboardList, GraduationCap } from "lucide-react"
+import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download, ClipboardList, GraduationCap, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -46,6 +46,11 @@ const TrainingLogReport = dynamic(() => import("./training-log-report").then(mod
   loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
 })
 
+const AuditTrailReport = dynamic(() => import("./audit-trail-report").then(mod => mod.AuditTrailReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
 
 interface ReportsClientProps {
   profile: Profile
@@ -53,13 +58,14 @@ interface ReportsClientProps {
   isAdmin: boolean
 }
 
-type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests" | "training-log"
+type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests" | "training-log" | "audit-trail"
 
 export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
-  const [activeReport, setActiveReport] = useState<ReportType>("sop-changes")
+  const [activeReport, setActiveReport] = useState<ReportType>("audit-trail")
   const { dateFrom, dateTo, setDateRange, clearFilters } = useReportStore()
 
   const reports = [
+    { id: "audit-trail", label: "Audit Trail", icon: ShieldCheck, access: "qa+admin", color: "text-purple-600" },
     { id: "sop-changes", label: "SOP Change History", icon: FileText, access: "qa", color: "text-teal-600" },
     { id: "acknowledgements", label: "Worker Acknowledgements", icon: Users, access: "all", color: "text-blue-600" },
     { id: "pm-completion", label: "PM Completion Log", icon: Wrench, access: "qa", color: "text-orange-600" },
@@ -148,23 +154,26 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
         <Card className="border-border shadow-md bg-card relative overflow-hidden mb-8">
           <CardContent className="p-0 relative z-10">
             <div className="p-4 sm:p-8">
+              {activeReport === "audit-trail" && (isQa || isAdmin) && (
+                <AuditTrailReport dateFrom={dateFrom} dateTo={dateTo} isAdmin={isAdmin} />
+              )}
               {activeReport === "sop-changes" && (
-                <SopChangeHistoryReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} />
+                <SopChangeHistoryReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} isAdmin={isAdmin} />
               )}
               {activeReport === "acknowledgements" && (
-                <AcknowledgementLogReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} />
+                <AcknowledgementLogReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} isAdmin={isAdmin} />
               )}
               {activeReport === "pm-completion" && (
-                <PmCompletionReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} />
+                <PmCompletionReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} isAdmin={isAdmin} />
               )}
               {activeReport === "pulse-notices" && isAdmin && (
-                <PulseNoticeReport dateFrom={dateFrom} dateTo={dateTo} />
+                <PulseNoticeReport dateFrom={dateFrom} dateTo={dateTo} isAdmin={isAdmin} />
               )}
               {activeReport === "document-requests" && (isQa || isAdmin) && (
-                <DocumentRequestsReport dateFrom={dateFrom} dateTo={dateTo} />
+                <DocumentRequestsReport dateFrom={dateFrom} dateTo={dateTo} isAdmin={isAdmin} />
               )}
               {activeReport === "training-log" && (isQa || isAdmin || profile.role === "manager") && (
-                <TrainingLogReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} />
+                <TrainingLogReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} isAdmin={isAdmin} />
               )}
             </div>
           </CardContent>

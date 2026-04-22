@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient, createServiceClient } from "@/lib/supabase/server"
+import { logAudit } from "@/lib/audit"
 
 export async function sendMessage({ 
   conversationId, 
@@ -181,6 +182,18 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
 
   if (memErr) throw new Error("Failed to add members: " + JSON.stringify(memErr))
 
+  await logAudit({
+    actorId: user.id,
+    action: type === 'group' ? 'conversation_group_created' : 'conversation_direct_created',
+    entityType: 'conversation',
+    entityId: conv.id,
+    metadata: {
+      type,
+      name: type === 'group' ? name?.trim() ?? null : null,
+      member_count: allMembers.length,
+    },
+  })
+
   return conv
 }
 
@@ -236,6 +249,14 @@ export async function leaveGroup(conversationId: string) {
   if (count === 0) {
      await adminClient.from('conversations').update({ is_archived: true }).eq('id', conversationId)
   }
+
+  await logAudit({
+    actorId: user.id,
+    action: 'conversation_left',
+    entityType: 'conversation',
+    entityId: conversationId,
+    metadata: { remaining_members: count ?? 0 },
+  })
 }
 
 export async function deleteConversation(conversationId: string) {
@@ -255,5 +276,13 @@ export async function deleteConversation(conversationId: string) {
   if (conv.type === 'direct') {
     // Completely physically delete the DM
     await adminClient.from('conversations').delete().eq('id', conversationId)
+
+    await logAudit({
+      actorId: user.id,
+      action: 'conversation_direct_deleted',
+      entityType: 'conversation',
+      entityId: conversationId,
+      metadata: {},
+    })
   }
 }

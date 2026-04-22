@@ -4,8 +4,9 @@ import { useState, useEffect } from "react"
 import { format } from "date-fns"
 import { useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query"
 import { fetchPulseNotices } from "@/lib/queries/reports"
+import { exportReportCsv } from "@/actions/audit"
 import { Button } from "@/components/ui/button"
-import { Download, Bell, MailOpen, ChevronLeft, ChevronRight } from "lucide-react"
+import { Download, Bell, MailOpen, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
@@ -13,9 +14,10 @@ import { ColumnDef } from "@tanstack/react-table"
 interface PulseNoticeReportProps {
   dateFrom: string | null
   dateTo: string | null
+  isAdmin: boolean
 }
 
-export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) {
+export function PulseNoticeReport({ dateFrom, dateTo, isAdmin }: PulseNoticeReportProps) {
   const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
 
@@ -95,24 +97,22 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
     },
   ]
 
-  const buildCsv = () => {
-    const headers = ["Sender", "Audience", "Target Dept", "Subject", "Body", "Sent At"]
-    const rows = data.map((entry) => [
-      (entry as any).sender?.full_name || "-",
-      entry.audience,
-      entry.target_department || "-",
-      entry.title,
-      (entry.body || "").substring(0, 100),
-      format(new Date(entry.created_at), "yyyy-MM-dd HH:mm:ss"),
-    ])
-    const csv = [headers, ...rows].map((row) => row.map((v) => `"${v}"`).join(",")).join("\n")
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `pulse-notices-${format(new Date(), "yyyy-MM-dd")}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await exportReportCsv({ reportType: "pulse-notices", dateFrom, dateTo })
+      if (!res.success) { alert(res.error || "Export failed"); return }
+      const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = res.filename
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
   }
 
   return (
@@ -127,15 +127,17 @@ export function PulseNoticeReport({ dateFrom, dateTo }: PulseNoticeReportProps) 
             <p className="text-sm text-muted-foreground">Audit log of all broadcast notices and system communications</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={buildCsv}
-          disabled={data.length === 0}
-          className="rounded-xl border-indigo-500/20 hover:bg-indigo-500/5 hover:text-indigo-500 shadow-sm group/btn"
-        >
-          <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />
-          Export Dataset (.csv)
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={data.length === 0 || exporting}
+            className="rounded-xl border-indigo-500/20 hover:bg-indigo-500/5 hover:text-indigo-500 shadow-sm group/btn"
+          >
+            {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
+            Export Dataset (.csv)
+          </Button>
+        )}
       </div>
 
       <DataTable
