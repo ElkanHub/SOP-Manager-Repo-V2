@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -30,6 +30,10 @@ export function NewEventModal({ open, onOpenChange, initialDate }: NewEventModal
   const [visibility, setVisibility] = useState<"public" | "department">("department")
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open && initialDate) setStartDate(initialDate)
+  }, [open, initialDate])
 
   const handleSubmit = async () => {
     if (!title.trim()) return
