@@ -184,7 +184,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
       {(isQa || isAdmin) && (
         <Card className="mt-4 border-border shadow-md bg-card overflow-hidden">
           <CardContent className="p-4 sm:p-8">
-            <RiskInsightsReport />
+            <RiskInsightsReport isAdmin={isAdmin} />
           </CardContent>
         </Card>
       )}

@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** April 22, 2026
-> **Version:** 3.7 (Central AI Client & SDK Consolidation)
-> **Current Phase:** Phase 40 ✅ Complete — Phase 41 Next
+> **Version:** 3.8 (Risk Assessment Redesign — SQL-First, Cached, Deterministic)
+> **Current Phase:** Phase 41 ✅ Complete — Phase 42 Next
 
 ---
 
@@ -55,6 +55,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 38 | ✅ Complete | Calendar Revamp, Requests Cleanup & Build Fixes  |
 | Phase 39 | ✅ Complete | Reports & Audit Trail Hardening                  |
 | Phase 40 | ✅ Complete | Central AI Client & SDK Consolidation            |
+| Phase 41 | ✅ Complete | Risk Assessment Redesign (SQL + snapshot cache)  |
 
 ---
 
@@ -2219,3 +2220,123 @@ Define a Gemini `responseSchema` (already supported by the new client's `schema`
 Rough numbers for a mid-sized workspace: today ~1–2¢ per risk-insights click × ~20 clicks/day ≈ **$3–6/month just from risk insights**. The redesign would push that to **~$0.10–0.30/month** while producing tighter, clickable, reproducible output. Plus the snapshots table doubles as a historical series ("risk trending up over the quarter") — a feature we don't have today.
 
 If you want me to proceed with the redesign, confirm and I'll ship it as Phase 41 with: metric-aggregator SQL function + migration, two-phase call using the central client's tier routing, `risk_assessment_snapshots` cache table with a cron refresh, structured schema + deep-link UI, and PROGRESS.md update.
+
+---
+
+## Phase 41: Risk Assessment Redesign — SQL-First, Cached, Deterministic
+
+**Status:** ✅ Complete
+**Completed:** April 22, 2026
+
+### Overview
+
+Rebuilt the AI Risk Insights feature along the lines proposed at the end of Phase 40: SQL does the counting, TypeScript does the scoring, AI only narrates, and everything is cached in a snapshot table so repeat reads don't hit the model. Projected cost drop is ~15–20× for a mid-sized workspace while producing tighter, clickable, reproducible output.
+
+### The shape
+
+```
+User opens Reports
+   ↓
+getLatestRiskAssessment(scope='org')
+   ↓
+ snapshot exists? ─► YES → serve from DB (0 AI calls)
+         │
+         NO
+         ↓
+   compute_risk_metrics(scope)          ← SQL RPC, ~10 deterministic counts
+         ↓
+   scoreAndLevel(metrics)               ← TS, weighted 0-100 score → low/medium/high
+         ↓
+   generateJson(tier='fast', ~2KB prompt) ← AI narrates 3 bullets ONLY
+         ↓
+   INSERT risk_assessment_snapshots     ← cached 6h
+```
+
+Subsequent reads over the next 6 hours return the cached row with an `is_stale` flag when applicable. Admins can force-regenerate; QA managers read cached results to cap cost.
+
+### Files shipped
+
+```
+supabase/migrations/041_risk_assessment.sql            # NEW — table, RLS, compute_risk_metrics RPC
+actions/risk-assessment.ts                              # NEW — scoring, narration, snapshot read/write
+app/api/cron/refresh-risk-assessment/route.ts          # NEW — 6h cron warming org + dept scopes
+components/reports/risk-insights-report.tsx            # Rewritten — snapshot UI with signal chips
+components/reports/reports-client.tsx                  # Pass isAdmin down to risk panel
+app/api/gemini/risk-insights/route.ts                  # REMOVED — obsolete
+```
+
+### Migration `041_risk_assessment.sql`
+
+**`risk_assessment_snapshots`** table: `scope`, `risk_level`, `risk_score 0-100`, `metrics jsonb`, `signals jsonb`, `insights jsonb`, `model_used`, `tier_used`, `latency_ms`, `generated_at`. Indexed on `(scope, generated_at DESC)`. RLS: SELECT for QA + Admin, RESTRICTIVE INSERT/UPDATE/DELETE (service-client-only writes — same pattern as `audit_log` from Phase 39).
+
+**`compute_risk_metrics(p_scope text)`** — SECURITY DEFINER function, returns a single JSONB object with ~10 pre-aggregated signals:
+
+- `overdue_pm_count` + `overdue_pm_avg_days`
+- `pending_cc_past_deadline_count`, `pending_cc_near_deadline_count`
+- `sops_due_for_revision_count` (within 30 days)
+- `active_sops_under_80pct_ack_count` (scope-aware)
+- `failed_approvals_last_30d` (rejected/changes_requested SOP approvals)
+- `ai_failure_rate_last_7d` — derived from the Phase 40 `ai_call_succeeded` / `ai_call_failed` audit rows
+- `inactive_equipment_count`
+- `active_sops_total`, `active_users_total` (denominators for context)
+
+Execution is REVOKED from anon/authenticated and GRANTed only to `service_role`, so the function can only be reached via the server-side service client.
+
+### `actions/risk-assessment.ts`
+
+- **`scoreAndLevel(metrics)`** — weighted scoring in TypeScript (easy to tune without a migration). Each signal contributes 5–30 points; score is clamped 0–100. Level: `high` ≥ 60, `medium` ≥ 25, else `low`. **Why TS, not SQL:** tuning thresholds is the most frequently-changed logic in any risk model; keeping it out of migrations saves churn.
+- **`generateAndStore(service, scope)`** — runs the RPC, scores, asks the model for exactly 3 bullet insights constrained to the pre-computed signals ("do NOT invent other signals or counts"), writes a snapshot. AI failure is non-fatal: on any `AIError`, deterministic signals still produce readable insights.
+- **Exports:** `getLatestRiskAssessment(scope)` (QA+Admin, generates-if-missing), `regenerateRiskAssessment(scope)` (Admin-only), `refreshAllRiskAssessments(service)` (internal helper used by the cron).
+
+### Cron `/api/cron/refresh-risk-assessment`
+
+GET with `Authorization: Bearer $CRON_SECRET` (same pattern as the existing `pm-alerts`, `overdue-check`, `training-deadline-check` crons). Iterates `['org', ...all department names]` and calls `generateAndStore()` for each. Returns a summary of succeeded/failed scopes. `maxDuration = 120` so it has headroom when several AI calls serialize on rate limits. Suggested schedule: every 6 hours.
+
+### UI
+
+The `RiskInsightsReport` component (in `/reports`) is completely rewritten:
+
+- **Left rail:** risk level badge, risk score out of 100 with a color-coded progress bar, generation timestamp + "Stale (>6h)" flag, and model/latency footer.
+- **Right column — Signals card:** each signal rendered as a clickable row with a severity dot (red/amber/blue), count, one-line blurb, and an `ArrowUpRight` indicator. `href` on the signal deep-links straight into the relevant view (e.g. "Change controls past deadline" → `/change-control`, "Overdue PM tasks" → `/equipment`, etc.) so the audit log translates into one-click remediation.
+- **Right column — AI Insights card:** numbered bullets from the model. Footer disclaimer: "AI-generated narrative — the risk level and score are computed deterministically from database signals."
+- **Regenerate button:** visible to admins only. QA managers see cached data; an admin refresh is required to spend tokens again.
+
+### Cost & accuracy math
+
+Before (Phase 40 endpoint, per-click generation):
+- Input: ~100 raw audit rows as free text (~4–8 KB)
+- Output: free-form prose, no schema
+- Cost: ~1–2¢ per click
+- At ~20 clicks/day: **~$3–6/month** — and the number scales with audit activity, unbounded
+
+After (Phase 41):
+- Input: pre-aggregated signals + blurbs (~2 KB, constant)
+- Output: strict JSON, `maxOutputTokens: 400`
+- Cached: 6h per scope
+- Lazy: nothing generates unless somebody actually reads that scope
+- Cost: **~$0.05–0.15/month** (org + ~5 departments × 4 refreshes/day with cron on, or far less without)
+
+Accuracy improvements:
+- **Risk score is reproducible** — run `compute_risk_metrics` twice, get identical numbers. The model no longer assigns the level.
+- **No hallucinated counts.** The prompt explicitly says "do NOT invent other signals or counts" and references only the pre-aggregated list.
+- **Shape is guaranteed** — `generateJson` enforces `application/json` response MIME + runtime validator rejects shape drift.
+- **Historical series for free** — `risk_assessment_snapshots` is append-only, so "risk level trending over the last quarter" is now a simple query; a feature the prose-only endpoint couldn't support.
+
+### Security
+
+- RPC execute GRANT limited to `service_role`. Anon + authenticated cannot run it directly.
+- Snapshot table: SELECT only for QA + Admin via RLS; writes are service-client-only via RESTRICTIVE policies. Same lockdown as `audit_log`.
+- AI calls from `generateAndStore` go through the central `lib/ai/client.ts`, so every call writes an `ai_call_succeeded` / `ai_call_failed` audit row — cost/latency/failure visibility is preserved.
+- Cron endpoint gated by `CRON_SECRET` (unchanged pattern from existing crons).
+
+### Verification
+
+- `npx tsc --noEmit` passes ✅
+- Risk Insights panel loads from cache on repeat visits (no AI call) ✅
+- First-ever read for a scope generates synchronously and stores a snapshot ✅
+- Risk score is reproducible across regenerations (same metrics → same score) ✅
+- Admin-only "Regenerate" button enforced server-side (`regenerateRiskAssessment` checks `is_admin`) ✅
+- QA manager without admin role sees cached snapshot + no regenerate button ✅
+- Cron endpoint returns `{ ok, scopes, succeeded, failed, results }` summary and writes one snapshot per scope ✅
+- AI failure surfaces deterministic signals as insights (no crash) ✅
+- Signal chips with `href` deep-link to the correct views (`/change-control`, `/equipment`, `/library`, `/approvals`) ✅
