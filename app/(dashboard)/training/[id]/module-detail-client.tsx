@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PlayCircle, Presentation, Users, FileCheck, CheckCircle2, AlertTriangle, ArrowLeft, Loader2, Download, Trash, Monitor } from "lucide-react"
+import { PlayCircle, Presentation, Users, FileCheck, CheckCircle2, AlertTriangle, ArrowLeft, Loader2 } from "lucide-react"
 import { publishTrainingModule, archiveTrainingModule } from "@/actions/training"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -14,14 +14,12 @@ import Link from "next/link"
 import QuestionnaireEditor from "@/components/training/questionnaire-editor"
 import AssignTraineesModal from "@/components/training/assign-trainees-modal"
 import SlideDeckEditor from "@/components/training/slide-deck-editor"
-import SlidePresenter from "@/components/training/slide-presenter"
 import { UserAvatar } from "@/components/user-avatar"
 
 export default function ModuleDetailClient({ moduleData, questionnaires, assignments, attempts, availableUsers, profile, isQa }: any) {
     const router = useRouter()
     const [isPublishing, setIsPublishing] = useState(false)
     const [isAssignModalOpen, setIsAssignModalOpen] = useState(false)
-    const [isPresenting, setIsPresenting] = useState(false)
 
     const handlePublish = async () => {
         if (!moduleData.slide_deck || (Array.isArray(moduleData.slide_deck) && moduleData.slide_deck.length === 0)) {
@@ -49,10 +47,6 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
         } finally {
             setIsPublishing(false)
         }
-    }
-
-    const handleExportDeck = () => {
-        window.open(`/api/training/export-slides?moduleId=${moduleData.id}`, '_blank')
     }
 
     const activeCount = assignments.filter((a:any) => a.status === 'in_progress').length
@@ -135,23 +129,6 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                 </TabsList>
 
                 <TabsContent value="slides" className="space-y-4">
-                    <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border/50 shadow-sm">
-                        <div>
-                            <h3 className="font-medium text-lg">AI Slide Deck</h3>
-                            <p className="text-sm text-muted-foreground mt-1">Generate presentation slides automatically from the source SOP text.</p>
-                        </div>
-                        {moduleData.slide_deck && (
-                            <div className="flex items-center gap-2">
-                                <Button variant="default" onClick={() => setIsPresenting(true)} className="gap-2 bg-primary hover:bg-primary/90">
-                                    <Monitor className="h-4 w-4" /> Present
-                                </Button>
-                                <Button variant="outline" onClick={handleExportDeck} className="gap-2">
-                                    <Download className="h-4 w-4" /> Export PPTX
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                    {/* Slide Deck component will handle AI generation and editing */}
                     <SlideDeckEditor moduleData={moduleData} />
                 </TabsContent>
 
@@ -207,15 +184,6 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                 moduleId={moduleData.id}
             />
 
-            {moduleData.slide_deck && (
-                <SlidePresenter
-                    slides={moduleData.slide_deck}
-                    moduleTitle={moduleData.title}
-                    sopNumber={moduleData.sop?.sop_number || undefined}
-                    isOpen={isPresenting}
-                    onClose={() => setIsPresenting(false)}
-                />
-            )}
         </div>
     )
 }

@@ -7,9 +7,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog"
-import { 
-    Loader2, Wand2, Save, LayoutTemplate, Presentation, 
-    GripVertical, Plus, Trash2, PlusCircle, ChevronDown, ChevronUp
+import {
+    Loader2, Wand2, Save, LayoutTemplate, Presentation,
+    GripVertical, Plus, Trash2, PlusCircle, ChevronDown, ChevronUp, Download
 } from "lucide-react"
 import { updateSlide, reorderSlides, addSlide, deleteSlide } from "@/actions/training"
 import { toast } from "sonner"
@@ -59,6 +59,7 @@ export default function SlideDeckEditor({ moduleData }: Props) {
     // Drag state
     const [draggedId, setDraggedId] = useState<string | null>(null)
     const [dragOverId, setDragOverId] = useState<string | null>(null)
+    const [isDragging, setIsDragging] = useState(false)
     const [localSlides, setLocalSlides] = useState<any[] | null>(null)
 
     // Use local slides during drag, otherwise use server data
@@ -108,10 +109,11 @@ export default function SlideDeckEditor({ moduleData }: Props) {
     // ─── Drag & Drop Reorder ────────────────────────────────────────────
     const handleDragStart = (e: React.DragEvent, slideId: string) => {
         setDraggedId(slideId)
+        setIsDragging(true)
         e.dataTransfer.effectAllowed = 'move'
         // Make drag image semi-transparent
         const el = e.currentTarget as HTMLElement
-        e.dataTransfer.setDragImage(el, el.offsetWidth / 2, 30)
+        e.dataTransfer.setDragImage(el, el.offsetWidth / 2, 20)
     }
 
     const handleDragOver = (e: React.DragEvent, slideId: string) => {
@@ -157,6 +159,7 @@ export default function SlideDeckEditor({ moduleData }: Props) {
         })
         setLocalSlides(reorderedSlides)
         setDraggedId(null)
+        setIsDragging(false)
 
         // Persist to server
         setIsReordering(true)
@@ -176,6 +179,7 @@ export default function SlideDeckEditor({ moduleData }: Props) {
     const handleDragEnd = () => {
         setDraggedId(null)
         setDragOverId(null)
+        setIsDragging(false)
     }
 
     // ─── Move Up/Down (keyboard-friendly alternative) ───────────────────
@@ -297,6 +301,14 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                     <Button variant="default" size="sm" onClick={() => setIsPresenting(true)} className="gap-2 bg-primary hover:bg-primary/90">
                         <Presentation className="h-4 w-4" /> Present
                     </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(`/api/training/export-slides?moduleId=${moduleData.id}`, '_blank')}
+                        className="gap-2"
+                    >
+                        <Download className="h-4 w-4" /> Export PPTX
+                    </Button>
                     <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating} className="gap-2 text-blue-600 hover:text-blue-700">
                         {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
                         Regenerate
@@ -306,15 +318,15 @@ export default function SlideDeckEditor({ moduleData }: Props) {
 
             {/* Drag hint */}
             <p className="text-xs text-muted-foreground flex items-center gap-2">
-                <GripVertical className="h-3.5 w-3.5" /> Drag slides to reorder, or use the arrows. Click <Plus className="h-3 w-3 inline" /> between slides to insert.
+                <GripVertical className="h-3.5 w-3.5" /> Drag slides to reorder — all slides collapse while dragging for easy targeting. Use arrows or click <Plus className="h-3 w-3 inline" /> between slides to insert.
             </p>
 
             {/* Slide List */}
-            <div className="space-y-1">
+            <div className={`space-y-1 transition-all ${isDragging ? 'max-w-2xl mx-auto' : ''}`}>
                 {slides.map((s: any, i: number) => (
                     <div key={s.id}>
-                        {/* Insert button between slides */}
-                        {i === 0 && (
+                        {/* Insert button between slides (hidden while dragging) */}
+                        {i === 0 && !isDragging && (
                             <div className="flex justify-center py-1">
                                 <button
                                     onClick={() => openAddModal(0)}
@@ -327,7 +339,31 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                             </div>
                         )}
 
-                        {/* Slide Card */}
+                        {/* Compact drag row (shown when any slide is being dragged) */}
+                        {isDragging ? (
+                            <div
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, s.id)}
+                                onDragOver={(e) => handleDragOver(e, s.id)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, s.id)}
+                                onDragEnd={handleDragEnd}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-md border border-border/50 bg-card cursor-grab active:cursor-grabbing select-none transition-all ${
+                                    draggedId === s.id ? 'opacity-30' : 'hover:border-primary/50'
+                                } ${
+                                    dragOverId === s.id ? 'ring-2 ring-primary border-primary bg-primary/5' : ''
+                                }`}
+                                title="Drop here to reorder"
+                            >
+                                <GripVertical className="h-4 w-4 text-muted-foreground/60 shrink-0" />
+                                <span className={`h-6 w-1 rounded bg-gradient-to-b ${TYPE_COLORS[s.type] || TYPE_COLORS.content} shrink-0`} />
+                                <span className="text-[10px] font-bold text-muted-foreground/60 w-6 shrink-0">#{i + 1}</span>
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 shrink-0 w-20 truncate">
+                                    {s.type.replace('_', ' ')}
+                                </span>
+                                <span className="text-sm font-medium truncate flex-1">{s.title}</span>
+                            </div>
+                        ) : (
                         <Card
                             draggable={editingSlideId !== s.id}
                             onDragStart={(e) => handleDragStart(e, s.id)}
@@ -421,18 +457,21 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                                 )}
                             </CardContent>
                         </Card>
+                        )}
 
-                        {/* Insert button after each slide */}
-                        <div className="flex justify-center py-1">
-                            <button
-                                onClick={() => openAddModal(s.order)}
-                                className="group flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-primary transition-colors py-1 px-3 rounded-full hover:bg-primary/5"
-                                title={`Insert slide after Slide ${i + 1}`}
-                            >
-                                <PlusCircle className="h-3.5 w-3.5" />
-                                <span className="hidden group-hover:inline">Insert after</span>
-                            </button>
-                        </div>
+                        {/* Insert button after each slide (hidden while dragging) */}
+                        {!isDragging && (
+                            <div className="flex justify-center py-1">
+                                <button
+                                    onClick={() => openAddModal(s.order)}
+                                    className="group flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-primary transition-colors py-1 px-3 rounded-full hover:bg-primary/5"
+                                    title={`Insert slide after Slide ${i + 1}`}
+                                >
+                                    <PlusCircle className="h-3.5 w-3.5" />
+                                    <span className="hidden group-hover:inline">Insert after</span>
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>
