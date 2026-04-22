@@ -260,13 +260,7 @@ export async function GET(request: NextRequest) {
             doc.text(qLines, MARGIN + 10, y + 4)
             y += qLines.length * 5 + 4
 
-            // Type indicator
-            setText(RGB.gray)
-            doc.setFont('helvetica', 'normal')
-            doc.setFontSize(7)
-            const typeLabel = String(question.question_type || '').replace(/_/g, ' ').toUpperCase()
-            doc.text(typeLabel, MARGIN + 10, y + 2)
-            y += 4
+            y += 2
 
             // Answer area
             if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
