@@ -32,7 +32,7 @@ export async function GET(request: Request) {
         assigned_to,
         due_date,
         status,
-        equipment:equipment_id(name, department)
+        equipment:equipment_id(name, asset_id, department)
       `)
       .eq('status', 'pending')
       .gte('due_date', todayStr)
@@ -43,16 +43,21 @@ export async function GET(request: Request) {
     }
 
     if (pmDueTasks && pmDueTasks.length > 0) {
-      const pulseItems = pmDueTasks.map((task: any) => ({
-        recipient_id: task.assigned_to,
-        sender_id: null,
-        type: 'pm_due',
-        title: `PM Due Soon: ${task.equipment?.name || 'Equipment'}`,
-        body: `Due on ${task.due_date}`,
-        entity_type: 'pm_task',
-        entity_id: task.id,
-        audience: 'self',
-      }))
+      const pulseItems = pmDueTasks.map((task: any) => {
+        const equipmentName = task.equipment?.name || 'equipment'
+        const assetId = task.equipment?.asset_id
+        const assetLabel = assetId ? `${equipmentName} (${assetId})` : equipmentName
+        return {
+          recipient_id: task.assigned_to,
+          sender_id: null,
+          type: 'pm_due',
+          title: `PM due soon — ${equipmentName}`,
+          body: `Your PM task for ${assetLabel} is due on ${task.due_date}. Complete it before the deadline to keep the asset in compliance.`,
+          entity_type: 'pm_task',
+          entity_id: task.id,
+          audience: 'self' as const,
+        }
+      })
 
       await supabase.from('pulse_items').insert(pulseItems)
     }

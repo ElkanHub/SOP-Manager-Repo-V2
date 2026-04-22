@@ -374,9 +374,14 @@ export async function approveSopRequest(
 
         const { data: request } = await supabase
             .from('sop_approval_requests')
-            .select('sop_id, submitted_by, type')
+            .select('sop_id, submitted_by, type, sops:sop_id(title, sop_number)')
             .eq('id', requestId)
             .single()
+
+        const reqSop = Array.isArray((request as any)?.sops) ? (request as any)?.sops[0] : (request as any)?.sops
+        const sopTitle = reqSop?.title || 'Your SOP'
+        const sopNumber = reqSop?.sop_number || ''
+        const sopLabel = sopNumber ? `${sopNumber} — ${sopTitle}` : sopTitle
 
         if (resultData.result === 'activated') {
             const { error: pulseError } = await supabase
@@ -385,8 +390,8 @@ export async function approveSopRequest(
                     recipient_id: request?.submitted_by,
                     sender_id: user.id,
                     type: 'sop_active',
-                    title: 'Your SOP has been approved',
-                    body: 'Your SOP is now active in the library.',
+                    title: `SOP approved — ${sopLabel}`,
+                    body: `Your SOP "${sopTitle}" has been approved by QA and is now active in the Library.`,
                     entity_type: 'sop',
                     entity_id: request?.sop_id,
                     audience: 'self',
@@ -414,8 +419,8 @@ export async function approveSopRequest(
                     recipient_id: request.submitted_by,
                     sender_id: user.id,
                     type: 'approval_update',
-                    title: 'Your SOP update was approved',
-                    body: 'A Change Control has been issued for signing.',
+                    title: `SOP update approved — ${sopLabel}`,
+                    body: `QA approved your update to "${sopTitle}". A Change Control has been issued for the required signatories.`,
                     entity_type: 'sop',
                     entity_id: request.sop_id,
                     audience: 'self',
@@ -480,13 +485,18 @@ export async function requestChangesSop(
 
     const { data: request } = await supabase
         .from('sop_approval_requests')
-        .select('sop_id, submitted_by')
+        .select('sop_id, submitted_by, sops:sop_id(title, sop_number)')
         .eq('id', requestId)
         .single()
 
     if (!request) {
         return { success: false, error: 'Request not found' }
     }
+
+    const reqSop = Array.isArray((request as any).sops) ? (request as any).sops[0] : (request as any).sops
+    const sopTitle = reqSop?.title || 'your SOP'
+    const sopNumber = reqSop?.sop_number || ''
+    const sopLabel = sopNumber ? `${sopNumber} — ${sopTitle}` : sopTitle
 
     const { error: commentError } = await supabase
         .from('sop_approval_comments')
@@ -512,8 +522,8 @@ export async function requestChangesSop(
             recipient_id: request.submitted_by,
             sender_id: user.id,
             type: 'approval_update',
-            title: 'QA has requested changes to your SOP',
-            body: comment,
+            title: `Changes requested — ${sopLabel}`,
+            body: `QA requested changes to "${sopTitle}". Note from reviewer: ${comment}`,
             entity_type: 'sop',
             entity_id: request.sop_id,
             audience: 'self',
@@ -604,17 +614,22 @@ export async function signChangeControl(changeControlId: string): Promise<SignRe
 
     const { data: changeControl } = await supabase
         .from('change_controls')
-        .select('sop_id, required_signatories')
+        .select('sop_id, new_version, required_signatories, sops:sop_id(title, sop_number)')
         .eq('id', changeControlId)
         .single()
+
+    const ccSop = Array.isArray((changeControl as any)?.sops) ? (changeControl as any)?.sops[0] : (changeControl as any)?.sops
+    const sopTitle = ccSop?.title || 'an SOP'
+    const sopNumber = ccSop?.sop_number || ''
+    const sopLabel = sopNumber ? `${sopNumber} — ${sopTitle}` : sopTitle
 
     const { error: pulseError } = await supabase
         .from('pulse_items')
         .insert({
             sender_id: user.id,
             type: 'cc_signature',
-            title: 'Change Control Signed',
-            body: `${profile.full_name} has signed the Change Control`,
+            title: `Change Control signed — ${sopLabel}`,
+            body: `${profile.full_name} signed the Change Control for ${sopLabel}.`,
             entity_type: 'change_control',
             entity_id: changeControlId,
             audience: 'department',

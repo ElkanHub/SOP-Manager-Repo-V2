@@ -595,14 +595,28 @@ export async function recordPaperCompletion(data: { moduleId: string; respondent
     await supabase.from('training_assignments').update({ status: 'completed', completed_at: now }).eq('module_id', data.moduleId).eq('assignee_id', data.respondentId)
     await supabase.from('training_log').insert({ actor_id: user.id, action: 'paper_completion_recorded', module_id: data.moduleId, attempt_id: attempt.id, target_user_id: data.respondentId })
 
+    // Look up the module title and respondent name so the Pulse reads well —
+    // the previous version showed a UUID, which was useless at a glance.
+    const [{ data: moduleMeta }, { data: respondent }] = await Promise.all([
+        supabase.from('training_modules').select('title').eq('id', data.moduleId).single(),
+        supabase.from('profiles').select('full_name').eq('id', data.respondentId).single(),
+    ])
+    const moduleTitle = moduleMeta?.title || 'training module'
+    const respondentName = respondent?.full_name || 'A trainee'
+
     const { data: qaDept } = await supabase.from('departments').select('name').eq('is_qa', true).single()
     if (qaDept) {
         const { data: qaUsers } = await supabase.from('profiles').select('id').eq('department', qaDept.name).eq('role', 'manager').eq('is_active', true)
         if (qaUsers) {
             const pulses = qaUsers.map(qa => ({
-                recipient_id: qa.id, sender_id: user.id, type: 'training_completed',
-                title: 'Paper Training Recorded', body: `A paper completion was recorded for module ${data.moduleId}`,
-                entity_type: 'training_module', entity_id: data.moduleId, audience: 'self'
+                recipient_id: qa.id,
+                sender_id: user.id,
+                type: 'training_completed',
+                title: 'Paper training recorded',
+                body: `${profile.full_name} recorded a paper completion for ${respondentName} on "${moduleTitle}".`,
+                entity_type: 'training_module',
+                entity_id: data.moduleId,
+                audience: 'self',
             }))
             await supabase.from('pulse_items').insert(pulses)
         }

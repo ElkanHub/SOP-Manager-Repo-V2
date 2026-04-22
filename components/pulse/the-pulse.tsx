@@ -80,24 +80,23 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
                 { event: 'INSERT', schema: 'public', table: 'pulse_items' },
                 (payload: any) => {
                     const newItem = payload.new as any
-                    console.log('Pulse Realtime Insert:', newItem)
 
                     const isPotentiallyForMe =
                         newItem.recipient_id === user.id ||
                         newItem.audience === 'everyone' ||
                         (newItem.audience === 'department' && newItem.target_department === profile.department)
 
-                    console.log('Pulse: isPotentiallyForMe?', isPotentiallyForMe, 'Dept:', profile.department, 'TargetDept:', newItem.target_department)
-
                     if (isPotentiallyForMe) {
                         const itemWithCounts = withCounts(newItem)
 
-                        // Play Notification Sound
+                        // Play Notification Sound — but not for the user's own todos
                         const prefs = profile.notification_prefs || {}
-                        const shouldPlayNotice = (newItem.type === 'notice' || newItem.type === 'todo') && (prefs.notice_sound !== false)
+                        const isOwnTodo = newItem.type === 'todo' && newItem.sender_id === user.id
+                        const shouldPlayNotice =
+                            !isOwnTodo &&
+                            (newItem.type === 'notice' || newItem.type === 'todo') &&
+                            (prefs.notice_sound !== false)
                         const shouldPlayMessage = newItem.type === 'message' && (prefs.message_sound !== false)
-
-                        console.log('Pulse: shouldPlayNotice?', shouldPlayNotice, 'shouldPlayMessage?', shouldPlayMessage, 'Prefs:', prefs)
 
                         if (shouldPlayNotice) {
                             const audio = new Audio('/sounds/mixkit-double-beep-tone-alert-2868.wav')
@@ -121,6 +120,25 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
             )
             .on(
                 'postgres_changes',
+                { event: 'UPDATE', schema: 'public', table: 'pulse_items' },
+                (payload: any) => {
+                    const updated = payload.new as any
+                    setItems(prev => prev.map(item =>
+                        item.id === updated.id ? { ...item, ...updated } : item
+                    ))
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: 'DELETE', schema: 'public', table: 'pulse_items' },
+                (payload: any) => {
+                    const deletedId = (payload.old as any)?.id
+                    if (!deletedId) return
+                    setItems(prev => prev.filter(item => item.id !== deletedId))
+                }
+            )
+            .on(
+                'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'pulse_acknowledgements' },
                 (payload: any) => {
                     const newAck = payload.new as any
@@ -136,12 +154,27 @@ export function ThePulse({ user, profile }: { user: any, profile: any }) {
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [user.id, supabase, withCounts])
+    }, [user.id, supabase, withCounts, profile.department, profile.notification_prefs])
 
 
     const topLevelItems = items.filter(i => !i.parent_id)
     const notices = topLevelItems.filter(i => i.type === 'notice')
-    const todos = topLevelItems.filter(i => i.type === 'todo')
+    // Todos: open items first ordered by due date (overdue → soonest → no due),
+    // completed items at the bottom ordered by most-recently-completed.
+    const todos = topLevelItems
+        .filter(i => i.type === 'todo')
+        .sort((a, b) => {
+            const aDone = Boolean(a.completed_at)
+            const bDone = Boolean(b.completed_at)
+            if (aDone !== bDone) return aDone ? 1 : -1
+            if (aDone && bDone) {
+                return new Date(b.completed_at).getTime() - new Date(a.completed_at).getTime()
+            }
+            const aDue = a.due_at ? new Date(a.due_at).getTime() : Number.POSITIVE_INFINITY
+            const bDue = b.due_at ? new Date(b.due_at).getTime() : Number.POSITIVE_INFINITY
+            if (aDue !== bDue) return aDue - bDue
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        })
 
     // Sort replies chronologically (oldest first) for readable conversation flow
     const getReplies = (parentId: string) => {

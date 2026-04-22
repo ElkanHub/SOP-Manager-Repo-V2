@@ -107,28 +107,34 @@ export async function createTodo(formData: FormData) {
         return { error: 'Not authenticated' }
     }
 
-    const content = formData.get('content') as string
+    const content = (formData.get('content') as string | null)?.trim()
+    const dueAtRaw = formData.get('dueAt') as string | null
 
     if (!content) {
         return { error: 'Content is required' }
     }
 
-    // Get sender profile for name
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
+    // Validate / parse the optional due date. Accept either an ISO string or the
+    // 'YYYY-MM-DDTHH:mm' shape emitted by <input type="datetime-local">.
+    let dueAtIso: string | null = null
+    if (dueAtRaw && dueAtRaw.trim()) {
+        const parsed = new Date(dueAtRaw)
+        if (isNaN(parsed.getTime())) {
+            return { error: 'Invalid due date' }
+        }
+        dueAtIso = parsed.toISOString()
+    }
 
     const { error } = await supabase
         .from('pulse_items')
         .insert({
             sender_id: user.id,
-            recipient_id: user.id, // Personal todo
+            recipient_id: user.id,
             type: 'todo',
             title: 'Personal To-Do',
             body: content,
             audience: 'self',
+            due_at: dueAtIso,
         })
 
     if (error) {
@@ -136,6 +142,60 @@ export async function createTodo(formData: FormData) {
     }
 
     revalidatePath('/dashboard')
+
+    return { success: true }
+}
+
+/**
+ * Flip a todo between open and complete. Returns the new state so the client
+ * can reconcile without another round-trip.
+ */
+export async function toggleTodoComplete(todoId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const { data: existing } = await supabase
+        .from('pulse_items')
+        .select('id, recipient_id, completed_at, type')
+        .eq('id', todoId)
+        .maybeSingle()
+
+    if (!existing || existing.type !== 'todo' || existing.recipient_id !== user.id) {
+        return { error: 'Todo not found' }
+    }
+
+    const nextCompletedAt = existing.completed_at ? null : new Date().toISOString()
+
+    const { error } = await supabase
+        .from('pulse_items')
+        .update({ completed_at: nextCompletedAt })
+        .eq('id', todoId)
+
+    if (error) return { error: error.message }
+
+    return { success: true, completed_at: nextCompletedAt }
+}
+
+export async function deleteTodo(todoId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    // RLS policy 'pulse_items todo deletable by owner' enforces the ownership
+    // check. This server-side guard is defense-in-depth.
+    const { data: existing } = await supabase
+        .from('pulse_items')
+        .select('id, recipient_id, type')
+        .eq('id', todoId)
+        .maybeSingle()
+
+    if (!existing || existing.type !== 'todo' || existing.recipient_id !== user.id) {
+        return { error: 'Todo not found' }
+    }
+
+    const { error } = await supabase.from('pulse_items').delete().eq('id', todoId)
+    if (error) return { error: error.message }
 
     return { success: true }
 }

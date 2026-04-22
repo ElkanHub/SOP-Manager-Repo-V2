@@ -1,23 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { startOfDay, subDays } from 'date-fns'
+import { startOfDay } from 'date-fns'
 
-// This endpoint should be hit daily via Vercel Cron or similar
+// Daily cron. Finds training assignments whose module deadline has passed and
+// the trainee has not yet completed, then sends a single Pulse to the trainee
+// and one department-scoped manager alert per assignment.
 export async function GET(req: NextRequest) {
-    if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
-        // In reality, protect this route. For demo, we might allow it or just use a basic check.
-        // return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const cronSecret = process.env.CRON_SECRET
+    if (!cronSecret) {
+        return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 500 })
+    }
+    if (process.env.NODE_ENV === 'production') {
+        if (req.headers.get('Authorization') !== `Bearer ${cronSecret}`) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        }
     }
 
     const serviceClient = await createServiceClient()
     const todayStr = startOfDay(new Date()).toISOString().split('T')[0]
-    
-    // Find in-progress assignments with a deadline that is <= today
+
     const { data: assignments, error } = await serviceClient
         .from('training_assignments')
         .select(`
             id,
             assignee_id,
+            assignee:profiles!training_assignments_assignee_id_fkey(full_name),
             module:training_modules!inner(id, title, deadline, department)
         `)
         .neq('status', 'completed')
@@ -36,40 +43,50 @@ export async function GET(req: NextRequest) {
     let alertsSent = 0
     for (const a of assignments) {
         const mod = Array.isArray(a.module) ? a.module[0] : a.module
-        
-        // Check if we already alerted for this specific assignment
+        const assignee = Array.isArray(a.assignee) ? a.assignee[0] : a.assignee
+        const assigneeName = assignee?.full_name || 'A trainee'
+
+        // Dedup: use entity_id to check if we already sent a training_due pulse
+        // for this assignment.
         const { data: existingPulse } = await serviceClient
             .from('pulse_items')
             .select('id')
             .eq('type', 'training_due')
             .eq('recipient_id', a.assignee_id)
-            .contains('metadata', { assignment_id: a.id })
-            .single()
+            .eq('entity_id', a.id)
+            .maybeSingle()
 
-        if (!existingPulse) {
-            // Alert user
-            await serviceClient.from('pulse_items').insert({
-                sender_id: null,
-                recipient_id: a.assignee_id,
-                audience: 'direct',
-                type: 'training_due',
-                body: `Training Overdue: "${mod.title}" was due on ${mod.deadline}. Please complete it immediately.`,
-                link_url: `/training/my-training`,
-                metadata: { assignment_id: a.id, module_id: mod.id }
-            })
+        if (existingPulse) continue
 
-            // Alert manager
+        // Trainee alert (self)
+        await serviceClient.from('pulse_items').insert({
+            sender_id: null,
+            recipient_id: a.assignee_id,
+            audience: 'self',
+            type: 'training_due',
+            title: `Training overdue — ${mod.title}`,
+            body: `Your training "${mod.title}" was due on ${mod.deadline} and is now overdue. Please complete it as soon as possible.`,
+            link_url: `/training/my-training`,
+            entity_type: 'training_assignment',
+            entity_id: a.id,
+        })
+
+        // Manager alert (department-wide)
+        if (mod.department) {
             await serviceClient.from('pulse_items').insert({
                 sender_id: null,
                 audience: 'department',
                 target_department: mod.department,
                 type: 'training_due',
-                body: `Manager Alert: Trainee has overdue training for "${mod.title}".`,
+                title: `Overdue training in ${mod.department}`,
+                body: `${assigneeName} has not completed "${mod.title}" — deadline was ${mod.deadline}.`,
                 link_url: `/training/${mod.id}`,
-                metadata: { assignment_id: a.id, manager_alert: true }
+                entity_type: 'training_assignment',
+                entity_id: a.id,
             })
-            alertsSent++
         }
+
+        alertsSent++
     }
 
     return NextResponse.json({ success: true, alertsSent, overdueTotal: assignments.length })

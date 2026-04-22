@@ -47,7 +47,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         // Fetch recent top-level items only
         const { data: items } = await supabase
             .from('pulse_items')
-            .select('id, type, sender_id, audience, target_department, recipient_id, created_at')
+            .select('id, type, sender_id, audience, target_department, recipient_id, created_at, due_at, completed_at')
             .is('parent_id', null)
             .order('created_at', { ascending: false })
             .limit(200)
@@ -61,19 +61,36 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             .eq('user_id', user.id)
 
         const ackedIds = new Set((acks || []).map((a: any) => a.pulse_item_id))
+        const now = Date.now()
 
-        // Step 3: Count based on two-bucket rules
+        // Count based on three buckets.
         let count = 0
         for (const item of items) {
-            // Skip items sent by this user
+            // BUCKET 3 — Own To-Do: private, counts only when due and not yet done.
+            // Own todos have sender_id === user.id, so they are handled before the
+            // generic "skip own items" rule.
+            if (item.type === 'todo' && item.recipient_id === user.id) {
+                if (item.completed_at) continue
+                // No due date: treat as a reminder — count once (until panel opened)
+                if (!item.due_at) {
+                    const itemTime = new Date(item.created_at).getTime()
+                    if (itemTime > lastOpenedAt) count++
+                    continue
+                }
+                // Has a due date: only count when it's due (now or past)
+                if (new Date(item.due_at).getTime() <= now) count++
+                continue
+            }
+
+            // Skip items sent by this user (non-todos, or someone else's todos)
             if (item.sender_id === user.id) continue
 
-            // Check visibility: is this item meant for this user?
+            // Is this item meant for this user?
             const isForMe =
                 item.audience === 'everyone' ||
                 (item.audience === 'department' && item.target_department === profile.department) ||
                 item.recipient_id === user.id ||
-                item.sender_id === null // system-generated items broadcast to all
+                item.sender_id === null
 
             if (!isForMe) continue
 
@@ -131,10 +148,15 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         window.addEventListener('pulse-viewed', handlePulseViewed)
         window.addEventListener('pulse-toggle', handleToggle)
 
+        // Due-date ticker — todos that have just crossed their due time won't
+        // fire a postgres_changes event, so poll every 60s to pick them up.
+        const dueTicker = setInterval(fetchBadgeCount, 60_000)
+
         return () => {
             supabase.removeChannel(channel)
             window.removeEventListener('pulse-viewed', handlePulseViewed)
             window.removeEventListener('pulse-toggle', handleToggle)
+            clearInterval(dueTicker)
         }
     }, [user, fetchBadgeCount])
 

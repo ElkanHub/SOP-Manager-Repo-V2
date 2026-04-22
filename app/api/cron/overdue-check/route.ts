@@ -28,7 +28,8 @@ export async function GET(request: Request) {
         id,
         assigned_to,
         due_date,
-        equipment:equipment_id(id, name, department)
+        assignee:profiles!pm_tasks_assigned_to_fkey(full_name),
+        equipment:equipment_id(id, name, asset_id, department)
       `)
       .eq('status', 'pending')
       .lt('due_date', today)
@@ -50,13 +51,17 @@ export async function GET(request: Request) {
 
         const taskAny = task as any
         const deptName = taskAny.equipment?.department
+        const equipmentName = taskAny.equipment?.name || 'equipment'
+        const assetId = taskAny.equipment?.asset_id
+        const assigneeName = taskAny.assignee?.full_name || 'the assignee'
+        const assetLabel = assetId ? `${equipmentName} (${assetId})` : equipmentName
 
         await supabase.from('pulse_items').insert({
           recipient_id: task.assigned_to,
           sender_id: null,
           type: 'pm_overdue',
-          title: `PM Overdue: ${taskAny.equipment?.name || 'Equipment'}`,
-          body: `Was due on ${task.due_date}`,
+          title: `PM overdue — ${equipmentName}`,
+          body: `Your PM task for ${assetLabel} was due on ${task.due_date} and is now overdue. Please complete it as soon as possible.`,
           entity_type: 'pm_task',
           entity_id: task.id,
           audience: 'self',
@@ -69,14 +74,15 @@ export async function GET(request: Request) {
             .eq('department', deptName)
             .eq('role', 'manager')
             .eq('is_active', true)
+            .neq('id', task.assigned_to) // don't double-notify a manager who is also the assignee
 
           if (managers && managers.length > 0) {
             const managerPulseItems = managers.map(m => ({
               recipient_id: m.id,
               sender_id: null,
               type: 'pm_overdue',
-              title: `PM Overdue in ${deptName}: ${task.equipment?.name || 'Equipment'}`,
-              body: `Assigned to user, due date was ${task.due_date}`,
+              title: `PM overdue in ${deptName}`,
+              body: `${assigneeName}'s PM task for ${assetLabel} was due on ${task.due_date} and is now overdue.`,
               entity_type: 'pm_task',
               entity_id: task.id,
               audience: 'self',

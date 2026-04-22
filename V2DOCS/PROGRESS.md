@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** April 22, 2026
-> **Version:** 3.8 (Risk Assessment Redesign — SQL-First, Cached, Deterministic)
-> **Current Phase:** Phase 41 ✅ Complete — Phase 42 Next
+> **Version:** 3.9 (Functional Pulse To-Dos + Pulse Copy Pass)
+> **Current Phase:** Phase 42 ✅ Complete — Phase 43 Next
 
 ---
 
@@ -56,6 +56,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 39 | ✅ Complete | Reports & Audit Trail Hardening                  |
 | Phase 40 | ✅ Complete | Central AI Client & SDK Consolidation            |
 | Phase 41 | ✅ Complete | Risk Assessment Redesign (SQL + snapshot cache)  |
+| Phase 42 | ✅ Complete | Functional Pulse To-Dos + Pulse Copy Pass        |
 
 ---
 
@@ -2340,3 +2341,93 @@ Accuracy improvements:
 - Cron endpoint returns `{ ok, scopes, succeeded, failed, results }` summary and writes one snapshot per scope ✅
 - AI failure surfaces deterministic signals as insights (no crash) ✅
 - Signal chips with `href` deep-link to the correct views (`/change-control`, `/equipment`, `/library`, `/approvals`) ✅
+
+---
+
+## Phase 42: Functional Pulse To-Dos + Pulse Copy Pass
+
+**Status:** ✅ Complete
+**Completed:** April 22, 2026
+
+### Overview
+
+To-Dos in The Pulse are now real, due-dated, completable tasks — not fire-and-forget one-line reminders. Todos stay visible in the pulse until the owner completes or deletes them, and they add to the unread badge on the Pulse handle only when they're actually due. As a second pass, every Pulse notification across the app was reviewed for copy quality; the most misleading / placeholder / ID-referencing ones were rewritten to read cleanly.
+
+### To-Dos — what changed
+
+**Schema (`042_pulse_todos.sql`):**
+
+- `pulse_items.due_at timestamptz` — optional deadline for the todo.
+- `pulse_items.completed_at timestamptz` — set when the owner marks done.
+- `pulse_items.link_url text` — retroactively added; some code (training cron, `PulseItem` rendering) referenced this column but the schema was never updated. Fixed here.
+- Partial index `pulse_items_todo_open_idx` on `(recipient_id, due_at)` filtered to `type = 'todo' AND completed_at IS NULL` for fast "my open todos" queries.
+- New DELETE policy scoped strictly to the owner's self-audience todos. The rest of `pulse_items` still has no DELETE policy, so other pulse types remain append-only.
+
+**Server actions (`actions/pulse.ts`):**
+
+- `createTodo({content, dueAt})` — accepts an optional ISO or datetime-local string for the due date.
+- `toggleTodoComplete(id)` — flips `completed_at` between `NOW()` and `NULL`. Verifies ownership server-side.
+- `deleteTodo(id)` — removes the row. Defense-in-depth check in addition to the RLS policy.
+
+**UI:**
+
+- **`TodoComposer`** now has a `datetime-local` input beside a CalendarClock icon. Keyboard shortcut: Ctrl/⌘+Enter to save. Escape discards.
+- **`PulseItem`** renders todos as a checkbox (click the avatar-circle to toggle complete). Completed todos get strikethrough text + dimmed icon; the composer's due-date badge colour-codes by urgency: red for overdue, amber for ≤24h, muted otherwise. Delete affordance (trash icon) appears on hover and is keyboard-accessible.
+- **`ThePulse`** now handles realtime UPDATE and DELETE on `pulse_items` (previously only INSERT), so completing or deleting a todo in one tab reconciles in every other open tab without a reload. Todos are sorted: open items first by due-date ascending (overdue → soonest → no-due), completed items last by recency of completion.
+
+**Badge-count rule (`PulseWrapper`):**
+
+A third bucket was added specifically for todos so they no longer fall through the "skip own items" filter:
+
+- **Bucket 3 — Own To-Dos:** count when `completed_at IS NULL` AND (`due_at IS NULL AND created_at > last_pulse_view`) OR (`due_at <= now`). So: a todo with no due date counts once (until the panel is opened); a todo with a due date counts only after it's due.
+- Bucket 1 (notices — count until acknowledged) and Bucket 2 (everything else — count if new since last view) unchanged.
+
+A 60-second interval refresh was added so todos ticking into "due" update the badge without requiring any other event.
+
+### Pulse copy pass — what was wrong and what reads now
+
+These are the notification surfaces rewritten in this phase. Each used to be terse, placeholder-ridden, or plain broken.
+
+| Where | Before | After |
+|---|---|---|
+| `actions/sop.ts` — SOP approved → activated | "Your SOP has been approved" / "Your SOP is now active in the library." | `SOP approved — {number} — {title}` / "Your SOP "{title}" has been approved by QA and is now active in the Library." |
+| `actions/sop.ts` — SOP update → CC issued | "Your SOP update was approved" / "A Change Control has been issued for signing." | `SOP update approved — {number} — {title}` / "QA approved your update to "{title}". A Change Control has been issued for the required signatories." |
+| `actions/sop.ts` — Changes requested | "QA has requested changes to your SOP" / body was the bare comment | `Changes requested — {number} — {title}` / "QA requested changes to "{title}". Note from reviewer: {comment}" |
+| `actions/sop.ts` — CC signature captured | "Change Control Signed" / "{name} has signed the Change Control" — no SOP reference | `Change Control signed — {number} — {title}` / "{name} signed the Change Control for {number} — {title}." |
+| `actions/equipment.ts` — Equipment rejected | "Equipment Rejected" / body was bare reason text | `Equipment rejected — {name}` / "Your equipment submission "{name}" was rejected by QA. Reason: {reason}" |
+| `actions/training.ts` — Paper training recorded | "Paper Training Recorded" / "A paper completion was recorded for **module `<uuid>`**" | "Paper training recorded" / "{recorder} recorded a paper completion for **{respondent}** on **"{module title}"**." |
+| `app/api/cron/overdue-check` — PM overdue (assignee) | `PM Overdue: {name}` / "Was due on {date}" | `PM overdue — {name}` / "Your PM task for {name} ({assetId}) was due on {date} and is now overdue. Please complete it as soon as possible." |
+| `app/api/cron/overdue-check` — PM overdue (manager) | `PM Overdue in {dept}: {name}` / "**Assigned to user**, due date was {date}" | `PM overdue in {dept}` / "**{assigneeName}**'s PM task for {name} ({assetId}) was due on {date} and is now overdue." |
+| `app/api/cron/pm-alerts` — PM due soon | "PM Due Soon: {name}" / "Due on {date}" | "PM due soon — {name}" / "Your PM task for {name} ({assetId}) is due on {date}. Complete it before the deadline to keep the asset in compliance." |
+| `app/api/cron/training-deadline-check` | `audience: 'direct'` (invalid — violates the CHECK constraint), missing required `title` field, dedup query used a non-existent `metadata` column | `audience: 'self'` for trainee + `'department'` for manager alerts, real titles ("Training overdue — {module}", "Overdue training in {dept}"), dedup against `entity_id` (the existing indexed column for this purpose) |
+
+Several of these were latent bugs, not just ugly copy — the training cron would silently fail inserts because of the invalid audience value and the missing title. That's fixed too.
+
+### Files Touched
+
+```
+supabase/migrations/042_pulse_todos.sql                 # NEW — due_at, completed_at, link_url, todo delete policy
+actions/pulse.ts                                        # createTodo (due date), toggleTodoComplete, deleteTodo
+actions/sop.ts                                          # Copy + SOP title/number in 4 notifications
+actions/equipment.ts                                    # Equipment-rejected copy
+actions/training.ts                                     # Paper-completion copy uses names instead of UUIDs
+app/api/cron/pm-alerts/route.ts                         # PM-due copy
+app/api/cron/overdue-check/route.ts                     # PM-overdue copy (assignee + manager) + joins assignee name
+app/api/cron/training-deadline-check/route.ts           # Full rewrite — fixed invalid audience + missing title + dedup
+components/pulse/todo-composer.tsx                      # Datetime input + Ctrl/⌘+Enter shortcut
+components/pulse/pulse-item.tsx                         # Todo: completion checkbox, delete, due badge, strikethrough
+components/pulse/the-pulse.tsx                          # Realtime UPDATE/DELETE handlers + todo sort
+components/pulse/pulse-wrapper.tsx                      # Bucket 3 (due todos) + 60s due-date ticker
+```
+
+### Verification
+
+- `npx tsc --noEmit` passes ✅
+- Create a todo with a due date in the future → appears in panel, does NOT add to badge ✅
+- Due time passes → next ≤60s tick adds to badge ✅
+- Complete the todo → strikethrough, badge decreases, still visible in panel ✅
+- Toggle back to incomplete → re-enters open list and badge (if still due) ✅
+- Delete the todo → removed from panel in every open tab (realtime DELETE) ✅
+- A second user cannot see or delete another user's todos (RLS policies confirmed) ✅
+- Every rewritten notification reads as a clean English sentence with real entity names instead of UUIDs, and titles reference the SOP number/title where relevant ✅
+- Training-deadline cron now inserts rows successfully (previously failing silently due to invalid `audience = 'direct'` and missing `title`) ✅
