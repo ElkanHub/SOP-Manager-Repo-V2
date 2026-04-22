@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
 import { format } from "date-fns"
-import { ClipboardList, FileText, Send, Inbox, ExternalLink, Sparkles } from "lucide-react"
+import { ClipboardList, FileText, Send, Inbox, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -73,14 +72,6 @@ export function NewRequestsClient({ profile, isQa, publishedForms, mySubmissions
                         </p>
                     </div>
                 </div>
-                {isQa && (
-                    <Link href="/requests/hub">
-                        <Button size="sm" className="bg-brand-navy hover:bg-brand-navy/90">
-                            <Sparkles className="h-4 w-4 mr-1.5" />
-                            Open QA Hub
-                        </Button>
-                    </Link>
-                )}
             </div>
 
             <div className="mt-6 px-4 md:px-0">
