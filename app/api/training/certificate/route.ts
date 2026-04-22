@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
         setText(RGB.slate500)
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(8)
-        doc.text('DATE OF COMPLETION', col1X, footerY + 8, { align: 'center', charSpacing: 2 })
+        doc.text('DATE OF COMPLETION', col1X, footerY + 8, { align: 'center', charSpace: 2 })
 
         // Score
         setText(RGB.emeralDk)
@@ -196,7 +196,7 @@ export async function GET(request: NextRequest) {
         setText(RGB.slate500)
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(8)
-        doc.text('ASSESSMENT SCORE', col2X, footerY + 8, { align: 'center', charSpacing: 2 })
+        doc.text('ASSESSMENT SCORE', col2X, footerY + 8, { align: 'center', charSpace: 2 })
 
         // Authority
         setText(RGB.slate800)
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
         setText(RGB.slate500)
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(8)
-        doc.text('AUTHORIZED SYSTEM', col3X, footerY + 8, { align: 'center', charSpacing: 2 })
+        doc.text('AUTHORIZED SYSTEM', col3X, footerY + 8, { align: 'center', charSpace: 2 })
 
         // Certificate ID (small, bottom left)
         setText(RGB.slate500)
