@@ -6,9 +6,10 @@ export default async function proxy(request: NextRequest) {
     console.log('>>> proxy hit:', request.nextUrl.pathname)
 
     // ─── Public routes: skip ALL auth logic ─────────────────────────────
-    // /m/[token] is the anonymous mobile signing page — must be accessible
-    // without any Supabase session.
-    if (request.nextUrl.pathname.startsWith('/m/')) {
+    // /m/[token] is the anonymous mobile signing page.
+    // /e/[id] is the public equipment QR-landing page (scannable from printed tags).
+    // Both must be accessible without any Supabase session.
+    if (request.nextUrl.pathname.startsWith('/m/') || request.nextUrl.pathname.startsWith('/e/')) {
         return NextResponse.next()
     }
 

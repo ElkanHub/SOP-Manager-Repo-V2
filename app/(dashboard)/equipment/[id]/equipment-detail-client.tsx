@@ -4,9 +4,9 @@ import { useState, useRef } from "react"
 import { differenceInDays, format } from "date-fns"
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Loader2, Upload, X } from "lucide-react"
 import Link from "next/link"
-import { QRCodeSVG } from "qrcode.react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { EquipmentQrCard } from "@/components/equipment/equipment-qr-card"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -235,10 +235,10 @@ export function EquipmentDetailClient({
                                 {equipment.linked_sop_id && (
                                     <div className="col-span-2 mt-2 pt-2 border-t border-border/50">
                                         <span className="text-muted-foreground mr-3">Maintenance Protocol:</span>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="h-7 text-xs bg-brand-navy/5 border-brand-navy/20 text-brand-navy hover:bg-brand-navy/10"
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 text-xs bg-brand-navy/5 dark:bg-brand-blue/10 border-brand-navy/20 dark:border-brand-blue/30 text-brand-navy dark:text-brand-blue hover:bg-brand-navy/10 dark:hover:bg-brand-blue/20"
                                             onClick={() => setSopModalOpen(true)}
                                         >
                                             <FileText className="h-3 w-3 mr-2" />
@@ -380,23 +380,12 @@ export function EquipmentDetailClient({
                         </Card>
                     )}
 
-                    <Card>
-                        <CardContent className="p-4 space-y-4">
-                            <h3 className="font-medium">QR Code</h3>
-                            <div className="flex justify-center">
-                                <div className="p-2 bg-white rounded-lg">
-                                    <QRCodeSVG
-                                        value={`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/equipment/${equipment.id}`}
-                                        size={128}
-                                        level="M"
-                                    />
-                                </div>
-                            </div>
-                            <p className="text-xs text-center text-muted-foreground">
-                                Scan to open equipment
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <EquipmentQrCard
+                        equipmentId={equipment.id}
+                        equipmentName={equipment.name}
+                        assetId={equipment.asset_id}
+                    />
+
                 </div>
             </div>
 

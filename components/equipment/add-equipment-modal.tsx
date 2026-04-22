@@ -478,9 +478,9 @@ export function AddEquipmentModal({
                                     </div>
                                 </div>
 
-                                <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 flex gap-2 items-start mt-2">
-                                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                                    <p className="text-[10px] text-amber-800/80 font-medium leading-relaxed">
+                                <div className="bg-amber-500/10 dark:bg-amber-500/5 border border-amber-500/30 dark:border-amber-500/20 rounded-xl p-3 flex gap-2 items-start mt-2">
+                                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                                    <p className="text-[10px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
                                         This registration will be logged in the facility audit trail. Please ensure all technical specifications are accurate before finalization.
                                     </p>
                                 </div>
