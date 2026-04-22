@@ -717,6 +717,301 @@ export async function addSlide(moduleId: string, slide: { type: string; title: s
     return { success: true, slideId: newSlide.id }
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// QUESTION EDITING
+// Parallels the slide-editing surface. Authoritative invariant: questions
+// are ONLY editable while their parent questionnaire is in `draft` status.
+// Once published, the questionnaire is locked — this matches the business
+// rule enforced by publishQuestionnaire().
+// ═══════════════════════════════════════════════════════════════════════
+
+type QuestionType = 'multiple_choice' | 'true_false' | 'short_answer' | 'fill_blank'
+
+interface QuestionOption {
+    id: string
+    text: string
+    is_correct?: boolean
+}
+
+interface QuestionUpdate {
+    question_text?: string
+    question_type?: QuestionType
+    options?: QuestionOption[] | null
+    correct_answer?: string | null
+}
+
+/**
+ * Loads the questionnaire + module for a given question and enforces the
+ * standard auth rule (QA / admin / module creator) plus the draft-only
+ * invariant. Returns the context so callers don't have to re-query.
+ */
+async function loadEditableQuestionContext(
+    supabase: any,
+    user: { id: string },
+    profile: { role: string },
+    isQa: boolean,
+    questionnaireId: string,
+) {
+    const { data: q } = await supabase
+        .from('training_questionnaires')
+        .select('id, status, module_id, training_modules(created_by, status)')
+        .eq('id', questionnaireId)
+        .single()
+
+    if (!q) return { error: 'Questionnaire not found' as const }
+    if (q.status !== 'draft') return { error: 'Published questionnaires are locked and cannot be edited' as const }
+
+    const mod = q.training_modules as any
+    if (!mod) return { error: 'Parent module not found' as const }
+    if (mod.status === 'archived') return { error: 'Archived modules cannot be edited' as const }
+
+    if (!isQa && profile.role !== 'admin' && mod.created_by !== user.id) {
+        return { error: 'Only the module creator or QA can edit questions' as const }
+    }
+
+    return { questionnaire: q, moduleId: q.module_id as string }
+}
+
+export async function updateQuestion(
+    questionnaireId: string,
+    questionId: string,
+    updates: QuestionUpdate,
+) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, profile, isQa, supabase } = auth
+
+    const ctx = await loadEditableQuestionContext(supabase, user, profile, isQa, questionnaireId)
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    // Sanity-check the incoming shape against the question_type invariant.
+    const patch: Record<string, any> = {}
+    if (typeof updates.question_text === 'string') {
+        const trimmed = updates.question_text.trim()
+        if (!trimmed) return { success: false, error: 'Question text is required' }
+        patch.question_text = trimmed
+    }
+    if (updates.question_type) {
+        patch.question_type = updates.question_type
+    }
+    if (updates.options !== undefined) {
+        patch.options = updates.options
+    }
+    if (updates.correct_answer !== undefined) {
+        patch.correct_answer = updates.correct_answer
+    }
+
+    // If options are provided for an MC/T-F question, require exactly one
+    // correct answer so grading is never ambiguous.
+    const effectiveType: QuestionType | undefined =
+        patch.question_type ?? (updates.options !== undefined ? undefined : undefined)
+    if (
+        (effectiveType === 'multiple_choice' || effectiveType === 'true_false') &&
+        Array.isArray(patch.options)
+    ) {
+        const correctCount = patch.options.filter((o: QuestionOption) => !!o.is_correct).length
+        if (correctCount !== 1) {
+            return { success: false, error: 'Choice questions must have exactly one correct option' }
+        }
+        if (patch.options.some((o: QuestionOption) => !o.text?.trim())) {
+            return { success: false, error: 'All options must have text' }
+        }
+    }
+
+    const { error } = await supabase
+        .from('training_questions')
+        .update(patch)
+        .eq('id', questionId)
+        .eq('questionnaire_id', questionnaireId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/training/${ctx.moduleId}`)
+    return { success: true }
+}
+
+export async function addQuestion(
+    questionnaireId: string,
+    question: {
+        question_text: string
+        question_type: QuestionType
+        options?: QuestionOption[] | null
+        correct_answer?: string | null
+        insertAfterOrder?: number
+    },
+) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, profile, isQa, supabase } = auth
+
+    const ctx = await loadEditableQuestionContext(supabase, user, profile, isQa, questionnaireId)
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    if (!question.question_text?.trim()) {
+        return { success: false, error: 'Question text is required' }
+    }
+
+    // Enforce shape by type.
+    let options: QuestionOption[] | null = null
+    let correctAnswer: string | null = null
+    if (question.question_type === 'multiple_choice' || question.question_type === 'true_false') {
+        const opts = question.options || []
+        if (opts.length < 2) return { success: false, error: 'Choice questions need at least 2 options' }
+        if (opts.filter(o => o.is_correct).length !== 1) {
+            return { success: false, error: 'Exactly one option must be marked correct' }
+        }
+        if (opts.some(o => !o.text?.trim())) {
+            return { success: false, error: 'All options must have text' }
+        }
+        options = opts
+    } else {
+        correctAnswer = question.correct_answer ?? null
+    }
+
+    // Compute display_order: insert after a given row or append to the end.
+    const { data: existing } = await supabase
+        .from('training_questions')
+        .select('id, display_order')
+        .eq('questionnaire_id', questionnaireId)
+        .order('display_order', { ascending: true })
+
+    const rows = existing || []
+    const insertAfter = question.insertAfterOrder
+    let newOrder: number
+    let shifts: { id: string; display_order: number }[] = []
+
+    if (insertAfter === undefined || insertAfter === null) {
+        newOrder = rows.length > 0 ? (rows[rows.length - 1].display_order ?? rows.length) + 1 : 1
+    } else {
+        // Place directly after `insertAfter` by shifting everyone after it.
+        newOrder = insertAfter + 1
+        shifts = rows
+            .filter(r => (r.display_order ?? 0) >= newOrder)
+            .map((r, i) => ({ id: r.id, display_order: (r.display_order ?? 0) + 1 }))
+    }
+
+    // Apply shifts first (if any) so the new row has a unique slot.
+    for (const s of shifts) {
+        await supabase.from('training_questions').update({ display_order: s.display_order }).eq('id', s.id)
+    }
+
+    const { data: inserted, error } = await supabase
+        .from('training_questions')
+        .insert({
+            questionnaire_id: questionnaireId,
+            question_text: question.question_text.trim(),
+            question_type: question.question_type,
+            options,
+            correct_answer: correctAnswer,
+            display_order: newOrder,
+        })
+        .select('id')
+        .single()
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/training/${ctx.moduleId}`)
+    return { success: true, questionId: inserted.id }
+}
+
+export async function deleteQuestion(questionnaireId: string, questionId: string) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, profile, isQa, supabase } = auth
+
+    const ctx = await loadEditableQuestionContext(supabase, user, profile, isQa, questionnaireId)
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const { error } = await supabase
+        .from('training_questions')
+        .delete()
+        .eq('id', questionId)
+        .eq('questionnaire_id', questionnaireId)
+
+    if (error) return { success: false, error: error.message }
+
+    // Renumber display_order so gaps don't accumulate.
+    const { data: remaining } = await supabase
+        .from('training_questions')
+        .select('id')
+        .eq('questionnaire_id', questionnaireId)
+        .order('display_order', { ascending: true })
+
+    if (remaining) {
+        for (let i = 0; i < remaining.length; i++) {
+            await supabase
+                .from('training_questions')
+                .update({ display_order: i + 1 })
+                .eq('id', remaining[i].id)
+        }
+    }
+
+    revalidatePath(`/training/${ctx.moduleId}`)
+    return { success: true }
+}
+
+export async function reorderQuestions(questionnaireId: string, orderedQuestionIds: string[]) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, profile, isQa, supabase } = auth
+
+    const ctx = await loadEditableQuestionContext(supabase, user, profile, isQa, questionnaireId)
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const { data: existing } = await supabase
+        .from('training_questions')
+        .select('id')
+        .eq('questionnaire_id', questionnaireId)
+
+    const existingIds = new Set((existing || []).map(r => r.id))
+    if (orderedQuestionIds.length !== existingIds.size ||
+        !orderedQuestionIds.every(id => existingIds.has(id))) {
+        return { success: false, error: 'Question ID mismatch — reorder aborted' }
+    }
+
+    for (let i = 0; i < orderedQuestionIds.length; i++) {
+        await supabase
+            .from('training_questions')
+            .update({ display_order: i + 1 })
+            .eq('id', orderedQuestionIds[i])
+            .eq('questionnaire_id', questionnaireId)
+    }
+
+    revalidatePath(`/training/${ctx.moduleId}`)
+    return { success: true }
+}
+
+export async function updateQuestionnaireMeta(
+    questionnaireId: string,
+    meta: { title?: string; passing_score?: number },
+) {
+    const auth = await checkAuthAndProfile()
+    if (auth.error) return { success: false, error: auth.error }
+    const { user, profile, isQa, supabase } = auth
+
+    const ctx = await loadEditableQuestionContext(supabase, user, profile, isQa, questionnaireId)
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const patch: Record<string, any> = { updated_at: new Date().toISOString() }
+    if (typeof meta.title === 'string' && meta.title.trim()) patch.title = meta.title.trim()
+    if (typeof meta.passing_score === 'number') {
+        if (meta.passing_score < 10 || meta.passing_score > 100) {
+            return { success: false, error: 'Passing score must be between 10 and 100' }
+        }
+        patch.passing_score = meta.passing_score
+    }
+
+    const { error } = await supabase
+        .from('training_questionnaires')
+        .update(patch)
+        .eq('id', questionnaireId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath(`/training/${ctx.moduleId}`)
+    return { success: true }
+}
+
 export async function deleteSlide(moduleId: string, slideId: string) {
     const auth = await checkAuthAndProfile()
     if (auth.error) return { success: false, error: auth.error }
