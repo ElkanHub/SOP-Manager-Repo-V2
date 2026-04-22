@@ -2,34 +2,49 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 // @ts-ignore
 import pptxgen from 'pptxgenjs'
-import { TrainingModule } from '@/types/app.types'
 
-// ─── Color Palette ──────────────────────────────────────────────────────
-const COLORS = {
-    navy:       '0D2B55',
-    darkBlue:   '1A365D',
-    blue:       '1A5EA8',
-    teal:       '00897B',
-    white:      'FFFFFF',
-    offWhite:   'F8FAFC',
-    lightGray:  'E2E8F0',
-    gray:       '64748B',
-    darkGray:   '334155',
-    text:       '1E293B',
-    textLight:  '475569',
-    red:        'C94C4C',
-    purple:     '6750A4',
-    green:      '2D6A4F',
+// ─── Brand palette (matches app/globals.css) ────────────────────────────
+const BRAND = {
+    navy:      '0F172A',
+    blue:      '0284C7',
+    teal:      '0D9488',
+    white:     'FFFFFF',
+    offWhite:  'F8FAFC',
+    lightGray: 'E2E8F0',
+    gray:      '64748B',
+    darkGray:  '334155',
+    text:      '1E293B',
+    textMuted: '475569',
+    subtle:    '94A3B8',
 }
 
-// Slide type → header color mapping
-const TYPE_COLORS: Record<string, string> = {
-    title:      COLORS.navy,
-    objectives: COLORS.teal,
-    content:    COLORS.darkBlue,
-    summary:    COLORS.purple,
-    edge_cases: COLORS.red,
-    resources:  COLORS.green,
+// ─── Slide-type colors (match in-app slide-presenter gradients) ─────────
+// Each type has a deep header color and a lighter accent.
+const TYPE_HEADER: Record<string, string> = {
+    title:      '0D2B55',
+    objectives: '0D3B4E',
+    content:    '1A365D',
+    summary:    '2D1B69',
+    edge_cases: '7B2D26',
+    resources:  '1A472A',
+}
+
+const TYPE_ACCENT: Record<string, string> = {
+    title:      '1A5EA8',
+    objectives: '00897B',
+    content:    '3B6CB4',
+    summary:    '6750A4',
+    edge_cases: 'C94C4C',
+    resources:  '40916C',
+}
+
+const TYPE_LABEL: Record<string, string> = {
+    title:      'TITLE',
+    objectives: 'OBJECTIVES',
+    content:    'CONTENT',
+    summary:    'SUMMARY',
+    edge_cases: 'EDGE CASES',
+    resources:  'RESOURCES',
 }
 
 export async function GET(request: NextRequest) {
@@ -60,168 +75,230 @@ export async function GET(request: NextRequest) {
 
     try {
         const pres = new pptxgen()
-
         pres.author = 'SOP Manager'
-        pres.company = mod.department
+        pres.company = mod.department || 'Atlantic Lifesciences'
         pres.title = mod.title
-        pres.layout = 'LAYOUT_16x9'
+        pres.layout = 'LAYOUT_16x9' // 10" x 5.625"
 
-        // Define reusable master slides
+        const SLIDE_W = 10
+        const SLIDE_H = 5.625
+
+        // ─── Master: CONTENT ─────────────────────────────────────────────
         pres.defineSlideMaster({
-            title: 'STANDARD',
-            background: { color: COLORS.white },
+            title: 'CONTENT_MASTER',
+            background: { color: BRAND.white },
             objects: [
-                // Bottom border line
-                { rect: { x: 0, y: '94%', w: '100%', h: '6%', fill: { color: COLORS.offWhite } } },
-            ]
+                // Footer band
+                { rect: { x: 0, y: SLIDE_H - 0.35, w: SLIDE_W, h: 0.35, fill: { color: BRAND.offWhite } } },
+                // Brand teal accent stripe above footer
+                { rect: { x: 0, y: SLIDE_H - 0.37, w: SLIDE_W, h: 0.02, fill: { color: BRAND.teal } } },
+            ],
         })
 
-        const slides = mod.slide_deck as any[]
+        const slides = (mod.slide_deck as any[])
+            .slice()
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         const totalSlides = slides.length
 
         for (let idx = 0; idx < totalSlides; idx++) {
             const s = slides[idx]
             const slideNum = idx + 1
-            const typeColor = TYPE_COLORS[s.type] || COLORS.darkBlue
+            const headerColor = TYPE_HEADER[s.type] || TYPE_HEADER.content
+            const accentColor = TYPE_ACCENT[s.type] || TYPE_ACCENT.content
+            const typeLabel = TYPE_LABEL[s.type] || String(s.type || '').replace(/_/g, ' ').toUpperCase()
 
             if (s.type === 'title') {
-                // ═══════════════════════════════════════════════════════════════
-                // TITLE SLIDE — full gradient background, centered text
-                // ═══════════════════════════════════════════════════════════════
+                // ═══════════════════════════════════════════════════════════
+                // TITLE SLIDE
+                // ═══════════════════════════════════════════════════════════
                 const slide = pres.addSlide()
 
                 // Full navy background
                 slide.addShape(pres.ShapeType.rect, {
-                    x: 0, y: 0, w: '100%', h: '100%',
-                    fill: { color: COLORS.navy }
+                    x: 0, y: 0, w: SLIDE_W, h: SLIDE_H,
+                    fill: { color: TYPE_HEADER.title },
+                    line: { color: TYPE_HEADER.title, width: 0 },
                 })
 
-                // Decorative accent bar
+                // Accent blue band lower-third
                 slide.addShape(pres.ShapeType.rect, {
-                    x: 0, y: '85%', w: '100%', h: '15%',
-                    fill: { color: COLORS.blue }
+                    x: 0, y: SLIDE_H * 0.78, w: SLIDE_W, h: SLIDE_H * 0.22,
+                    fill: { color: TYPE_ACCENT.title },
+                    line: { color: TYPE_ACCENT.title, width: 0 },
                 })
+
+                // Brand teal thin stripe (top of blue band)
+                slide.addShape(pres.ShapeType.rect, {
+                    x: 0, y: SLIDE_H * 0.78, w: SLIDE_W, h: 0.06,
+                    fill: { color: BRAND.teal },
+                    line: { color: BRAND.teal, width: 0 },
+                })
+
+                // Small eyebrow (SOP / department)
+                const eyebrow = [sopNumber, mod.department, mod.sop_version ? `v${mod.sop_version}` : null]
+                    .filter(Boolean)
+                    .join('   •   ')
+                if (eyebrow) {
+                    slide.addText(eyebrow, {
+                        x: 0.8, y: 1.25, w: SLIDE_W - 1.6, h: 0.4,
+                        fontSize: 12, color: '94B8DC', fontFace: 'Calibri',
+                        align: 'center', bold: true, charSpacing: 4,
+                    })
+                }
 
                 // Module title
-                slide.addText(s.title, {
-                    x: 0.8, y: 1.5, w: 8.4, h: 2.0,
-                    fontSize: 36, bold: true, color: COLORS.white,
-                    align: 'center', valign: 'middle',
-                    fontFace: 'Calibri'
+                slide.addText(s.title || mod.title, {
+                    x: 0.6, y: 1.8, w: SLIDE_W - 1.2, h: 1.6,
+                    fontSize: 40, bold: true, color: BRAND.white,
+                    align: 'center', valign: 'middle', fontFace: 'Calibri',
                 })
 
-                // Body text (subtitle)
-                const bodyText = s.body.replace(/\\n/g, '\n')
-                slide.addText(bodyText, {
-                    x: 1.5, y: 3.5, w: 7.0, h: 1.5,
-                    fontSize: 18, color: 'B0C4DE',
-                    align: 'center', valign: 'top',
-                    fontFace: 'Calibri'
+                // Subtitle / body
+                const bodyText = String(s.body || '').replace(/\\n/g, '\n').trim()
+                if (bodyText) {
+                    slide.addText(bodyText, {
+                        x: 1.2, y: 3.5, w: SLIDE_W - 2.4, h: 0.8,
+                        fontSize: 16, color: 'CBD5E1',
+                        align: 'center', valign: 'top', fontFace: 'Calibri',
+                    })
+                }
+
+                // Training footer line
+                slide.addText('SOP TRAINING MODULE', {
+                    x: 0.8, y: SLIDE_H - 0.65, w: SLIDE_W - 1.6, h: 0.35,
+                    fontSize: 10, bold: true, color: BRAND.white, fontFace: 'Calibri',
+                    align: 'center', charSpacing: 8,
                 })
 
-                // SOP reference + department
-                slide.addText([
-                    { text: sopNumber ? `${sopNumber}  •  ` : '', options: { fontSize: 12, color: 'B0C4DE' } },
-                    { text: `${mod.department}`, options: { fontSize: 12, color: 'B0C4DE' } },
-                    { text: mod.sop_version ? `  •  v${mod.sop_version}` : '', options: { fontSize: 12, color: 'B0C4DE' } },
-                ], {
-                    x: 1.5, y: 4.8, w: 7.0, h: 0.5,
-                    align: 'center', fontFace: 'Calibri'
-                })
-
-                if (s.notes) slide.addNotes(s.notes)
+                if (s.notes) slide.addNotes(String(s.notes))
             } else {
-                // ═══════════════════════════════════════════════════════════════
-                // ALL OTHER SLIDES — header bar + structured body
-                // ═══════════════════════════════════════════════════════════════
-                const slide = pres.addSlide({ masterName: 'STANDARD' })
+                // ═══════════════════════════════════════════════════════════
+                // CONTENT SLIDE
+                // ═══════════════════════════════════════════════════════════
+                const slide = pres.addSlide({ masterName: 'CONTENT_MASTER' })
 
-                // Colored header banner
+                // Colored header band
                 slide.addShape(pres.ShapeType.rect, {
-                    x: 0, y: 0, w: '100%', h: 1.0,
-                    fill: { color: typeColor }
+                    x: 0, y: 0, w: SLIDE_W, h: 1.0,
+                    fill: { color: headerColor },
+                    line: { color: headerColor, width: 0 },
                 })
 
-                // Module name in header (small)
-                slide.addText(mod.title, {
-                    x: 0.5, y: 0.1, w: 7.5, h: 0.35,
-                    fontSize: 11, color: 'B0C4DE', fontFace: 'Calibri'
+                // Thin accent stripe below header
+                slide.addShape(pres.ShapeType.rect, {
+                    x: 0, y: 1.0, w: SLIDE_W, h: 0.05,
+                    fill: { color: accentColor },
+                    line: { color: accentColor, width: 0 },
                 })
 
-                // Slide type badge in header
-                const typeLabel = s.type.replace('_', ' ').toUpperCase()
+                // Type label badge (top-right)
                 slide.addText(typeLabel, {
-                    x: 8.0, y: 0.15, w: 1.6, h: 0.3,
-                    fontSize: 8, color: COLORS.white, fontFace: 'Calibri',
-                    align: 'right', bold: true
+                    x: SLIDE_W - 2.2, y: 0.18, w: 2.0, h: 0.3,
+                    fontSize: 9, bold: true, color: BRAND.white, fontFace: 'Calibri',
+                    align: 'right', charSpacing: 6,
+                })
+
+                // Module title (top-left eyebrow)
+                slide.addText(mod.title, {
+                    x: 0.4, y: 0.18, w: SLIDE_W - 4.5, h: 0.3,
+                    fontSize: 10, color: 'CBD5E1', fontFace: 'Calibri',
+                    align: 'left',
                 })
 
                 // Slide title
-                slide.addText(s.title, {
-                    x: 0.5, y: 0.5, w: 9.0, h: 0.5,
-                    fontSize: 22, bold: true, color: COLORS.white,
-                    fontFace: 'Calibri', valign: 'middle'
+                slide.addText(s.title || '', {
+                    x: 0.4, y: 0.45, w: SLIDE_W - 0.8, h: 0.5,
+                    fontSize: 24, bold: true, color: BRAND.white, fontFace: 'Calibri',
+                    align: 'left', valign: 'middle',
                 })
 
-                // Body content — parse lines and handle bullets properly
-                const bodyLines = s.body.split('\n').filter((l: string) => l.trim() !== '')
+                // Body: parse bullets + paragraphs
+                const rawLines = String(s.body || '').split('\n').map((l: string) => l.replace(/\r/g, ''))
                 const textItems: any[] = []
+                let hasContent = false
 
-                for (const line of bodyLines) {
+                for (const line of rawLines) {
                     const trimmed = line.trim()
-                    const isBullet = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')
-                    const cleanText = isBullet ? trimmed.replace(/^[•\-*]\s*/, '') : trimmed
+                    if (trimmed === '') {
+                        if (hasContent) {
+                            // Paragraph break via empty line
+                            textItems.push({
+                                text: ' ',
+                                options: { fontSize: 6, breakLine: true, fontFace: 'Calibri' },
+                            })
+                        }
+                        continue
+                    }
+
+                    const isBullet =
+                        trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || /^\d+[\.\)]\s/.test(trimmed)
+                    const cleanText = isBullet
+                        ? trimmed.replace(/^[•\-*]\s*/, '').replace(/^\d+[\.\)]\s*/, '')
+                        : trimmed
 
                     textItems.push({
                         text: cleanText,
                         options: {
-                            fontSize: 16,
-                            color: COLORS.text,
-                            bullet: isBullet ? { type: 'bullet', color: typeColor } : false,
-                            paraSpaceAfter: 8,
-                            breakType: 'break' as const,
+                            fontSize: 15,
+                            color: BRAND.text,
                             fontFace: 'Calibri',
-                            lineSpacingMultiple: 1.3,
-                        }
+                            bullet: isBullet ? { code: '25CF', color: accentColor } : false,
+                            paraSpaceAfter: 6,
+                            breakLine: true,
+                            lineSpacingMultiple: 1.35,
+                        },
+                    })
+                    hasContent = true
+                }
+
+                if (textItems.length === 0) {
+                    textItems.push({
+                        text: '(No content)',
+                        options: { fontSize: 14, color: BRAND.subtle, italic: true, fontFace: 'Calibri' },
                     })
                 }
 
                 slide.addText(textItems, {
-                    x: 0.6, y: 1.3, w: 8.8, h: 3.8,
+                    x: 0.6, y: 1.35, w: SLIDE_W - 1.2, h: SLIDE_H - 1.85,
                     valign: 'top',
+                    autoFit: true,
+                } as any)
+
+                // Footer: department + confidentiality
+                slide.addText(`${mod.department || ''} • CONFIDENTIAL`, {
+                    x: 0.4, y: SLIDE_H - 0.3, w: 5.0, h: 0.25,
+                    fontSize: 8, color: BRAND.gray, fontFace: 'Calibri',
+                    bold: true, charSpacing: 3,
                 })
 
-                // Footer
-                slide.addText(`Confidential — ${mod.department}`, {
-                    x: 0.5, y: 5.15, w: 5.0, h: 0.3,
-                    fontSize: 9, color: COLORS.gray, fontFace: 'Calibri'
-                })
-
+                // Footer: page number
                 slide.addText(`${slideNum} / ${totalSlides}`, {
-                    x: 8.0, y: 5.15, w: 1.5, h: 0.3,
-                    fontSize: 9, color: COLORS.gray, fontFace: 'Calibri', align: 'right'
+                    x: SLIDE_W - 1.4, y: SLIDE_H - 0.3, w: 1.0, h: 0.25,
+                    fontSize: 8, color: BRAND.gray, fontFace: 'Calibri',
+                    align: 'right', bold: true,
                 })
 
-                // Presenter notes
-                if (s.notes) {
-                    slide.addNotes(s.notes)
-                }
+                if (s.notes) slide.addNotes(String(s.notes))
             }
         }
 
         const buffer = await pres.write({ outputType: 'nodebuffer' })
-
-        // Sanitize filename
-        const safeTitle = mod.title.replace(/[^a-z0-9\s]/gi, '').replace(/\s+/g, '_').toLowerCase()
+        const safeTitle = String(mod.title || 'training')
+            .replace(/[^a-z0-9\s]/gi, '')
+            .replace(/\s+/g, '_')
+            .toLowerCase()
 
         return new NextResponse(buffer as any, {
             headers: {
                 'Content-Type': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'Content-Disposition': `attachment; filename="${safeTitle}_training.pptx"`
-            }
+                'Content-Disposition': `attachment; filename="${safeTitle}_training.pptx"`,
+            },
         })
     } catch (error: any) {
         console.error('PPTX Export error:', error)
-        return NextResponse.json({ error: error.message || 'Server error exporting PPTX' }, { status: 500 })
+        return NextResponse.json(
+            { error: "We couldn't generate the PowerPoint. Please try again." },
+            { status: 500 },
+        )
     }
 }
