@@ -382,26 +382,31 @@ export async function startAttempt(questionnaireId: string, moduleId: string) {
     const { data: q } = await supabase.from('training_questionnaires').select('status, version').eq('id', questionnaireId).single()
     if (q?.status !== 'published') return { success: false, error: 'Questionnaire is not published' }
 
-    // Check existing attempts
+    // Check existing attempts for this user + questionnaire version.
     const { data: existing } = await supabase.from('training_attempts')
         .select('id, submitted_at, passed')
         .eq('questionnaire_id', questionnaireId)
         .eq('respondent_id', user.id)
         .eq('questionnaire_version', q.version)
-    
+        .order('started_at', { ascending: false })
+
     if (existing && existing.length > 0) {
-        // Find any in-progress (unsubmitted) attempt
+        // Reuse any in-progress (unsubmitted) attempt so the user picks up
+        // exactly where they left off.
         const inProgress = existing.find(e => e.submitted_at === null)
         if (inProgress) {
             return { success: true, attemptId: inProgress.id }
         }
-        
-        // If a passed attempt exists, block retry
+
+        // A prior passing attempt means training is already complete.
         const passedAttempt = existing.find(e => e.passed === true)
         if (passedAttempt) {
             return { success: false, error: 'You have already passed this assessment' }
         }
-        // If all prior attempts failed, allow new attempt (fall through)
+        // Otherwise every prior attempt failed → fall through and create a
+        // fresh attempt for the retake. The partial unique index only
+        // rejects concurrent OPEN attempts, so submitted failures don't
+        // block us.
     }
 
     const { data: attempt, error } = await supabase.from('training_attempts').insert({
@@ -414,7 +419,22 @@ export async function startAttempt(questionnaireId: string, moduleId: string) {
         started_at: new Date().toISOString()
     }).select('id').single()
 
-    if (error) return { success: false, error: error.message }
+    if (error) {
+        // Unique-violation here means another tab raced and opened an
+        // attempt in between the SELECT above and this INSERT. Surface the
+        // existing open attempt instead of a scary duplicate-key message.
+        if ((error as any).code === '23505') {
+            const { data: raced } = await supabase.from('training_attempts')
+                .select('id')
+                .eq('questionnaire_id', questionnaireId)
+                .eq('respondent_id', user.id)
+                .eq('questionnaire_version', q.version)
+                .is('submitted_at', null)
+                .maybeSingle()
+            if (raced) return { success: true, attemptId: raced.id }
+        }
+        return { success: false, error: error.message }
+    }
 
     await supabase.from('training_assignments').update({ status: 'in_progress' }).eq('module_id', moduleId).eq('assignee_id', user.id)
     await supabase.from('training_log').insert({ actor_id: user.id, action: 'training_started', module_id: moduleId, attempt_id: attempt.id })
