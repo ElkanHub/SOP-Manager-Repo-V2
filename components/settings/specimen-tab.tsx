@@ -1,6 +1,6 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import Image from "next/image"
 import { useEffect, useState, useRef } from "react"
 import { Search, Loader2, CheckCircle2, ShieldCheck, AlertTriangle } from "lucide-react"
@@ -141,12 +141,10 @@ export function SpecimenTab({ users: initialUsers }: SpecimenTabProps) {
                                         <tr key={user.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-4 whitespace-nowrap">
                                                 <div className="flex items-center gap-3">
-                                                    <Avatar className="h-9 w-9 border border-border shadow-sm">
-                                                        <AvatarImage src={user.avatar_url} />
-                                                        <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">
-                                                            {user.full_name.split(' ').map(n => n[0]).join('')}
-                                                        </AvatarFallback>
-                                                    </Avatar>
+                                                    <UserAvatar
+                                                        user={user as any}
+                                                        className="size-9 border border-border shadow-sm"
+                                                    />
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-foreground leading-tight">{user.full_name}</span>
                                                         <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider mt-0.5">

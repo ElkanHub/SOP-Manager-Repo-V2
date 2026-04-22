@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { Loader2, Users } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { cn } from "@/lib/utils"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface Props {
     isOpen: boolean
@@ -96,8 +97,9 @@ export default function AssignTraineesModal({ isOpen, onOpenChange, availableUse
                                             className="h-5 w-5 rounded-md border-border/60 data-[state=checked]:bg-brand-teal data-[state=checked]:border-brand-teal transition-colors"
                                         />
                                     </div>
-                                    <div className="ml-4 flex-1">
-                                        <p className={cn("font-bold text-sm text-foreground transition-colors", !u.isAssigned && "group-hover:text-brand-navy")}>{u.full_name}</p>
+                                    <UserAvatar user={u} size="default" className="ml-4 shrink-0" />
+                                    <div className="ml-3 flex-1 min-w-0">
+                                        <p className={cn("font-bold text-sm text-foreground transition-colors truncate", !u.isAssigned && "group-hover:text-brand-navy")}>{u.full_name}</p>
                                         <div className="flex gap-2 mt-0.5">
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground/60">{u.department}</span>
                                             <span className="text-[9px] font-bold uppercase tracking-widest text-brand-teal/80">· {u.role}</span>

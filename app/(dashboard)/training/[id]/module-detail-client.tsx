@@ -15,6 +15,7 @@ import QuestionnaireEditor from "@/components/training/questionnaire-editor"
 import AssignTraineesModal from "@/components/training/assign-trainees-modal"
 import SlideDeckEditor from "@/components/training/slide-deck-editor"
 import SlidePresenter from "@/components/training/slide-presenter"
+import { UserAvatar } from "@/components/user-avatar"
 
 export default function ModuleDetailClient({ moduleData, questionnaires, assignments, attempts, availableUsers, profile, isQa }: any) {
     const router = useRouter()
@@ -175,9 +176,7 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                                     {assignments.map((a:any) => (
                                         <div key={a.id} className="flex items-center justify-between p-4 border border-border/50 rounded-lg">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 bg-primary/20 rounded-full flex items-center justify-center font-bold text-primary">
-                                                    {a.assignee?.full_name?.charAt(0) || '?'}
-                                                </div>
+                                                <UserAvatar user={a.assignee} size="lg" />
                                                 <div>
                                                     <p className="font-medium">{a.assignee?.full_name}</p>
                                                     <p className="text-xs text-muted-foreground">{a.assignee?.department}</p>

@@ -9,13 +9,12 @@ import { cn } from "@/lib/utils"
 import { Message, Conversation, Profile } from "@/types/app.types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { ReferencePicker } from "./reference-picker"
 import { SopReadModal } from "@/components/library/sop-read-modal"
 import { sendMessage, editMessage, deleteMessage, markConversationRead, leaveGroup, deleteConversation, updateNotifySetting } from "@/actions/messages"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import Image from "next/image"
 
 
 export function ConversationThread({ conversationId, userId, onBack }: { conversationId: string, userId: string, onBack?: () => void }) {
@@ -285,18 +284,10 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
 
   const avatar = conversation.type === 'direct'
     ? (
-      <div className="w-9 h-9 shrink-0 bg-brand-navy rounded-full flex items-center justify-center text-white overflow-hidden relative">
-        {otherUser?.avatar_url ? (
-          <Image 
-            src={otherUser.avatar_url} 
-            alt="" 
-            width={36} 
-            height={36} 
-            className="w-full h-full object-cover" 
-          />
-        ) : (
-          <span className="text-xs font-semibold">{otherUser?.full_name?.substring(0, 2).toUpperCase()}</span>
-        )}
+      <div className="relative shrink-0">
+        <UserAvatar user={otherUser as any} className="size-9" />
+        {/* keep outer wrapper for any presence badge styling */}
+        <span className="sr-only">{otherUser?.full_name}</span>
       </div>
     )
     : (
@@ -350,19 +341,7 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
         {!isGrouped && (
           <div className={cn("flex items-end gap-2 mb-1", isOwn ? "justify-end mr-1" : "ml-1")}>
             {!isOwn && (
-              <div className="w-6 h-6 shrink-0 bg-slate-200 rounded-full overflow-hidden flex items-center justify-center relative">
-                {msg.sender?.avatar_url ? (
-                  <Image 
-                    src={msg.sender.avatar_url} 
-                    alt="" 
-                    width={24} 
-                    height={24} 
-                    className="w-full h-full object-cover" 
-                  />
-                ) : (
-                  <span className="text-[10px] font-semibold text-slate-600">{msg.sender?.full_name?.substring(0, 2).toUpperCase()}</span>
-                )}
-              </div>
+              <UserAvatar user={msg.sender as any} size="sm" className="shrink-0" />
             )}
             {!isOwn && <span className="text-[12px] font-semibold text-muted-foreground">{msg.sender?.full_name}</span>}
             <span className="text-[10px] text-muted-foreground/80 mb-[1px]">{format(msgDate, 'HH:mm')}</span>
@@ -652,12 +631,11 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
           {profileModalUser && (
             <div className="flex flex-col items-center pb-10 px-8 -mt-14 relative z-10">
               <div className="rounded-[2rem] p-1.5 bg-background shadow-2xl mb-5 ring-1 ring-border/5">
-                <Avatar className="h-24 w-24 border-2 border-transparent">
-                  <AvatarImage src={profileModalUser.avatar_url || ""} className="object-cover" />
-                  <AvatarFallback className="bg-gradient-to-br from-brand-navy to-brand-teal text-white text-2xl font-bold">
-                    {profileModalUser.full_name?.substring(0, 2).toUpperCase() || "PS"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  user={profileModalUser as any}
+                  className="size-24"
+                  fallbackClassName="text-2xl"
+                />
               </div>
 
               <div className="text-center w-full space-y-3">

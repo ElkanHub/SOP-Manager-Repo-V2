@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { ConversationThread } from "./conversation-thread"
 import { NewConversationModal } from "./new-conversation-modal"
 import { Conversation, ConversationMember } from "@/types/app.types"
-import Image from "next/image"
+import { UserAvatar } from "@/components/user-avatar"
 
 
 // Temporary stub components
@@ -147,21 +147,7 @@ export function MessagesClient({ userId, initialActiveId }: { userId: string, in
                 : conv.name || 'Group Chat'
                 
               const avatar = conv.type === 'direct'
-                ? (
-                  <div className="w-9 h-9 shrink-0 bg-brand-navy rounded-full flex items-center justify-center text-white overflow-hidden">
-                    {otherUser?.avatar_url ? (
-                      <Image 
-                        src={otherUser.avatar_url} 
-                        alt="" 
-                        width={36} 
-                        height={36} 
-                        className="w-full h-full object-cover" 
-                      />
-                    ) : (
-                      <span className="text-xs font-semibold">{otherUser?.full_name?.substring(0,2).toUpperCase()}</span>
-                    )}
-                  </div>
-                )
+                ? <UserAvatar user={otherUser} className="size-9 shrink-0" />
                 : <GroupAvatar members={conv.members || []} />
 
               const hasUnread = conv.last_message_at && myMember?.last_read_at 

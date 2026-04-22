@@ -60,7 +60,7 @@ export default async function ModulePage({ params }: { params: Promise<{ id: str
             .order('submitted_at', { ascending: false }),
             
         serviceClient.from('profiles')
-            .select('id, full_name, department, role, is_active')
+            .select('id, full_name, avatar_url, department, role, is_active')
             .eq('is_active', true)
     ])
 

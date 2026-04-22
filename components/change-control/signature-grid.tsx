@@ -1,11 +1,10 @@
 "use client"
 
 import { CheckCircle2, Clock, UserX, PenTool } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CcSignatory, SignatureCertificate } from "@/types/app.types"
-import { getInitials } from "@/lib/utils"
 
 interface SignatureGridProps {
     signatories: CcSignatory[]
@@ -59,14 +58,12 @@ export function SignatureGrid({
                             `}
                         >
                             <div className="flex items-center gap-4 w-full sm:w-auto">
-                                <Avatar className="h-10 w-10 border border-border/40 shadow-sm">
-                                    {(signatory as any).avatar_url && (
-                                        <AvatarImage src={(signatory as any).avatar_url} />
-                                    )}
-                                    <AvatarFallback className="text-xs font-bold bg-gradient-to-br from-brand-teal/20 to-brand-navy/10 text-brand-teal">
-                                        {getInitials(signatory.full_name)}
-                                    </AvatarFallback>
-                                </Avatar>
+                                <UserAvatar
+                                    name={signatory.full_name}
+                                    image={(signatory as any).avatar_url}
+                                    size="lg"
+                                    className="border border-border/40 shadow-sm"
+                                />
                                 
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-3">

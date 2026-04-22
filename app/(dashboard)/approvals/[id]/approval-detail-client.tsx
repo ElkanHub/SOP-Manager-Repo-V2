@@ -8,11 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { SopViewer } from "@/components/library/sop-viewer"
 import { approveSopRequest, requestChangesSop } from "@/actions/sop"
 import { SopApprovalRequest, Profile, SopRecord } from "@/types/app.types"
-import { getInitials } from "@/lib/utils"
 
 interface ApprovalDetailClientProps {
     approvalRequest: SopApprovalRequest & {
@@ -167,12 +166,7 @@ export function ApprovalDetailClient({
                             <div>
                                 <h3 className="font-medium text-sm text-muted-foreground mb-2">Submitted By</h3>
                                 <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarImage src={submitter?.avatar_url} />
-                                        <AvatarFallback>
-                                            {getInitials(submitter?.full_name)}
-                                        </AvatarFallback>
-                                    </Avatar>
+                                    <UserAvatar user={submitter as any} size="lg" />
                                     <div>
                                         <p className="font-medium">{submitter?.full_name}</p>
                                         <p className="text-xs text-muted-foreground">{submitter?.department}</p>
@@ -259,12 +253,7 @@ export function ApprovalDetailClient({
                                     {comments.map(comment => (
                                         <div key={comment.id} className="bg-muted dark:bg-muted/50 p-3 rounded-md">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <Avatar className="h-6 w-6">
-                                                    <AvatarImage src={comment.profiles?.avatar_url} />
-                                                    <AvatarFallback className="text-xs">
-                                                        {getInitials(comment.profiles?.full_name)}
-                                                    </AvatarFallback>
-                                                </Avatar>
+                                                <UserAvatar user={comment.profiles as any} size="sm" />
                                                 <span className="text-sm font-medium">{comment.profiles?.full_name}</span>
                                                 <span className="text-xs text-muted-foreground">
                                                     {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}

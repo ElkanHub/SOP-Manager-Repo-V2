@@ -8,6 +8,7 @@ import { MessageSquare, Users, Search, X, Plus, Loader2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { createConversation } from "@/actions/messages"
 import { useMessagesStore } from "@/store/messages-store"
+import { UserAvatar } from "@/components/user-avatar"
 
 export function NewConversationModal({ isOpen, onClose, userId }: { isOpen: boolean, onClose: () => void, userId: string }) {
   const [type, setType] = useState<'direct' | 'group'>('direct')
@@ -126,9 +127,7 @@ export function NewConversationModal({ isOpen, onClose, userId }: { isOpen: bool
             <div className="flex flex-wrap gap-2 px-6 py-2 bg-muted/20 border-b border-border/40 animate-in fade-in duration-300">
                 {selectedMembers.map(m => (
                     <div key={m.id} className="flex items-center gap-1.5 bg-brand-navy/90 text-white rounded-lg pl-1 pr-2 py-1 shadow-sm animate-in zoom-in-95">
-                        <div className="w-5 h-5 rounded-md bg-white/20 flex items-center justify-center text-[9px] font-bold">
-                            {m.full_name?.substring(0,2).toUpperCase()}
-                        </div>
+                        <UserAvatar user={m} size="xs" />
                         <span className="text-[10px] font-bold uppercase tracking-wider">{m.full_name.split(' ')[0]}</span>
                         <X className="w-3 h-3 text-white/60 cursor-pointer hover:text-white transition-colors" onClick={() => toggleMember(m)} />
                     </div>
@@ -160,9 +159,11 @@ export function NewConversationModal({ isOpen, onClose, userId }: { isOpen: bool
                           className="flex items-center gap-4 p-4 hover:bg-brand-teal/[0.03] cursor-pointer transition-all border-b border-border/30 last:border-0 group"
                           onClick={() => toggleMember(r)}
                         >
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-navy to-brand-navy/80 flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0 shadow-md transition-transform group-hover:scale-105 group-hover:rotate-3">
-                                {r.full_name?.substring(0,2).toUpperCase()}
-                            </div>
+                            <UserAvatar
+                                user={r}
+                                size="lg"
+                                className="flex-shrink-0 shadow-md transition-transform group-hover:scale-105"
+                            />
                             <div className="flex-1 min-w-0">
                                 <div className="text-sm font-bold text-foreground truncate group-hover:text-brand-teal transition-colors tracking-tight">{r.full_name}</div>
                                 <div className="flex items-center gap-2 mt-0.5">

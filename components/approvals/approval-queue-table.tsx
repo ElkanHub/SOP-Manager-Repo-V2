@@ -6,10 +6,9 @@ import { FileText, Clock, CheckCircle2, AlertCircle, RefreshCw } from "lucide-re
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { SopApprovalRequest, Profile, SopRecord } from "@/types/app.types"
 import Link from "next/link"
-import { getInitials } from "@/lib/utils"
 
 interface ApprovalQueueTableProps {
     requests: (SopApprovalRequest & {
@@ -96,12 +95,7 @@ export function ApprovalQueueTable({ requests, currentUserId }: ApprovalQueueTab
                             <CardContent className="p-0">
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4">
                                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                                        <Avatar className="h-10 w-10 shrink-0">
-                                            <AvatarImage src={submitter?.avatar_url} />
-                                            <AvatarFallback>
-                                                {getInitials(submitter?.full_name)}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        <UserAvatar user={submitter as any} size="lg" className="shrink-0" />
                                         
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
