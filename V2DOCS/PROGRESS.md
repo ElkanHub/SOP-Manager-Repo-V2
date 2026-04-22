@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
 > **Last Updated:** April 22, 2026
-> **Version:** 3.4 (Equipment Public QR Flow & Training Exports)
-> **Current Phase:** Phase 37 ✅ Complete — Phase 38 Next
+> **Version:** 3.5 (Calendar Revamp, Requests Cleanup & Build Fixes)
+> **Current Phase:** Phase 38 ✅ Complete — Phase 39 Next
 
 ---
 
@@ -52,6 +52,7 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 35 | ✅ Complete | Mobile Polish (Messages & SOP Read View)         |
 | Phase 36 | ✅ Complete | Pulse, Tooltips, Global Avatar & Presence        |
 | Phase 37 | ✅ Complete | Equipment Public QR Flow                         |
+| Phase 38 | ✅ Complete | Calendar Revamp, Requests Cleanup & Build Fixes  |
 
 ---
 
@@ -1963,3 +1964,61 @@ lib/equipment/token.ts                 # Public token issuance/validation
 - Authenticated assignee scan → lands on PM task page ✅
 - QR PNG/PDF downloads with correct token embedded ✅
 - Equipment pulse notifications use a single audience-NULL row, not per-recipient fan-out ✅
+
+---
+
+## Phase 38: Calendar Revamp, Requests Cleanup & Build Fixes
+
+**Status:** ✅ Complete
+**Completed:** April 22, 2026
+
+### Overview
+
+Full UI/UX revamp of the Calendar to a premium, responsive surface that scales to many PM items per day; small cleanup on the Requests page to remove a redundant header action; and two production build fixes for the jsPDF training certificate route.
+
+### Calendar Revamp
+
+The calendar was redesigned end-to-end. Grid, cells, chips, sidebar, and day detail view all replaced or rewritten. Highlights:
+
+- **Responsive layout** — Grid + Upcoming panel now side-by-side only at `xl` (≥1280px) with a tight 280px rail; below that, the panel stacks under the grid so neither feels cramped.
+- **Premium grid toolbar** — Prev / Today / Next grouped into a single segmented pill; the big month heading separates the month name (bold) from the year (muted). Inline legend shows live counts for PM, Company, and Department items in the visible month.
+- **Day cells that support many items** — Cells grew to `min-h-[120px]` (mobile) / `min-h-[136px]` (sm+) with increased padding and chip spacing. PM items are listed first (time-sensitive), then events. Overflow renders as `+N more` which opens the full day sheet.
+- **Nested-button fix** — The first revision used a `<button>` cell wrapping chip `<button>` elements, which browsers rendered with split hit regions (only part of the cell responded to hover). The outer cell is now a `role="button"` div with `Enter`/`Space` keyboard support; chips remain real buttons with `stopPropagation`, so the whole cell responds uniformly to hover and click while chips still handle their own taps. **Why:** never nest `<button>` inside `<button>` — use `role="button"` + keydown instead.
+- **Chip redesign** — Dropped the redundant dot; chips now use a `border-l-2` tone accent + type icon (Wrench / Globe2 / Users) + truncated title. Each chip has a Base UI tooltip describing the type. Colors use brand tokens (`brand-teal` for PM, `brand-blue` for company, `slate-500/300` for department) so dark mode works without an inverted palette.
+- **Day Detail Sheet (new)** — Clicking a cell or chip opens a right-side Sheet with the day's items grouped by section (PM / Company / Department). Owners get an inline Delete action per event; creators (managers/admins) get an "Add event on {date}" CTA that opens the event modal pre-filled with that date.
+- **Upcoming panel redesign** — Each row now has a date tile (month + day), a type-coded chip with icon, and an optional subtitle. Imminent PM items (≤3 days) tint amber. Clicking any row opens that day's sheet and scrolls the grid to that month.
+- **New event modal** — Syncs `initialDate` on open so pre-filling works across multiple opens in one session. Create-event button (header and sheet footer) is gated to managers and admins.
+- **Removed** — `components/calendar/event-detail-popover.tsx` (superseded by the Day Detail Sheet; not imported anywhere).
+
+### Requests Page Cleanup
+
+- Removed the redundant **"Open QA Hub"** button from the top-right of `/requests`. The sidebar already exposes a dedicated **"Request Hub"** nav entry for QA/admin users pointing to `/requests/hub`, so the in-page button was duplicate chrome. Removed unused `Link` and `Sparkles` imports with it.
+
+### Build Fixes (Production Deploy Blockers)
+
+- **`charSpacing` → `charSpace`** in `app/api/training/certificate/route.ts` (lines 102, 187, 199, 211). jsPDF's `TextOptionsLight` type uses `charSpace`; `charSpacing` is the `pptxgenjs` spelling and is still correct in `app/api/training/export-slides/route.ts`. The two libraries share similar option shapes but the property names differ — don't assume they're interchangeable. Confirmed with `npx tsc --noEmit` before reporting.
+
+### Files Touched
+
+```
+components/calendar/calendar-client.tsx        # Rewritten — responsive, gated actions, sheet wiring
+components/calendar/calendar-grid.tsx          # Rewritten — segmented toolbar, legend, grid borders
+components/calendar/calendar-cell.tsx          # Rewritten — role=button, keyboard, larger cells
+components/calendar/calendar-chip.tsx          # Rewritten — border-l-2 accent, icon, tooltip
+components/calendar/upcoming-panel.tsx         # Rewritten — date tile, type chip, click-to-open
+components/calendar/day-detail-sheet.tsx       # New — grouped day view with delete/add actions
+components/calendar/new-event-modal.tsx        # Added useEffect to sync initialDate on open
+components/calendar/event-detail-popover.tsx   # Removed (superseded)
+components/requests/new-requests-client.tsx    # Removed Open QA Hub button + unused imports
+app/api/training/certificate/route.ts          # charSpacing → charSpace (jsPDF)
+```
+
+### Verification
+
+- `npx tsc --noEmit` passes ✅
+- Calendar day with many PM items renders stacked chips + `+N more` without overlap ✅
+- Cell hover/click responds uniformly across the full cell area (no dead zones) ✅
+- Keyboard focus on a cell + Enter/Space opens the day sheet ✅
+- `initialDate` in the event modal updates correctly when opening for different days in one session ✅
+- Removing the QA Hub button does not affect QA users' ability to reach the hub (sidebar link still present) ✅
+- Training certificate PDF generation compiles without TypeScript errors ✅
