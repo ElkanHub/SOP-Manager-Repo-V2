@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit --skipLibCheck)"
     ]
   }
 }

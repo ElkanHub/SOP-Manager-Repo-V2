@@ -445,32 +445,40 @@ export async function submitAttempt(attemptId: string, answers: { questionId: st
     const modTitle = (attempt.training_modules as any).title
     const creatorId = (attempt.training_modules as any).created_by
 
+    // Grade against the canonical question list, NOT the submitted answers.
+    // Iterating the answers array caused unanswered questions to be excluded
+    // from the denominator — answering 1 of 10 correctly would yield 100%.
+    const answerMap = new Map<string, string | null>()
+    for (const a of answers) answerMap.set(a.questionId, a.answerValue)
+
     let mcTfTotal = 0
     let mcTfCorrect = 0
 
-    const dbAnswers = answers.map(ans => {
-        const q = questions.find(qu => qu.id === ans.questionId)
+    const dbAnswers = questions.map(q => {
+        const answerValue = answerMap.get(q.id) ?? null
         let isCorrect: boolean | null = null
 
-        if (q && (q.question_type === 'multiple_choice' || q.question_type === 'true_false')) {
+        if (q.question_type === 'multiple_choice' || q.question_type === 'true_false') {
             mcTfTotal++
-            // check option correct
             const opts = (q.options as any[]) || []
-            const selectedOpt = opts.find(o => o.id === ans.answerValue)
+            const selectedOpt = answerValue ? opts.find(o => o.id === answerValue) : null
+            // Unanswered MC/T-F counts as incorrect, never null.
             isCorrect = selectedOpt ? !!selectedOpt.is_correct : false
             if (isCorrect) mcTfCorrect++
         }
+        // short_answer / fill_blank: isCorrect stays null → requires manual review.
 
         return {
             attempt_id: attemptId,
-            question_id: ans.questionId,
-            answer_value: ans.answerValue,
+            question_id: q.id,
+            answer_value: answerValue,
             is_correct: isCorrect
         }
     })
 
-    const score = mcTfTotal > 0 ? (mcTfCorrect / mcTfTotal) * 100 : 100
-    const passed = score >= passingScore
+    // No auto-gradable questions → don't silently auto-pass at 100%.
+    const score = mcTfTotal > 0 ? (mcTfCorrect / mcTfTotal) * 100 : 0
+    const passed = mcTfTotal > 0 ? score >= passingScore : false
 
     // Insert answers
     if (dbAnswers.length > 0) {
