@@ -1,8 +1,8 @@
 # SOP-Guard Pro - Project Progress
 
-> **Last Updated:** April 20, 2026
-> **Version:** 3.3 (Training Publish Fix)
-> **Current Phase:** Phase 30 ✅ Complete — Phase 31 Next
+> **Last Updated:** April 22, 2026
+> **Version:** 3.4 (Equipment Public QR Flow & Training Exports)
+> **Current Phase:** Phase 37 ✅ Complete — Phase 38 Next
 
 ---
 
@@ -45,6 +45,13 @@ SOP-Guard Pro is an industrial SaaS platform for managing Standard Operating Pro
 | Phase 28 | ✅ Complete | Documentation Modernization & Responsive Tables  |
 | Phase 29 | ✅ Complete | Training Hub Bug Fixes & Hardening               |
 | Phase 30 | ✅ Complete | Training Publish Button Fix                      |
+| Phase 31 | ✅ Complete | Training Hub UI Polish & KPI/Tagging             |
+| Phase 32 | ✅ Complete | Editable Questionnaires & Slide Reordering       |
+| Phase 33 | ✅ Complete | Training Exports (PPTX, PDF, Certificates)       |
+| Phase 34 | ✅ Complete | Email Infrastructure Migration (Resend → Mailtrap) |
+| Phase 35 | ✅ Complete | Mobile Polish (Messages & SOP Read View)         |
+| Phase 36 | ✅ Complete | Pulse, Tooltips, Global Avatar & Presence        |
+| Phase 37 | ✅ Complete | Equipment Public QR Flow                         |
 
 ---
 
@@ -1744,3 +1751,215 @@ actions/
 - Both publish buttons now provide proper toast feedback on success and failure ✅
 - Spinner correctly resets via `finally` blocks even when errors occur ✅
 - Auxiliary operation failures (logs, notifications) no longer block successful publish ✅
+
+---
+
+## Phase 31: Training Hub UI Polish & KPI/Tagging
+
+**Status:** ✅ Complete
+**Completed:** April 20, 2026
+
+### Overview
+
+Round of visual and information-architecture polish on the Training Hub now that the publish pipeline is stable. Focus was on surfacing the right signals to managers at a glance (KPI cards, assignment state) and tightening module-level affordances (header naming, publish iconography).
+
+### Changes
+
+- **Training Hub KPI cards corrected** — KPI counters on the Training Hub landing (total modules, published, pending, completions) now read from the correct scoped queries rather than the unfiltered module list.
+- **Assignment tagging on trainee pickers** — When assigning a module, trainees who already have an active assignment for that module are now tagged inline so managers don't accidentally re-assign. Eliminates a common "why is this user listed twice?" support question.
+- **Publish button iconography** — Replaced the text-only publish state with a clearer iconized treatment (paired with the lucide `Send`/`CheckCircle` states depending on publish status) so the publish action is recognisable without reading.
+- **Module header capitalisation & naming** — Training module headers (Overview / Slides / Questionnaire / Assignments tabs and section titles) now use consistent Title Case. Renamed a handful of ambiguous sub-section headers for clarity.
+- **General Training Hub UI pass** — Spacing, badge sizing, and card chrome normalised against the dashboard patterns introduced in Phase 20.
+
+### Files Touched (high-level)
+
+```
+app/(dashboard)/training/              # Training hub list, KPIs, module detail
+components/training/                   # Module cards, assignment pickers, publish controls
+```
+
+---
+
+## Phase 32: Editable Questionnaires & Slide Reordering
+
+**Status:** ✅ Complete
+**Completed:** April 21, 2026
+
+### Overview
+
+Unblocked the two biggest authoring frustrations on Training: questionnaires were generate-once-and-accept, and slide decks were generated in a fixed order with no way to re-sequence or insert. Both are now fully editable in-app.
+
+### Changes
+
+#### Editable Questionnaires
+- Questionnaire editor now supports **per-question edits** (stem, options, correct answer, explanation) and **add/remove question** operations pre-publish.
+- Version bumping on save keeps the audit trail: each save creates a new draft version (Phase 29's version-increment fix applies).
+- Gemini generation now returns questions into the editor rather than straight to the database, giving managers a review-and-refine step before publish.
+
+#### Slide Deck Authoring
+- **Drag-and-drop slide reordering** on the slide editor. Order is persisted to `slide_deck.slides[]` in the stored order.
+- **Manual slide insertion** — managers can insert a blank slide at any position and fill in title/body content, independent of the AI-generated deck.
+- **Cycle-through presenter mode** — keyboard arrow navigation through slides in the preview/present view.
+- **Fullscreen presentation mode** with ESC-to-exit.
+
+#### AI Generation UX
+- Both slide and questionnaire generation now surface a **percentage progress indicator** instead of an indeterminate spinner. Progress is streamed from the Gemini endpoint as chunks arrive so users know long generations are making forward progress.
+
+### Files Touched (high-level)
+
+```
+components/training/
+├── questionnaire-editor.tsx           # Per-question editing + add/remove
+├── slide-editor.tsx                   # DnD reorder + manual insert
+├── slide-presenter.tsx                # Cycle + fullscreen
+└── generation-progress.tsx            # Percentage progress UI
+
+app/api/training/generate-slides/route.ts         # Streamed progress
+app/api/training/generate-questionnaire/route.ts  # Streamed progress
+actions/training.ts                               # Editable persistence paths
+```
+
+---
+
+## Phase 33: Training Exports (PPTX, PDF, Certificates)
+
+**Status:** ✅ Complete
+**Completed:** April 21, 2026
+
+### Overview
+
+Training content and outcomes are now portable. Managers can export slide decks to PowerPoint for offline training or handoff, questionnaires to printable PDF, and trainees can download completion certificates. Audit/report exports for training data were also wired up.
+
+### Changes
+
+- **Slides → PPTX export** — Slide decks export to `.pptx` using a client-side builder (pptxgenjs). Preserves slide order including manually inserted slides from Phase 32.
+- **Questionnaire → PDF export** — Printable questionnaire PDF with questions, options, and (for manager exports) the answer key. Later iteration refined the PDF layout, spacing, and header/footer treatment for readability.
+- **Training audit exports** — Training activity exports (attempts, scores, completions per module/department) now produce correct CSV/PDF output. Previous iteration had broken column mappings.
+- **Certificate download** — Trainees who pass an assessment can download a branded completion certificate (PDF) from the My Training view. Certificate includes trainee name, module, version, score, completion date, and signatory block.
+
+### Files Touched (high-level)
+
+```
+lib/training/
+├── pptx-exporter.ts                   # New — slide → pptx builder
+├── questionnaire-pdf.ts               # New — questionnaire PDF
+└── certificate-pdf.ts                 # New — completion certificate
+
+app/(dashboard)/training/my-training/  # Certificate download action
+app/(dashboard)/reports/               # Training audit export wiring
+```
+
+---
+
+## Phase 34: Email Infrastructure Migration (Resend → Mailtrap)
+
+**Status:** ✅ Complete
+**Completed:** April 20, 2026
+
+### Overview
+
+Transactional email delivery migrated off Resend and onto Mailtrap. Driver swap only — no template or call-site changes needed thanks to the single email action abstraction.
+
+### Changes
+
+- `actions/email.ts` now targets the Mailtrap API (SMTP fallback available).
+- Env vars rotated: removed `RESEND_API_KEY`, added `MAILTRAP_API_TOKEN` + inbox/project IDs.
+- EMAIL_TESTING.md updated to reflect the new provider and sandbox inbox workflow.
+- All existing call sites (signup confirm, approval notices, change control signatories, training assignment, PM alerts) verified against the new provider.
+
+---
+
+## Phase 35: Mobile Polish (Messages & SOP Read View)
+
+**Status:** ✅ Complete
+**Completed:** April 20, 2026
+
+### Overview
+
+Two surfaces that were desktop-first — Messages and the SOP read view — got proper mobile treatments. Continues the responsive-polish thread from Phase 17.
+
+### Changes
+
+#### Messages on Mobile
+- Conversation list / message pane now switches between stacked views on small breakpoints instead of trying to render both columns.
+- Back-button pattern wired to return from an open conversation to the conversation list.
+- Composer anchored to the viewport bottom on mobile with keyboard-safe spacing.
+
+#### SOP Read View on Mobile
+- `mammoth.js`-rendered SOP content now flows properly on narrow viewports (tables, images, lists responsive).
+- Action bar (acknowledge, sign, request edit) collapsed into an overflow menu on small screens so it never pushes content.
+- Version/metadata chips stack gracefully.
+
+### Files Touched (high-level)
+
+```
+app/(dashboard)/messages/              # Stacked-view responsive behavior
+components/library/sop-viewer.tsx      # Mobile SOP render pass
+components/library/sop-action-bar.tsx  # Overflow menu on mobile
+```
+
+---
+
+## Phase 36: Pulse, Tooltips, Global Avatar & Presence
+
+**Status:** ✅ Complete
+**Completed:** April 21, 2026
+
+### Overview
+
+Cross-cutting polish to the always-mounted chrome: Pulse interactions, tooltip system, the user avatar, and dashboard presence indicators.
+
+### Changes
+
+- **Base UI tooltip adoption** — Tooltips across the app migrated to the Base UI `<Tooltip>` primitive. `TooltipProvider` is mounted once in the dashboard layout; triggers use the `render` prop to avoid nested-button accessibility issues. Documented in CLAUDE.md as the standard.
+- **Pulse handle & interaction polish** — The Pulse trigger/handle got hover-state, badge-animation, and keyboard-focus polish. Panel open/close transitions smoothed.
+- **Global user avatar** — User avatar now renders from a single source-of-truth component and reflects profile photo changes live across TopNav, message threads, comments, and signatory lists without a reload.
+- **Dashboard presence strip** — The dashboard status strip now shows the live count of online users as its first tile, driven by a real-time presence channel. Count is animated (tween on change) rather than snapping.
+- **Dashboard data accuracy pass** — Fixed a handful of dashboard KPIs that were reading from stale queries; now sourced from the same canonical views used by reports.
+
+### Files Touched (high-level)
+
+```
+components/ui/tooltip.tsx              # Base UI wrapper (standard)
+components/pulse/                      # Handle, badge animation polish
+components/shell/user-avatar.tsx       # Global avatar component
+components/dashboard/status-strip.tsx  # Online count + animated counter
+app/(dashboard)/dashboard/             # Data source corrections
+```
+
+---
+
+## Phase 37: Equipment Public QR Flow
+
+**Status:** ✅ Complete
+**Completed:** April 22, 2026
+
+### Overview
+
+Extended the QR-code pattern introduced in Phase 27 (mobile signature) to the Equipment Registry. Each equipment item now has a printable QR that deep-links to a **public, unauthenticated** equipment page. If the scanner *is* authenticated and happens to be the PM assignee for that equipment, they're auto-redirected into the authenticated PM task view. Also improved Pulse integration for equipment events.
+
+### Changes
+
+- **Public equipment route** — New unauthenticated route renders read-only equipment info (name, tag, department, current status, latest PM, open tasks) when the token on the QR matches. Middleware (`proxy.ts`) short-circuits auth for this path, same pattern as `/m/*` mobile signature pages.
+- **QR code download** — Equipment detail view has a "Download QR" action that generates a PNG/PDF of the QR with the equipment tag and name beneath it, print-ready.
+- **Auto-redirect for authenticated assignees** — When a logged-in user scans a QR and they are the current PM assignee for that equipment, they land directly on the authenticated PM task page instead of the public read-only view. Non-assignees (even if authenticated) stay on the public view unless they navigate in explicitly.
+- **Pulse integration improvements** — Equipment events (status change, PM due, assignment) now broadcast through the Pulse using the single-row audience-NULL pattern documented in CLAUDE.md. Fixes a previous fan-out bug that created N rows per recipient.
+
+### Files Touched (high-level)
+
+```
+app/e/[token]/                         # New — public equipment route
+proxy.ts                               # Auth short-circuit for /e/* + assignee redirect
+app/(dashboard)/equipment/             # QR download action, detail view updates
+components/equipment/qr-code.tsx       # QR generation + download
+actions/equipment.ts                   # Pulse broadcast via audience-NULL row
+lib/equipment/token.ts                 # Public token issuance/validation
+```
+
+### Verification
+
+- Unauthenticated scan → public view renders without redirect to login ✅
+- Authenticated non-assignee scan → public view (not auto-redirected) ✅
+- Authenticated assignee scan → lands on PM task page ✅
+- QR PNG/PDF downloads with correct token embedded ✅
+- Equipment pulse notifications use a single audience-NULL row, not per-recipient fan-out ✅
