@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,6 +41,8 @@ interface Props {
 export default function SlideDeckEditor({ moduleData }: Props) {
     const router = useRouter()
     const [isGenerating, setIsGenerating] = useState(false)
+    const [genProgress, setGenProgress] = useState(0)
+    const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const [editingSlideId, setEditingSlideId] = useState<string | null>(null)
     const [editData, setEditData] = useState({ title: "", body: "", notes: "" })
     const [isSaving, setIsSaving] = useState(false)
@@ -67,8 +69,32 @@ export default function SlideDeckEditor({ moduleData }: Props) {
     const slides = [...rawSlides].sort((a, b) => a.order - b.order)
 
     // ─── AI Generate ────────────────────────────────────────────────────
+    const startProgressSim = () => {
+        setGenProgress(3)
+        if (progressTimerRef.current) clearInterval(progressTimerRef.current)
+        progressTimerRef.current = setInterval(() => {
+            setGenProgress((p) => {
+                if (p >= 92) return p
+                const increment = Math.max(0.5, (92 - p) * 0.06)
+                return Math.min(92, p + increment)
+            })
+        }, 400)
+    }
+
+    const stopProgressSim = () => {
+        if (progressTimerRef.current) {
+            clearInterval(progressTimerRef.current)
+            progressTimerRef.current = null
+        }
+    }
+
+    useEffect(() => {
+        return () => { if (progressTimerRef.current) clearInterval(progressTimerRef.current) }
+    }, [])
+
     const handleGenerate = async () => {
         setIsGenerating(true)
+        startProgressSim()
         try {
             const res = await fetch('/api/training/generate-slides', {
                 method: 'POST',
@@ -77,13 +103,19 @@ export default function SlideDeckEditor({ moduleData }: Props) {
             })
             const data = await res.json()
             if (data.error) throw new Error(data.error)
+            stopProgressSim()
+            setGenProgress(100)
             toast.success("Slide deck generated successfully!")
             setLocalSlides(null)
             router.refresh()
         } catch (error: any) {
+            stopProgressSim()
             toast.error(error.message || "Failed to generate slide deck")
         } finally {
-            setIsGenerating(false)
+            setTimeout(() => {
+                setIsGenerating(false)
+                setGenProgress(0)
+            }, 500)
         }
     }
 
@@ -272,9 +304,21 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                 <p className="text-muted-foreground mt-2 max-w-md mb-6">
                     Use our AI to automatically generate a complete instructional slide deck from the associated SOP text.
                 </p>
-                <Button onClick={handleGenerate} disabled={isGenerating} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg px-8 shadow-primary/20">
-                    {isGenerating ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Analyzing SOP & Generating...</> : <><Wand2 className="mr-2 h-5 w-5" /> Generate Slides with AI</>}
-                </Button>
+                <div className="flex flex-col items-center gap-3 w-full max-w-md">
+                    <Button onClick={handleGenerate} disabled={isGenerating} size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg px-8 shadow-primary/20">
+                        {isGenerating
+                            ? <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Generating... {Math.round(genProgress)}%</>
+                            : <><Wand2 className="mr-2 h-5 w-5" /> Generate Slides with AI</>}
+                    </Button>
+                    {isGenerating && (
+                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                                className="h-full bg-primary transition-all duration-300 ease-out"
+                                style={{ width: `${genProgress}%` }}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
         )
     }
@@ -311,10 +355,27 @@ export default function SlideDeckEditor({ moduleData }: Props) {
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating} className="gap-2 text-blue-600 hover:text-blue-700">
                         {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                        Regenerate
+                        {isGenerating ? `Regenerating ${Math.round(genProgress)}%` : 'Regenerate'}
                     </Button>
                 </div>
             </div>
+
+            {isGenerating && (
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                            <Loader2 className="h-3 w-3 animate-spin" /> AI is analyzing the SOP and drafting slides…
+                        </span>
+                        <span className="tabular-nums font-medium">{Math.round(genProgress)}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-primary transition-all duration-300 ease-out"
+                            style={{ width: `${genProgress}%` }}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Drag hint */}
             <p className="text-xs text-muted-foreground flex items-center gap-2">

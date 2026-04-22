@@ -112,7 +112,18 @@ export async function POST(request: NextRequest) {
 
     } catch (error: any) {
         console.error('Generation Error:', error)
-        return NextResponse.json({ error: error.message || 'Server error' }, { status: 500 })
+        const msg = String(error?.message || '')
+        let userMessage = "We couldn't generate the slide deck. Please try again in a moment."
+        if (/retrieve document|not found|storage/i.test(msg)) {
+            userMessage = "We couldn't read the SOP document. Please check that the file is available and try again."
+        } else if (/JSON|parse/i.test(msg)) {
+            userMessage = "The AI response was incomplete. Please try generating again."
+        } else if (/quota|rate|429|503|overloaded/i.test(msg)) {
+            userMessage = "The AI service is busy right now. Please wait a moment and try again."
+        } else if (/Database update/i.test(msg)) {
+            userMessage = "The slides were generated but couldn't be saved. Please try again."
+        }
+        return NextResponse.json({ error: userMessage }, { status: 500 })
     }
 }
 

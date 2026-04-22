@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -126,7 +126,13 @@ function defaultOptionsFor(type: QuestionType): QuestionOption[] | null {
 export default function QuestionnaireEditor({ moduleData, questionnaires }: Props) {
     const router = useRouter()
     const [isGenerating, setIsGenerating] = useState(false)
+    const [genProgress, setGenProgress] = useState(0)
+    const progressTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
     const [isPublishing, setIsPublishing] = useState<string | null>(null)
+
+    useEffect(() => {
+        return () => { if (progressTimerRef.current) clearInterval(progressTimerRef.current) }
+    }, [])
     const [numQuestions, setNumQuestions] = useState("5")
     const [passingScore, setPassingScore] = useState("70")
 
@@ -147,8 +153,28 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
     }, [sorted, expandedId])
 
     // ─── Top: AI generate panel ────────────────────────────────────
+    const startProgressSim = () => {
+        setGenProgress(3)
+        if (progressTimerRef.current) clearInterval(progressTimerRef.current)
+        progressTimerRef.current = setInterval(() => {
+            setGenProgress((p) => {
+                if (p >= 92) return p
+                const increment = Math.max(0.5, (92 - p) * 0.06)
+                return Math.min(92, p + increment)
+            })
+        }, 400)
+    }
+
+    const stopProgressSim = () => {
+        if (progressTimerRef.current) {
+            clearInterval(progressTimerRef.current)
+            progressTimerRef.current = null
+        }
+    }
+
     const handleGenerate = async () => {
         setIsGenerating(true)
+        startProgressSim()
         try {
             const qRes = await createQuestionnaire({
                 moduleId: moduleData.id,
@@ -170,13 +196,19 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
             const data = await res.json()
             if (data.error) throw new Error(data.error)
 
+            stopProgressSim()
+            setGenProgress(100)
             toast.success(`Generated ${data.count} questions!`)
             setExpandedId(qRes.questionnaireId ?? null)
             router.refresh()
         } catch (e: any) {
+            stopProgressSim()
             toast.error(e.message || "Failed to generate questionnaire")
         } finally {
-            setIsGenerating(false)
+            setTimeout(() => {
+                setIsGenerating(false)
+                setGenProgress(0)
+            }, 500)
         }
     }
 
@@ -240,7 +272,7 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
                             >
                                 {isGenerating ? (
                                     <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating...
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generating {Math.round(genProgress)}%
                                     </>
                                 ) : (
                                     "Generate New Assessment"
@@ -248,6 +280,22 @@ export default function QuestionnaireEditor({ moduleData, questionnaires }: Prop
                             </Button>
                         </div>
                     </div>
+                    {isGenerating && (
+                        <div className="mt-4 space-y-1.5">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
+                                    <Loader2 className="h-3 w-3 animate-spin" /> AI is analyzing the SOP and drafting questions…
+                                </span>
+                                <span className="tabular-nums font-medium">{Math.round(genProgress)}%</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-primary transition-all duration-300 ease-out"
+                                    style={{ width: `${genProgress}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
             </Card>
 
