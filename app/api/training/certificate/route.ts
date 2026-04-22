@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         setText(RGB.slate500)
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(10)
-        doc.text('SOP TRAINING', PAGE_W / 2, 32, { align: 'center', charSpacing: 3 })
+        doc.text('SOP TRAINING', PAGE_W / 2, 32, { align: 'center', charSpace: 3 })
 
         // ─── Title ───────────────────────────────────────────────────────
         setText(RGB.slate800)
