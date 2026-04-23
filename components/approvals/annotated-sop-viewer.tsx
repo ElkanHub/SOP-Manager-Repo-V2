@@ -31,7 +31,14 @@ export function AnnotatedSopViewer({
 }: Props) {
     const [html, setHtml] = useState<string | null>(null)
     const [loadError, setLoadError] = useState<string | null>(null)
-    const [selection, setSelection] = useState<{ text: string; context: string; rect: DOMRect } | null>(null)
+    const [selection, setSelection] = useState<{
+        text: string
+        context: string
+        rect: DOMRect
+        line_number: number
+        char_offset: number
+        section_heading: string | null
+    } | null>(null)
     const [composerOpen, setComposerOpen] = useState(false)
     const [draftComment, setDraftComment] = useState('')
     const viewerRef = useRef<HTMLDivElement>(null)
@@ -71,10 +78,16 @@ export function AnnotatedSopViewer({
         const idx = fullText.indexOf(text)
         const before = idx >= 0 ? fullText.slice(Math.max(0, idx - CONTEXT_LEN), idx) : ''
         const after = idx >= 0 ? fullText.slice(idx + text.length, idx + text.length + CONTEXT_LEN) : ''
+        const char_offset = computeTextOffset(viewerRef.current, range.startContainer, range.startOffset)
+        const line_number = fullText.slice(0, char_offset).split('\n').length
+        const section_heading = findPrecedingHeading(viewerRef.current, range.startContainer)
         setSelection({
             text,
             context: `${before}…${after}`,
             rect: range.getBoundingClientRect(),
+            line_number,
+            char_offset,
+            section_heading,
         })
     }, [readOnly])
 
@@ -91,6 +104,9 @@ export function AnnotatedSopViewer({
             quoted_text: selection.text,
             quote_context: selection.context,
             anchor_hash,
+            line_number: selection.line_number,
+            char_offset: selection.char_offset,
+            section_heading: selection.section_heading || undefined,
         })
         setDraftComment('')
         setComposerOpen(false)
@@ -150,7 +166,11 @@ export function AnnotatedSopViewer({
                 <div className="fixed z-50 w-80 p-3 bg-popover border rounded-md shadow-lg"
                      style={{ top: Math.min(selection.rect.bottom + 8, window.innerHeight - 200), left: Math.min(selection.rect.left, window.innerWidth - 340) }}>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Comment on selection</p>
-                    <p className="text-xs italic text-muted-foreground mb-2 line-clamp-2">"{selection.text}"</p>
+                    <p className="text-xs italic text-muted-foreground mb-1 line-clamp-2">"{selection.text}"</p>
+                    <p className="text-[10px] text-muted-foreground mb-2">
+                        {selection.section_heading && <>§ {selection.section_heading} · </>}
+                        line {selection.line_number} · char {selection.char_offset}
+                    </p>
                     <Textarea
                         autoFocus
                         value={draftComment}
@@ -188,6 +208,31 @@ async function sha1(input: string): Promise<string> {
     const data = new TextEncoder().encode(input)
     const hash = await crypto.subtle.digest('SHA-1', data)
     return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function computeTextOffset(root: HTMLElement, container: Node, offset: number): number {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
+    let total = 0
+    let node: Node | null
+    while ((node = walker.nextNode())) {
+        if (node === container) return total + offset
+        total += (node.nodeValue || '').length
+    }
+    return total
+}
+
+function findPrecedingHeading(root: HTMLElement, container: Node): string | null {
+    const anchor: Node = container.nodeType === Node.TEXT_NODE ? (container.parentNode as Node) : container
+    const headings = Array.from(root.querySelectorAll('h1, h2, h3, h4, h5, h6')) as HTMLElement[]
+    let best: HTMLElement | null = null
+    for (const h of headings) {
+        const pos = h.compareDocumentPosition(anchor)
+        if (pos & Node.DOCUMENT_POSITION_FOLLOWING) best = h
+        else break
+    }
+    const text = best?.textContent?.trim() || null
+    if (!text) return null
+    return text.length > 80 ? text.slice(0, 80) + '…' : text
 }
 
 function wrapFirstMatch(root: HTMLElement, needle: string, annotationId: string) {

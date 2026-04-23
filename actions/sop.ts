@@ -335,6 +335,9 @@ type Annotation = {
     quoted_text?: string
     quote_context?: string
     anchor_hash?: string
+    line_number?: number
+    char_offset?: number
+    section_heading?: string
 }
 
 async function insertApprovalAnnotations(
@@ -354,6 +357,9 @@ async function insertApprovalAnnotations(
             quoted_text: a.quoted_text || null,
             quote_context: a.quote_context || null,
             anchor_hash: a.anchor_hash || null,
+            line_number: a.line_number ?? null,
+            char_offset: a.char_offset ?? null,
+            section_heading: a.section_heading || null,
         }))
     if (rows.length === 0) return
     await supabase.from('sop_approval_comments').insert(rows)

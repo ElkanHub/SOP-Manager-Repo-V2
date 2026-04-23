@@ -2,13 +2,14 @@
 
 import { useState, useMemo } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, FileText, Send, MessageSquare, Trash2, Quote } from "lucide-react"
+import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, FileText, Send, MessageSquare, Trash2, Quote, Eye, Highlighter } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
+import { SopViewer } from "@/components/library/sop-viewer"
 import { AnnotatedSopViewer, ViewerAnnotation } from "@/components/approvals/annotated-sop-viewer"
 import { approveSopRequest, requestChangesSop } from "@/actions/sop"
 import { SopApprovalRequest, Profile, SopRecord, SopAnnotationDraft } from "@/types/app.types"
@@ -46,6 +47,7 @@ export function ApprovalDetailClient({
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
     const [drafts, setDrafts] = useState<DraftAnnotation[]>([])
+    const [viewerTab, setViewerTab] = useState<'office' | 'annotate'>('office')
 
     const sop = approvalRequest.sops
     const submitter = approvalRequest.profiles
@@ -169,7 +171,7 @@ export function ApprovalDetailClient({
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                     <div className="bg-card dark:bg-card rounded-lg border shadow-sm">
-                        <div className="p-4 border-b flex items-center justify-between">
+                        <div className="p-4 border-b flex items-center justify-between gap-4 flex-wrap">
                             <div className="flex items-center gap-3">
                                 <FileText className="h-5 w-5 text-muted-foreground" />
                                 <div>
@@ -177,17 +179,46 @@ export function ApprovalDetailClient({
                                     <p className="text-sm text-muted-foreground">{sop?.title}</p>
                                 </div>
                             </div>
-                            <Badge variant="secondary">
-                                {approvalRequest.type === 'new' ? 'New SOP' : 'Update'}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                <div className="inline-flex rounded-md border bg-muted/40 p-0.5 text-xs">
+                                    <button
+                                        onClick={() => setViewerTab('office')}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-md transition ${viewerTab === 'office' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        <Eye className="h-3.5 w-3.5" />
+                                        View
+                                    </button>
+                                    <button
+                                        onClick={() => setViewerTab('annotate')}
+                                        className={`flex items-center gap-1 px-3 py-1.5 rounded-md transition ${viewerTab === 'annotate' ? 'bg-background shadow-sm font-medium' : 'text-muted-foreground hover:text-foreground'}`}
+                                    >
+                                        <Highlighter className="h-3.5 w-3.5" />
+                                        {canAct ? 'Annotate' : 'Highlights'}
+                                    </button>
+                                </div>
+                                <Badge variant="secondary">
+                                    {approvalRequest.type === 'new' ? 'New SOP' : 'Update'}
+                                </Badge>
+                            </div>
                         </div>
                         <div className="p-4">
-                            <AnnotatedSopViewer
-                                requestId={approvalRequest.id}
-                                annotations={[...persisted, ...draftViewerAnnotations]}
-                                readOnly={!canAct}
-                                onAddAnnotation={handleAddDraft}
-                            />
+                            {/* Keep both mounted to preserve state (selection, fetched HTML, MS viewer scroll). Toggle via display. */}
+                            <div className={viewerTab === 'office' ? 'block' : 'hidden'}>
+                                <SopViewer fileUrl={approvalRequest.file_url} />
+                            </div>
+                            <div className={viewerTab === 'annotate' ? 'block' : 'hidden'}>
+                                <AnnotatedSopViewer
+                                    requestId={approvalRequest.id}
+                                    annotations={[...persisted, ...draftViewerAnnotations]}
+                                    readOnly={!canAct}
+                                    onAddAnnotation={handleAddDraft}
+                                />
+                                {canAct && (
+                                    <p className="text-[10px] text-muted-foreground mt-2 italic">
+                                        Select any passage to attach a comment. Switch back to "View" anytime — drafts persist.
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -259,10 +290,17 @@ export function ApprovalDetailClient({
                                 <div className="space-y-3">
                                     {drafts.map(d => (
                                         <div key={d.id} className="border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 rounded-md">
-                                            <div className="flex items-start gap-2 mb-2 text-xs text-muted-foreground">
+                                            <div className="flex items-start gap-2 mb-1 text-xs text-muted-foreground">
                                                 <Quote className="h-3 w-3 mt-0.5 shrink-0" />
                                                 <span className="italic line-clamp-2">{d.quoted_text}</span>
                                             </div>
+                                            {(d.section_heading || d.line_number) && (
+                                                <p className="text-[10px] text-muted-foreground mb-2 pl-5">
+                                                    {d.section_heading && <>§ {d.section_heading} · </>}
+                                                    {d.line_number && <>line {d.line_number}</>}
+                                                    {d.char_offset != null && <> · char {d.char_offset}</>}
+                                                </p>
+                                            )}
                                             <p className="text-sm">{d.comment}</p>
                                             <div className="flex justify-end mt-2">
                                                 <Button size="sm" variant="ghost" onClick={() => handleRemoveDraft(d.id)} className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive">
@@ -329,10 +367,17 @@ export function ApprovalDetailClient({
                                                 )}
                                             </div>
                                             {c.quoted_text && (
-                                                <div className="flex items-start gap-2 mb-2 text-xs text-muted-foreground">
+                                                <div className="flex items-start gap-2 mb-1 text-xs text-muted-foreground">
                                                     <Quote className="h-3 w-3 mt-0.5 shrink-0" />
                                                     <span className="italic line-clamp-2">{c.quoted_text}</span>
                                                 </div>
+                                            )}
+                                            {(c.section_heading || c.line_number) && (
+                                                <p className="text-[10px] text-muted-foreground mb-2 pl-5">
+                                                    {c.section_heading && <>§ {c.section_heading} · </>}
+                                                    {c.line_number && <>line {c.line_number}</>}
+                                                    {c.char_offset != null && <> · char {c.char_offset}</>}
+                                                </p>
                                             )}
                                             <p className="text-sm">{c.comment}</p>
                                         </div>

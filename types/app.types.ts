@@ -87,6 +87,9 @@ export interface SopApprovalComment {
     quoted_text?: string | null;
     quote_context?: string | null;
     anchor_hash?: string | null;
+    line_number?: number | null;
+    char_offset?: number | null;
+    section_heading?: string | null;
     created_at: string;
 }
 
@@ -95,6 +98,9 @@ export interface SopAnnotationDraft {
     quoted_text?: string;
     quote_context?: string;
     anchor_hash?: string;
+    line_number?: number;
+    char_offset?: number;
+    section_heading?: string;
 }
 
 export interface SopAcknowledgement {
