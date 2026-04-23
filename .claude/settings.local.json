@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc *)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx tsc --noEmit --skipLibCheck)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)",
+      "Bash(grep -A 3 \"approval-detail-client.tsx$\\\\|annotated-sop-viewer.tsx$\\\\|preview/route.ts$\\\\|actions\\\\\\\\\\\\\\\\sop.ts$\" /tmp/lint.log)"
     ]
   }
 }

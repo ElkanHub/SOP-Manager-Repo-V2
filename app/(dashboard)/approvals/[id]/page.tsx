@@ -30,10 +30,6 @@ export default async function ApprovalDetailPage({ params }: Props) {
 
     const { data: isQa } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
 
-    if (!isQa) {
-        redirect('/dashboard')
-    }
-
     const { data: approvalRequest } = await serviceClient
         .from('sop_approval_requests')
         .select(`
@@ -47,6 +43,12 @@ export default async function ApprovalDetailPage({ params }: Props) {
     if (!approvalRequest) {
         notFound()
     }
+
+    const isSubmitterView = approvalRequest.submitted_by === user.id
+    if (!isQa && !isSubmitterView) {
+        redirect('/dashboard')
+    }
+    const mode: 'reviewer' | 'submitter' = isQa ? 'reviewer' : 'submitter'
 
     // Convert the raw DB storage path into a secure Microsoft Web Viewer compatible 1-hour signed URL.
     let signedFileUrl = approvalRequest.file_url
@@ -86,12 +88,13 @@ export default async function ApprovalDetailPage({ params }: Props) {
         .order('created_at', { ascending: true })
 
     return (
-        <ApprovalDetailClient 
+        <ApprovalDetailClient
             approvalRequest={clientApprovalRequest}
             allRequestsForSop={allRequestsForSop || []}
             comments={comments || []}
             currentUserId={user.id}
             isSelfSubmission={isSelfSubmission}
+            mode={mode}
         />
     )
 }

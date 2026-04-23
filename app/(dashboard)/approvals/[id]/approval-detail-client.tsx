@@ -1,17 +1,17 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, FileText, Send } from "lucide-react"
+import { ArrowLeft, CheckCircle2, AlertCircle, Loader2, FileText, Send, MessageSquare, Trash2, Quote } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
-import { SopViewer } from "@/components/library/sop-viewer"
+import { AnnotatedSopViewer, ViewerAnnotation } from "@/components/approvals/annotated-sop-viewer"
 import { approveSopRequest, requestChangesSop } from "@/actions/sop"
-import { SopApprovalRequest, Profile, SopRecord } from "@/types/app.types"
+import { SopApprovalRequest, Profile, SopRecord, SopAnnotationDraft } from "@/types/app.types"
 
 interface ApprovalDetailClientProps {
     approvalRequest: SopApprovalRequest & {
@@ -26,7 +26,10 @@ interface ApprovalDetailClientProps {
     })[]
     currentUserId: string
     isSelfSubmission: boolean
+    mode: 'reviewer' | 'submitter'
 }
+
+type DraftAnnotation = SopAnnotationDraft & { id: string }
 
 export function ApprovalDetailClient({
     approvalRequest,
@@ -34,6 +37,7 @@ export function ApprovalDetailClient({
     comments,
     currentUserId,
     isSelfSubmission,
+    mode,
 }: ApprovalDetailClientProps) {
     const [loading, setLoading] = useState(false)
     const [action, setAction] = useState<'approve' | 'changes' | null>(null)
@@ -41,9 +45,34 @@ export function ApprovalDetailClient({
     const [comment, setComment] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const [drafts, setDrafts] = useState<DraftAnnotation[]>([])
 
     const sop = approvalRequest.sops
     const submitter = approvalRequest.profiles
+    const isReviewer = mode === 'reviewer'
+    const canAct = isReviewer && approvalRequest.status === 'pending' && !isSelfSubmission
+
+    const persisted: ViewerAnnotation[] = useMemo(() =>
+        comments
+            .filter(c => !!c.quoted_text)
+            .map(c => ({
+                id: c.id,
+                comment: c.comment,
+                quoted_text: c.quoted_text,
+                quote_context: c.quote_context,
+                anchor_hash: c.anchor_hash,
+            })),
+    [comments])
+
+    const draftViewerAnnotations: ViewerAnnotation[] = drafts.map(d => ({ ...d, isDraft: true }))
+
+    const handleAddDraft = (a: SopAnnotationDraft) => {
+        setDrafts(prev => [...prev, { ...a, id: `draft-${crypto.randomUUID()}` }])
+    }
+
+    const handleRemoveDraft = (id: string) => {
+        setDrafts(prev => prev.filter(d => d.id !== id))
+    }
 
     const handleApprove = async () => {
         if (approvalRequest.type === 'update' && !changeType) {
@@ -54,14 +83,15 @@ export function ApprovalDetailClient({
         setLoading(true)
         setError(null)
         setAction('approve')
-        
+
         try {
             const result = await approveSopRequest(
-                approvalRequest.id, 
+                approvalRequest.id,
                 changeType || 'significant',
-                comment || undefined
+                comment || undefined,
+                drafts.map(({ id, ...rest }) => rest)
             )
-            
+
             if (!result.success) {
                 setError(result.error)
                 setAction(null)
@@ -73,10 +103,8 @@ export function ApprovalDetailClient({
             } else if (result.result === 'change_control_issued') {
                 setSuccess('Approved — Change Control issued for signing. Redirecting…')
             }
-            
-            setTimeout(() => {
-                window.location.href = '/approvals'
-            }, 2000)
+
+            setTimeout(() => { window.location.href = '/approvals' }, 2000)
         } catch (err: any) {
             setError(err.message || 'Failed to approve')
             setAction(null)
@@ -87,7 +115,7 @@ export function ApprovalDetailClient({
 
     const handleRequestChanges = async () => {
         if (!comment.trim()) {
-            setError('Please provide a comment explaining the requested changes')
+            setError('Please provide a summary explaining the requested changes')
             return
         }
 
@@ -95,24 +123,25 @@ export function ApprovalDetailClient({
         setError(null)
 
         try {
-            const result = await requestChangesSop(approvalRequest.id, comment)
-            
+            const result = await requestChangesSop(
+                approvalRequest.id,
+                comment,
+                drafts.map(({ id, ...rest }) => rest)
+            )
+
             if (!result.success) {
                 setError(result.error || 'Failed to request changes')
                 return
             }
 
             setSuccess('Changes requested. The submitter has been notified.')
-            setTimeout(() => {
-                window.location.href = '/approvals'
-            }, 2000)
+            setTimeout(() => { window.location.href = '/approvals' }, 2000)
         } catch (err: any) {
             setError(err.message || 'Failed to request changes')
         } finally {
             setLoading(false)
         }
     }
-
 
     return (
         <div className="container mx-auto py-6">
@@ -153,8 +182,11 @@ export function ApprovalDetailClient({
                             </Badge>
                         </div>
                         <div className="p-4">
-                            <SopViewer 
-                                fileUrl={approvalRequest.file_url}
+                            <AnnotatedSopViewer
+                                requestId={approvalRequest.id}
+                                annotations={[...persisted, ...draftViewerAnnotations]}
+                                readOnly={!canAct}
+                                onAddAnnotation={handleAddDraft}
                             />
                         </div>
                     </div>
@@ -191,7 +223,7 @@ export function ApprovalDetailClient({
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground">Status:</span>
-                                        <Badge 
+                                        <Badge
                                             variant="outline"
                                             className={
                                                 approvalRequest.status === 'pending' ? 'border-blue-500 text-blue-600 dark:text-blue-400' :
@@ -216,6 +248,37 @@ export function ApprovalDetailClient({
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Draft annotations composer (reviewer, active request only) */}
+                    {canAct && drafts.length > 0 && (
+                        <Card>
+                            <CardContent className="p-4">
+                                <h3 className="font-medium text-sm text-muted-foreground mb-3">
+                                    Draft annotations ({drafts.length})
+                                </h3>
+                                <div className="space-y-3">
+                                    {drafts.map(d => (
+                                        <div key={d.id} className="border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-3 rounded-md">
+                                            <div className="flex items-start gap-2 mb-2 text-xs text-muted-foreground">
+                                                <Quote className="h-3 w-3 mt-0.5 shrink-0" />
+                                                <span className="italic line-clamp-2">{d.quoted_text}</span>
+                                            </div>
+                                            <p className="text-sm">{d.comment}</p>
+                                            <div className="flex justify-end mt-2">
+                                                <Button size="sm" variant="ghost" onClick={() => handleRemoveDraft(d.id)} className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive">
+                                                    <Trash2 className="h-3 w-3 mr-1" />
+                                                    Remove
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-3">
+                                    These will be attached when you Approve or Request Changes.
+                                </p>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {allRequestsForSop.length > 1 && (
                         <Card>
@@ -248,18 +311,30 @@ export function ApprovalDetailClient({
                     {comments.length > 0 && (
                         <Card>
                             <CardContent className="p-4">
-                                <h3 className="font-medium text-sm text-muted-foreground mb-3">QA Comments</h3>
+                                <h3 className="font-medium text-sm text-muted-foreground mb-3 flex items-center gap-2">
+                                    <MessageSquare className="h-4 w-4" />
+                                    QA Comments ({comments.length})
+                                </h3>
                                 <div className="space-y-3">
-                                    {comments.map(comment => (
-                                        <div key={comment.id} className="bg-muted dark:bg-muted/50 p-3 rounded-md">
+                                    {comments.map(c => (
+                                        <div key={c.id} className={`p-3 rounded-md ${c.quoted_text ? 'border border-amber-200 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/10' : 'bg-muted dark:bg-muted/50'}`}>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <UserAvatar user={comment.profiles as any} size="sm" />
-                                                <span className="text-sm font-medium">{comment.profiles?.full_name}</span>
+                                                <UserAvatar user={c.profiles as any} size="sm" />
+                                                <span className="text-sm font-medium">{c.profiles?.full_name}</span>
                                                 <span className="text-xs text-muted-foreground">
-                                                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                                                    {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
                                                 </span>
+                                                {c.action === 'changes_requested' && (
+                                                    <Badge variant="outline" className="text-[9px] border-amber-500 text-amber-600">summary</Badge>
+                                                )}
                                             </div>
-                                            <p className="text-sm">{comment.comment}</p>
+                                            {c.quoted_text && (
+                                                <div className="flex items-start gap-2 mb-2 text-xs text-muted-foreground">
+                                                    <Quote className="h-3 w-3 mt-0.5 shrink-0" />
+                                                    <span className="italic line-clamp-2">{c.quoted_text}</span>
+                                                </div>
+                                            )}
+                                            <p className="text-sm">{c.comment}</p>
                                         </div>
                                     ))}
                                 </div>
@@ -267,7 +342,7 @@ export function ApprovalDetailClient({
                         </Card>
                     )}
 
-                    {approvalRequest.status === 'pending' && (
+                    {canAct && (
                         <Card>
                             <CardContent className="p-4 space-y-4">
                                 {isSelfSubmission ? (
@@ -277,9 +352,8 @@ export function ApprovalDetailClient({
                                 ) : (
                                     <>
                                         <div className="space-y-2">
-                                            {/* Approve — two-step: click to reveal confirm, then confirm fires handleApprove */}
                                             {action !== 'approve' ? (
-                                                <Button 
+                                                <Button
                                                     onClick={() => setAction('approve')}
                                                     disabled={loading}
                                                     className="w-full bg-green-600 hover:bg-green-700"
@@ -293,7 +367,7 @@ export function ApprovalDetailClient({
                                                         <span className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-400">Step 2: Classification</span>
                                                         <Button variant="ghost" size="sm" onClick={() => setAction(null)} className="h-6 w-6 p-0 text-green-700">×</Button>
                                                     </div>
-                                                    
+
                                                     {approvalRequest.type === 'update' ? (
                                                         <div className="space-y-3">
                                                             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Classify this update before activation:</p>
@@ -301,8 +375,8 @@ export function ApprovalDetailClient({
                                                                 <button
                                                                     onClick={() => setChangeType('minor')}
                                                                     className={`p-3 rounded-xl border text-left transition-all ${
-                                                                        changeType === 'minor' 
-                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm' 
+                                                                        changeType === 'minor'
+                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm'
                                                                         : 'bg-transparent border-slate-200 dark:border-slate-800 opacity-60'
                                                                     }`}
                                                                 >
@@ -312,8 +386,8 @@ export function ApprovalDetailClient({
                                                                 <button
                                                                     onClick={() => setChangeType('significant')}
                                                                     className={`p-3 rounded-xl border text-left transition-all ${
-                                                                        changeType === 'significant' 
-                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm' 
+                                                                        changeType === 'significant'
+                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm'
                                                                         : 'bg-transparent border-slate-200 dark:border-slate-800 opacity-60'
                                                                     }`}
                                                                 >
@@ -330,13 +404,19 @@ export function ApprovalDetailClient({
 
                                                     <div className="space-y-2">
                                                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Optional justification:</p>
-                                                        <Textarea 
+                                                        <Textarea
                                                             placeholder="Why was this classification chosen?"
                                                             value={comment}
                                                             onChange={(e) => setComment(e.target.value)}
                                                             className="text-xs min-h-[60px] bg-white/50 dark:bg-black/20"
                                                         />
                                                     </div>
+
+                                                    {drafts.length > 0 && (
+                                                        <p className="text-[10px] text-muted-foreground italic">
+                                                            {drafts.length} highlighted comment{drafts.length === 1 ? '' : 's'} will be attached.
+                                                        </p>
+                                                    )}
 
                                                     <Button
                                                         onClick={handleApprove}
@@ -353,7 +433,7 @@ export function ApprovalDetailClient({
                                                 </div>
                                             )}
 
-                                            <Button 
+                                            <Button
                                                 onClick={() => setAction('changes')}
                                                 variant="outline"
                                                 disabled={loading || action === 'approve'}
@@ -366,14 +446,19 @@ export function ApprovalDetailClient({
 
                                         {action === 'changes' && (
                                             <div className="space-y-2">
-                                                <Textarea 
-                                                    placeholder="Explain what changes are needed..."
+                                                <Textarea
+                                                    placeholder={drafts.length > 0 ? 'Summary of what the submitter needs to address…' : 'Explain what changes are needed…'}
                                                     value={comment}
                                                     onChange={(e) => setComment(e.target.value)}
                                                     rows={3}
                                                 />
+                                                {drafts.length > 0 && (
+                                                    <p className="text-[10px] text-muted-foreground italic">
+                                                        {drafts.length} highlighted comment{drafts.length === 1 ? '' : 's'} will be attached.
+                                                    </p>
+                                                )}
                                                 <div className="flex gap-2">
-                                                    <Button 
+                                                    <Button
                                                         onClick={handleRequestChanges}
                                                         disabled={loading}
                                                         size="sm"
@@ -386,7 +471,7 @@ export function ApprovalDetailClient({
                                                         )}
                                                         Send
                                                     </Button>
-                                                    <Button 
+                                                    <Button
                                                         variant="ghost"
                                                         size="sm"
                                                         onClick={() => {
@@ -401,6 +486,14 @@ export function ApprovalDetailClient({
                                         )}
                                     </>
                                 )}
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {!isReviewer && (
+                        <Card>
+                            <CardContent className="p-4 text-sm text-muted-foreground">
+                                Viewing as submitter — reviewer actions are hidden. Highlighted passages are marked inline.
                             </CardContent>
                         </Card>
                     )}

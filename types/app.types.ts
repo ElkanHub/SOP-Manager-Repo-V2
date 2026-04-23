@@ -84,7 +84,17 @@ export interface SopApprovalComment {
     author_id: string;
     comment: string;
     action?: 'comment' | 'changes_requested' | 'approved' | 'resubmitted';
+    quoted_text?: string | null;
+    quote_context?: string | null;
+    anchor_hash?: string | null;
     created_at: string;
+}
+
+export interface SopAnnotationDraft {
+    comment: string;
+    quoted_text?: string;
+    quote_context?: string;
+    anchor_hash?: string;
 }
 
 export interface SopAcknowledgement {

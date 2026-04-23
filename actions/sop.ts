@@ -330,10 +330,40 @@ export type ApproveResult =
     | { success: true; result: 'activated' | 'change_control_issued'; changeControlId?: string }
     | { success: false; error: string }
 
+type Annotation = {
+    comment: string
+    quoted_text?: string
+    quote_context?: string
+    anchor_hash?: string
+}
+
+async function insertApprovalAnnotations(
+    supabase: any,
+    requestId: string,
+    authorId: string,
+    annotations: Annotation[] | undefined
+) {
+    if (!annotations || annotations.length === 0) return
+    const rows = annotations
+        .filter(a => a.comment?.trim())
+        .map(a => ({
+            request_id: requestId,
+            author_id: authorId,
+            comment: a.comment,
+            action: 'comment',
+            quoted_text: a.quoted_text || null,
+            quote_context: a.quote_context || null,
+            anchor_hash: a.anchor_hash || null,
+        }))
+    if (rows.length === 0) return
+    await supabase.from('sop_approval_comments').insert(rows)
+}
+
 export async function approveSopRequest(
-    requestId: string, 
+    requestId: string,
     changeType: 'minor' | 'significant' = 'significant',
-    qaNote?: string
+    qaNote?: string,
+    annotations?: Annotation[]
 ): Promise<ApproveResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
@@ -369,6 +399,8 @@ export async function approveSopRequest(
         if (result.error) {
             return { success: false, error: result.error.message }
         }
+
+        await insertApprovalAnnotations(supabase, requestId, user.id, annotations)
 
         const resultData = result.data as { result: string; change_control_id?: string }
 
@@ -458,7 +490,8 @@ export async function approveSopRequest(
 
 export async function requestChangesSop(
     requestId: string,
-    comment: string
+    comment: string,
+    annotations?: Annotation[]
 ): Promise<{ success: boolean; error?: string }> {
     const supabase = await createServiceClient()
     const client = await createClient()
@@ -511,6 +544,9 @@ export async function requestChangesSop(
         return { success: false, error: commentError.message }
     }
 
+    await insertApprovalAnnotations(supabase, requestId, user.id, annotations)
+    const annotationCount = (annotations || []).filter(a => a.comment?.trim()).length
+
     await supabase
         .from('sop_approval_requests')
         .update({ status: 'changes_requested', updated_at: new Date().toISOString() })
@@ -523,7 +559,9 @@ export async function requestChangesSop(
             sender_id: user.id,
             type: 'approval_update',
             title: `Changes requested — ${sopLabel}`,
-            body: `QA requested changes to "${sopTitle}". Note from reviewer: ${comment}`,
+            body: annotationCount > 0
+                ? `QA requested changes to "${sopTitle}" with ${annotationCount} highlighted comment${annotationCount === 1 ? '' : 's'}. Summary: ${comment}`
+                : `QA requested changes to "${sopTitle}". Note from reviewer: ${comment}`,
             entity_type: 'sop',
             entity_id: request.sop_id,
             audience: 'self',
@@ -538,7 +576,9 @@ export async function requestChangesSop(
                     to: targetUser.user.email,
                     subject: `Revision Requested: ${request.sop_id}`,
                     title: "SOP Action Required",
-                    message: `QA has reviewed your SOP and requested the following changes: \n\n${comment}`,
+                    message: annotationCount > 0
+                        ? `QA has reviewed your SOP and left ${annotationCount} highlighted comment${annotationCount === 1 ? '' : 's'} along with this summary:\n\n${comment}\n\nOpen the request to view each annotation inline.`
+                        : `QA has reviewed your SOP and requested the following changes: \n\n${comment}`,
                     buttonText: "Revise SOP"
                 })
             }
