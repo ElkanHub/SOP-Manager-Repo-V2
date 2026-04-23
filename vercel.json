@@ -1,6 +1,8 @@
 {
-  "crons": [
-    { "path": "/api/cron/pm-alerts", "schedule": "0 7 * * *" },
-    { "path": "/api/cron/overdue-check", "schedule": "0 6 * * *" }
-  ]
-}
+    "crons": [
+      { "path": "/api/cron/pm-alerts", "schedule": "0 8 * * *" },
+      { "path": "/api/cron/overdue-check", "schedule": "0 9 * * *" },
+      { "path": "/api/cron/training-deadline-check", "schedule": "0 10 * * *" },
+      { "path": "/api/cron/refresh-risk-assessment", "schedule": "0 */6 * * *" }
+    ]
+  }
