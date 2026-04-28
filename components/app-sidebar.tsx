@@ -33,6 +33,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [pendingApprovals, setPendingApprovals] = React.useState(0)
   const [pendingEquipmentCount, setPendingEquipmentCount] = React.useState(0)
   const [pendingRequests, setPendingRequests] = React.useState(0)
+  const [pendingHubSubmissions, setPendingHubSubmissions] = React.useState(0)
   const [pendingTraining, setPendingTraining] = React.useState(0)
   const [reviewModules, setReviewModules] = React.useState(0)
   const supabase = createClient()
@@ -119,6 +120,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           .in('status', ['submitted', 'received', 'approved']),
       ])
       setPendingRequests((rfsCount || 0) + (legacyCount || 0))
+      setPendingHubSubmissions(rfsCount || 0)
     } else {
       const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
         supabase
@@ -235,6 +237,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       url: "/requests/hub",
       icon: <Sparkles className="w-5 h-5" />,
       isActive: pathname.startsWith("/requests/hub"),
+      badge: pendingHubSubmissions,
     }] : []),
     {
       title: "Calendar",
