@@ -82,7 +82,7 @@ export default function PricingSection() {
           <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
             Plans &amp; Pricing
           </p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl">
             Pick a plan. Skip the binder.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -97,7 +97,7 @@ export default function PricingSection() {
               className={cn(
                 "rounded-full px-5 py-2 text-sm font-medium transition-all",
                 period === "monthly"
-                  ? "bg-brand-navy text-white dark:bg-white dark:text-brand-navy"
+                  ? "bg-brand-navy text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -108,7 +108,7 @@ export default function PricingSection() {
               className={cn(
                 "inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
                 period === "annual"
-                  ? "bg-brand-navy text-white dark:bg-white dark:text-brand-navy"
+                  ? "bg-brand-navy text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -146,7 +146,7 @@ export default function PricingSection() {
                 </div>
               )}
 
-              <h3 className="text-lg font-semibold text-brand-navy dark:text-white">
+              <h3 className="text-lg font-semibold text-brand-navy">
                 {tier.name}
               </h3>
               <p className="mt-2 min-h-[2.75rem] text-sm text-muted-foreground">{tier.blurb}</p>
@@ -154,13 +154,13 @@ export default function PricingSection() {
               <div className="mt-6">
                 {tier.price ? (
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-5xl font-semibold tracking-tight text-brand-navy dark:text-white">
+                    <span className="text-5xl font-semibold tracking-tight text-brand-navy">
                       ${tier.price[period]}
                     </span>
                     <span className="text-sm text-muted-foreground">/ user / mo</span>
                   </div>
                 ) : (
-                  <div className="text-3xl font-semibold tracking-tight text-brand-navy dark:text-white">
+                  <div className="text-3xl font-semibold tracking-tight text-brand-navy">
                     Custom
                   </div>
                 )}
@@ -180,7 +180,7 @@ export default function PricingSection() {
                 className={cn(
                   "mt-7 inline-flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition-all active:translate-y-px",
                   tier.highlight
-                    ? "bg-brand-navy text-white shadow-[0_8px_24px_-8px_rgba(15,23,42,0.4)] hover:bg-brand-navy/90 dark:bg-white dark:text-brand-navy"
+                    ? "bg-brand-navy text-white shadow-[0_8px_24px_-8px_rgba(15,23,42,0.4)] hover:bg-brand-navy/90"
                     : "border border-border bg-background text-foreground hover:bg-muted"
                 )}
               >

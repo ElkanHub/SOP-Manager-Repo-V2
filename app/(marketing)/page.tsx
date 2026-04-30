@@ -44,7 +44,7 @@ function SiteNav() {
           <span className="grid size-8 place-items-center rounded-lg bg-brand-navy text-white">
             <FileCheck2 className="size-4" />
           </span>
-          <span className="text-[15px] font-semibold tracking-tight text-brand-navy dark:text-white">
+          <span className="text-[15px] font-semibold tracking-tight text-brand-navy">
             SOP-Guard Pro
           </span>
         </Link>
@@ -76,7 +76,7 @@ function SiteNav() {
           </Link>
           <Link
             href="/signup"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-navy px-4 text-sm font-medium text-white shadow-sm transition-all hover:bg-brand-navy/90 active:translate-y-px dark:bg-white dark:text-brand-navy dark:hover:bg-white/90"
+            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand-navy px-4 text-sm font-medium text-white shadow-sm transition-all hover:bg-brand-navy/90 active:translate-y-px"
           >
             Get started
             <ArrowRight className="size-4" />
@@ -91,38 +91,34 @@ function SiteNav() {
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(60% 50% at 75% 35%, rgba(2,132,199,0.12), transparent 60%), radial-gradient(40% 40% at 15% 80%, rgba(13,148,136,0.10), transparent 60%)",
-        }}
+    <section className="relative isolate overflow-hidden bg-brand-navy">
+      <Image
+        src="/marketing/hero-dashboard.webp"
+        alt="SOP-Guard Pro dashboard showing active SOPs, pending approvals, PM compliance, and change controls."
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] dark:opacity-[0.06]"
-        style={{
-          backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }}
+        className="absolute inset-0 bg-gradient-to-r from-brand-navy via-brand-navy/85 to-brand-navy/10 sm:via-brand-navy/70 sm:to-transparent lg:from-brand-navy/95 lg:via-brand-navy/55 lg:to-transparent"
       />
 
-      <div className="mx-auto grid max-w-7xl gap-12 px-6 pt-16 pb-24 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:pt-24 lg:pb-32">
-        <div className="lg:col-span-5 lg:pt-10">
-          <span className="inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue/5 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] text-brand-blue uppercase">
+      <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-44 xl:py-52">
+        <div className="max-w-xl">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85 backdrop-blur-sm">
             <Sparkles className="size-3" />
             Quality management, reimagined
           </span>
 
-          <h1 className="mt-6 font-sans text-5xl leading-[1.05] font-semibold tracking-tight text-balance text-brand-navy sm:text-6xl lg:text-[68px] dark:text-white">
+          <h1 className="mt-6 text-5xl leading-[1.05] font-semibold tracking-tight text-balance text-white sm:text-6xl lg:text-[68px]">
             Your procedures, in&nbsp;order.
             <br />
-            <span className="text-brand-blue">Your audit, ready.</span>
+            <span className="text-brand-teal">Your audit, ready.</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-6 max-w-lg text-lg leading-relaxed text-white/75">
             Manage SOPs, approvals, equipment PMs, and training from one place — with a real-time
             Pulse that surfaces what needs your attention next.
           </p>
@@ -130,42 +126,30 @@ function Hero() {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/signup"
-              className="group inline-flex h-12 items-center gap-2 rounded-xl bg-brand-navy px-6 text-sm font-medium text-white shadow-[0_8px_24px_-8px_rgba(15,23,42,0.4)] transition-all hover:bg-brand-navy/90 active:translate-y-px dark:bg-white dark:text-brand-navy dark:shadow-[0_8px_24px_-8px_rgba(2,132,199,0.5)] dark:hover:bg-white/90"
+              className="group inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-semibold text-brand-navy shadow-[0_12px_30px_-10px_rgba(0,0,0,0.5)] transition-all hover:bg-white/90 active:translate-y-px"
             >
               Get started
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
               href="/contact"
-              className="inline-flex h-12 items-center gap-2 rounded-xl border border-border bg-background px-6 text-sm font-medium text-foreground transition-colors hover:border-foreground/30 hover:bg-muted"
+              className="inline-flex h-12 items-center gap-2 rounded-xl border border-white/30 bg-white/5 px-6 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:border-white/50 hover:bg-white/10"
             >
               <Calendar className="size-4" />
               Book a demo
             </Link>
             <Link
               href="/login"
-              className="inline-flex h-12 items-center px-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex h-12 items-center px-2 text-sm font-medium text-white/75 transition-colors hover:text-white"
             >
               Sign in
             </Link>
           </div>
 
-          <p className="mt-8 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">No credit card required.</span> Built for
-            QA-led teams in pharma, biotech, and food manufacturing.
+          <p className="mt-8 text-sm text-white/65">
+            <span className="font-medium text-white">No credit card required.</span> Built for QA-led
+            teams in pharma, biotech, and food manufacturing.
           </p>
-        </div>
-
-        <div className="relative lg:col-span-7">
-          <Image
-            src="/marketing/hero-dashboard.webp"
-            alt="SOP-Guard Pro dashboard showing active SOPs, pending approvals, PM compliance, and change controls."
-            width={2400}
-            height={1416}
-            priority
-            sizes="(min-width: 1024px) 70vw, 100vw"
-            className="w-full lg:absolute lg:top-1/2 lg:left-0 lg:w-[125%] lg:max-w-none lg:-translate-y-1/2"
-          />
         </div>
       </div>
     </section>
@@ -233,7 +217,7 @@ function RolesGrid() {
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
           Built for every role
         </p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl">
           One workspace. Every team on the floor.
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
@@ -256,12 +240,12 @@ function RolesGrid() {
                     ? "grid size-11 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
                     : role.accent === "teal"
                     ? "grid size-11 place-items-center rounded-xl bg-brand-teal/10 text-brand-teal ring-1 ring-brand-teal/20"
-                    : "grid size-11 place-items-center rounded-xl bg-brand-navy/5 text-brand-navy ring-1 ring-brand-navy/10 dark:bg-white/5 dark:text-white dark:ring-white/10"
+                    : "grid size-11 place-items-center rounded-xl bg-brand-navy/5 text-brand-navy ring-1 ring-brand-navy/10"
                 }
               >
                 <Icon className="size-5" />
               </div>
-              <h3 className="mt-6 text-lg font-semibold text-brand-navy dark:text-white">
+              <h3 className="mt-6 text-lg font-semibold text-brand-navy">
                 {role.title}
               </h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{role.body}</p>
@@ -309,7 +293,7 @@ function FAQ() {
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
           Frequently asked questions
         </p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl">
           Answers, not corporate fog.
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
@@ -380,7 +364,7 @@ function FinalCTAGrid() {
     <section className="border-t border-border/60 bg-background py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+          <h2 className="text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl">
             Get started.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -402,12 +386,12 @@ function FinalCTAGrid() {
                       ? "grid size-12 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue"
                       : card.accent === "teal"
                       ? "grid size-12 place-items-center rounded-xl bg-brand-teal/10 text-brand-teal"
-                      : "grid size-12 place-items-center rounded-xl bg-brand-navy/10 text-brand-navy dark:bg-white/10 dark:text-white"
+                      : "grid size-12 place-items-center rounded-xl bg-brand-navy/10 text-brand-navy"
                   }
                 >
                   <Icon className="size-6" />
                 </div>
-                <h3 className="mt-6 text-xl font-semibold text-brand-navy dark:text-white">
+                <h3 className="mt-6 text-xl font-semibold text-brand-navy">
                   {card.title}
                 </h3>
                 <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{card.body}</p>
@@ -475,7 +459,7 @@ function SiteFooter() {
               <span className="grid size-8 place-items-center rounded-lg bg-brand-navy text-white">
                 <FileCheck2 className="size-4" />
               </span>
-              <span className="text-[15px] font-semibold tracking-tight text-brand-navy dark:text-white">
+              <span className="text-[15px] font-semibold tracking-tight text-brand-navy">
                 SOP-Guard Pro
               </span>
             </Link>

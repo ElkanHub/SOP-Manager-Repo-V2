@@ -114,7 +114,7 @@ export default function TabbedBenefits() {
           <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
             Built around the work
           </p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl">
             Three pillars. One controlled system.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
@@ -137,7 +137,7 @@ export default function TabbedBenefits() {
                 className={cn(
                   "rounded-full px-5 py-2 text-sm font-medium transition-all",
                   activeId === tab.id
-                    ? "bg-brand-navy text-white shadow-sm dark:bg-white dark:text-brand-navy"
+                    ? "bg-brand-navy text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -149,7 +149,7 @@ export default function TabbedBenefits() {
 
         <div key={active.id} className="mt-16 animate-in fade-in duration-500">
           <div className="mx-auto max-w-3xl text-center">
-            <h3 className="text-3xl font-semibold tracking-tight text-balance text-brand-navy sm:text-4xl dark:text-white">
+            <h3 className="text-3xl font-semibold tracking-tight text-balance text-brand-navy sm:text-4xl">
               {active.headline}
             </h3>
             <p className="mt-3 text-base text-muted-foreground sm:text-lg">{active.subline}</p>
@@ -165,7 +165,7 @@ export default function TabbedBenefits() {
                 )}
               >
                 <div>
-                  <h4 className="text-2xl font-semibold tracking-tight text-balance text-brand-navy sm:text-3xl dark:text-white">
+                  <h4 className="text-2xl font-semibold tracking-tight text-balance text-brand-navy sm:text-3xl">
                     {panel.title}
                   </h4>
                   <p className="mt-4 text-[17px] leading-relaxed text-muted-foreground">
@@ -426,8 +426,8 @@ function CountersMock() {
     <div className="flex items-center justify-around gap-6">
       <div className="text-center">
         <div className="relative inline-block">
-          <div className="grid size-16 place-items-center rounded-2xl bg-brand-navy/5 dark:bg-white/5">
-            <Bell className="size-8 text-brand-navy dark:text-white" />
+          <div className="grid size-16 place-items-center rounded-2xl bg-brand-navy/5">
+            <Bell className="size-8 text-brand-navy" />
           </div>
           <span className="absolute -right-2 -top-2 grid size-7 place-items-center rounded-full bg-brand-teal text-xs font-bold text-white">
             12

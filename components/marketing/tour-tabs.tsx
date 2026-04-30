@@ -60,7 +60,7 @@ export default function TourTabs() {
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
           See it in action
         </p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl">
           A tour through the floor.
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
@@ -85,7 +85,7 @@ export default function TourTabs() {
                 className={cn(
                   "inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
                   isActive
-                    ? "bg-brand-navy text-white shadow-sm dark:bg-white dark:text-brand-navy"
+                    ? "bg-brand-navy text-white shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -102,7 +102,7 @@ export default function TourTabs() {
         className="mt-14 grid items-center gap-12 animate-in fade-in duration-500 lg:grid-cols-2 lg:gap-16"
       >
         <div className="lg:order-2">
-          <h3 className="text-3xl font-semibold tracking-tight text-balance text-brand-navy sm:text-4xl dark:text-white">
+          <h3 className="text-3xl font-semibold tracking-tight text-balance text-brand-navy sm:text-4xl">
             {active.headline}
           </h3>
           <p className="mt-5 text-[17px] leading-relaxed text-muted-foreground">{active.body}</p>
