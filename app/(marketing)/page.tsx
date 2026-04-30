@@ -2,17 +2,20 @@ import Image from "next/image"
 import Link from "next/link"
 import {
   ArrowRight,
-  BookOpenCheck,
-  CheckCircle2,
-  ClipboardSignature,
+  Calendar,
+  ChevronDown,
+  ClipboardCheck,
   FileCheck2,
-  GraduationCap,
-  History,
-  Radar,
-  ShieldCheck,
+  FlaskConical,
   Sparkles,
+  ShieldCheck,
+  UserCog,
   Wrench,
 } from "lucide-react"
+
+import TabbedBenefits from "@/components/marketing/tabbed-benefits"
+import TourTabs from "@/components/marketing/tour-tabs"
+import PricingSection from "@/components/marketing/pricing-section"
 
 export default function LandingPage() {
   return (
@@ -20,10 +23,12 @@ export default function LandingPage() {
       <SiteNav />
       <Hero />
       <TrustStrip />
-      <Pillars />
-      <CapabilityGrid />
-      <ComplianceBand />
-      <FinalCTA />
+      <TabbedBenefits />
+      <TourTabs />
+      <RolesGrid />
+      <PricingSection />
+      <FAQ />
+      <FinalCTAGrid />
       <SiteFooter />
     </>
   )
@@ -33,7 +38,7 @@ export default function LandingPage() {
 
 function SiteNav() {
   return (
-    <header className="sticky top-0 z-50 border-b border-transparent bg-background/70 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-transparent bg-background/75 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-lg bg-brand-navy text-white">
@@ -45,14 +50,17 @@ function SiteNav() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <a href="#pillars" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+          <a href="#features" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Features
           </a>
-          <a href="#capabilities" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Capabilities
+          <a href="#tour" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Tour
           </a>
-          <a href="#compliance" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-            Compliance
+          <a href="#pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            Pricing
+          </a>
+          <a href="#faq" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            FAQ
           </a>
           <Link href="/docs" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             Docs
@@ -84,7 +92,6 @@ function SiteNav() {
 function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* Ambient background */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -97,21 +104,19 @@ function Hero() {
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 opacity-[0.04] dark:opacity-[0.06]"
         style={{
-          backgroundImage:
-            "radial-gradient(currentColor 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(currentColor 1px, transparent 1px)",
           backgroundSize: "22px 22px",
         }}
       />
 
       <div className="mx-auto grid max-w-7xl gap-12 px-6 pt-16 pb-24 lg:grid-cols-12 lg:gap-8 lg:px-8 lg:pt-24 lg:pb-32">
-        {/* Copy */}
-        <div className="lg:col-span-6 lg:pt-10">
+        <div className="lg:col-span-5 lg:pt-10">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue/5 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] text-brand-blue uppercase">
             <Sparkles className="size-3" />
             Quality management, reimagined
           </span>
 
-          <h1 className="mt-6 font-sans text-5xl leading-[1.05] font-semibold tracking-tight text-brand-navy sm:text-6xl lg:text-[68px] dark:text-white">
+          <h1 className="mt-6 font-sans text-5xl leading-[1.05] font-semibold tracking-tight text-balance text-brand-navy sm:text-6xl lg:text-[68px] dark:text-white">
             Your procedures, in&nbsp;order.
             <br />
             <span className="text-brand-blue">Your audit, ready.</span>
@@ -131,8 +136,15 @@ function Hero() {
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
-              href="/login"
+              href="/contact"
               className="inline-flex h-12 items-center gap-2 rounded-xl border border-border bg-background px-6 text-sm font-medium text-foreground transition-colors hover:border-foreground/30 hover:bg-muted"
+            >
+              <Calendar className="size-4" />
+              Book a demo
+            </Link>
+            <Link
+              href="/login"
+              className="inline-flex h-12 items-center px-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               Sign in
             </Link>
@@ -144,23 +156,16 @@ function Hero() {
           </p>
         </div>
 
-        {/* Visual */}
-        <div className="relative lg:col-span-6">
-          <div className="relative lg:-mr-24 xl:-mr-40">
-            <div
-              aria-hidden
-              className="absolute -inset-8 -z-10 rounded-[40px] bg-gradient-to-br from-brand-blue/10 via-transparent to-brand-teal/10 blur-2xl"
-            />
-            <Image
-              src="/marketing/hero-dashboard.webp"
-              alt="SOP-Guard Pro dashboard showing active SOPs, pending approvals, PM compliance, and change controls."
-              width={2000}
-              height={1180}
-              priority
-              sizes="(min-width: 1024px) 60vw, 100vw"
-              className="relative w-full rounded-2xl"
-            />
-          </div>
+        <div className="relative lg:col-span-7">
+          <Image
+            src="/marketing/hero-dashboard.webp"
+            alt="SOP-Guard Pro dashboard showing active SOPs, pending approvals, PM compliance, and change controls."
+            width={2400}
+            height={1416}
+            priority
+            sizes="(min-width: 1024px) 70vw, 100vw"
+            className="w-full lg:absolute lg:top-1/2 lg:left-0 lg:w-[125%] lg:max-w-none lg:-translate-y-1/2"
+          />
         </div>
       </div>
     </section>
@@ -192,234 +197,227 @@ function TrustStrip() {
   )
 }
 
-/* ----------------------------------------------------------------- Pillars */
+/* ----------------------------------------------------------------- Roles */
 
-function Pillars() {
-  const pillars = [
+function RolesGrid() {
+  const roles = [
     {
-      icon: BookOpenCheck,
-      eyebrow: "Library",
-      title: "One library, every procedure.",
-      body:
-        "Versioned SOPs, locked during change control, with department visibility built in. Upload .docx and render read-only — no risk of accidental edits.",
-      accent: "brand-navy",
+      icon: ShieldCheck,
+      title: "QA Manager",
+      body: "Approval authority, signature audits, deviation visibility — all in one queue. The role the system was built around.",
+      accent: "navy",
     },
     {
-      icon: ClipboardSignature,
-      eyebrow: "Approvals",
-      title: "Sign-offs without surprises.",
-      body:
-        "QA-routed approvals with snapshot signatories, mobile signature capture, and immutable signature certificates. Every signature accounted for.",
-      accent: "brand-blue",
+      icon: Wrench,
+      title: "Manufacturing Lead",
+      body: "Active SOPs at the line, equipment PMs on the calendar, training compliance tracked per operator.",
+      accent: "blue",
     },
     {
-      icon: Radar,
-      eyebrow: "Pulse",
-      title: "The Pulse never sleeps.",
-      body:
-        "Real-time alerts for pending approvals, equipment PMs due, expiring training, and open change controls — surfaced the moment they happen.",
-      accent: "brand-teal",
+      icon: FlaskConical,
+      title: "Lab Tech / Operator",
+      body: "Quick search, mobile sign-offs, training assignments. The interface stays out of your way.",
+      accent: "teal",
     },
-  ]
+    {
+      icon: ClipboardCheck,
+      title: "Auditor / Inspector",
+      body: "Full audit trail, signature certificates, immutable history. Pull a report and walk into the inspection cold.",
+      accent: "navy",
+    },
+  ] as const
 
   return (
-    <section id="pillars" className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+    <section id="roles" className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
-          Built around the work
+          Built for every role
         </p>
-        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-brand-navy sm:text-5xl dark:text-white">
-          Three pillars. One controlled system.
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+          One workspace. Every team on the floor.
         </h2>
         <p className="mt-4 text-lg text-muted-foreground">
-          Replace the binder, the spreadsheet, and the email chain with a single source of truth
-          your inspectors will actually trust.
+          Tailored views for the people doing the work — and an immutable audit trail for the
+          people checking it.
         </p>
       </div>
 
-      <div className="mt-16 grid gap-6 lg:grid-cols-3">
-        {pillars.map((p) => (
-          <div
-            key={p.eyebrow}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-soft"
-          >
-            <div className="grid size-11 place-items-center rounded-xl bg-brand-navy/5 text-brand-navy ring-1 ring-brand-navy/10 dark:bg-white/5 dark:text-white dark:ring-white/10">
-              <p.icon className="size-5" />
+      <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {roles.map((role) => {
+          const Icon = role.icon
+          return (
+            <div
+              key={role.title}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-7 transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-soft"
+            >
+              <div
+                className={
+                  role.accent === "blue"
+                    ? "grid size-11 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue ring-1 ring-brand-blue/20"
+                    : role.accent === "teal"
+                    ? "grid size-11 place-items-center rounded-xl bg-brand-teal/10 text-brand-teal ring-1 ring-brand-teal/20"
+                    : "grid size-11 place-items-center rounded-xl bg-brand-navy/5 text-brand-navy ring-1 ring-brand-navy/10 dark:bg-white/5 dark:text-white dark:ring-white/10"
+                }
+              >
+                <Icon className="size-5" />
+              </div>
+              <h3 className="mt-6 text-lg font-semibold text-brand-navy dark:text-white">
+                {role.title}
+              </h3>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{role.body}</p>
             </div>
-            <p className="mt-6 text-xs font-semibold tracking-[0.16em] text-muted-foreground uppercase">
-              {p.eyebrow}
-            </p>
-            <h3 className="mt-2 text-xl font-semibold text-brand-navy dark:text-white">
-              {p.title}
-            </h3>
-            <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{p.body}</p>
-          </div>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+/* -------------------------------------------------------------------- FAQ */
+
+function FAQ() {
+  const items = [
+    {
+      q: "How does SOP-Guard handle versioning and version control?",
+      a: "SOPs follow a major-minor pattern (e.g., v3.2 → v3.3 for revisions, v4.0 for major rewrites). When a Change Control opens against an SOP, the document is locked until completion — no parallel edits, no race conditions. Every version is preserved with its approval signatures, so you can always see what was effective at any point in time.",
+    },
+    {
+      q: "Can multiple departments share the same SOP library?",
+      a: "Yes — one library, scoped per department. The default Library view filters to your department's SOPs. Search exposes all active SOPs across the organization (so nothing gets lost), but cross-department SOPs render read-only — your team can't accidentally modify someone else's work. RLS enforces this at the database layer, not just the UI.",
+    },
+    {
+      q: "What happens during a regulatory inspection? How fast can we pull records?",
+      a: "Every SOP version, every approval signature, every training acknowledgment, and every Change Control has an immutable audit trail. Reports can be pulled in seconds — not days. Signature certificates reference stored signature images and live in tables with no UPDATE/DELETE policies, so the audit trail can't be tampered with.",
+    },
+    {
+      q: "Is signature capture compliant with 21 CFR Part 11?",
+      a: "Yes. Signatures are user-authenticated, time-stamped, and bound to specific records via immutable certificates. Mobile signing uses one-time tokens — no shared logins. The combination of authenticated capture, immutable storage, and full audit trail satisfies Part 11 requirements for closed systems.",
+    },
+    {
+      q: "Can we import existing SOPs from Word documents?",
+      a: "Yes — upload .docx and SOP-Guard renders them read-only in-app via Mammoth.js, sanitized with DOMPurify. There's no in-app editor by design: what you upload is what your team sees, every time. Versioning and approval workflows run on top of the uploaded document.",
+    },
+    {
+      q: "How do you handle user offboarding without breaking the audit trail?",
+      a: "Profiles are never hard-deleted. Offboarding sets the user inactive, but their FK references in audit logs, signatures, acknowledgments, and Pulse items stay valid forever. The signature on a 2019 SOP will still resolve to the same person 10 years later — even if they've left the company.",
+    },
+  ]
+
+  return (
+    <section id="faq" className="mx-auto max-w-3xl px-6 py-24 lg:px-8 lg:py-32">
+      <div className="text-center">
+        <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
+          Frequently asked questions
+        </p>
+        <h2 className="mt-3 text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+          Answers, not corporate fog.
+        </h2>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Real questions from QA managers we&apos;ve talked to. Real answers from how the system
+          actually works.
+        </p>
+      </div>
+
+      <div className="mt-12 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
+        {items.map((item, i) => (
+          <details
+            key={i}
+            className="group [&_summary::-webkit-details-marker]:hidden"
+          >
+            <summary className="flex cursor-pointer items-center justify-between gap-4 p-6 transition-colors hover:bg-muted/40">
+              <span className="text-base font-semibold text-foreground">{item.q}</span>
+              <ChevronDown className="size-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="px-6 pb-6">
+              <p className="text-[15px] leading-relaxed text-muted-foreground">{item.a}</p>
+            </div>
+          </details>
         ))}
       </div>
+
+      <p className="mt-10 text-center text-sm text-muted-foreground">
+        Have a question we didn&apos;t answer?{" "}
+        <Link href="/contact" className="font-medium text-brand-blue hover:underline">
+          Talk to our compliance team
+        </Link>
+        .
+      </p>
     </section>
   )
 }
 
-/* ------------------------------------------------------- Capability grid */
+/* ---------------------------------------------------------- Final CTA grid */
 
-function CapabilityGrid() {
-  const items = [
-    { icon: BookOpenCheck, title: "SOP Library", body: "Versioned, locked-during-CC, read-only rendering." },
-    { icon: ClipboardSignature, title: "Approvals & E-sign", body: "QA-routed with mobile signature capture." },
-    { icon: Wrench, title: "Equipment PMs", body: "Schedules, alerts, and full maintenance history." },
-    { icon: GraduationCap, title: "Training Hub", body: "Assignments, expirations, and competency tracking." },
-    { icon: History, title: "Change Control", body: "Snapshot signatories. Immutable certificates." },
-    { icon: Radar, title: "Pulse", body: "Real-time visibility across every active workflow." },
+function FinalCTAGrid() {
+  const cards = [
+    {
+      icon: Sparkles,
+      title: "Try free for 14 days",
+      body: "Full access. No credit card. No call required.",
+      cta: "Start trial",
+      href: "/signup",
+      accent: "blue" as const,
+    },
+    {
+      icon: Calendar,
+      title: "Book a guided demo",
+      body: "See your workflows in action with a compliance specialist.",
+      cta: "Schedule a call",
+      href: "/contact",
+      accent: "teal" as const,
+    },
+    {
+      icon: UserCog,
+      title: "Talk to compliance",
+      body: "Pharma, biotech, medical devices — let's discuss validation packages.",
+      cta: "Contact sales",
+      href: "/contact",
+      accent: "navy" as const,
+    },
   ]
 
   return (
-    <section id="capabilities" className="border-y border-border/60 bg-muted/30 py-24 lg:py-32">
+    <section className="border-t border-border/60 bg-background py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
-            Capabilities
-          </p>
-          <h2 className="mt-3 text-4xl font-semibold tracking-tight text-brand-navy sm:text-5xl dark:text-white">
-            Everything quality teams need.
+          <h2 className="text-4xl font-semibold tracking-tight text-balance text-brand-navy sm:text-5xl dark:text-white">
+            Get started.
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Designed by operators, for operators. Each module orbits the SOP and Equipment hubs —
-            so nothing lives in a silo.
+            Pick the path that fits — they all lead to a tighter, calmer floor.
           </p>
         </div>
-
-        <div className="mt-14 grid gap-px overflow-hidden rounded-2xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => (
-            <div
-              key={item.title}
-              className="group relative bg-card p-7 transition-colors hover:bg-background"
-            >
-              <div className="flex items-center gap-3">
-                <div className="grid size-9 place-items-center rounded-lg bg-brand-blue/10 text-brand-blue">
-                  <item.icon className="size-[18px]" />
+        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+          {cards.map((card) => {
+            const Icon = card.icon
+            return (
+              <Link
+                key={card.title}
+                href={card.href}
+                className="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 transition-all hover:-translate-y-0.5 hover:border-foreground/20 hover:shadow-soft"
+              >
+                <div
+                  className={
+                    card.accent === "blue"
+                      ? "grid size-12 place-items-center rounded-xl bg-brand-blue/10 text-brand-blue"
+                      : card.accent === "teal"
+                      ? "grid size-12 place-items-center rounded-xl bg-brand-teal/10 text-brand-teal"
+                      : "grid size-12 place-items-center rounded-xl bg-brand-navy/10 text-brand-navy dark:bg-white/10 dark:text-white"
+                  }
+                >
+                  <Icon className="size-6" />
                 </div>
-                <h3 className="text-[15px] font-semibold text-brand-navy dark:text-white">
-                  {item.title}
+                <h3 className="mt-6 text-xl font-semibold text-brand-navy dark:text-white">
+                  {card.title}
                 </h3>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-/* ---------------------------------------------------------- Compliance band */
-
-function ComplianceBand() {
-  const bullets = [
-    {
-      title: "Row-level security on every table",
-      body: "Postgres RLS is the security layer — never just frontend filtering.",
-    },
-    {
-      title: "Immutable signature certificates",
-      body: "Audit-trail tables have no UPDATE or DELETE policies. Ever.",
-    },
-    {
-      title: "Snapshot-based change control",
-      body: "Required signatories captured at CC creation — transfers mid-cycle never affect signing.",
-    },
-    {
-      title: "Soft-delete by default",
-      body: "Profiles are deactivated, not destroyed. FK references stay valid forever.",
-    },
-  ]
-
-  return (
-    <section id="compliance" className="relative overflow-hidden bg-brand-navy py-24 text-white lg:py-32">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(60% 50% at 80% 20%, rgba(2,132,199,0.25), transparent 60%), radial-gradient(50% 50% at 10% 90%, rgba(13,148,136,0.20), transparent 60%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage: "radial-gradient(white 1px, transparent 1px)",
-          backgroundSize: "22px 22px",
-        }}
-      />
-
-      <div className="relative mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-2 lg:gap-16 lg:px-8">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] uppercase">
-            <ShieldCheck className="size-3" />
-            Built for inspections
-          </span>
-          <h2 className="mt-6 text-4xl font-semibold tracking-tight sm:text-5xl">
-            Compliance baked in,
-            <br />
-            <span className="text-brand-teal">not bolted on.</span>
-          </h2>
-          <p className="mt-5 max-w-lg text-lg text-white/70">
-            The architecture itself enforces your audit posture. No shortcuts. No surprises during
-            a Form&nbsp;483.
-          </p>
-          <Link
-            href="/signup"
-            className="mt-10 inline-flex h-12 items-center gap-2 rounded-xl bg-white px-6 text-sm font-medium text-brand-navy transition-all hover:bg-white/90 active:translate-y-px"
-          >
-            See how it works
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
-
-        <ul className="grid gap-4 sm:grid-cols-2">
-          {bullets.map((b) => (
-            <li
-              key={b.title}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm"
-            >
-              <CheckCircle2 className="size-5 text-brand-teal" />
-              <p className="mt-4 text-[15px] font-semibold leading-snug">{b.title}</p>
-              <p className="mt-2 text-sm leading-relaxed text-white/65">{b.body}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
-  )
-}
-
-/* --------------------------------------------------------------- Final CTA */
-
-function FinalCTA() {
-  return (
-    <section className="relative overflow-hidden">
-      <div className="mx-auto max-w-5xl px-6 py-24 text-center lg:px-8 lg:py-32">
-        <h2 className="text-4xl font-semibold tracking-tight text-brand-navy sm:text-5xl lg:text-6xl dark:text-white">
-          Ready to retire the binder?
-        </h2>
-        <p className="mx-auto mt-5 max-w-xl text-lg text-muted-foreground">
-          Spin up your workspace in minutes. Bring your team. Pass your next audit with the receipts
-          ready.
-        </p>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            href="/signup"
-            className="group inline-flex h-12 items-center gap-2 rounded-xl bg-brand-navy px-7 text-sm font-medium text-white shadow-[0_8px_24px_-8px_rgba(15,23,42,0.4)] transition-all hover:bg-brand-navy/90 active:translate-y-px dark:bg-white dark:text-brand-navy"
-          >
-            Get started
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </Link>
-          <Link
-            href="/login"
-            className="inline-flex h-12 items-center gap-2 rounded-xl border border-border bg-background px-7 text-sm font-medium text-foreground hover:bg-muted"
-          >
-            Sign in
-          </Link>
+                <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">{card.body}</p>
+                <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-blue transition-all group-hover:gap-2">
+                  {card.cta}
+                  <ArrowRight className="size-4" />
+                </span>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </section>
@@ -429,25 +427,112 @@ function FinalCTA() {
 /* ------------------------------------------------------------------ Footer */
 
 function SiteFooter() {
+  const cols = [
+    {
+      title: "Product",
+      links: [
+        { label: "Features", href: "#features" },
+        { label: "Tour", href: "#tour" },
+        { label: "Pricing", href: "#pricing" },
+        { label: "FAQ", href: "#faq" },
+        { label: "Changelog", href: "/docs/changelog" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "About", href: "/about" },
+        { label: "Customers", href: "/customers" },
+        { label: "Careers", href: "/careers" },
+        { label: "Contact", href: "/contact" },
+      ],
+    },
+    {
+      title: "Resources",
+      links: [
+        { label: "Documentation", href: "/docs" },
+        { label: "Help center", href: "/help" },
+        { label: "Templates", href: "/templates" },
+        { label: "Webinars", href: "/webinars" },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Privacy", href: "/privacy" },
+        { label: "Terms", href: "/terms" },
+        { label: "Security", href: "/security" },
+        { label: "GDPR", href: "/gdpr" },
+      ],
+    },
+  ]
   return (
-    <footer className="border-t border-border bg-muted/20">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 py-10 md:flex-row lg:px-8">
-        <div className="flex items-center gap-2">
-          <span className="grid size-7 place-items-center rounded-md bg-brand-navy text-white">
-            <FileCheck2 className="size-3.5" />
-          </span>
-          <span className="text-sm font-semibold tracking-tight text-brand-navy dark:text-white">
-            SOP-Guard Pro
-          </span>
-          <span className="ml-3 text-xs text-muted-foreground">
-            © {new Date().getFullYear()} All rights reserved.
-          </span>
+    <footer className="border-t border-border bg-muted/30 pt-16 pb-8">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-lg bg-brand-navy text-white">
+                <FileCheck2 className="size-4" />
+              </span>
+              <span className="text-[15px] font-semibold tracking-tight text-brand-navy dark:text-white">
+                SOP-Guard Pro
+              </span>
+            </Link>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              Quality management for QA-led teams. Procedures in order. Audit ready.
+            </p>
+            <p className="mt-6 text-xs text-muted-foreground">
+              Made for pharma, biotech, and regulated manufacturing.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-8">
+            {cols.map((col) => (
+              <div key={col.title}>
+                <p className="text-xs font-semibold tracking-[0.16em] uppercase text-foreground">
+                  {col.title}
+                </p>
+                <ul className="mt-4 space-y-3">
+                  {col.links.map((l) => (
+                    <li key={l.label}>
+                      <Link
+                        href={l.href}
+                        className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {l.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
         </div>
-        <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-          <Link href="/docs" className="transition-colors hover:text-foreground">Docs</Link>
-          <Link href="/login" className="transition-colors hover:text-foreground">Sign in</Link>
-          <Link href="/signup" className="transition-colors hover:text-foreground">Get started</Link>
-        </nav>
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} SOP-Guard Pro. All rights reserved.
+          </p>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/privacy"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Privacy
+            </Link>
+            <Link
+              href="/terms"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/security"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Security
+            </Link>
+          </div>
+        </div>
       </div>
     </footer>
   )
