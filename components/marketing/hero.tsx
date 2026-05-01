@@ -4,7 +4,7 @@ import { ArrowRight, Calendar, Sparkles } from "lucide-react"
 
 export default function Hero() {
   return (
-    <section className="relative isolate overflow-hidden bg-brand-navy">
+    <section className="relative isolate flex min-h-dvh items-center overflow-hidden bg-brand-navy">
       <Image
         src="/marketing/hero-dashboard.webp"
         alt="SOP-Guard Pro dashboard showing active SOPs, pending approvals, PM compliance, and change controls."
@@ -18,7 +18,7 @@ export default function Hero() {
         className="absolute inset-0 bg-gradient-to-r from-brand-navy via-brand-navy/85 to-brand-navy/10 sm:via-brand-navy/70 sm:to-transparent lg:from-brand-navy/95 lg:via-brand-navy/55 lg:to-transparent"
       />
 
-      <div className="relative mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8 lg:py-44 xl:py-52">
+      <div className="relative mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:pt-36 sm:pb-24 lg:px-8 lg:py-24">
         <div className="max-w-xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85 backdrop-blur-sm">
             <Sparkles className="size-3" />
