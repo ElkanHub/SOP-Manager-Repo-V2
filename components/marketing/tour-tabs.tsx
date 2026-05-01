@@ -5,7 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, Layers, ShieldCheck, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTabIndicator } from "./use-tab-indicator"
+import { useTabIndicator } from "@/hooks/use-tab-indicator"
 
 const TOUR_TABS = [
   {
@@ -56,7 +56,7 @@ export default function TourTabs() {
   const { rect, setRef } = useTabIndicator<TourId>(activeId)
 
   return (
-    <section id="tour" className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+    <section id="tour" className="mx-auto max-w-7xl scroll-mt-24 px-6 py-24 lg:px-8 lg:py-32">
       <div className="mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
           See it in action

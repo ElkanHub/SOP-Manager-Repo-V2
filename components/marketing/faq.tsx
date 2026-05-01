@@ -30,7 +30,7 @@ const ITEMS = [
 
 export default function FAQ() {
   return (
-    <section id="faq" className="mx-auto max-w-3xl px-6 py-24 lg:px-8 lg:py-32">
+    <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-6 py-24 lg:px-8 lg:py-32">
       <div className="text-center">
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
           Frequently asked questions

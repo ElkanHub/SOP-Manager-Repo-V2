@@ -12,7 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTabIndicator } from "./use-tab-indicator"
+import { useTabIndicator } from "@/hooks/use-tab-indicator"
 
 type Panel = {
   title: string
@@ -110,7 +110,7 @@ export default function TabbedBenefits() {
   const { rect, setRef } = useTabIndicator<string>(activeId)
 
   return (
-    <section id="features" className="border-y border-border/60 bg-muted/30 py-24 lg:py-32">
+    <section id="features" className="scroll-mt-24 border-y border-border/60 bg-muted/30 py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">

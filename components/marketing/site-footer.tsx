@@ -9,34 +9,15 @@ const COLS = [
       { label: "Tour", href: "#tour" },
       { label: "Pricing", href: "#pricing" },
       { label: "FAQ", href: "#faq" },
-      { label: "Changelog", href: "/docs/changelog" },
-    ],
-  },
-  {
-    title: "Company",
-    links: [
-      { label: "About", href: "/about" },
-      { label: "Customers", href: "/customers" },
-      { label: "Careers", href: "/careers" },
-      { label: "Contact", href: "/contact" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
       { label: "Documentation", href: "/docs" },
-      { label: "Help center", href: "/help" },
-      { label: "Templates", href: "/templates" },
-      { label: "Webinars", href: "/webinars" },
     ],
   },
   {
-    title: "Legal",
+    title: "Get started",
     links: [
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-      { label: "Security", href: "/security" },
-      { label: "GDPR", href: "/gdpr" },
+      { label: "Contact sales", href: "/contact" },
+      { label: "Sign in", href: "/login" },
+      { label: "Create account", href: "/signup" },
     ],
   },
 ]
@@ -46,7 +27,7 @@ export default function SiteFooter() {
     <footer className="border-t border-border bg-muted/30 pt-16 pb-8">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-5">
             <Link href="/" className="flex items-center gap-2">
               <span className="grid size-8 place-items-center rounded-lg bg-brand-navy text-white">
                 <FileCheck2 className="size-4" />
@@ -62,7 +43,7 @@ export default function SiteFooter() {
               Made for pharma, biotech, and regulated manufacturing.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:col-span-8">
+          <div className="grid grid-cols-2 gap-8 lg:col-span-7">
             {COLS.map((col) => (
               <div key={col.title}>
                 <p className="text-xs font-semibold tracking-[0.16em] uppercase text-foreground">
@@ -88,26 +69,12 @@ export default function SiteFooter() {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} SOP-Guard Pro. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <Link
-              href="/privacy"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/security"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Security
-            </Link>
-          </div>
+          <Link
+            href="/contact"
+            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Contact
+          </Link>
         </div>
       </div>
     </footer>

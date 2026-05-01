@@ -26,7 +26,8 @@ export default async function proxy(request: NextRequest) {
         request.nextUrl.pathname.startsWith('/reset-password') ||
         request.nextUrl.pathname.startsWith('/auth')
 
-    const isLandingRoute = request.nextUrl.pathname === '/'
+    const isMarketingRoute = request.nextUrl.pathname === '/' ||
+        request.nextUrl.pathname === '/contact'
 
     console.log('>>> proxy auth check:', { pathname: request.nextUrl.pathname, isAuthRoute })
 
@@ -39,7 +40,7 @@ export default async function proxy(request: NextRequest) {
             url.pathname = '/login'
             redirectUrl = url
         }
-    } else if (!user && !isAuthRoute && !isLandingRoute) {
+    } else if (!user && !isAuthRoute && !isMarketingRoute) {
         url.pathname = '/login'
         redirectUrl = url
     } else if (user) {

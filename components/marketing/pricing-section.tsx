@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useTabIndicator } from "./use-tab-indicator"
+import { useTabIndicator } from "@/hooks/use-tab-indicator"
 
 type Tier = {
   id: string
@@ -78,7 +78,7 @@ export default function PricingSection() {
   const { rect, setRef } = useTabIndicator<"monthly" | "annual">(period)
 
   return (
-    <section id="pricing" className="border-y border-border/60 bg-muted/30 py-24 lg:py-32">
+    <section id="pricing" className="scroll-mt-24 border-y border-border/60 bg-muted/30 py-24 lg:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
@@ -192,7 +192,7 @@ export default function PricingSection() {
                 className={cn(
                   "mt-7 inline-flex h-11 w-full items-center justify-center rounded-xl text-sm font-semibold transition-all active:translate-y-px",
                   tier.highlight
-                    ? "bg-brand-navy text-white shadow-[0_8px_24px_-8px_rgba(15,23,42,0.4)] hover:bg-brand-navy/90"
+                    ? "bg-brand-navy text-white shadow-xl shadow-brand-navy/30 hover:bg-brand-navy/90"
                     : "border border-border bg-background text-foreground hover:bg-muted"
                 )}
               >
