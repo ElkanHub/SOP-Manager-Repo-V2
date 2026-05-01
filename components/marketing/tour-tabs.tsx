@@ -5,6 +5,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, Layers, ShieldCheck, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTabIndicator } from "./use-tab-indicator"
 
 const TOUR_TABS = [
   {
@@ -49,10 +50,10 @@ const TOUR_TABS = [
 ] as const
 
 export default function TourTabs() {
-  const [activeId, setActiveId] = useState<(typeof TOUR_TABS)[number]["id"]>(
-    TOUR_TABS[0].id
-  )
+  type TourId = (typeof TOUR_TABS)[number]["id"]
+  const [activeId, setActiveId] = useState<TourId>(TOUR_TABS[0].id)
   const active = TOUR_TABS.find((t) => t.id === activeId)!
+  const { rect, setRef } = useTabIndicator<TourId>(activeId)
 
   return (
     <section id="tour" className="mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
@@ -71,21 +72,30 @@ export default function TourTabs() {
       <div className="mt-12 flex justify-center">
         <div
           role="tablist"
-          className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-sm"
+          className="relative inline-flex justify-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-sm"
         >
+          <span
+            aria-hidden
+            className={cn(
+              "absolute top-1.5 bottom-1.5 rounded-full bg-brand-navy shadow-sm transition-[left,width] duration-300 ease-out",
+              rect ? "opacity-100" : "opacity-0"
+            )}
+            style={{ left: rect?.left ?? 0, width: rect?.width ?? 0 }}
+          />
           {TOUR_TABS.map((tab) => {
             const Icon = tab.icon
             const isActive = activeId === tab.id
             return (
               <button
                 key={tab.id}
+                ref={setRef(tab.id)}
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setActiveId(tab.id)}
                 className={cn(
-                  "inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
+                  "relative z-10 inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors duration-300",
                   isActive
-                    ? "bg-brand-navy text-white shadow-sm"
+                    ? "text-white"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >

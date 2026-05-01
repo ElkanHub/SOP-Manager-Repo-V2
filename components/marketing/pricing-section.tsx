@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTabIndicator } from "./use-tab-indicator"
 
 type Tier = {
   id: string
@@ -74,6 +75,7 @@ const TIERS: Tier[] = [
 
 export default function PricingSection() {
   const [period, setPeriod] = useState<"monthly" | "annual">("annual")
+  const { rect, setRef } = useTabIndicator<"monthly" | "annual">(period)
 
   return (
     <section id="pricing" className="border-y border-border/60 bg-muted/30 py-24 lg:py-32">
@@ -91,33 +93,43 @@ export default function PricingSection() {
         </div>
 
         <div className="mt-10 flex justify-center">
-          <div className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-sm">
+          <div className="relative inline-flex items-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-sm">
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-1.5 bottom-1.5 rounded-full bg-brand-navy transition-[left,width] duration-300 ease-out",
+                rect ? "opacity-100" : "opacity-0"
+              )}
+              style={{ left: rect?.left ?? 0, width: rect?.width ?? 0 }}
+            />
             <button
+              ref={setRef("monthly")}
               onClick={() => setPeriod("monthly")}
               className={cn(
-                "rounded-full px-5 py-2 text-sm font-medium transition-all",
+                "relative z-10 rounded-full px-5 py-2 text-sm font-medium transition-colors duration-300",
                 period === "monthly"
-                  ? "bg-brand-navy text-white"
+                  ? "text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               Monthly
             </button>
             <button
+              ref={setRef("annual")}
               onClick={() => setPeriod("annual")}
               className={cn(
-                "inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-all",
+                "relative z-10 inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-colors duration-300",
                 period === "annual"
-                  ? "bg-brand-navy text-white"
+                  ? "text-white"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
               Annual
               <span
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                  "rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors duration-300",
                   period === "annual"
-                    ? "bg-brand-teal/20 text-brand-teal"
+                    ? "bg-white/15 text-white"
                     : "bg-brand-teal/15 text-brand-teal"
                 )}
               >

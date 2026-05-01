@@ -12,6 +12,7 @@ import {
   ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTabIndicator } from "./use-tab-indicator"
 
 type Panel = {
   title: string
@@ -106,6 +107,7 @@ const TABS: Tab[] = [
 export default function TabbedBenefits() {
   const [activeId, setActiveId] = useState(TABS[0].id)
   const active = TABS.find((t) => t.id === activeId)!
+  const { rect, setRef } = useTabIndicator<string>(activeId)
 
   return (
     <section id="features" className="border-y border-border/60 bg-muted/30 py-24 lg:py-32">
@@ -126,18 +128,27 @@ export default function TabbedBenefits() {
         <div className="mt-12 flex justify-center">
           <div
             role="tablist"
-            className="inline-flex flex-wrap justify-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-sm"
+            className="relative inline-flex justify-center gap-1 rounded-full border border-border bg-card p-1.5 shadow-sm"
           >
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-1.5 bottom-1.5 rounded-full bg-brand-navy shadow-sm transition-[left,width] duration-300 ease-out",
+                rect ? "opacity-100" : "opacity-0"
+              )}
+              style={{ left: rect?.left ?? 0, width: rect?.width ?? 0 }}
+            />
             {TABS.map((tab) => (
               <button
                 key={tab.id}
+                ref={setRef(tab.id)}
                 role="tab"
                 aria-selected={activeId === tab.id}
                 onClick={() => setActiveId(tab.id)}
                 className={cn(
-                  "rounded-full px-5 py-2 text-sm font-medium transition-all",
+                  "relative z-10 rounded-full px-5 py-2 text-sm font-medium transition-colors duration-300",
                   activeId === tab.id
-                    ? "bg-brand-navy text-white shadow-sm"
+                    ? "text-white"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
