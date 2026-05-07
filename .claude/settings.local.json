@@ -6,7 +6,21 @@
       "Bash(xargs grep *)",
       "Bash(echo \"exit=$?\")",
       "Read(//tmp/**)",
-      "Bash(grep -A 3 \"approval-detail-client.tsx$\\\\|annotated-sop-viewer.tsx$\\\\|preview/route.ts$\\\\|actions\\\\\\\\\\\\\\\\sop.ts$\" /tmp/lint.log)"
+      "Bash(grep -A 3 \"approval-detail-client.tsx$\\\\|annotated-sop-viewer.tsx$\\\\|preview/route.ts$\\\\|actions\\\\\\\\\\\\\\\\sop.ts$\" /tmp/lint.log)",
+      "Bash(git checkout *)",
+      "Skill(stitch-design)",
+      "mcp__stitch__create_project",
+      "mcp__stitch__generate_screen_from_text",
+      "Bash(mkdir -p public/marketing)",
+      "Bash(cp \"/c/Users/GBERBIESON/Downloads/Generated Image April 30, 2026 - 12_30PM.jpg\" public/marketing/hero-dashboard-source.jpg)",
+      "Bash(node optimize-hero.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "WebFetch(domain:www.microsoft.com)",
+      "Bash(git add *)",
+      "Bash(npx eslint *)",
+      "Bash(git restore *)"
     ]
   }
 }
