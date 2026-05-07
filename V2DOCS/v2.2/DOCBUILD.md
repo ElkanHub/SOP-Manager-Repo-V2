@@ -3,7 +3,7 @@
 > Build the complete user documentation site for SOP-Guard Pro from start to finish in a single pass.
 > Do not stop between sections. Do not defer anything. Complete the entire build before committing.
 
----test
+---
 
 ## WHAT THIS FILE IS
 
