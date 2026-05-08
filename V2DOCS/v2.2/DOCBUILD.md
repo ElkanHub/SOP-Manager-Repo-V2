@@ -81,6 +81,8 @@ role: "all"    # "all" | "employee" | "manager" | "qa" | "admin"
 ---
 ```
 
+...
+
 ### Content file structure
 
 ```
