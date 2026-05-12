@@ -11,6 +11,9 @@ export interface SyncQueueItem {
   created_at: string
   retries: number
   last_error?: string | null
+  // Optional handler key — when set, sync engine dispatches to a registered
+  // handler (e.g. a server action) instead of writing directly via Supabase REST.
+  handler?: string | null
 }
 
 export interface OfflineRecord<T = Record<string, unknown>> {
@@ -42,6 +45,18 @@ interface AppDB extends DBSchema {
     value: OfflineRecord
     indexes: { "by-updated": string }
   }
+  messages_cache: {
+    key: string
+    value: {
+      id: string
+      conversation_id: string
+      created_at: string
+      data: Record<string, unknown>
+      synced: boolean
+      temp_id?: string
+    }
+    indexes: { "by-conversation": string; "by-created": string }
+  }
   sync_queue: {
     key: number
     value: SyncQueueItem
@@ -57,7 +72,7 @@ export type OfflineStoreName = "sops" | "equipment" | "departments" | "profiles"
 export type AppDBSchema = AppDB
 
 const DB_NAME = "sop-guard-offline"
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbPromise: Promise<IDBPDatabase<AppDB>> | null = null
 
@@ -97,6 +112,11 @@ export function getDB(): Promise<IDBPDatabase<AppDB>> {
         if (!db.objectStoreNames.contains("meta")) {
           db.createObjectStore("meta", { keyPath: "key" })
         }
+        if (!db.objectStoreNames.contains("messages_cache")) {
+          const m = db.createObjectStore("messages_cache", { keyPath: "id" })
+          m.createIndex("by-conversation", "conversation_id")
+          m.createIndex("by-created", "created_at")
+        }
       },
     })
   }
@@ -111,6 +131,7 @@ export async function clearOfflineDB(): Promise<void> {
     db.clear("equipment"),
     db.clear("departments"),
     db.clear("profiles"),
+    db.clear("messages_cache"),
     db.clear("sync_queue"),
     db.clear("meta"),
   ])

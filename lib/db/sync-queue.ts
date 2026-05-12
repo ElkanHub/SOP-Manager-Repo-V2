@@ -5,6 +5,7 @@ export async function enqueueSync(
   table: string,
   action: SyncAction,
   payload: Record<string, unknown>,
+  options: { handler?: string | null } = {},
 ): Promise<number> {
   const db = await getDB()
   return db.add("sync_queue", {
@@ -14,6 +15,7 @@ export async function enqueueSync(
     created_at: new Date().toISOString(),
     retries: 0,
     last_error: null,
+    handler: options.handler ?? null,
   })
 }
 

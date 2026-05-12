@@ -15,6 +15,15 @@ import { SopReadModal } from "@/components/library/sop-read-modal"
 import { sendMessage, editMessage, deleteMessage, markConversationRead, leaveGroup, deleteConversation, updateNotifySetting } from "@/actions/messages"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import {
+  cacheMessages,
+  cachePendingMessage,
+  replacePendingMessage,
+  getCachedMessages,
+} from "@/lib/db/messages-cache"
+import { enqueueSync } from "@/lib/db/sync-queue"
+import { handlerKey } from "@/lib/sync/handlers"
+import { runSync } from "@/lib/sync/sync-engine"
 
 
 export function ConversationThread({ conversationId, userId, onBack }: { conversationId: string, userId: string, onBack?: () => void }) {
@@ -34,12 +43,32 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
 
   const router = useRouter()
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   useEffect(() => {
     let active = true
 
     async function loadThread() {
+      // 0. Hydrate from local cache first so the thread renders instantly,
+      // including any messages queued for sync while offline.
+      try {
+        const cached = await getCachedMessages<Message>(conversationId, 200)
+        if (active && cached.length > 0) {
+          setMessages(cached)
+          setLoading(false)
+        }
+      } catch {
+        // ignore — cache is best-effort
+      }
+
+      // If we're offline, stop here. The realtime channel will reconnect later
+      // and the online listener (below) will refetch.
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        if (active) setLoading(false)
+        return
+      }
+
       // 1. Fetch conversation details
       const { data: convData } = await supabase
         .from('conversations')
@@ -74,7 +103,32 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
 
       if (active) {
         if (msgData) {
-          setMessages(msgData as unknown as Message[])
+          const fresh = msgData as unknown as Message[]
+          // Merge fresh server data with any pending (unsynced) messages still in the cache.
+          setMessages((prev) => {
+            const pending = prev.filter((m) => m.id.startsWith("temp-"))
+            const freshIds = new Set(fresh.map((m) => m.id))
+            const keepPending = pending.filter((m) => {
+              // Drop temp messages whose real version has shown up
+              return !fresh.some(
+                (f) => f.body === m.body && f.sender_id === m.sender_id,
+              )
+            })
+            const merged = [...keepPending, ...fresh].filter(
+              (m, i, arr) => arr.findIndex((x) => x.id === m.id) === i,
+            )
+            void freshIds
+            return merged
+          })
+          // Persist fresh messages to local cache for offline read
+          void cacheMessages(
+            fresh.map((m) => ({
+              id: m.id,
+              conversation_id: m.conversation_id,
+              created_at: m.created_at,
+              ...(m as unknown as Record<string, unknown>),
+            })),
+          )
           markConversationRead(conversationId)
         }
         setLoading(false)
@@ -97,6 +151,16 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
         if (!msgData) return
         const newMsg = msgData as unknown as Message
 
+        // Persist incoming message to local cache for offline access
+        void cacheMessages([
+          {
+            id: newMsg.id,
+            conversation_id: newMsg.conversation_id,
+            created_at: newMsg.created_at,
+            ...(newMsg as unknown as Record<string, unknown>),
+          },
+        ])
+
         setMessages(prev => {
           // Optimization: Check if this message was already added optimistically by the current user
           // Deduplicate by searching for a temporary message with the same body and sender
@@ -107,8 +171,16 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
           )
 
           if (optimisticIdx !== -1) {
+            const tempId = prev[optimisticIdx].id
             const updated = [...prev]
             updated[optimisticIdx] = newMsg
+            // Replace the pending entry in IndexedDB so it doesn't stick around as a duplicate
+            void replacePendingMessage(tempId, {
+              id: newMsg.id,
+              conversation_id: newMsg.conversation_id,
+              created_at: newMsg.created_at,
+              ...(newMsg as unknown as Record<string, unknown>),
+            })
             return updated
           }
 
@@ -138,10 +210,18 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
       })
       .subscribe()
 
+    // On reconnect: trigger queued-sync push and re-run the loader to pull
+    // any messages that landed while the WebSocket was disconnected.
+    function onOnline() {
+      void runSync().then(() => loadThread())
+    }
+    window.addEventListener("online", onOnline)
+
     return () => {
       active = false
       supabase.removeChannel(msgSubscription)
       supabase.removeChannel(presenceChannel)
+      window.removeEventListener("online", onOnline)
     }
   }, [conversationId, userId, supabase])
 
@@ -212,45 +292,98 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
       if (member) mentions.push(member.user_id)
     }
 
+    const tempId = 'temp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+    const referenceType = reference?.type || null
+    const referenceId = reference?.id || null
+    const replyToId = replyTo?.id || null
+
+    // Create an optimistic message object
+    const optimisticMsg: Message = {
+      id: tempId,
+      conversation_id: conversationId,
+      sender_id: userId,
+      body,
+      mentions,
+      reference_type: referenceType,
+      reference_id: referenceId,
+      reply_to_id: replyToId,
+      is_edited: false,
+      edited_at: null,
+      deleted_at: null,
+      created_at: new Date().toISOString(),
+      sender: (conversation?.members?.find(m => m.user_id === userId)?.profile as any) || { id: userId, full_name: "Me", avatar_url: undefined },
+      reply_to: replyTo ? { id: replyTo.id, body: replyTo.body, sender_id: replyTo.sender_id } : undefined,
+      // @ts-expect-error — augmenting Message with a transient pending flag for UI use only
+      _pending: true,
+    }
+
+    // Optimistically add to UI immediately
+    setMessages(prev => [optimisticMsg, ...prev])
+    setInputValue("")
+    setReplyTo(null)
+    setReference(null)
+    setTimeout(() => scrollToBottom('smooth'), 100)
+
+    // Persist the pending message so it survives a reload / app close
+    void cachePendingMessage({
+      id: tempId,
+      temp_id: tempId,
+      conversation_id: conversationId,
+      created_at: optimisticMsg.created_at,
+      ...(optimisticMsg as unknown as Record<string, unknown>),
+    })
+
+    const queuePayload = {
+      tempId,
+      conversationId,
+      body,
+      mentions,
+      referenceType,
+      referenceId,
+      replyToId,
+    }
+
     try {
-      // Create an optimistic message object
-      const optimisticMsg: Message = {
-        id: 'temp-' + Date.now(),
-        conversation_id: conversationId,
-        sender_id: userId,
-        body,
-        mentions,
-        reference_type: reference?.type || null,
-        reference_id: reference?.id || null,
-        reply_to_id: replyTo?.id || null,
-        is_edited: false,
-        edited_at: null,
-        deleted_at: null,
-        created_at: new Date().toISOString(),
-        sender: (conversation?.members?.find(m => m.user_id === userId)?.profile as any) || { id: userId, full_name: "Me", avatar_url: undefined },
-        reply_to: replyTo ? { id: replyTo.id, body: replyTo.body, sender_id: replyTo.sender_id } : undefined
+      if (typeof navigator !== "undefined" && !navigator.onLine) {
+        await enqueueSync("messages", "INSERT", queuePayload, {
+          handler: handlerKey("messages", "INSERT"),
+        })
+        toast("Message queued — will send when you reconnect")
+        return
       }
 
-      // Optimistically add to UI immediately
-      setMessages(prev => [optimisticMsg, ...prev])
-      setInputValue("")
-      setReplyTo(null)
-      setReference(null)
-      setTimeout(scrollToBottom, 100)
-
-      await sendMessage({
+      const real = await sendMessage({
         conversationId,
         body,
         mentions,
-        referenceType: reference?.type || null,
-        referenceId: reference?.id || null,
-        replyToId: replyTo?.id || null
+        referenceType,
+        referenceId,
+        replyToId,
       })
 
-      // We don't need to replace the temp message ID perfectly here because 
-      // the realtime subscription will pull in the real one and React's `key` handles the rest reasonably well.
-      // But ideally we'd swap it. For basic snappy UI, the realtime event will soon provide the real ID.
+      if (real && typeof real === "object" && "id" in real) {
+        await replacePendingMessage(tempId, real as {
+          id: string
+          conversation_id: string
+          created_at: string
+          [k: string]: unknown
+        })
+      }
+      // Realtime subscription will deliver the canonical row and the existing
+      // optimistic-dedup logic in the INSERT handler swaps the temp message.
     } catch (e) {
+      // Network or transient server error — queue it for retry
+      try {
+        await enqueueSync("messages", "INSERT", queuePayload, {
+          handler: handlerKey("messages", "INSERT"),
+        })
+        toast("Couldn't reach the server — message queued for retry")
+      } catch (qErr) {
+        console.error("Failed to enqueue message", qErr)
+        toast.error("Failed to send message")
+        // Roll the optimistic bubble back
+        setMessages(prev => prev.filter(m => m.id !== tempId))
+      }
       console.error(e)
     } finally {
       setIsSubmitting(false)
@@ -264,9 +397,40 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
     }
   }
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior })
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior })
+    }
   }
+
+  const isNearBottom = () => {
+    const container = messagesContainerRef.current
+    if (!container) return true
+    const threshold = 150
+    return container.scrollHeight - container.scrollTop - container.clientHeight < threshold
+  }
+
+  // Jump straight to the bottom once the initial batch finishes loading
+  useEffect(() => {
+    if (loading) return
+    // Two RAFs to wait for layout after content paint
+    requestAnimationFrame(() => requestAnimationFrame(() => scrollToBottom('auto')))
+  }, [loading, conversationId])
+
+  // Follow new messages only if the user is already near the bottom
+  const lastMessageIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    const latest = messages[0]?.id ?? null
+    if (latest && latest !== lastMessageIdRef.current) {
+      if (isNearBottom()) {
+        requestAnimationFrame(() => scrollToBottom('smooth'))
+      }
+      lastMessageIdRef.current = latest
+    }
+  }, [messages])
 
   if (loading) {
     return <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading thread...</div>
@@ -382,6 +546,12 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
               </div>
 
               {msg.is_edited && <div className={cn("text-[10px] text-right mt-1.5 opacity-60", isOwn ? "text-white" : "text-muted-foreground")}>Edited</div>}
+              {msg.id.startsWith('temp-') && isOwn && (
+                <div className="text-[10px] text-right mt-1 opacity-70 text-white inline-flex items-center gap-1 justify-end w-full">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse" />
+                  Sending…
+                </div>
+              )}
 
               {/* Reference Card */}
               {msg.reference_type && msg.reference_id && (() => {
@@ -535,7 +705,7 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-4 flex flex-col">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto py-4 flex flex-col">
         {renderedMessages}
         <div ref={messagesEndRef} />
       </div>

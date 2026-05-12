@@ -4,6 +4,7 @@ import {
   markSyncFailure,
   removeSyncItem,
 } from "@/lib/db/sync-queue"
+import { getSyncHandler } from "./handlers"
 
 const MAX_RETRIES = 5
 
@@ -35,6 +36,15 @@ export async function runSync(): Promise<SyncResult> {
     }
 
     try {
+      // Custom handler takes precedence (e.g. server actions that need auth/RLS bypass)
+      const customHandler = getSyncHandler(item.handler)
+      if (customHandler) {
+        await customHandler({ item })
+        await removeSyncItem(item.id)
+        synced++
+        continue
+      }
+
       let error: { message: string } | null = null
 
       if (item.action === "INSERT") {
