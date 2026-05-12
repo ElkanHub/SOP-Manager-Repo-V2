@@ -3,6 +3,7 @@ import { DM_Sans, DM_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -20,6 +21,22 @@ const dmMono = DM_Mono({
 export const metadata: Metadata = {
   title: "SOP-Guard Pro",
   description: "Industrial compliance, simplified",
+  applicationName: "SOP-Guard Pro",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SOP-Guard",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#0D2B55",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
 };
 
 export default function RootLayout({
@@ -40,6 +57,7 @@ export default function RootLayout({
         >
           <QueryProvider>
             {children}
+            <InstallPrompt />
             <Toaster />
           </QueryProvider>
         </ThemeProvider>

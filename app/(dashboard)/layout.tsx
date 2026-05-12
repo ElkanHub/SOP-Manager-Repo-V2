@@ -6,6 +6,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { PulseWrapper } from "@/components/pulse/pulse-wrapper"
 import { PresenceTracker } from "@/components/presence/presence-tracker"
+import { PwaProvider } from "@/components/pwa/pwa-provider"
 
 export default async function DashboardLayout({
     children,
@@ -39,6 +40,7 @@ export default async function DashboardLayout({
     return (
         <SidebarProvider>
             <TooltipProvider delay={300}>
+                <PwaProvider>
                 <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
                     <TopNav user={user} profile={profile} />
 
@@ -59,6 +61,7 @@ export default async function DashboardLayout({
                         online counts. Unmounts on logout / tab close. */}
                     <PresenceTracker userId={user.id} department={profile.department ?? null} />
                 </div>
+                </PwaProvider>
             </TooltipProvider>
         </SidebarProvider>
     )
