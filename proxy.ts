@@ -13,6 +13,20 @@ export default async function proxy(request: NextRequest) {
         return NextResponse.next()
     }
 
+    // PWA assets — must be served as-is to unauthenticated requests.
+    // Chrome fetches the manifest and service worker without credentials and
+    // will reject an HTML redirect with "Manifest: Line 1, Column 1, Syntax error".
+    if (
+        request.nextUrl.pathname === '/manifest.webmanifest' ||
+        request.nextUrl.pathname === '/sw.js' ||
+        request.nextUrl.pathname === '/sw.js.map' ||
+        request.nextUrl.pathname.startsWith('/icons/') ||
+        request.nextUrl.pathname.startsWith('/swe-worker-') ||
+        request.nextUrl.pathname === '/offline'
+    ) {
+        return NextResponse.next()
+    }
+
     const { supabase, supabaseResponse } = await updateSession(request)
 
     const {
@@ -96,6 +110,6 @@ export default async function proxy(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+        '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw\\.js|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
     ],
 }
