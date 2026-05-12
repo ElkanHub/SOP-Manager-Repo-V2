@@ -16,6 +16,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { GlobalSearch } from "./global-search"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { InstallButton } from "@/components/pwa/install-button"
 import { createClient } from "@/lib/supabase/client"
 import { UserAvatar } from "@/components/user-avatar"
 
@@ -147,6 +148,7 @@ export function TopNav({ user, profile }: TopNavProps) {
                 </div>
 
                 <nav className="flex items-center gap-2">
+                    <InstallButton />
                     <Tooltip>
                         <TooltipTrigger render={<ThemeToggle />} />
                         <TooltipContent side="bottom">Toggle theme</TooltipContent>
