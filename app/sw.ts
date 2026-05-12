@@ -17,9 +17,17 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope
 
+// SKIP_WAITING is driven by the window via postMessage so the user gets a
+// chance to consent to the update via an in-app toast.
+self.addEventListener("message", (event) => {
+  if ((event as ExtendableMessageEvent).data?.type === "SKIP_WAITING") {
+    void self.skipWaiting()
+  }
+})
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
-  skipWaiting: true,
+  skipWaiting: false,
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
