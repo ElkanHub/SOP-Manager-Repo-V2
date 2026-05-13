@@ -25,8 +25,19 @@ self.addEventListener("message", (event) => {
   }
 })
 
+// Pages we explicitly want available with no network, on top of whatever the
+// build manifest already includes. The offline fallback in particular is never
+// visited during normal browsing, so without forcing it into the precache the
+// fallback handler has nothing to serve and the OS shows its default error.
+const ADDITIONAL_PRECACHE = [
+  { url: "/offline", revision: "1" },
+]
+
 const serwist = new Serwist({
-  precacheEntries: self.__SW_MANIFEST,
+  precacheEntries: [
+    ...(self.__SW_MANIFEST ?? []),
+    ...ADDITIONAL_PRECACHE,
+  ],
   skipWaiting: false,
   clientsClaim: true,
   navigationPreload: true,
