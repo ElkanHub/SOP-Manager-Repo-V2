@@ -52,6 +52,12 @@ export function useSwUpdate(): void {
         showUpdateToast(reg)
       }
 
+      // Force an update check on mount so we don't depend on the browser's
+      // own heuristic about when to re-fetch sw.js. The server now sends
+      // Cache-Control: max-age=0 for /sw.js so this is a cheap conditional
+      // GET in practice.
+      reg.update().catch(() => {})
+
       const onUpdateFound = () => {
         const installing = reg.installing
         if (!installing) return
