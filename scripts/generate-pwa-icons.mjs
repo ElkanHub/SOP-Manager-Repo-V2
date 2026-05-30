@@ -10,17 +10,28 @@ await mkdir(OUT, { recursive: true })
 const BRAND_NAVY = { r: 13, g: 43, b: 85, alpha: 1 }
 const WHITE = { r: 255, g: 255, b: 255, alpha: 1 }
 
+import { readFileSync } from "fs"
+
+const logoPath = join(process.cwd(), "public", "marketing", "logo.jpg")
+const logoBase64 = readFileSync(logoPath).toString("base64")
+const logoDataUri = `data:image/jpeg;base64,${logoBase64}`
+
 function svgIcon(size, { maskable = false } = {}) {
   // Maskable safe zone = inner 80%. Keep the mark in that area.
   const inner = maskable ? size * 0.6 : size * 0.7
   const offset = (size - inner) / 2
   const r = inner / 8
-  const fontSize = inner * 0.5
+  
+  const logoWidth = inner * 0.8
+  const logoHeight = logoWidth / 4
+  const logoX = offset + (inner - logoWidth) / 2
+  const logoY = offset + (inner - logoHeight) / 2
+
   return Buffer.from(`
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" fill="rgb(13,43,85)"/>
-  <rect x="${offset}" y="${offset}" width="${inner}" height="${inner}" rx="${r}" ry="${r}" fill="rgb(13,43,85)" stroke="white" stroke-width="${size / 64}" />
-  <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="central">SG</text>
+  <rect x="${offset}" y="${offset}" width="${inner}" height="${inner}" rx="${r}" ry="${r}" fill="white" />
+  <image href="${logoDataUri}" x="${logoX}" y="${logoY}" width="${logoWidth}" height="${logoHeight}" />
 </svg>
 `)
 }
