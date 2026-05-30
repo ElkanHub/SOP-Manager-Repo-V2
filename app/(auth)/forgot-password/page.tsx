@@ -9,7 +9,7 @@ export default function ForgotPasswordPage() {
     return (
         <div className="grid min-h-svh lg:grid-cols-2">
             <div className="relative flex flex-col gap-4 p-6 md:p-10 overflow-hidden border-r">
-                <SectionGrainient preset="hero" />
+                <SectionGrainient preset="splash" />
                 <div className="relative z-10 flex justify-center gap-2 md:justify-start">
                     <Link href="/" className="flex items-center gap-2">
                         <Logo />
