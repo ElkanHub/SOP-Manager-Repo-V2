@@ -1,9 +1,10 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { ArrowRight, Calendar, Mail, MessageSquare } from "lucide-react"
+import SectionGrainient from "@/components/marketing/section-grainient"
 
 export const metadata: Metadata = {
-  title: "Contact — SOP-Guard Pro",
+  title: "Contact — QMS-MANAJA",
   description:
     "Talk to our compliance team about pilot programs, validation packages, and rollout support for QA-led organizations.",
 }
@@ -13,29 +14,30 @@ const CHANNELS = [
     icon: Mail,
     title: "Email us",
     body: "For pilots, validation packages, and procurement questions.",
-    cta: "hello@sop-guard.app",
-    href: "mailto:hello@sop-guard.app",
+    cta: "hello@QMS-MANAJA.app",
+    href: "mailto:hello@QMS-MANAJA.app",
   },
   {
     icon: Calendar,
     title: "Book a guided demo",
     body: "Walk through your workflows live with a compliance specialist.",
     cta: "Schedule a 30-min call",
-    href: "mailto:demo@sop-guard.app?subject=Demo%20request",
+    href: "mailto:demo@QMS-MANAJA.app?subject=Demo%20request",
   },
   {
     icon: MessageSquare,
     title: "Talk to sales",
     body: "Pricing, multi-site rollouts, and Enterprise validation packages.",
-    cta: "sales@sop-guard.app",
-    href: "mailto:sales@sop-guard.app",
+    cta: "sales@QMS-MANAJA.app",
+    href: "mailto:sales@QMS-MANAJA.app",
   },
 ] as const
 
 export default function ContactPage() {
   return (
-    <section className="mx-auto max-w-5xl px-6 pt-32 pb-24 sm:pt-40 lg:px-8 lg:pt-44 lg:pb-32">
-      <div className="mx-auto max-w-2xl text-center">
+    <section className="relative overflow-hidden mx-auto max-w-5xl px-6 pt-32 pb-24 sm:pt-40 lg:px-8 lg:pt-44 lg:pb-32">
+      <SectionGrainient preset="contact" />
+      <div className="relative z-10 mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold tracking-[0.18em] text-brand-blue uppercase">
           Get in touch
         </p>
@@ -48,7 +50,7 @@ export default function ContactPage() {
         </p>
       </div>
 
-      <div className="mt-14 grid gap-6 lg:grid-cols-3">
+      <div className="relative z-10 mt-14 grid gap-6 lg:grid-cols-3">
         {CHANNELS.map((channel) => {
           const Icon = channel.icon
           return (
@@ -73,7 +75,7 @@ export default function ContactPage() {
         })}
       </div>
 
-      <div className="mt-16 rounded-3xl border border-border bg-muted/30 p-8 text-center sm:p-12">
+      <div className="relative z-10 mt-16 rounded-3xl border border-border bg-white/80 backdrop-blur-sm p-8 text-center sm:p-12">
         <h2 className="text-2xl font-semibold tracking-tight text-brand-navy sm:text-3xl">
           Ready to skip the binder?
         </h2>

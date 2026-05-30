@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: DocPageProps): Promise<Metada
   const data = parsed.data
 
   return {
-    title: `${data.title} - SOP-Guard Pro Documentation`,
+    title: `${data.title} - QMS-MANAJA Documentation`,
     description: data.description,
   }
 }

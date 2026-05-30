@@ -311,7 +311,7 @@ export function MobileSignClient({ token, initialExpired, initialCompleted, expi
     )
 }
 
-/** Wrapper that provides full-screen mobile layout with SOP-Guard branding */
+/** Wrapper that provides full-screen mobile layout with QMS-MANAJA branding */
 function MobileShell({ children }: { children: React.ReactNode }) {
     return (
         <div
@@ -324,7 +324,7 @@ function MobileShell({ children }: { children: React.ReactNode }) {
                     <ShieldCheck className="w-4 h-4 text-white/90" />
                 </div>
                 <div className="flex flex-col">
-                    <span className="text-sm font-bold text-white tracking-tight leading-tight">SOP-Guard Pro</span>
+                    <span className="text-sm font-bold text-white tracking-tight leading-tight">QMS-MANAJA</span>
                     <span className="text-[9px] font-bold text-white/50 uppercase tracking-widest">Digital Signature</span>
                 </div>
             </div>

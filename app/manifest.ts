@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "SOP-Guard Pro",
-    short_name: "SOP-Guard",
+    name: "QMS-MANAJA",
+    short_name: "QMS-MANAJA",
     description: "Industrial compliance, simplified",
     start_url: "/dashboard",
     scope: "/",

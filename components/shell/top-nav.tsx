@@ -16,6 +16,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { GlobalSearch } from "./global-search"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { Logo } from "@/components/ui/logo"
 import { InstallButton } from "@/components/pwa/install-button"
 import { createClient } from "@/lib/supabase/client"
 import { UserAvatar } from "@/components/user-avatar"
@@ -131,15 +132,15 @@ export function TopNav({ user, profile }: TopNavProps) {
                     </TooltipTrigger>
                     <TooltipContent side="bottom">Open menu</TooltipContent>
                 </Tooltip>
-                <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-white">
-                    <GalleryVerticalEnd className="h-5 w-5" />
-                    <span className="hidden sm:inline-block">SOP-Guard Pro</span>
+                <Link href="/dashboard" className="flex items-center gap-2">
+                    <Logo forceDark className="h-6" />
+                    <span className="hidden sm:inline-block font-semibold text-white">QMS-MANAJA</span>
                 </Link>
             </div>
 
-            <div className="hidden lg:flex items-center gap-2 font-semibold text-white mr-4">
-                <GalleryVerticalEnd className="h-5 w-5" />
-                <span>SOP-Guard Pro</span>
+            <div className="hidden lg:flex items-center gap-2 mr-4">
+                <Logo forceDark className="h-6" />
+                <span className="font-semibold text-white">QMS-MANAJA</span>
             </div>
 
             <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">

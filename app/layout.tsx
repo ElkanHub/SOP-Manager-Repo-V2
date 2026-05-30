@@ -19,13 +19,13 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SOP-Guard Pro",
+  title: "QMS-MANAJA",
   description: "Industrial compliance, simplified",
-  applicationName: "SOP-Guard Pro",
+  applicationName: "QMS-MANAJA",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SOP-Guard",
+    title: "QMS-MANAJA",
   },
   formatDetection: {
     telephone: false,

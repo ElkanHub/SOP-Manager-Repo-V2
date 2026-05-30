@@ -44,7 +44,7 @@ export function NotificationsTab({ initialPrefs }: NotificationsTabProps) {
 
     return (
         <div className="space-y-6 max-w-xl">
-            <p className="text-sm text-muted-foreground">Control how you receive notifications and alerts from SOP-Guard Pro.</p>
+            <p className="text-sm text-muted-foreground">Control how you receive notifications and alerts from QMS-MANAJA.</p>
 
             {error && (
                 <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">{error}</div>

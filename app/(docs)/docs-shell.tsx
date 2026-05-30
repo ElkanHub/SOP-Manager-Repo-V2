@@ -56,7 +56,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
     { slug: "equipment/logging-pm-completion", title: "Logging PM Completion", section: "equipment", order: 4, role: "all" },
     { slug: "equipment/overview", title: "Equipment Registry Overview", section: "equipment", order: 1, role: "all" },
     { slug: "equipment/reassigning-tasks", title: "Reassigning PM Tasks", section: "equipment", order: 5, role: "manager" },
-    { slug: "getting-started/introduction", title: "What is SOP-Guard Pro?", section: "getting-started", order: 1, role: "all" },
+    { slug: "getting-started/introduction", title: "What is QMS-MANAJA?", section: "getting-started", order: 1, role: "all" },
     { slug: "getting-started/onboarding", title: "Completing Your Onboarding", section: "getting-started", order: 3, role: "all" },
     { slug: "getting-started/quickstart", title: "Quickstart Guide", section: "getting-started", order: 2, role: "all" },
     { slug: "getting-started/understanding-your-role", title: "Understanding Your Role and Permissions", section: "getting-started", order: 4, role: "all" },
@@ -131,7 +131,7 @@ export function DocsShell({ children }: { children: React.ReactNode }) {
           <Link href="/docs" className="group flex items-center gap-2">
             <div className="w-8 h-8 bg-brand-navy rounded-lg flex items-center justify-center text-white font-bold text-lg shadow-soft group-hover:bg-brand-blue transition-colors">S</div>
             <div>
-              <span className="text-14 font-bold text-foreground tracking-tight block leading-none">SOP-GUARD PRO</span>
+              <span className="text-14 font-bold text-foreground tracking-tight block leading-none">QMS-MANAJA</span>
               <span className="text-[10px] text-muted-foreground font-medium tracking-[0.05em] uppercase">Knowledge Base</span>
             </div>
           </Link>
