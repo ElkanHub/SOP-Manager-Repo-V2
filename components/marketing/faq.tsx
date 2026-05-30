@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react"
 
 const ITEMS = [
   {
-    q: "How does SOP-Guard handle versioning and version control?",
+    q: "How does QMS-MANAJA handle versioning and version control?",
     a: "SOPs follow a major-minor pattern (e.g., v3.2 → v3.3 for revisions, v4.0 for major rewrites). When a Change Control opens against an SOP, the document is locked until completion — no parallel edits, no race conditions. Every version is preserved with its approval signatures, so you can always see what was effective at any point in time.",
   },
   {
@@ -20,7 +20,7 @@ const ITEMS = [
   },
   {
     q: "Can we import existing SOPs from Word documents?",
-    a: "Yes — upload .docx and SOP-Guard renders them read-only in-app via Mammoth.js, sanitized with DOMPurify. There's no in-app editor by design: what you upload is what your team sees, every time. Versioning and approval workflows run on top of the uploaded document.",
+    a: "Yes — upload .docx and QMS-MANAJA renders them read-only in-app via Mammoth.js, sanitized with DOMPurify. There's no in-app editor by design: what you upload is what your team sees, every time. Versioning and approval workflows run on top of the uploaded document.",
   },
   {
     q: "How do you handle user offboarding without breaking the audit trail?",

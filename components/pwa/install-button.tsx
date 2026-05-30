@@ -21,7 +21,7 @@ export function InstallButton() {
       return
     }
     // iOS fallback — show share-sheet instructions
-    toast("Install SOP-Guard Pro", {
+    toast("Install QMS-MANAJA", {
       description:
         "Tap the Share button in Safari, then choose 'Add to Home Screen'.",
       duration: 8000,

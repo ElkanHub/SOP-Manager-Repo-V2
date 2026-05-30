@@ -1,3 +1,4 @@
+import Image from "next/image"
 import FAQ from "@/components/marketing/faq"
 import FinalCTAGrid from "@/components/marketing/final-cta-grid"
 import Hero from "@/components/marketing/hero"
@@ -12,6 +13,20 @@ export default function LandingPage() {
     <>
       <Hero />
       <TrustStrip />
+      
+      <section className="relative mx-auto max-w-[90rem] px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-[2rem] border border-border/50 bg-muted/20 shadow-2xl">
+          <Image
+            src="/marketing/hero-dashboard2.jpg"
+            alt="QMS-MANAJA dashboard overview"
+            width={2400}
+            height={1400}
+            className="w-full h-auto object-cover"
+            priority
+          />
+        </div>
+      </section>
+
       <TabbedBenefits />
       <TourTabs />
       <RolesGrid />

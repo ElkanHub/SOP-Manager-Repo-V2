@@ -2,8 +2,8 @@ import { Metadata } from "next"
 import { OfflineScreen } from "./offline-screen"
 
 export const metadata: Metadata = {
-  title: "Offline — SOP-Guard Pro",
-  description: "You're currently offline. SOP-Guard Pro will reconnect automatically.",
+  title: "Offline — QMS-MANAJA",
+  description: "You're currently offline. QMS-MANAJA will reconnect automatically.",
 }
 
 export default function OfflinePage() {

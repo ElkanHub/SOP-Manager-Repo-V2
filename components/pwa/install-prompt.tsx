@@ -39,7 +39,7 @@ export function InstallPrompt() {
     if (isMarketing(pathname)) return
     if (recentlyDismissed(DISMISS_KEY)) return
 
-    toast("Install SOP-Guard Pro", {
+    toast("Install QMS-MANAJA", {
       id: TOAST_ID,
       description: "Add the app to your device for faster access and offline use.",
       duration: Infinity,
@@ -72,7 +72,7 @@ export function InstallPrompt() {
 
     const t = window.setTimeout(() => {
       iosShown.current = true
-      toast("Install SOP-Guard Pro", {
+      toast("Install QMS-MANAJA", {
         id: IOS_TOAST_ID,
         description:
           "Tap the Share button, then 'Add to Home Screen' to install this app on your device.",

@@ -140,7 +140,7 @@ export default function TourTabs() {
           />
           <Image
             src="/marketing/hero-dashboard.webp"
-            alt={`${active.label} view of SOP-Guard Pro dashboard`}
+            alt={`${active.label} view of QMS-MANAJA dashboard`}
             width={2000}
             height={1180}
             sizes="(min-width: 1024px) 50vw, 100vw"

@@ -4,7 +4,7 @@ import { SettingsClient } from "@/components/settings/settings-client"
 import type { Profile, Department } from "@/types/app.types"
 
 export const metadata = {
-    title: "Settings — SOP-Guard Pro",
+    title: "Settings — QMS-MANAJA",
     description: "Manage your profile, notifications, departments, and users.",
 }
 

@@ -1,21 +1,19 @@
 import Image from "next/image"
 import Link from "next/link"
 import { LoginForm } from "@/components/login-form"
-import { GalleryVerticalEndIcon } from "lucide-react"
 import { Suspense } from "react"
-import { AnimatedGradientBackground } from "@/components/animated-gradient-background"
+import SectionGrainient from "@/components/marketing/section-grainient"
+import { Logo } from "@/components/ui/logo"
 
 export default function LoginPage() {
     return (
         <div className="grid min-h-svh lg:grid-cols-2">
             <div className="relative flex flex-col gap-4 p-6 md:p-10 overflow-hidden border-r">
-                <AnimatedGradientBackground />
+                <SectionGrainient preset="hero" />
                 <div className="relative z-10 flex justify-center gap-2 md:justify-start">
-                    <Link href="/" className="flex items-center gap-2 font-medium">
-                        <div className="flex size-6 items-center justify-center rounded-md bg-brand-navy text-primary-foreground">
-                            <GalleryVerticalEndIcon className="size-4" />
-                        </div>
-                        SOP-Guard Pro
+                    <Link href="/" className="flex items-center gap-2">
+                        <Logo />
+                        <span className="font-semibold tracking-tight">QMS-MANAJA</span>
                     </Link>
                 </div>
                 <div className="relative z-10 flex flex-1 items-center justify-center">
@@ -38,7 +36,7 @@ export default function LoginPage() {
                 <div className="relative max-w-md text-white">
                     <h2 className="text-3xl font-bold mb-4">Welcome Back</h2>
                     <p className="text-lg opacity-80">
-                        Log in to your SOP-Guard Pro account to manage standard operating procedures,
+                        Log in to your QMS-MANAJA account to manage standard operating procedures,
                         approve change controls, and stay updated.
                     </p>
                 </div>

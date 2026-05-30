@@ -2,8 +2,8 @@ import { Metadata } from 'next'
 import { DocsHomeContent } from './docs-home-content'
 
 export const metadata: Metadata = {
-  title: 'SOP-Guard Pro Documentation',
-  description: 'Everything you need to use SOP-Guard Pro confidently.',
+  title: 'QMS-MANAJA Documentation',
+  description: 'Everything you need to use QMS-MANAJA confidently.',
 }
 
 export default function DocsHomePage() {

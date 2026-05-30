@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { FileCheck2 } from "lucide-react"
+import SectionGrainient from "@/components/marketing/section-grainient"
+import { Logo } from "@/components/ui/logo"
 
 const COLS = [
   {
@@ -24,17 +26,15 @@ const COLS = [
 
 export default function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-muted/30 pt-16 pb-8">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+    <footer className="relative overflow-hidden border-t border-border pt-16 pb-8">
+      <SectionGrainient preset="footer" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-12">
           <div className="lg:col-span-5">
             <Link href="/" className="flex items-center gap-2">
-              <span className="grid size-8 place-items-center rounded-lg bg-brand-navy text-white">
-                <FileCheck2 className="size-4" />
-              </span>
-              <span className="text-[15px] font-semibold tracking-tight text-brand-navy">
-                SOP-Guard Pro
-              </span>
+              <Logo />
+              <span className="text-[15px] font-semibold tracking-tight text-brand-navy">QMS-MANAJA</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
               Quality management for QA-led teams. Procedures in order. Audit ready.
@@ -67,7 +67,7 @@ export default function SiteFooter() {
         </div>
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 md:flex-row">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} SOP-Guard Pro. All rights reserved.
+            © {new Date().getFullYear()} QMS-MANAJA. All rights reserved.
           </p>
           <Link
             href="/contact"

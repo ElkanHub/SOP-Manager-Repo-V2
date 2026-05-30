@@ -13,6 +13,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import SectionGrainient from "@/components/marketing/section-grainient"
 
 const QUICK_LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -63,20 +64,9 @@ export function OfflineScreen() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background via-background to-brand-navy/[0.04] dark:to-brand-navy/[0.12]">
-      {/* Decorative background — soft radial wash, brand-tinted */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 20% 20%, rgba(13,43,85,0.10), transparent 55%), radial-gradient(circle at 80% 80%, rgba(20,184,166,0.08), transparent 55%)",
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.04)_1px,transparent_1px)] [background-size:48px_48px] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)]"
-      />
+    <div className="relative isolate min-h-screen overflow-hidden bg-brand-navy dark">
+      <SectionGrainient preset="splash" />
+
 
       <main className="relative mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center justify-center gap-8 px-6 py-16 text-center">
         {/* Connection chip */}
@@ -132,7 +122,7 @@ export function OfflineScreen() {
               ? autoReloadIn !== null
                 ? `Reloading in ${autoReloadIn}s…`
                 : "Reconnecting now."
-              : "We couldn&rsquo;t reach SOP-Guard Pro from this device. Anything you&rsquo;ve already viewed is still available, and any changes you make will sync automatically when your connection returns."}
+              : "We couldn&rsquo;t reach QMS-MANAJA from this device. Anything you&rsquo;ve already viewed is still available, and any changes you make will sync automatically when your connection returns."}
           </p>
         </div>
 
@@ -141,7 +131,7 @@ export function OfflineScreen() {
           <Button
             onClick={handleRetry}
             disabled={retrying}
-            className="h-11 flex-1 bg-brand-navy text-white hover:bg-brand-navy/90"
+            className="h-11 flex-1 bg-white text-brand-navy hover:bg-white/90"
           >
             <RefreshCw className={cn("mr-2 h-4 w-4", retrying && "animate-spin")} />
             Try again
@@ -175,7 +165,7 @@ export function OfflineScreen() {
 
         {/* Footer note */}
         <div className="mt-2 text-[11px] text-muted-foreground/70">
-          SOP-Guard Pro &middot; Working offline is supported on this device
+          QMS-MANAJA &middot; Working offline is supported on this device
         </div>
       </main>
     </div>

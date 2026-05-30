@@ -3,8 +3,8 @@ import type { Metadata } from "next"
 import SiteFooter from "@/components/marketing/site-footer"
 import SiteNav from "@/components/marketing/site-nav"
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sop-guard.app"
-const title = "SOP-Guard Pro — Procedures in order. Audit ready."
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://QMS-MANAJA.app"
+const title = "QMS-MANAJA — Procedures in order. Audit ready."
 const description =
   "Manage SOPs, approvals, equipment PMs, and training in one controlled system. Real-time Pulse surfaces what needs attention next. Built for QA-led teams."
 
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "SOP-Guard Pro",
+    siteName: "QMS-MANAJA",
     url: "/",
     title,
     description,

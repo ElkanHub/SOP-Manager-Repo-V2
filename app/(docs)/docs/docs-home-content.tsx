@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils/cn'
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const GETTING_STARTED = [
-  { title: 'What is SOP-Guard Pro?', href: '/docs/getting-started/introduction' },
+  { title: 'What is QMS-MANAJA?', href: '/docs/getting-started/introduction' },
   { title: 'Quickstart Guide', href: '/docs/getting-started/quickstart' },
   { title: 'Completing Your Onboarding', href: '/docs/getting-started/onboarding' },
   { title: 'Understanding Your Role', href: '/docs/getting-started/understanding-your-role' },
@@ -171,7 +171,7 @@ export function DocsHomeContent() {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
               <h1 className="text-[32px] md:text-[40px] font-extrabold text-foreground tracking-tight leading-[1.15] mb-3">
-                SOP-Guard Pro User Guide
+                QMS-MANAJA User Guide
               </h1>
               <p className="text-[16px] text-muted-foreground max-w-lg leading-relaxed">
                 Comprehensive guides for every feature, workflow, and administrative task. Find answers fast with search or browse by category below.

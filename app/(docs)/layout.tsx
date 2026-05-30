@@ -18,8 +18,8 @@ const dmMono = DM_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'SOP-Guard Pro Documentation',
-  description: 'The complete guide to using SOP-Guard Pro.',
+  title: 'QMS-MANAJA Documentation',
+  description: 'The complete guide to using QMS-MANAJA.',
 }
 
 export default function DocsLayout({
