@@ -16,8 +16,6 @@ interface LibraryPageClientProps {
   isAdmin: boolean
   isQa: boolean
   statusFilter?: string
-  levelFilter?: string
-  departmentFilter?: string
 }
 
 export function LibraryPageClient({
@@ -28,22 +26,16 @@ export function LibraryPageClient({
   isAdmin,
   isQa,
   statusFilter,
-  levelFilter,
-  departmentFilter,
 }: LibraryPageClientProps) {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [activeStatus, setActiveStatus] = useState(statusFilter)
-  const [activeLevel, setActiveLevel] = useState(levelFilter)
-  const [activeDepartment, setActiveDepartment] = useState(departmentFilter)
 
   useEffect(() => {
     const params = new URLSearchParams()
     if (activeStatus) params.set("status", activeStatus)
-    if (activeLevel) params.set("level", activeLevel)
-    if (activeDepartment) params.set("department", activeDepartment)
     const query = params.toString()
     window.history.replaceState(null, "", query ? `/library?${query}` : "/library")
-  }, [activeStatus, activeLevel, activeDepartment])
+  }, [activeStatus])
 
   return (
     <div className="p-0 md:p-6">
@@ -79,43 +71,6 @@ export function LibraryPageClient({
       </div>
 
       <div className="mt-6 space-y-3 mx-4 md:mx-0 mb-4">
-        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
-          <StatusFilterTab
-            label="Master Index"
-            active={!activeDepartment}
-            onClick={() => setActiveDepartment(undefined)}
-          />
-          {departments.map((dept) => (
-            <StatusFilterTab
-              key={dept.name}
-              label={`${dept.name} SOP List`}
-              active={activeDepartment === dept.name}
-              onClick={() => setActiveDepartment(dept.name)}
-            />
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
-          <StatusFilterTab
-            label="All Levels"
-            active={!activeLevel}
-            onClick={() => setActiveLevel(undefined)}
-          />
-          {[
-            ['level_1', 'Level I'],
-            ['level_2', 'Level II'],
-            ['level_3', 'Level III'],
-            ['level_4', 'Level IV'],
-          ].map(([value, label]) => (
-            <StatusFilterTab
-              key={value}
-              label={label}
-              active={activeLevel === value}
-              onClick={() => setActiveLevel(value)}
-            />
-          ))}
-        </div>
-
         <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
         <StatusFilterTab
           label="All"
@@ -168,8 +123,6 @@ export function LibraryPageClient({
           isAdmin={isAdmin}
           isQa={isQa}
           statusFilter={activeStatus}
-          levelFilter={activeLevel}
-          departmentFilter={activeDepartment}
         />
       </div>
 

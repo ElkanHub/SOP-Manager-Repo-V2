@@ -10,7 +10,7 @@ import { LibraryPageClient } from "./library-client"
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-  searchParams: Promise<{ status?: string; level?: string; department?: string; index?: string }>
+  searchParams: Promise<{ status?: string }>
 }
 
 export default async function LibraryPage({ searchParams }: PageProps) {
@@ -37,8 +37,6 @@ export default async function LibraryPage({ searchParams }: PageProps) {
 
   const params = await searchParams
   const statusFilter = params.status
-  const levelFilter = params.level
-  const departmentFilter = params.department
 
   let query = supabase
     .from("sops")
@@ -85,8 +83,6 @@ export default async function LibraryPage({ searchParams }: PageProps) {
       isAdmin={profile.is_admin || false}
       isQa={isQaManager || false}
       statusFilter={statusFilter}
-      levelFilter={levelFilter}
-      departmentFilter={departmentFilter}
     />
   )
 }

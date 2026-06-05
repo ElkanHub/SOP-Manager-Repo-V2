@@ -13,8 +13,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree } from "lucide-react"
 import { logoutUser } from "@/actions/auth"
 
 import { Badge } from "@/components/ui/badge"
@@ -36,6 +39,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [pendingHubSubmissions, setPendingHubSubmissions] = React.useState(0)
   const [pendingTraining, setPendingTraining] = React.useState(0)
   const [reviewModules, setReviewModules] = React.useState(0)
+  const [libraryOpen, setLibraryOpen] = React.useState(pathname.startsWith("/library"))
   const supabase = createClient()
 
   const prevUnreadRef = React.useRef(0)
@@ -176,6 +180,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     }
   }, [user?.id, supabase, fetchCounts])
 
+  React.useEffect(() => {
+    if (pathname.startsWith("/library")) {
+      setLibraryOpen(true)
+    }
+  }, [pathname])
+
 
   const navItems = [
     {
@@ -267,10 +277,53 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                render={<Link href={item.url} />}
-                isActive={item.isActive}
-                className={`
+              {item.title === "SOP Library" ? (
+                <>
+                  <div className="flex items-center">
+                    <SidebarMenuButton
+                      render={<Link href={item.url} />}
+                      isActive={item.isActive}
+                      className={`
+                        flex items-center gap-3 px-3 py-2 md:py-2.5 rounded-md transition-all duration-200 ease-in-out
+                        md:text-sm text-base py-3 flex-1
+                        ${item.isActive
+                          ? "bg-brand-navy/5 text-brand-navy font-semibold border-l-4 border-brand-teal shadow-soft dark:bg-brand-teal/10 dark:text-brand-teal"
+                          : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground border-l-4 border-transparent hover:translate-x-1"
+                        }
+                      `}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                    <button
+                      type="button"
+                      onClick={() => setLibraryOpen((open) => !open)}
+                      className="ml-1 flex h-9 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800"
+                      aria-label="Toggle SOP Library submenu"
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${libraryOpen ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {libraryOpen && (
+                    <SidebarMenuSub>
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton
+                          render={<Link href="/library/master-index" />}
+                          isActive={pathname.startsWith("/library/master-index")}
+                          className="gap-2"
+                        >
+                          <ListTree className="h-4 w-4" />
+                          <span>Master Index</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  )}
+                </>
+              ) : (
+                <SidebarMenuButton
+                  render={<Link href={item.url} />}
+                  isActive={item.isActive}
+                  className={`
                     flex items-center gap-3 px-3 py-2 md:py-2.5 rounded-md transition-all duration-200 ease-in-out
                     md:text-sm text-base py-3
                     ${item.isActive
@@ -278,15 +331,16 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
                     : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground border-l-4 border-transparent hover:translate-x-1"
                   }
                   `}
-              >
-                {item.icon}
-                <span>{item.title}</span>
-                {item.badge !== undefined && item.badge > 0 && (
-                  <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
-                    {item.badge > 99 ? '99+' : item.badge}
-                  </Badge>
-                )}
-              </SidebarMenuButton>
+                >
+                  {item.icon}
+                  <span>{item.title}</span>
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
+                      {item.badge > 99 ? '99+' : item.badge}
+                    </Badge>
+                  )}
+                </SidebarMenuButton>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
