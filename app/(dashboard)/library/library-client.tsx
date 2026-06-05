@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
 import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
@@ -16,8 +16,6 @@ interface LibraryPageClientProps {
   isAdmin: boolean
   isQa: boolean
   statusFilter?: string
-  levelFilter?: string
-  departmentFilter?: string
 }
 
 export function LibraryPageClient({
@@ -28,10 +26,16 @@ export function LibraryPageClient({
   isAdmin,
   isQa,
   statusFilter,
-  levelFilter,
-  departmentFilter,
 }: LibraryPageClientProps) {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
+  const [activeStatus, setActiveStatus] = useState(statusFilter)
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (activeStatus) params.set("status", activeStatus)
+    const query = params.toString()
+    window.history.replaceState(null, "", query ? `/library?${query}` : "/library")
+  }, [activeStatus])
 
   return (
     <div className="p-0 md:p-6">
@@ -68,82 +72,42 @@ export function LibraryPageClient({
 
       <div className="mt-6 space-y-3 mx-4 md:mx-0 mb-4">
         <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
-          <StatusFilterTab
-            label="Master Index"
-            active={!departmentFilter}
-            href="/library"
-          />
-          {departments.map((dept) => (
-            <StatusFilterTab
-              key={dept.name}
-              label={`${dept.name} SOP List`}
-              active={departmentFilter === dept.name}
-              href={`/library?department=${encodeURIComponent(dept.name)}`}
-            />
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
-          <StatusFilterTab
-            label="All Levels"
-            active={!levelFilter}
-            href={departmentFilter ? `/library?department=${encodeURIComponent(departmentFilter)}` : "/library"}
-          />
-          {[
-            ['level_1', 'Level I'],
-            ['level_2', 'Level II'],
-            ['level_3', 'Level III'],
-            ['level_4', 'Level IV'],
-          ].map(([value, label]) => (
-            <StatusFilterTab
-              key={value}
-              label={label}
-              active={levelFilter === value}
-              href={`/library?${new URLSearchParams({
-                ...(departmentFilter ? { department: departmentFilter } : {}),
-                level: value,
-              }).toString()}`}
-            />
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
         <StatusFilterTab
           label="All"
-          active={!statusFilter}
-          href="/library"
+          active={!activeStatus}
+          onClick={() => setActiveStatus(undefined)}
         />
         <StatusFilterTab
           label="Active"
-          active={statusFilter === "active"}
-          href="/library?status=active"
+          active={activeStatus === "active"}
+          onClick={() => setActiveStatus("active")}
         />
         {isManager && (
           <>
             <StatusFilterTab
               label="Draft"
-              active={statusFilter === "draft"}
-              href="/library?status=draft"
+              active={activeStatus === "draft"}
+              onClick={() => setActiveStatus("draft")}
             />
             <StatusFilterTab
               label="Pending"
-              active={statusFilter === "pending_qa"}
-              href="/library?status=pending_qa"
+              active={activeStatus === "pending_qa"}
+              onClick={() => setActiveStatus("pending_qa")}
             />
             <StatusFilterTab
               label="HOD"
-              active={statusFilter === "pending_hod"}
-              href="/library?status=pending_hod"
+              active={activeStatus === "pending_hod"}
+              onClick={() => setActiveStatus("pending_hod")}
             />
             <StatusFilterTab
               label="Training"
-              active={statusFilter === "approved_pending_training"}
-              href="/library?status=approved_pending_training"
+              active={activeStatus === "approved_pending_training"}
+              onClick={() => setActiveStatus("approved_pending_training")}
             />
             <StatusFilterTab
               label="Pending CC"
-              active={statusFilter === "pending_cc"}
-              href="/library?status=pending_cc"
+              active={activeStatus === "pending_cc"}
+              onClick={() => setActiveStatus("pending_cc")}
             />
           </>
         )}
@@ -158,9 +122,7 @@ export function LibraryPageClient({
           userRole={profile.role || 'employee'}
           isAdmin={isAdmin}
           isQa={isQa}
-          statusFilter={statusFilter}
-          levelFilter={levelFilter}
-          departmentFilter={departmentFilter}
+          statusFilter={activeStatus}
         />
       </div>
 
@@ -181,21 +143,22 @@ export function LibraryPageClient({
 function StatusFilterTab({
   label,
   active,
-  href,
+  onClick,
 }: {
   label: string
   active: boolean
-  href: string
+  onClick: () => void
 }) {
   return (
-    <a
-      href={href}
+    <button
+      type="button"
+      onClick={onClick}
       className={`px-4 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all ${active
         ? "bg-background text-brand-blue shadow-sm border border-border/50"
         : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
         }`}
     >
       {label}
-    </a>
+    </button>
   )
 }

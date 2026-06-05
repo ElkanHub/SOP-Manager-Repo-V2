@@ -2,14 +2,18 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const requestUrl = new URL(request.url)
+  const { searchParams } = requestUrl
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
-  
-  // Robust origin detection
-  const host = request.headers.get('host')
-  const protocol = request.headers.get('x-forwarded-proto') || 'http'
-  const origin = `${protocol}://${host}`
+  const rawNext = searchParams.get('next') ?? '/dashboard'
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const host = forwardedHost || request.headers.get('host')
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+  const protocol = forwardedProto || (host?.includes('localhost') ? 'http' : 'https')
+  const origin = host
+    ? `${protocol}://${host}`
+    : process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin
 
   console.log('>>> auth/callback hit:', { code: !!code, next, origin })
 

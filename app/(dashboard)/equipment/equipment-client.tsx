@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { EquipmentTable } from "@/components/equipment/equipment-table"
 import { AddEquipmentModal } from "@/components/equipment/add-equipment-modal"
 import { Wrench, Plus } from "lucide-react"
@@ -27,6 +27,14 @@ export function EquipmentPageClient({
   statusFilter,
 }: EquipmentPageClientProps) {
   const [addModalOpen, setAddModalOpen] = useState(false)
+  const [activeStatus, setActiveStatus] = useState(statusFilter)
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (activeStatus) params.set("status", activeStatus)
+    const query = params.toString()
+    window.history.replaceState(null, "", query ? `/equipment?${query}` : "/equipment")
+  }, [activeStatus])
 
   return (
     <div className="p-0 md:p-6">
@@ -67,25 +75,25 @@ export function EquipmentPageClient({
       <div className="mt-6 flex items-center gap-3 mb-4 px-4 md:px-0">
         <StatusFilterTab
           label="All"
-          active={!statusFilter}
-          href="/equipment"
+          active={!activeStatus}
+          onClick={() => setActiveStatus(undefined)}
         />
         <StatusFilterTab
           label="Active"
-          active={statusFilter === "active"}
-          href="/equipment?status=active"
+          active={activeStatus === "active"}
+          onClick={() => setActiveStatus("active")}
         />
         {isManager && (
           <>
             <StatusFilterTab
               label="Pending QA"
-              active={statusFilter === "pending_qa"}
-              href="/equipment?status=pending_qa"
+              active={activeStatus === "pending_qa"}
+              onClick={() => setActiveStatus("pending_qa")}
             />
             <StatusFilterTab
               label="Inactive"
-              active={statusFilter === "inactive"}
-              href="/equipment?status=inactive"
+              active={activeStatus === "inactive"}
+              onClick={() => setActiveStatus("inactive")}
             />
           </>
         )}
@@ -96,7 +104,7 @@ export function EquipmentPageClient({
           userDepartment={profile.department || ''}
           userRole={profile.role || 'employee'}
           isAdmin={isAdmin}
-          statusFilter={statusFilter}
+          statusFilter={activeStatus}
         />
       </div>
 
@@ -117,15 +125,16 @@ export function EquipmentPageClient({
 function StatusFilterTab({
   label,
   active,
-  href,
+  onClick,
 }: {
   label: string
   active: boolean
-  href: string
+  onClick: () => void
 }) {
   return (
-    <a
-      href={href}
+    <button
+      type="button"
+      onClick={onClick}
       className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
         active
           ? "bg-card shadow-sm border border-border text-brand-blue"
@@ -133,6 +142,6 @@ function StatusFilterTab({
       }`}
     >
       {label}
-    </a>
+    </button>
   )
 }

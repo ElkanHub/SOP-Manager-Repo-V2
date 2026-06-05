@@ -3,6 +3,22 @@
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
+async function getRequestOrigin() {
+    const { headers: getHeaders } = await import('next/headers')
+    const headerList = await getHeaders()
+    const origin = headerList.get('origin')
+    if (origin) return origin
+
+    const forwardedHost = headerList.get('x-forwarded-host')
+    const host = forwardedHost || headerList.get('host')
+    const forwardedProto = headerList.get('x-forwarded-proto')
+    const protocol = forwardedProto || (host?.includes('localhost') ? 'http' : 'https')
+
+    if (host) return `${protocol}://${host}`
+
+    return process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+}
+
 export async function createFirstAdmin(formData: FormData) {
     const supabase = await createServiceClient()
 
@@ -114,11 +130,7 @@ export async function signupUser(formData: FormData) {
         return { error: 'Full name, email, and password are required.' }
     }
 
-    const { headers: getHeaders } = await import('next/headers')
-    const headerList = await getHeaders()
-    const host = headerList.get('host')
-    const protocol = headerList.get('x-forwarded-proto') || 'http'
-    const appUrl = `${protocol}://${host}`
+    const appUrl = await getRequestOrigin()
 
     const { error } = await supabase.auth.signUp({
         email,
@@ -152,12 +164,7 @@ export async function forgotPassword(formData: FormData) {
         return { error: 'Email is required.' }
     }
 
-    // Use headers for better port and origin handling across all environments
-    const { headers: getHeaders } = await import('next/headers')
-    const headerList = await getHeaders()
-    const host = headerList.get('host')
-    const protocol = headerList.get('x-forwarded-proto') || 'http'
-    const appUrl = `${protocol}://${host}`
+    const appUrl = await getRequestOrigin()
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${appUrl}/auth/callback?next=/reset-password`,
@@ -201,12 +208,7 @@ export async function updatePassword(formData: FormData) {
 export async function signInWithGoogle() {
     const supabase = await createClient()
 
-    // Use headers for better port and origin handling across all environments
-    const { headers: getHeaders } = await import('next/headers')
-    const headerList = await getHeaders()
-    const host = headerList.get('host')
-    const protocol = headerList.get('x-forwarded-proto') || 'http'
-    const appUrl = `${protocol}://${host}`
+    const appUrl = await getRequestOrigin()
 
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
