@@ -42,6 +42,8 @@ export function SopUploadModal({
     const [title, setTitle] = useState('')
     const [primaryDept, setPrimaryDept] = useState(user.department)
     const [secondaryDepts, setSecondaryDepts] = useState<string[]>([])
+    const [documentLevel, setDocumentLevel] = useState<'level_1' | 'level_2' | 'level_3' | 'level_4'>('level_2')
+    const [reasonForChange, setReasonForChange] = useState('')
     const [selectedSopId, setSelectedSopId] = useState<string>('')
     const [lockedError, setLockedError] = useState<string | null>(null)
 
@@ -64,6 +66,8 @@ export function SopUploadModal({
             setTitle('')
             setPrimaryDept(user.department)
             setSecondaryDepts([])
+            setDocumentLevel('level_2')
+            setReasonForChange('')
             setSelectedSopId('')
             setLockedError(null)
             setNotesToQa('')
@@ -161,9 +165,9 @@ export function SopUploadModal({
     const canProceedStep2 = () => {
         if (!fileUrl) return false
         if (sopType === 'new') {
-            return sopNumber.trim() !== '' && title.trim() !== ''
+            return sopNumber.trim() !== '' && title.trim() !== '' && reasonForChange.trim() !== ''
         }
-        return selectedSopId !== '' && !lockedError
+        return selectedSopId !== '' && !lockedError && reasonForChange.trim() !== ''
     }
 
     const handleSubmit = async () => {
@@ -179,6 +183,9 @@ export function SopUploadModal({
                 title: title.trim(),
                 department: primaryDept || '',
                 secondaryDepartments: secondaryDepts,
+                documentLevel,
+                reasonForChange: reasonForChange.trim(),
+                crossFunctionalDepartments: secondaryDepts,
                 notesToQa: notesToQa.trim() || undefined,
             })
 
@@ -208,9 +215,11 @@ export function SopUploadModal({
                         <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mb-6 animate-in zoom-in duration-500">
                              <CheckCircle2 className="h-10 w-10 text-green-500" />
                         </div>
-                        <DialogTitle className="text-2xl font-bold mb-2">Submitted for QA Review</DialogTitle>
+                        <DialogTitle className="text-2xl font-bold mb-2">
+                            {user.role === 'employee' ? 'Submitted for HOD Review' : 'Submitted for QA Review'}
+                        </DialogTitle>
                         <DialogDescription className="text-muted-foreground max-w-[280px]">
-                            Your SOP has been successfully queued. You&apos;ll be notified once the QA team has completed their review.
+                            Your SOP has been successfully queued. You&apos;ll be notified as the formal review progresses.
                         </DialogDescription>
                     </div>
                 </DialogContent>
@@ -353,8 +362,12 @@ export function SopUploadModal({
                                             value={sopNumber}
                                             onChange={(e) => setSopNumber(e.target.value)}
                                             placeholder="e.g., SOP-001"
+                                            pattern="[A-Za-z0-9]{2,10}/SOP/[0-9]{3,5}"
                                             className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
                                         />
+                                        <p className="text-[10px] text-muted-foreground font-medium">
+                                            Format: DEPT/SOP/000, for example QA/SOP/007.
+                                        </p>
                                     </div>
 
                                     <div className="space-y-2">
@@ -425,7 +438,22 @@ export function SopUploadModal({
                             </div>
 
                             <div className="space-y-2">
-                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Secondary Department Access</Label>
+                                <Label htmlFor="document-level" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Document Level</Label>
+                                <Select value={documentLevel} onValueChange={(v) => setDocumentLevel(v as typeof documentLevel)}>
+                                    <SelectTrigger id="document-level" className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="level_1">Level I - Quality Manual / Policy</SelectItem>
+                                        <SelectItem value="level_2">Level II - SOP / Protocol</SelectItem>
+                                        <SelectItem value="level_3">Level III - Work Instruction / Method</SelectItem>
+                                        <SelectItem value="level_4">Level IV - Record / Form / Log</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Cross-functional Review / Secondary Access</Label>
                                 <div className="flex flex-wrap gap-2 p-3 rounded-2xl border border-dashed border-border/50 bg-muted/10">
                                     {departments
                                         .filter(d => d.name !== primaryDept)
@@ -451,6 +479,21 @@ export function SopUploadModal({
                                             </Button>
                                         ))}
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="reason-for-change" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Reason for Change</Label>
+                                <Textarea
+                                    id="reason-for-change"
+                                    value={reasonForChange}
+                                    onChange={(e) => setReasonForChange(e.target.value)}
+                                    placeholder="Business or quality justification for creating or revising this document..."
+                                    maxLength={800}
+                                    className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 min-h-[90px]"
+                                />
+                                <p className="text-[10px] font-bold text-muted-foreground tracking-widest text-right uppercase">
+                                    {reasonForChange.length} / 800 characters
+                                </p>
                             </div>
                         </div>
                     )}
@@ -488,8 +531,16 @@ export function SopUploadModal({
                                         <p className="text-sm font-bold text-foreground leading-tight">{title}</p>
                                     </div>
                                     <div className="space-y-1">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Level</p>
+                                        <p className="text-sm font-bold text-foreground uppercase">{documentLevel.replace('_', ' ')}</p>
+                                    </div>
+                                    <div className="space-y-1">
                                         <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Department</p>
                                         <p className="text-sm font-bold text-foreground">{primaryDept}</p>
+                                    </div>
+                                    <div className="space-y-1 sm:col-span-2">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">Reason for Change</p>
+                                        <p className="text-xs text-foreground leading-tight line-clamp-3">{reasonForChange}</p>
                                     </div>
                                 </div>
                             </div>
@@ -537,7 +588,7 @@ export function SopUploadModal({
                                         Processing...
                                     </>
                                 ) : (
-                                    'Submit for QA'
+                                    user.role === 'employee' ? 'Submit to HOD' : 'Submit for QA'
                                 )}
                             </Button>
                         )}

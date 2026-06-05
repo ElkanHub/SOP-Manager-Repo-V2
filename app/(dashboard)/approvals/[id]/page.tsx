@@ -45,10 +45,15 @@ export default async function ApprovalDetailPage({ params }: Props) {
     }
 
     const isSubmitterView = approvalRequest.submitted_by === user.id
-    if (!isQa && !isSubmitterView) {
+    const isHodReviewer =
+        approvalRequest.approval_stage === 'hod_review' &&
+        profile.role === 'manager' &&
+        profile.department === approvalRequest.sops?.department
+
+    if (!isQa && !isSubmitterView && !isHodReviewer) {
         redirect('/dashboard')
     }
-    const mode: 'reviewer' | 'submitter' = isQa ? 'reviewer' : 'submitter'
+    const mode: 'reviewer' | 'submitter' = (isQa || isHodReviewer) ? 'reviewer' : 'submitter'
 
     // Convert the raw DB storage path into a secure Microsoft Web Viewer compatible 1-hour signed URL.
     let signedFileUrl = approvalRequest.file_url
@@ -95,6 +100,7 @@ export default async function ApprovalDetailPage({ params }: Props) {
             currentUserId={user.id}
             isSelfSubmission={isSelfSubmission}
             mode={mode}
+            reviewStage={approvalRequest.approval_stage}
         />
     )
 }

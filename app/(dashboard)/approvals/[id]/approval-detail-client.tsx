@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
 import { SopViewer } from "@/components/library/sop-viewer"
 import { AnnotatedSopViewer, ViewerAnnotation } from "@/components/approvals/annotated-sop-viewer"
-import { approveSopRequest, requestChangesSop } from "@/actions/sop"
+import { approveSopRequest, endorseSopToQa, requestChangesSop } from "@/actions/sop"
 import { SopApprovalRequest, Profile, SopRecord, SopAnnotationDraft } from "@/types/app.types"
 
 interface ApprovalDetailClientProps {
@@ -28,6 +28,7 @@ interface ApprovalDetailClientProps {
     currentUserId: string
     isSelfSubmission: boolean
     mode: 'reviewer' | 'submitter'
+    reviewStage: 'hod_review' | 'qa_review'
 }
 
 type DraftAnnotation = SopAnnotationDraft & { id: string }
@@ -39,10 +40,13 @@ export function ApprovalDetailClient({
     currentUserId,
     isSelfSubmission,
     mode,
+    reviewStage,
 }: ApprovalDetailClientProps) {
     const [loading, setLoading] = useState(false)
     const [action, setAction] = useState<'approve' | 'changes' | null>(null)
     const [changeType, setChangeType] = useState<'minor' | 'significant' | null>(null)
+    const [requiresTraining, setRequiresTraining] = useState(true)
+    const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10))
     const [comment, setComment] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
@@ -53,6 +57,7 @@ export function ApprovalDetailClient({
     const submitter = approvalRequest.profiles
     const isReviewer = mode === 'reviewer'
     const canAct = isReviewer && approvalRequest.status === 'pending' && !isSelfSubmission
+    const isHodReview = reviewStage === 'hod_review'
 
     const persisted: ViewerAnnotation[] = useMemo(() =>
         comments
@@ -91,7 +96,8 @@ export function ApprovalDetailClient({
                 approvalRequest.id,
                 changeType || 'significant',
                 comment || undefined,
-                drafts.map(({ id, ...rest }) => rest)
+                drafts.map(({ id, ...rest }) => rest),
+                { requiresTraining, effectiveDate }
             )
 
             if (!result.success) {
@@ -102,6 +108,8 @@ export function ApprovalDetailClient({
 
             if (result.result === 'activated') {
                 setSuccess('SOP approved and activated! Redirecting…')
+            } else if (result.result === 'pending_training') {
+                setSuccess('Approved — training gate opened. Redirecting…')
             } else if (result.result === 'change_control_issued') {
                 setSuccess('Approved — Change Control issued for signing. Redirecting…')
             }
@@ -109,6 +117,28 @@ export function ApprovalDetailClient({
             setTimeout(() => { window.location.href = '/approvals' }, 2000)
         } catch (err: any) {
             setError(err.message || 'Failed to approve')
+            setAction(null)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleHodEndorse = async () => {
+        setLoading(true)
+        setError(null)
+        setAction('approve')
+
+        try {
+            const result = await endorseSopToQa(approvalRequest.id, comment || undefined)
+            if (!result.success) {
+                setError(result.error || 'Failed to endorse')
+                setAction(null)
+                return
+            }
+            setSuccess('Submission endorsed and forwarded to QA. Redirecting…')
+            setTimeout(() => { window.location.href = '/approvals' }, 2000)
+        } catch (err: any) {
+            setError(err.message || 'Failed to endorse')
             setAction(null)
         } finally {
             setLoading(false)
@@ -266,8 +296,21 @@ export function ApprovalDetailClient({
                                             {approvalRequest.status.replace('_', ' ')}
                                         </Badge>
                                     </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground">Stage:</span>
+                                        <span>{isHodReview ? 'HOD Review' : 'QA Review'}</span>
+                                    </div>
                                 </div>
                             </div>
+
+                            {approvalRequest.reason_for_change && (
+                                <div>
+                                    <h3 className="font-medium text-sm text-muted-foreground mb-2">Reason for Change</h3>
+                                    <p className="text-sm bg-muted dark:bg-muted/50 p-3 rounded-md">
+                                        {approvalRequest.reason_for_change}
+                                    </p>
+                                </div>
+                            )}
 
                             {approvalRequest.notes_to_qa && (
                                 <div>
@@ -404,16 +447,18 @@ export function ApprovalDetailClient({
                                                     className="w-full bg-green-600 hover:bg-green-700"
                                                 >
                                                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                                                    Approve
+                                                    {isHodReview ? 'Endorse to QA' : 'Approve'}
                                                 </Button>
                                             ) : (
                                                 <div className="space-y-4 p-4 bg-green-50/50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl">
                                                     <div className="flex items-center justify-between">
-                                                        <span className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-400">Step 2: Classification</span>
+                                                        <span className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-400">
+                                                            {isHodReview ? 'HOD Endorsement' : 'Step 2: Classification'}
+                                                        </span>
                                                         <Button variant="ghost" size="sm" onClick={() => setAction(null)} className="h-6 w-6 p-0 text-green-700">×</Button>
                                                     </div>
 
-                                                    {approvalRequest.type === 'update' ? (
+                                                    {!isHodReview && approvalRequest.type === 'update' ? (
                                                         <div className="space-y-3">
                                                             <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Classify this update before activation:</p>
                                                             <div className="grid grid-cols-2 gap-2">
@@ -441,10 +486,39 @@ export function ApprovalDetailClient({
                                                                 </button>
                                                             </div>
                                                         </div>
+                                                    ) : isHodReview ? (
+                                                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                                                            Confirm this document is technically acceptable for QA review.
+                                                        </p>
                                                     ) : (
                                                         <p className="text-sm font-medium text-green-800 dark:text-green-200">
                                                             Confirm activation for this new SOP?
                                                         </p>
+                                                    )}
+
+                                                    {!isHodReview && (
+                                                        <div className="space-y-3 rounded-lg border border-green-200 dark:border-green-900 bg-white/50 dark:bg-black/10 p-3">
+                                                            <label className="flex items-center justify-between gap-3 text-xs font-semibold">
+                                                                <span>Training required before Effective Date</span>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={requiresTraining}
+                                                                    onChange={(e) => setRequiresTraining(e.target.checked)}
+                                                                    className="h-4 w-4"
+                                                                />
+                                                            </label>
+                                                            {!requiresTraining && (
+                                                                <div className="space-y-1">
+                                                                    <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Effective Date</p>
+                                                                    <input
+                                                                        type="date"
+                                                                        value={effectiveDate}
+                                                                        onChange={(e) => setEffectiveDate(e.target.value)}
+                                                                        className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     )}
 
                                                     <div className="space-y-2">
@@ -464,8 +538,8 @@ export function ApprovalDetailClient({
                                                     )}
 
                                                     <Button
-                                                        onClick={handleApprove}
-                                                        disabled={loading || (approvalRequest.type === 'update' && !changeType)}
+                                                        onClick={isHodReview ? handleHodEndorse : handleApprove}
+                                                        disabled={loading || (!isHodReview && approvalRequest.type === 'update' && !changeType)}
                                                         className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/10"
                                                     >
                                                         {loading ? (
@@ -473,7 +547,7 @@ export function ApprovalDetailClient({
                                                         ) : (
                                                             <CheckCircle2 className="h-4 w-4 mr-2" />
                                                         )}
-                                                        Confirm & Activate
+                                                        {isHodReview ? 'Confirm & Forward' : 'Confirm Approval'}
                                                     </Button>
                                                 </div>
                                             )}

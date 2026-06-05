@@ -128,7 +128,7 @@ export function RequestFormModal({ open, onOpenChange, profile, onSuccess }: Req
                 <Textarea
                   value={body}
                   onChange={(e) => setBody(e.target.value)}
-                  placeholder="Describe the document or record you need. Be as specific as possible — include document names, reference numbers, date ranges, or any other details that will help QA locate and prepare it."
+                  placeholder="List the document number(s) and title(s) requested, for example QA/SOP/007 - Document Control Procedure. Include copy type, date ranges, or any other details QA needs to issue the controlled copy."
                   className={cn(
                     'min-h-[140px] max-h-[280px] resize-none bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all text-sm',
                     isOverLimit && 'border-destructive focus-visible:ring-destructive'

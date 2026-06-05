@@ -16,6 +16,8 @@ interface LibraryPageClientProps {
   isAdmin: boolean
   isQa: boolean
   statusFilter?: string
+  levelFilter?: string
+  departmentFilter?: string
 }
 
 export function LibraryPageClient({
@@ -26,6 +28,8 @@ export function LibraryPageClient({
   isAdmin,
   isQa,
   statusFilter,
+  levelFilter,
+  departmentFilter,
 }: LibraryPageClientProps) {
   const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
@@ -62,7 +66,48 @@ export function LibraryPageClient({
         )}
       </div>
 
-      <div className="mt-6 flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit mb-4 overflow-x-auto no-scrollbar max-w-full mx-4 md:mx-0">
+      <div className="mt-6 space-y-3 mx-4 md:mx-0 mb-4">
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
+          <StatusFilterTab
+            label="Master Index"
+            active={!departmentFilter}
+            href="/library"
+          />
+          {departments.map((dept) => (
+            <StatusFilterTab
+              key={dept.name}
+              label={`${dept.name} SOP List`}
+              active={departmentFilter === dept.name}
+              href={`/library?department=${encodeURIComponent(dept.name)}`}
+            />
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
+          <StatusFilterTab
+            label="All Levels"
+            active={!levelFilter}
+            href={departmentFilter ? `/library?department=${encodeURIComponent(departmentFilter)}` : "/library"}
+          />
+          {[
+            ['level_1', 'Level I'],
+            ['level_2', 'Level II'],
+            ['level_3', 'Level III'],
+            ['level_4', 'Level IV'],
+          ].map(([value, label]) => (
+            <StatusFilterTab
+              key={value}
+              label={label}
+              active={levelFilter === value}
+              href={`/library?${new URLSearchParams({
+                ...(departmentFilter ? { department: departmentFilter } : {}),
+                level: value,
+              }).toString()}`}
+            />
+          ))}
+        </div>
+
+        <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg w-fit overflow-x-auto no-scrollbar max-w-full">
         <StatusFilterTab
           label="All"
           active={!statusFilter}
@@ -86,12 +131,23 @@ export function LibraryPageClient({
               href="/library?status=pending_qa"
             />
             <StatusFilterTab
+              label="HOD"
+              active={statusFilter === "pending_hod"}
+              href="/library?status=pending_hod"
+            />
+            <StatusFilterTab
+              label="Training"
+              active={statusFilter === "approved_pending_training"}
+              href="/library?status=approved_pending_training"
+            />
+            <StatusFilterTab
               label="Pending CC"
               active={statusFilter === "pending_cc"}
               href="/library?status=pending_cc"
             />
           </>
         )}
+        </div>
       </div>
 
       <div className="px-4 md:px-0">
@@ -103,6 +159,8 @@ export function LibraryPageClient({
           isAdmin={isAdmin}
           isQa={isQa}
           statusFilter={statusFilter}
+          levelFilter={levelFilter}
+          departmentFilter={departmentFilter}
         />
       </div>
 

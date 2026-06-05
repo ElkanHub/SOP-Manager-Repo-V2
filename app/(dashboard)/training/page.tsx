@@ -38,7 +38,7 @@ export default async function TrainingPage() {
 
     const { data: sops } = await serviceClient
         .from('sops')
-        .select('id, title, version, status, sop_number, department')
+        .select('id, title, version, status, sop_number, department, document_level')
         .eq('status', 'active')
         .or(isQa ? 'status.not.is.null' : `department.eq.${profile.department}`)
         .order('title', { ascending: true })
