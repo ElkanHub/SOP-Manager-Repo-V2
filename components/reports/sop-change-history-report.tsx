@@ -57,9 +57,10 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
       cell: ({ row }) => {
         const id = row.original.id
         const date = new Date(row.original.created_at)
-        const ccRef = `CC-${date.getFullYear()}-${id.slice(0, 4).toUpperCase()}`
+        const ccRef = row.original.cc_number || `CC-${date.getFullYear()}-${id.slice(0, 4).toUpperCase()}`
+        const href = row.original.sop_id ? `/change-control/${id}` : "/requests/hub/change-control"
         return (
-          <Link href={`/change-control/${id}`} className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded hover:underline hover:bg-brand-teal/10 transition-colors">
+          <Link href={href} className="font-mono text-xs font-bold text-brand-teal bg-brand-teal/5 px-2 py-1 rounded hover:underline hover:bg-brand-teal/10 transition-colors">
             {ccRef}
           </Link>
         )
@@ -68,18 +69,26 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
     {
       accessorKey: "sops.title",
       header: "Document",
-      cell: ({ row }) => (
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold">{row.original.sops?.title || "Unknown Document"}</span>
-          <span className="text-xs text-muted-foreground">{row.original.sops?.sop_number || "-"}</span>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const firstDoc = row.original.documents?.[0]
+        const docCount = row.original.documents?.length || (row.original.sop_id ? 1 : 0)
+        return (
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold">{row.original.title || row.original.sops?.title || firstDoc?.document_title || "Change Control Package"}</span>
+            <span className="text-xs text-muted-foreground">
+              {row.original.sops?.sop_number || firstDoc?.document_number || "-"}{docCount > 1 ? ` + ${docCount - 1} more` : ""}
+            </span>
+          </div>
+        )
+      },
     },
     {
       accessorKey: "sops.department",
       header: "Dept",
       cell: ({ row }) => (
-        <div className="text-xs text-muted-foreground/80 font-medium">{row.original.sops?.department || "-"}</div>
+        <div className="text-xs text-muted-foreground/80 font-medium">
+          {row.original.originating_department || row.original.sops?.department || row.original.documents?.[0]?.department || "-"}
+        </div>
       ),
     },
     {
@@ -89,7 +98,7 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
         <div className="text-xs font-medium flex items-center gap-1.5">
           <span className="text-muted-foreground">{row.original.old_version || '00'}</span>
           <span className="text-brand-navy dark:text-brand-teal">→</span>
-          <span className="font-bold text-foreground">{row.original.new_version || '-'}</span>
+          <span className="font-bold text-foreground">{row.original.new_version || row.original.documents?.[0]?.new_revision || 'TBD'}</span>
         </div>
       ),
     },

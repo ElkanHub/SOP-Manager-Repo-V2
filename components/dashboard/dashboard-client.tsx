@@ -94,11 +94,23 @@ interface PmTask {
 
 interface OpenCC {
   id: string
-  new_version: string
+  sop_id?: string | null
+  cc_number?: string | null
+  title?: string | null
+  new_version?: string | null
   created_at: string
+  submitted_at?: string | null
   status: string
   deadline?: string | null
-  sops: { title: string; department: string }
+  originating_department?: string | null
+  sops?: { title: string; department: string } | null
+  documents?: {
+    document_number: string
+    document_title: string
+    department?: string | null
+    old_revision?: string | null
+    new_revision?: string | null
+  }[]
   required_signatories: any[]
   signature_certificates: any[]
 }
@@ -512,18 +524,25 @@ export function DashboardClient({
                   const progressPct = requiredCount > 0 ? (signedCount / requiredCount) * 100 : 0;
                   const isActionRequired = !cc.signature_certificates?.some((c: any) => c.user_id === profile.id) && cc.required_signatories?.some((s: any) => s.user_id === profile.id);
                   const isOverdue = cc.deadline ? isPast(new Date(cc.deadline)) : false;
+                  const documentCount = cc.documents?.length || (cc.sop_id ? 1 : 0);
+                  const displayTitle = cc.title || cc.sops?.title || 'Change Control Package';
+                  const displayDepartment = cc.originating_department || cc.sops?.department || cc.documents?.[0]?.department || 'QA';
+                  const displayRevision = cc.new_version || cc.documents?.[0]?.new_revision || 'TBD';
+                  const detailHref = cc.sop_id ? `/change-control/${cc.id}` : (isQa ? '/requests/hub/change-control' : '/requests/change-control');
                   
                   return (
                     <div key={cc.id} className={`flex flex-col p-4 rounded-xl border ${isActionRequired ? 'border-amber-300 bg-amber-50/30 dark:border-amber-700/50 dark:bg-amber-900/10' : 'border-border bg-card'} gap-3 transition-colors hover:border-slate-300`}>
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="font-bold text-sm text-foreground flex items-center gap-2">
-                            {cc.sops?.title || 'Unknown Document'}
+                            {displayTitle}
                             {isOverdue && <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-widest scale-90">SLA Breach</Badge>}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5 font-medium">Draft Rev. {cc.new_version} • <span className="uppercase tracking-widest text-[10px]">{cc.sops?.department}</span></div>
+                          <div className="text-xs text-muted-foreground mt-0.5 font-medium">
+                            {cc.cc_number || 'Change Control'} • {documentCount} document{documentCount === 1 ? '' : 's'} • Rev. {displayRevision} • <span className="uppercase tracking-widest text-[10px]">{displayDepartment}</span>
+                          </div>
                         </div>
-                        <Link href={`/change-control/${cc.id}`}>
+                        <Link href={detailHref}>
                           <Button size="sm" variant={isActionRequired ? "default" : "outline"} className={`h-8 text-xs font-bold ${isActionRequired ? 'bg-amber-500 hover:bg-amber-600' : ''}`}>
                             {isActionRequired ? 'Sign Now' : 'View'}
                           </Button>

@@ -17,8 +17,9 @@ export async function fetchSopChanges({ page, dateFrom, dateTo }: DateParams) {
   let query = supabase
     .from("change_controls")
     .select(
-      `id, old_version, new_version, status, created_at, completed_at,
+      `id, sop_id, cc_number, title, originating_department, old_version, new_version, status, created_at, completed_at,
        sops(sop_number, title, department),
+       documents:change_control_documents(document_number, document_title, department, old_revision, new_revision),
        signatories:signature_certificates(id)`,
       { count: "exact" }
     )

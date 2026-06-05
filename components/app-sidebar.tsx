@@ -40,6 +40,21 @@ type ApprovalBadgeRow = {
   sops?: { status?: string | null } | { status?: string | null }[] | null
 }
 
+type NavSubItem = {
+  title: string
+  url: string
+  badge?: number
+}
+
+type NavItem = {
+  title: string
+  url: string
+  icon: React.ReactNode
+  isActive: boolean
+  badge?: number
+  submenu?: NavSubItem[]
+}
+
 export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const [unreadConversations, setUnreadConversations] = React.useState(0)
@@ -47,9 +62,13 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [pendingEquipmentCount, setPendingEquipmentCount] = React.useState(0)
   const [pendingRequests, setPendingRequests] = React.useState(0)
   const [pendingHubSubmissions, setPendingHubSubmissions] = React.useState(0)
+  const [pendingChangeControls, setPendingChangeControls] = React.useState(0)
+  const [pendingHubChangeControls, setPendingHubChangeControls] = React.useState(0)
   const [pendingTraining, setPendingTraining] = React.useState(0)
   const [reviewModules, setReviewModules] = React.useState(0)
   const [libraryOpen, setLibraryOpen] = React.useState(pathname.startsWith("/library"))
+  const [requestsOpen, setRequestsOpen] = React.useState(pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub"))
+  const [requestHubOpen, setRequestHubOpen] = React.useState(pathname.startsWith("/requests/hub"))
   const supabase = createClient()
 
   const prevUnreadRef = React.useRef(0)
@@ -127,9 +146,22 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     }
     setPendingEquipmentCount(equipCount)
 
-    // 4. Pending Requests badge (new + legacy tables)
+    const openChangeControlStatuses = [
+      'submitted',
+      'qa_screening',
+      'clarification_requested',
+      'approved_for_document_work',
+      'documents_in_review',
+      'signatures_pending',
+      'pending',
+      'pending_reconciliation',
+      'pending_training',
+      'pending_activation',
+    ]
+
+    // 4. Pending Requests badge (new + legacy tables + Change Control packages)
     if (isQa || profile?.is_admin) {
-      const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
+      const [{ count: rfsCount }, { count: legacyCount }, { count: ccCount }] = await Promise.all([
         supabase
           .from('request_form_submissions')
           .select('*', { count: 'exact', head: true })
@@ -138,11 +170,17 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
           .in('status', ['submitted', 'received', 'approved']),
+        supabase
+          .from('change_controls')
+          .select('*', { count: 'exact', head: true })
+          .in('status', openChangeControlStatuses),
       ])
-      setPendingRequests((rfsCount || 0) + (legacyCount || 0))
+      setPendingRequests((rfsCount || 0) + (legacyCount || 0) + (ccCount || 0))
       setPendingHubSubmissions(rfsCount || 0)
+      setPendingChangeControls(ccCount || 0)
+      setPendingHubChangeControls(ccCount || 0)
     } else {
-      const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
+      const [{ count: rfsCount }, { count: legacyCount }, { count: ccCount }] = await Promise.all([
         supabase
           .from('request_form_submissions')
           .select('*', { count: 'exact', head: true })
@@ -153,8 +191,14 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           .select('*', { count: 'exact', head: true })
           .eq('requester_id', user.id)
           .in('status', ['submitted', 'received', 'approved']),
+        supabase
+          .from('change_controls')
+          .select('*', { count: 'exact', head: true })
+          .eq('requester_id', user.id)
+          .in('status', openChangeControlStatuses),
       ])
-      setPendingRequests((rfsCount || 0) + (legacyCount || 0))
+      setPendingRequests((rfsCount || 0) + (legacyCount || 0) + (ccCount || 0))
+      setPendingChangeControls(ccCount || 0)
     }
 
     // 5. Training
@@ -187,6 +231,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'request_form_submissions' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'change_controls' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'change_control_documents' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'training_assignments' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'training_modules' }, fetchCounts)
       .subscribe()
@@ -200,10 +246,16 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     if (pathname.startsWith("/library")) {
       setLibraryOpen(true)
     }
+    if (pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub")) {
+      setRequestsOpen(true)
+    }
+    if (pathname.startsWith("/requests/hub")) {
+      setRequestHubOpen(true)
+    }
   }, [pathname])
 
 
-  const navItems = [
+  const navItems: NavItem[] = [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -257,13 +309,21 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <ClipboardList className="w-5 h-5" />,
       isActive: pathname === "/requests" || (pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub")),
       badge: pendingRequests,
+      submenu: [
+        { title: "Document Requests", url: "/requests", badge: Math.max(0, pendingRequests - pendingChangeControls) },
+        { title: "Change Control", url: "/requests/change-control", badge: pendingChangeControls },
+      ],
     },
     ...(isQa ? [{
       title: "Request Hub",
       url: "/requests/hub",
       icon: <Sparkles className="w-5 h-5" />,
       isActive: pathname.startsWith("/requests/hub"),
-      badge: pendingHubSubmissions,
+      badge: pendingHubSubmissions + pendingHubChangeControls,
+      submenu: [
+        { title: "Document Request Hub", url: "/requests/hub", badge: pendingHubSubmissions },
+        { title: "Change Control Hub", url: "/requests/hub/change-control", badge: pendingHubChangeControls },
+      ],
     }] : []),
     {
       title: "Calendar",
@@ -332,6 +392,62 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
                           <span>Master Index</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  )}
+                </>
+              ) : item.submenu ? (
+                <>
+                  <div className="flex items-center">
+                    <SidebarMenuButton
+                      render={<Link href={item.url} />}
+                      isActive={item.isActive}
+                      className={`
+                        flex items-center gap-3 px-3 py-2 md:py-2.5 rounded-md transition-all duration-200 ease-in-out
+                        md:text-sm text-base py-3 flex-1
+                        ${item.isActive
+                          ? "bg-brand-navy/5 text-brand-navy font-semibold border-l-4 border-brand-teal shadow-soft dark:bg-brand-teal/10 dark:text-brand-teal"
+                          : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground border-l-4 border-transparent hover:translate-x-1"
+                        }
+                      `}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </Badge>
+                      )}
+                    </SidebarMenuButton>
+                    <button
+                      type="button"
+                      onClick={() => item.title === "Requests"
+                        ? setRequestsOpen((open) => !open)
+                        : setRequestHubOpen((open) => !open)
+                      }
+                      className="ml-1 flex h-9 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800"
+                      aria-label={`Toggle ${item.title} submenu`}
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${(item.title === "Requests" ? requestsOpen : requestHubOpen) ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {(item.title === "Requests" ? requestsOpen : requestHubOpen) && (
+                    <SidebarMenuSub>
+                      {item.submenu.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.url}>
+                          <SidebarMenuSubButton
+                            render={<Link href={subItem.url} />}
+                            isActive={pathname === subItem.url}
+                            className="gap-2"
+                          >
+                            <span>{subItem.title}</span>
+                            {subItem.badge !== undefined && subItem.badge > 0 && (
+                              <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
+                                {subItem.badge > 99 ? '99+' : subItem.badge}
+                              </Badge>
+                            )}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
                     </SidebarMenuSub>
                   )}
                 </>
