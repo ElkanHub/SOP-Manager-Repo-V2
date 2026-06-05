@@ -25,18 +25,36 @@ export default async function ApprovalsPage() {
 
     const { data: isQa } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
 
-    if (!isQa) {
+    const isDepartmentManager = profile.role === 'manager'
+
+    if (!isQa && !isDepartmentManager) {
         redirect('/dashboard')
     }
 
-    const { data: approvalRequests, error } = await serviceClient
+    let approvalQuery = serviceClient
         .from('sop_approval_requests')
         .select(`
             *,
             profiles!inner(id, full_name, avatar_url, department),
-            sops!inner(id, sop_number, title, department)
+            sops!inner(id, sop_number, title, department, status, training_deadline, document_level)
         `)
         .order('created_at', { ascending: false })
+
+    if (isQa) {
+        approvalQuery = approvalQuery.eq('approval_stage', 'qa_review')
+    } else {
+        approvalQuery = approvalQuery.eq('approval_stage', 'hod_review').eq('sops.department', profile.department)
+    }
+
+    const { data: approvalRequests, error } = await approvalQuery
+
+    const { data: pendingTrainingSops } = isQa
+        ? await serviceClient
+            .from('sops')
+            .select('id, sop_number, title, department, status, training_deadline, approved_date, effective_date, document_level')
+            .eq('status', 'approved_pending_training')
+            .order('training_deadline', { ascending: true })
+        : { data: [] as any[] }
 
     if (error) {
         console.error('Error fetching approval requests:', error)
@@ -64,6 +82,8 @@ export default async function ApprovalsPage() {
             <ApprovalQueueTable
                 requests={approvalRequests || []}
                 currentUserId={user.id}
+                mode={isQa ? 'qa' : 'hod'}
+                pendingTrainingSops={pendingTrainingSops || []}
             />
         </div>
     )

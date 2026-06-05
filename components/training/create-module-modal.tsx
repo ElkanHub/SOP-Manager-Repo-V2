@@ -33,6 +33,11 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
 
     // Unique departments from active sops if QA, else just their own
     const deps = isQa ? Array.from(new Set(activeSops.map(s => s.department))) : [profile.department]
+    const sortedSops = [...activeSops].sort((a, b) => {
+        if (a.document_level === 'level_2' && b.document_level !== 'level_2') return -1
+        if (a.document_level !== 'level_2' && b.document_level === 'level_2') return 1
+        return String(a.sop_number).localeCompare(String(b.sop_number))
+    })
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -128,9 +133,9 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
                                             <SelectValue placeholder="Select an Active SOP" />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-[300px]">
-                                            {activeSops.filter(s => isQa || s.department === department).map(sop => (
+                                            {sortedSops.filter(s => isQa || s.department === department).map(sop => (
                                                 <SelectItem key={sop.id} value={sop.id}>
-                                                    {sop.sop_number} - {sop.title} (v{sop.version})
+                                                    {sop.sop_number} - {sop.title} ({sop.document_level === 'level_2' ? 'Level II' : sop.document_level?.replace('_', ' ')}, v{sop.version})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

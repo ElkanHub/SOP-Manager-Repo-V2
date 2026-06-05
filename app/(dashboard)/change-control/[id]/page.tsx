@@ -47,6 +47,7 @@ export default async function ChangeControlPage({ params }: Props) {
         .eq('change_control_id', id)
 
     const { data: isAdmin } = await serviceClient.rpc('is_admin', { user_id: user.id })
+    const { data: isQa } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
 
     const isSignatory = changeControl.required_signatories?.some(
         (s: any) => s.user_id === user.id
@@ -86,6 +87,7 @@ export default async function ChangeControlPage({ params }: Props) {
             currentUserId={user.id}
             currentUserProfile={profile}
             isAdmin={isAdmin || false}
+            isQa={isQa || false}
             canSign={canSign}
         />
     )

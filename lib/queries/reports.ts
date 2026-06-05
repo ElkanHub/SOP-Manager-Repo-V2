@@ -136,3 +136,26 @@ export async function fetchDocumentRequests({ page, dateFrom, dateTo }: DatePara
   return { data: data ?? [], count: count ?? 0, pageSize: PAGE_SIZE }
 }
 
+export async function fetchDocumentsDueForReview({ page, dateFrom, dateTo }: DateParams) {
+  const supabase = createClient()
+  const from = page * PAGE_SIZE
+  const today = new Date().toISOString().slice(0, 10)
+  const ninetyDays = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+
+  let query = supabase
+    .from("sops")
+    .select(
+      `id, sop_number, title, department, document_level, version, status, effective_date, due_for_revision, submitted_by,
+       owner:profiles!sops_submitted_by_fkey(full_name, department)`,
+      { count: "exact" }
+    )
+    .not("due_for_revision", "is", null)
+    .gte("due_for_revision", dateFrom || today)
+    .lte("due_for_revision", dateTo || ninetyDays)
+    .order("due_for_revision", { ascending: true })
+    .range(from, from + PAGE_SIZE - 1)
+
+  const { data, count, error } = await query
+  if (error) throw error
+  return { data: data ?? [], count: count ?? 0, pageSize: PAGE_SIZE }
+}

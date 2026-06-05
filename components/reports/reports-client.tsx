@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { format, subDays } from "date-fns"
-import { FileBarChart, FileText, Users, Wrench, Bell, Sparkles, Download, ClipboardList, GraduationCap, ShieldCheck } from "lucide-react"
+import { FileText, Users, Wrench, Bell, Sparkles, ClipboardList, GraduationCap, ShieldCheck, CalendarClock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -51,6 +51,11 @@ const AuditTrailReport = dynamic(() => import("./audit-trail-report").then(mod =
   loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
 })
 
+const DocumentsDueReviewReport = dynamic(() => import("./documents-due-review-report").then(mod => mod.DocumentsDueReviewReport), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center"><Sparkles className="h-8 w-8 animate-pulse text-muted-foreground/20" /></div>
+})
+
 
 interface ReportsClientProps {
   profile: Profile
@@ -58,7 +63,7 @@ interface ReportsClientProps {
   isAdmin: boolean
 }
 
-type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests" | "training-log" | "audit-trail"
+type ReportType = "sop-changes" | "acknowledgements" | "pm-completion" | "pulse-notices" | "risk-insights" | "document-requests" | "training-log" | "audit-trail" | "documents-due-review"
 
 export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
   const [activeReport, setActiveReport] = useState<ReportType>("audit-trail")
@@ -67,6 +72,7 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
   const reports = [
     { id: "audit-trail", label: "Audit Trail", icon: ShieldCheck, access: "qa+admin", color: "text-purple-600" },
     { id: "sop-changes", label: "SOP Change History", icon: FileText, access: "qa", color: "text-teal-600" },
+    { id: "documents-due-review", label: "Documents Due for Review", icon: CalendarClock, access: "qa+admin", color: "text-red-600" },
     { id: "acknowledgements", label: "Worker Acknowledgements", icon: Users, access: "all", color: "text-blue-600" },
     { id: "pm-completion", label: "PM Completion Log", icon: Wrench, access: "qa", color: "text-orange-600" },
     { id: "pulse-notices", label: "Pulse / Notice Log", icon: Bell, access: "admin", color: "text-indigo-600" },
@@ -159,6 +165,9 @@ export function ReportsClient({ profile, isQa, isAdmin }: ReportsClientProps) {
               )}
               {activeReport === "sop-changes" && (
                 <SopChangeHistoryReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} isAdmin={isAdmin} />
+              )}
+              {activeReport === "documents-due-review" && (isQa || isAdmin) && (
+                <DocumentsDueReviewReport dateFrom={dateFrom} dateTo={dateTo} />
               )}
               {activeReport === "acknowledgements" && (
                 <AcknowledgementLogReport dateFrom={dateFrom} dateTo={dateTo} isQa={isQa} isAdmin={isAdmin} />

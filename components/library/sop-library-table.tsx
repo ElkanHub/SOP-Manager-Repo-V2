@@ -36,6 +36,8 @@ interface SopLibraryTableProps {
   isAdmin: boolean
   isQa: boolean
   statusFilter?: string
+  levelFilter?: string
+  departmentFilter?: string
 }
 
 export function SopLibraryTable({
@@ -44,6 +46,8 @@ export function SopLibraryTable({
   isAdmin,
   isQa,
   statusFilter,
+  levelFilter,
+  departmentFilter,
 }: SopLibraryTableProps) {
   const router = useRouter()
   const { addTab } = useSopTabStore()
@@ -52,13 +56,13 @@ export function SopLibraryTable({
   const queryClient = useQueryClient()
 
   // Reset to page 0 when status filter changes
-  useEffect(() => { setPage(0) }, [statusFilter])
+  useEffect(() => { setPage(0) }, [statusFilter, levelFilter, departmentFilter])
 
-  const queryKey = ["sops", page, userDepartment, userRole, isAdmin, isQa, statusFilter]
+  const queryKey = ["sops", page, userDepartment, userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter]
 
   const { data: result, isLoading, isFetching } = useQuery({
     queryKey,
-    queryFn: () => fetchSopPage({ page, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter }),
+    queryFn: () => fetchSopPage({ page, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter }),
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
@@ -66,10 +70,10 @@ export function SopLibraryTable({
   // Prefetch next page
   useEffect(() => {
     queryClient.prefetchQuery({
-      queryKey: ["sops", page + 1, userDepartment, userRole, isAdmin, isQa, statusFilter],
-      queryFn: () => fetchSopPage({ page: page + 1, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter }),
+      queryKey: ["sops", page + 1, userDepartment, userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter],
+      queryFn: () => fetchSopPage({ page: page + 1, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter }),
     })
-  }, [page, userDepartment, userRole, isAdmin, isQa, statusFilter, queryClient])
+  }, [page, userDepartment, userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter, queryClient])
 
   const sops: SopRecord[] = (result?.data as SopRecord[]) ?? []
   const totalCount = result?.count ?? 0
@@ -123,6 +127,15 @@ export function SopLibraryTable({
           </span>
         ),
         size: 80,
+      },
+      {
+        accessorKey: "document_level",
+        header: "Level",
+        cell: ({ row }) => {
+          const labels: Record<string, string> = { level_1: "I", level_2: "II", level_3: "III", level_4: "IV" }
+          return <span className="text-xs font-semibold text-muted-foreground">Level {labels[row.getValue("document_level") as string] || "II"}</span>
+        },
+        size: 90,
       },
       {
         accessorKey: "status",

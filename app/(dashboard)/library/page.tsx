@@ -10,7 +10,7 @@ import { LibraryPageClient } from "./library-client"
 export const dynamic = "force-dynamic"
 
 interface PageProps {
-  searchParams: Promise<{ status?: string }>
+  searchParams: Promise<{ status?: string; level?: string; department?: string; index?: string }>
 }
 
 export default async function LibraryPage({ searchParams }: PageProps) {
@@ -37,6 +37,8 @@ export default async function LibraryPage({ searchParams }: PageProps) {
 
   const params = await searchParams
   const statusFilter = params.status
+  const levelFilter = params.level
+  const departmentFilter = params.department
 
   let query = supabase
     .from("sops")
@@ -48,7 +50,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
   } else if (statusFilter) {
     query = query.eq("status", statusFilter)
   } else if (!profile.is_admin) {
-    query = query.in("status", ["draft", "pending_qa", "pending_cc", "active"])
+    query = query.in("status", ["draft", "draft_in_review", "pending_hod", "pending_qa", "approved_pending_training", "pending_cc", "active", "superseded", "pending_destruction"])
   }
 
   const { data: isQaManager } = await serviceClient.rpc('is_qa_manager', { user_id: user.id })
@@ -58,7 +60,7 @@ export default async function LibraryPage({ searchParams }: PageProps) {
     .select("*")
     .order("name")
 
-  const isManager = profile.role === "manager" || profile.is_admin
+  const isManager = profile.role === "manager" || profile.role === "employee" || profile.is_admin
 
   // Fetch active SOPs for the "Update Existing" dropdown in the upload modal
   let existingSopsQuery = supabase
@@ -83,6 +85,8 @@ export default async function LibraryPage({ searchParams }: PageProps) {
       isAdmin={profile.is_admin || false}
       isQa={isQaManager || false}
       statusFilter={statusFilter}
+      levelFilter={levelFilter}
+      departmentFilter={departmentFilter}
     />
   )
 }

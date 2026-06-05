@@ -187,7 +187,14 @@ export default function LibraryViewClient({
                   {approverProfile?.full_name || 'System Approved'}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
-                  {sop.date_listed ? format(new Date(sop.date_listed), "dd MMM yyyy") : '-'}
+                  {sop.approved_date ? format(new Date(sop.approved_date), "dd MMM yyyy") : '-'}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Effective</p>
+                <p className="text-xs font-semibold text-slate-700 mt-1">
+                  {sop.effective_date ? format(new Date(sop.effective_date), "dd MMM yyyy") : 'Not effective'}
                 </p>
               </div>
 
@@ -219,7 +226,12 @@ export default function LibraryViewClient({
           <div className="flex-1 bg-slate-200/50 flex flex-col sm:p-8">
             <div className="max-w-5xl mx-auto w-full h-full bg-white shadow-2xl overflow-hidden sm:rounded-xl ring-1 ring-slate-200/50">
               {signedFileUrl ? (
-                <SopViewer fileUrl={signedFileUrl} className="h-full w-full" />
+                <SopViewer
+                  fileUrl={signedFileUrl}
+                  className="h-full w-full"
+                  status={sop.status}
+                  isCrossDepartment={isCrossDept}
+                />
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-400 text-xs italic">
                   No document content available.

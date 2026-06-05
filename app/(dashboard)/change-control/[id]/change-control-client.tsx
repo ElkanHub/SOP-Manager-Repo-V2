@@ -4,13 +4,14 @@ import { useState } from "react"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { ChangeControlHeader } from "@/components/change-control/change-control-header"
 import { DiffViewer } from "@/components/change-control/diff-viewer"
 import { DeltaSummaryCard } from "@/components/change-control/delta-summary-card"
 import { SignatureGrid } from "@/components/change-control/signature-grid"
 import { SignatureConfirmModal } from "@/components/change-control/signature-confirm-modal"
 import { WaiveModal } from "@/components/change-control/waive-modal"
-import { signChangeControl, waiveSignature, generateDeltaSummary } from "@/actions/sop"
+import { signChangeControl, waiveSignature, generateDeltaSummary, confirmChangeControlReconciliation } from "@/actions/sop"
 import { ChangeControl, CcSignatory, SignatureCertificate, Profile } from "@/types/app.types"
 
 interface ChangeControlClientProps {
@@ -27,6 +28,7 @@ interface ChangeControlClientProps {
     currentUserId: string
     currentUserProfile: Profile
     isAdmin: boolean
+    isQa: boolean
     canSign: boolean
 }
 
@@ -36,6 +38,7 @@ export function ChangeControlClient({
     currentUserId,
     currentUserProfile,
     isAdmin,
+    isQa,
     canSign,
 }: ChangeControlClientProps) {
     const [changeControl, setChangeControl] = useState(initialChangeControl)
@@ -43,6 +46,9 @@ export function ChangeControlClient({
     const [signModalOpen, setSignModalOpen] = useState(false)
     const [waiveModalOpen, setWaiveModalOpen] = useState(false)
     const [waiveTarget, setWaiveTarget] = useState<{ id: string; name: string } | null>(null)
+    const [reconciliationNote, setReconciliationNote] = useState("")
+    const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10))
+    const [confirmingReconciliation, setConfirmingReconciliation] = useState(false)
 
     const signatories = changeControl.required_signatories as CcSignatory[] || []
     const signedCount = signatories.filter(s => {
@@ -51,11 +57,26 @@ export function ChangeControlClient({
     }).length
 
     const ccRef = `CC-${new Date(changeControl.created_at).getFullYear()}-${changeControl.id.slice(0, 4).toUpperCase()}`
+    const canConfirmReconciliation = (isAdmin || isQa) && changeControl.status === 'pending_activation'
 
     const handleRegenerateSummary = async () => {
         const result = await generateDeltaSummary(changeControl.id)
         if (result.success && result.summary) {
             return result.summary
+        }
+    }
+
+    const handleConfirmReconciliation = async () => {
+        setConfirmingReconciliation(true)
+        try {
+            const result = await confirmChangeControlReconciliation(changeControl.id, reconciliationNote, effectiveDate)
+            if (!result.success) {
+                alert(result.error)
+                return
+            }
+            window.location.reload()
+        } finally {
+            setConfirmingReconciliation(false)
         }
     }
 
@@ -124,15 +145,48 @@ export function ChangeControlClient({
                                         setWaiveTarget({ id: userId, name: signatory?.full_name || 'Unknown' })
                                         setWaiveModalOpen(true)
                                     }}
-                                    isLocked={changeControl.status === 'complete'}
+                                    isLocked={changeControl.status === 'complete' || changeControl.status === 'pending_activation'}
                                 />
                             </div>
                         </div>
 
+                        {canConfirmReconciliation && (
+                            <div className="p-6 bg-amber-50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900 space-y-4">
+                                <div>
+                                    <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300 uppercase tracking-widest mb-2">Copy Reconciliation</h4>
+                                    <p className="text-xs text-amber-900/80 dark:text-amber-200/80 leading-relaxed">
+                                        Confirm all issued copies of {changeControl.old_version} have been retrieved or reconciled before activating {changeControl.new_version}.
+                                    </p>
+                                </div>
+                                <Textarea
+                                    value={reconciliationNote}
+                                    onChange={(e) => setReconciliationNote(e.target.value)}
+                                    placeholder="Reconciliation note or controlled-copy reference..."
+                                    className="min-h-[80px] bg-white/70 dark:bg-black/20 text-xs"
+                                />
+                                <div className="space-y-1">
+                                    <label className="text-[10px] font-bold uppercase tracking-widest text-amber-900/70 dark:text-amber-200/70">Effective Date</label>
+                                    <input
+                                        type="date"
+                                        value={effectiveDate}
+                                        onChange={(e) => setEffectiveDate(e.target.value)}
+                                        className="h-9 w-full rounded-md border bg-background px-2 text-xs"
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleConfirmReconciliation}
+                                    disabled={confirmingReconciliation}
+                                    className="w-full bg-amber-700 hover:bg-amber-800 text-white"
+                                >
+                                    Confirm Reconciliation
+                                </Button>
+                            </div>
+                        )}
+
                         <div className="p-6 bg-brand-navy/5 dark:bg-brand-navy/10 rounded-2xl border border-brand-navy/10">
                             <h4 className="text-xs font-bold text-brand-navy dark:text-brand-teal uppercase tracking-widest mb-2">Governance Note</h4>
                             <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                                Once all required department managers have cryptographically signed this record, the SOP will automatically transition to "Active" status and the document version will be updated system-wide.
+                                Once all required department managers have cryptographically signed this record, QA must confirm old-copy reconciliation before the revised SOP can become effective.
                             </p>
                         </div>
                     </div>

@@ -40,12 +40,21 @@ export interface SopRecord {
     department: string;
     secondary_departments: string[];
     version: string;
-    status: 'draft' | 'pending_qa' | 'active' | 'superseded' | 'pending_cc';
+    status: 'draft' | 'draft_in_review' | 'pending_hod' | 'pending_qa' | 'approved_pending_training' | 'pending_cc' | 'active' | 'superseded' | 'pending_destruction' | 'destroyed';
     locked: boolean;
     file_url?: string;
     date_listed?: string;
     date_revised?: string;
     due_for_revision?: string;
+    document_level: 'level_1' | 'level_2' | 'level_3' | 'level_4';
+    approved_date?: string;
+    effective_date?: string;
+    revision_history: any[];
+    reason_for_change?: string;
+    training_required: boolean;
+    training_deadline?: string;
+    retention_period_years: number;
+    retention_expires_at?: string;
     submitted_by?: string;
     approved_by?: string;
     created_at: string;
@@ -73,6 +82,11 @@ export interface SopApprovalRequest {
     file_url: string;
     version_label: string;
     change_type?: 'minor' | 'significant';
+    approval_stage: 'hod_review' | 'qa_review';
+    endorsed_by?: string;
+    endorsed_at?: string;
+    reason_for_change?: string;
+    cross_functional_departments: string[];
     notes_to_qa?: string;
     created_at: string;
     updated_at: string;
@@ -128,12 +142,15 @@ export interface ChangeControl {
     new_file_url: string;
     diff_json?: any;
     delta_summary?: string;
-    status: 'pending' | 'complete' | 'waived';
+    status: 'pending' | 'pending_activation' | 'complete' | 'waived';
     required_signatories: CcSignatory[];
     deadline: string;
     issued_by?: string;
     created_at: string;
     completed_at?: string;
+    reconciliation_confirmed_by?: string;
+    reconciliation_confirmed_at?: string;
+    reconciliation_note?: string;
 }
 
 export interface SignatureCertificate {

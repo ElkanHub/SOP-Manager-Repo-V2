@@ -9,6 +9,8 @@ export type SubmitSopResult =
     | { success: true; requestId: string }
     | { success: false; error: string }
 
+const SOP_NUMBER_PATTERN = /^[A-Z0-9]{2,10}\/SOP\/\d{3,5}$/
+
 export async function submitSopForApproval(
     formData: {
         fileUrl: string
@@ -18,6 +20,9 @@ export async function submitSopForApproval(
         title: string
         department: string
         secondaryDepartments: string[]
+        documentLevel?: 'level_1' | 'level_2' | 'level_3' | 'level_4'
+        reasonForChange?: string
+        crossFunctionalDepartments?: string[]
         notesToQa?: string
     }
 ): Promise<SubmitSopResult> {
@@ -39,8 +44,16 @@ export async function submitSopForApproval(
         return { success: false, error: 'User is not active' }
     }
 
-    if (profile.role !== 'manager') {
-        return { success: false, error: 'Only managers can submit SOPs for approval' }
+    if (profile.role !== 'manager' && profile.role !== 'employee') {
+        return { success: false, error: 'Only active employees and managers can submit SOPs for approval' }
+    }
+
+    if (!SOP_NUMBER_PATTERN.test(formData.sopNumber.trim().toUpperCase())) {
+        return { success: false, error: 'SOP number must follow DEPT/SOP/000 format, for example QA/SOP/007' }
+    }
+
+    if (!formData.reasonForChange?.trim()) {
+        return { success: false, error: 'Reason for Change is required for GMP document control' }
     }
 
     if (formData.type === 'update' && formData.sopId) {
@@ -68,6 +81,8 @@ export async function submitSopForApproval(
     }
 
     const versionLabel = formData.type === 'new' ? 'Submission 1' : 'Submission 1'
+    const approvalStage = profile.role === 'employee' ? 'hod_review' : 'qa_review'
+    const initialStatus = profile.role === 'employee' ? 'pending_hod' : 'pending_qa'
 
     let sopId = formData.sopId
 
@@ -79,10 +94,12 @@ export async function submitSopForApproval(
                 title: formData.title,
                 department: formData.department,
                 secondary_departments: formData.secondaryDepartments,
+                document_level: formData.documentLevel || 'level_2',
                 version: 'v1.0',
-                status: 'pending_qa',
+                status: initialStatus,
                 file_url: formData.fileUrl,
                 submitted_by: user.id,
+                reason_for_change: formData.reasonForChange.trim(),
             })
             .select('id')
             .single()
@@ -101,9 +118,12 @@ export async function submitSopForApproval(
             submitted_by: user.id,
             type: formData.type,
             status: 'pending',
+            approval_stage: approvalStage,
             file_url: formData.fileUrl,
             version_label: versionLabel,
             notes_to_qa: formData.notesToQa || null,
+            reason_for_change: formData.reasonForChange.trim(),
+            cross_functional_departments: formData.crossFunctionalDepartments || formData.secondaryDepartments || [],
         })
         .select('id')
         .single()
@@ -112,13 +132,15 @@ export async function submitSopForApproval(
         return { success: false, error: requestError.message }
     }
 
-    const { data: qaDepartment } = await supabase
+    const notifyQa = async () => {
+        const { data: qaDepartment } = await supabase
         .from('departments')
         .select('name')
         .eq('is_qa', true)
         .single()
 
-    if (qaDepartment) {
+        if (!qaDepartment) return
+
         const { error: pulseError } = await supabase
             .from('pulse_items')
             .insert({
@@ -168,6 +190,31 @@ export async function submitSopForApproval(
         }
     }
 
+    const notifyHod = async () => {
+        const { error: pulseError } = await supabase
+            .from('pulse_items')
+            .insert({
+                sender_id: user.id,
+                type: 'approval_request',
+                title: formData.type === 'new' ? `HOD Review Required: ${formData.title}` : `HOD Review Required: ${formData.title}`,
+                body: formData.reasonForChange,
+                entity_type: 'sop',
+                entity_id: sopId,
+                audience: 'department',
+                target_department: profile.department,
+            })
+
+        if (pulseError) {
+            console.error('Failed to create HOD pulse item:', pulseError)
+        }
+    }
+
+    if (approvalStage === 'hod_review') {
+        await notifyHod()
+    } else {
+        await notifyQa()
+    }
+
     const { error: auditError } = await supabase
         .from('audit_log')
         .insert({
@@ -180,6 +227,8 @@ export async function submitSopForApproval(
                 title: formData.title,
                 department: formData.department,
                 approval_request_id: approvalRequest.id,
+                approval_stage: approvalStage,
+                reason_for_change: formData.reasonForChange,
             },
         })
 
@@ -327,7 +376,7 @@ export async function resubmitSop(
 }
 
 export type ApproveResult =
-    | { success: true; result: 'activated' | 'change_control_issued'; changeControlId?: string }
+    | { success: true; result: 'activated' | 'change_control_issued' | 'pending_training'; changeControlId?: string }
     | { success: false; error: string }
 
 type Annotation = {
@@ -369,7 +418,8 @@ export async function approveSopRequest(
     requestId: string,
     changeType: 'minor' | 'significant' = 'significant',
     qaNote?: string,
-    annotations?: Annotation[]
+    annotations?: Annotation[],
+    options?: { requiresTraining?: boolean; effectiveDate?: string }
 ): Promise<ApproveResult> {
     const supabase = await createServiceClient()
     const client = await createClient()
@@ -399,7 +449,9 @@ export async function approveSopRequest(
             p_request_id: requestId,
             p_qa_user_id: user.id,
             p_change_type: changeType,
-            p_qa_note: qaNote || null
+            p_qa_note: qaNote || null,
+            p_requires_training: options?.requiresTraining || false,
+            p_effective_date: options?.effectiveDate || new Date().toISOString().slice(0, 10)
         })
 
         if (result.error) {
@@ -450,6 +502,19 @@ export async function approveSopRequest(
                     }
                 } catch (e) { console.error("SOP activation email failed:", e) }
             }
+        } else if (resultData.result === 'pending_training' && request) {
+            await supabase
+                .from('pulse_items')
+                .insert({
+                    recipient_id: request.submitted_by,
+                    sender_id: user.id,
+                    type: 'approval_update',
+                    title: `SOP approved pending training — ${sopLabel}`,
+                    body: `QA approved "${sopTitle}". Training must be completed before QA sets the Effective Date.`,
+                    entity_type: 'sop',
+                    entity_id: request.sop_id,
+                    audience: 'self',
+                })
         } else if (resultData.result === 'change_control_issued' && request) {
             const { error: pulseError } = await supabase
                 .from('pulse_items')
@@ -486,12 +551,242 @@ export async function approveSopRequest(
 
         return {
             success: true,
-            result: resultData.result as 'activated' | 'change_control_issued',
+            result: resultData.result as 'activated' | 'change_control_issued' | 'pending_training',
             changeControlId: resultData.change_control_id
         }
     } catch (error: any) {
         return { success: false, error: error.message || 'Failed to approve SOP request' }
     }
+}
+
+export async function endorseSopToQa(
+    requestId: string,
+    comment?: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_active || profile.role !== 'manager') {
+        return { success: false, error: 'Only active department managers can endorse SOP submissions' }
+    }
+
+    const { data: request } = await supabase
+        .from('sop_approval_requests')
+        .select('sop_id, submitted_by, approval_stage, sops:sop_id(title, department)')
+        .eq('id', requestId)
+        .single()
+
+    const sop = Array.isArray((request as any)?.sops) ? (request as any).sops[0] : (request as any)?.sops
+    if (!request || request.approval_stage !== 'hod_review') {
+        return { success: false, error: 'Request is not waiting for HOD review' }
+    }
+    if (sop?.department !== profile.department) {
+        return { success: false, error: 'You can only endorse SOPs from your department' }
+    }
+    if (request.submitted_by === user.id) {
+        return { success: false, error: 'Managers cannot endorse their own HOD-stage submission' }
+    }
+
+    await supabase
+        .from('sop_approval_requests')
+        .update({ approval_stage: 'qa_review', endorsed_by: user.id, endorsed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq('id', requestId)
+
+    await supabase
+        .from('sops')
+        .update({ status: 'pending_qa', updated_at: new Date().toISOString() })
+        .eq('id', request.sop_id)
+
+    if (comment?.trim()) {
+        await supabase.from('sop_approval_comments').insert({
+            request_id: requestId,
+            author_id: user.id,
+            comment: comment.trim(),
+            action: 'approved',
+        })
+    }
+
+    const { data: qaDepartment } = await supabase
+        .from('departments')
+        .select('name')
+        .eq('is_qa', true)
+        .single()
+
+    if (qaDepartment) {
+        await supabase.from('pulse_items').insert({
+            sender_id: user.id,
+            type: 'approval_request',
+            title: `SOP Endorsed for QA: ${sop?.title || 'SOP'}`,
+            body: comment || undefined,
+            entity_type: 'sop',
+            entity_id: request.sop_id,
+            audience: 'department',
+            target_department: qaDepartment.name,
+        })
+    }
+
+    await supabase.from('audit_log').insert({
+        actor_id: user.id,
+        action: 'sop_hod_endorsed',
+        entity_type: 'sop_approval_request',
+        entity_id: requestId,
+        metadata: { sop_id: request.sop_id, comment },
+    })
+
+    revalidatePath('/approvals')
+    return { success: true }
+}
+
+export async function setSopEffectiveDate(
+    sopId: string,
+    effectiveDate: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
+    if (!isQa) return { success: false, error: 'Only QA managers can set an SOP Effective Date' }
+
+    const { data: sop } = await supabase
+        .from('sops')
+        .select('title, department, version, training_required, training_completion_threshold')
+        .eq('id', sopId)
+        .single()
+
+    if (!sop) return { success: false, error: 'SOP not found' }
+
+    if (sop.training_required) {
+        const { data: modules } = await supabase
+            .from('training_modules')
+            .select('id')
+            .eq('sop_id', sopId)
+            .neq('status', 'archived')
+
+        const moduleIds = (modules || []).map(m => m.id)
+        if (moduleIds.length === 0) {
+            return { success: false, error: 'Training is required, but no linked training module exists for this SOP.' }
+        }
+
+        const { data: assignments } = await supabase
+            .from('training_assignments')
+            .select('id, status')
+            .in('module_id', moduleIds)
+
+        const total = assignments?.length || 0
+        const completed = assignments?.filter(a => a.status === 'completed').length || 0
+        const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100)
+        if (total === 0 || completionRate < sop.training_completion_threshold) {
+            return {
+                success: false,
+                error: `Training completion is ${completionRate}%. Required threshold is ${sop.training_completion_threshold}%.`,
+            }
+        }
+    }
+
+    const { error } = await supabase.rpc('activate_sop_effective', {
+        p_sop_id: sopId,
+        p_effective_date: effectiveDate,
+        p_actor_id: user.id,
+        p_audit_action: 'sop_training_gate_released',
+    })
+
+    if (error) return { success: false, error: error.message }
+
+    if (sop) {
+        await supabase.from('pulse_items').insert({
+            sender_id: user.id,
+            type: 'sop_active',
+            title: `SOP Effective: ${sop.title}`,
+            body: `Version ${sop.version} is effective as of ${effectiveDate}.`,
+            entity_type: 'sop',
+            entity_id: sopId,
+            audience: 'department',
+            target_department: sop.department,
+        })
+    }
+
+    revalidatePath('/library')
+    revalidatePath('/approvals')
+    return { success: true }
+}
+
+export async function confirmChangeControlReconciliation(
+    changeControlId: string,
+    note: string,
+    effectiveDate?: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { error } = await supabase.rpc('confirm_cc_reconciliation', {
+        p_cc_id: changeControlId,
+        p_actor_id: user.id,
+        p_note: note || null,
+        p_effective_date: effectiveDate || new Date().toISOString().slice(0, 10),
+    })
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/change-control')
+    revalidatePath('/library')
+    return { success: true }
+}
+
+export async function markSopPendingDestruction(
+    sopId: string,
+    justification: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { error } = await supabase.rpc('mark_sop_pending_destruction', {
+        p_sop_id: sopId,
+        p_actor_id: user.id,
+        p_justification: justification,
+    })
+
+    if (error) return { success: false, error: error.message }
+    revalidatePath('/library')
+    return { success: true }
+}
+
+export async function destroySopRecord(
+    sopId: string,
+    justification: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const { error } = await supabase.rpc('destroy_sop_record', {
+        p_sop_id: sopId,
+        p_actor_id: user.id,
+        p_justification: justification,
+    })
+
+    if (error) return { success: false, error: error.message }
+    revalidatePath('/library')
+    return { success: true }
 }
 
 export async function requestChangesSop(
@@ -517,14 +812,9 @@ export async function requestChangesSop(
         return { success: false, error: 'User is not active' }
     }
 
-    const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
-    if (!isQa) {
-        return { success: false, error: 'Only QA managers can request changes' }
-    }
-
     const { data: request } = await supabase
         .from('sop_approval_requests')
-        .select('sop_id, submitted_by, sops:sop_id(title, sop_number)')
+        .select('sop_id, submitted_by, approval_stage, sops:sop_id(title, sop_number, department)')
         .eq('id', requestId)
         .single()
 
@@ -533,6 +823,12 @@ export async function requestChangesSop(
     }
 
     const reqSop = Array.isArray((request as any).sops) ? (request as any).sops[0] : (request as any).sops
+    const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
+    const isHodReviewer = request.approval_stage === 'hod_review' && profile.role === 'manager' && profile.department === reqSop?.department
+
+    if (!isQa && !isHodReviewer) {
+        return { success: false, error: 'Only QA managers or the department HOD can request changes' }
+    }
     const sopTitle = reqSop?.title || 'your SOP'
     const sopNumber = reqSop?.sop_number || ''
     const sopLabel = sopNumber ? `${sopNumber} — ${sopTitle}` : sopTitle
@@ -564,10 +860,10 @@ export async function requestChangesSop(
             recipient_id: request.submitted_by,
             sender_id: user.id,
             type: 'approval_update',
-            title: `Changes requested — ${sopLabel}`,
+            title: `${isHodReviewer ? 'HOD' : 'QA'} changes requested — ${sopLabel}`,
             body: annotationCount > 0
-                ? `QA requested changes to "${sopTitle}" with ${annotationCount} highlighted comment${annotationCount === 1 ? '' : 's'}. Summary: ${comment}`
-                : `QA requested changes to "${sopTitle}". Note from reviewer: ${comment}`,
+                ? `${isHodReviewer ? 'HOD' : 'QA'} requested changes to "${sopTitle}" with ${annotationCount} highlighted comment${annotationCount === 1 ? '' : 's'}. Summary: ${comment}`
+                : `${isHodReviewer ? 'HOD' : 'QA'} requested changes to "${sopTitle}". Note from reviewer: ${comment}`,
             entity_type: 'sop',
             entity_id: request.sop_id,
             audience: 'self',
@@ -594,7 +890,7 @@ export async function requestChangesSop(
         .from('audit_log')
         .insert({
             actor_id: user.id,
-            action: 'sop_changes_requested',
+            action: isHodReviewer ? 'sop_hod_changes_requested' : 'sop_changes_requested',
             entity_type: 'sop_approval_request',
             entity_id: requestId,
             metadata: { comment },
