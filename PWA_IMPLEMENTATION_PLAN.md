@@ -6,7 +6,7 @@
 
 ---
 
-## What This Document Is
+## What This Document Is.
 
 This is a complete, step-by-step implementation plan for adding Progressive Web App (PWA) capabilities to any Next.js project. It is written to be:
 
