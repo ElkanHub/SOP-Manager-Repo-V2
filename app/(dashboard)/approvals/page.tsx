@@ -41,7 +41,7 @@ export default async function ApprovalsPage() {
         .from('sop_approval_requests')
         .select(`
             *,
-            profiles(id, full_name, avatar_url, department),
+            profiles:profiles!sop_approval_requests_submitted_by_fkey(id, full_name, avatar_url, department),
             sops(id, sop_number, title, department, status, training_deadline, document_level)
         `)
         .order('created_at', { ascending: false })

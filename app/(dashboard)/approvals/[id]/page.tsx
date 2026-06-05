@@ -34,7 +34,7 @@ export default async function ApprovalDetailPage({ params }: Props) {
         .from('sop_approval_requests')
         .select(`
             *,
-            profiles(id, full_name, avatar_url, department, role),
+            profiles:profiles!sop_approval_requests_submitted_by_fkey(id, full_name, avatar_url, department, role),
             sops(id, sop_number, title, department, version, status)
         `)
         .eq('id', id)
@@ -78,7 +78,7 @@ export default async function ApprovalDetailPage({ params }: Props) {
         .from('sop_approval_requests')
         .select(`
             *,
-            profiles(id, full_name, avatar_url)
+            profiles:profiles!sop_approval_requests_submitted_by_fkey(id, full_name, avatar_url)
         `)
         .eq('sop_id', approvalRequest.sops?.id)
         .order('created_at', { ascending: true })
