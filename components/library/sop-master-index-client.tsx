@@ -13,6 +13,7 @@ import { SopRecord } from "@/types/app.types"
 interface SopMasterIndexClientProps {
   sops: SopRecord[]
   departments: string[]
+  queryError?: string | null
 }
 
 const levelLabels: Record<string, { title: string; description: string }> = {
@@ -24,7 +25,7 @@ const levelLabels: Record<string, { title: string; description: string }> = {
 
 const levelOrder = ["level_1", "level_2", "level_3", "level_4"]
 
-export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClientProps) {
+export function SopMasterIndexClient({ sops, departments, queryError }: SopMasterIndexClientProps) {
   const [department, setDepartment] = useState("all")
   const [search, setSearch] = useState("")
 
@@ -66,6 +67,12 @@ export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClient
       </div>
 
       <div className="px-4 md:px-0 mt-6 space-y-5">
+        {queryError && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            Master Index is using the legacy SOP schema fallback. Active SOPs remain listed; apply the latest database migration to enable document-level metadata.
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -86,6 +93,15 @@ export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClient
         </div>
 
         <div className="space-y-6">
+          {filteredSops.length === 0 && (
+            <div className="rounded-lg border border-border bg-card px-4 py-10 text-center">
+              <p className="text-sm font-semibold text-foreground">No active SOPs found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                The Master Index only includes SOPs with status Active.
+              </p>
+            </div>
+          )}
+
           {grouped.map(({ level, items }) => {
             const label = levelLabels[level]
             return (
