@@ -1,13 +1,20 @@
 "use client"
 import React from 'react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import {
   BookOpen, Shield, ClipboardCheck, GitBranch, Cog, CalendarDays,
   BarChart2, MessageSquare, Settings, ChevronRight, FileText,
-  BookmarkCheck, ArrowRight, Zap, Users, Database, Lock
+  BookmarkCheck, ArrowRight, Zap, Users, Database, Lock,
+  type LucideIcon,
 } from 'lucide-react'
 import { Search as DocsSearch } from '@/components/docs'
 import { cn } from '@/lib/utils/cn'
+
+const Lanyard = dynamic(() => import('@/components/Lanyard'), {
+  ssr: false,
+  loading: () => <div className="h-[180px] w-full" />,
+})
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DATA
@@ -152,7 +159,7 @@ const DIRECTORY: CategoryBlock[] = [
    ═══════════════════════════════════════════════════════════════════════════ */
 
 interface ModuleLink { label: string; href: string }
-interface Module { id: string; icon: React.ElementType; title: string; desc: string; badge?: string; links: ModuleLink[] }
+interface Module { id: string; icon: LucideIcon; title: string; desc: string; badge?: string; links: ModuleLink[] }
 interface CategoryBlock { category: string; modules: Module[] }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -164,7 +171,10 @@ export function DocsHomeContent() {
     <div className="min-h-screen bg-background font-sans">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="border-b border-border bg-background">
+      <section className="relative border-b border-border bg-background">
+        <div className="pointer-events-auto absolute right-4 top-3 hidden h-[210px] w-[230px] lg:block xl:right-[calc(50%-34rem)]">
+          <Lanyard className="h-full w-full" position={[0, 0, 18]} fov={25} />
+        </div>
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-16 pb-14">
 
           {/* Title row */}
@@ -180,6 +190,10 @@ export function DocsHomeContent() {
             <div className="w-full md:w-[360px] shrink-0">
               <DocsSearch variant="large" />
             </div>
+          </div>
+
+          <div className="mb-8 h-[180px] overflow-hidden rounded-lg border border-border bg-muted/20 md:hidden">
+            <Lanyard className="h-full w-full" position={[0, 0, 19]} fov={27} />
           </div>
 
           {/* Two-column quick access */}
@@ -289,7 +303,7 @@ export function DocsHomeContent() {
       <section className="border-t border-border bg-card">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div>
-            <h4 className="text-[16px] font-bold text-foreground mb-1">Can't find what you need?</h4>
+            <h4 className="text-[16px] font-bold text-foreground mb-1">Can&apos;t find what you need?</h4>
             <p className="text-[14px] text-muted-foreground">
               Reach out to our support team for configuration help and troubleshooting.
             </p>
