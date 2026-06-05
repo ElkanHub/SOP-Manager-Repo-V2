@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react"
 const ITEMS = [
   {
     q: "How does QMS-MANAJA handle versioning and version control?",
-    a: "SOPs follow a major-minor pattern (e.g., v3.2 → v3.3 for revisions, v4.0 for major rewrites). When a Change Control opens against an SOP, the document is locked until completion — no parallel edits, no race conditions. Every version is preserved with its approval signatures, so you can always see what was effective at any point in time.",
+    a: "SOPs follow two-digit GMP revision numbering: 00 for initial issue, 01 for the first revision, 02 for the second revision. When a Change Control opens against an SOP, the document is locked until completion — no parallel edits, no race conditions. Every revision is preserved with its approval signatures, so you can always see what was effective at any point in time.",
   },
   {
     q: "Can multiple departments share the same SOP library?",
@@ -12,7 +12,7 @@ const ITEMS = [
   },
   {
     q: "What happens during a regulatory inspection? How fast can we pull records?",
-    a: "Every SOP version, every approval signature, every training acknowledgment, and every Change Control has an immutable audit trail. Reports can be pulled in seconds — not days. Signature certificates reference stored signature images and live in tables with no UPDATE/DELETE policies, so the audit trail can't be tampered with.",
+    a: "Every SOP revision, every approval signature, every training acknowledgment, and every Change Control has an immutable audit trail. Reports can be pulled in seconds — not days. Signature certificates reference stored signature images and live in tables with no UPDATE/DELETE policies, so the audit trail can't be tampered with.",
   },
   {
     q: "Is signature capture compliant with 21 CFR Part 11?",

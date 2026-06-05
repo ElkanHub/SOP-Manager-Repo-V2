@@ -172,7 +172,7 @@ export default function MyTrainingClient({ assignments, attempts, profile }: any
 
                                         <div className="flex items-center justify-between gap-2 flex-wrap pt-3 sm:pt-4 border-t border-border/50">
                                             <span className="text-[11px] sm:text-xs text-muted-foreground">
-                                                SOP: {a.module.sop?.sop_number} v{a.module.sop_version}
+                                                SOP: {a.module.sop?.sop_number} Rev. {a.module.sop_version}
                                             </span>
                                             {latestQ ? (
                                                 <Button

@@ -44,7 +44,6 @@ export function ApprovalDetailClient({
 }: ApprovalDetailClientProps) {
     const [loading, setLoading] = useState(false)
     const [action, setAction] = useState<'approve' | 'changes' | null>(null)
-    const [changeType, setChangeType] = useState<'minor' | 'significant' | null>(null)
     const [requiresTraining, setRequiresTraining] = useState(true)
     const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10))
     const [comment, setComment] = useState('')
@@ -82,11 +81,6 @@ export function ApprovalDetailClient({
     }
 
     const handleApprove = async () => {
-        if (approvalRequest.type === 'update' && !changeType) {
-            setError('Please classify the change type before approving')
-            return
-        }
-
         setLoading(true)
         setError(null)
         setAction('approve')
@@ -94,7 +88,6 @@ export function ApprovalDetailClient({
         try {
             const result = await approveSopRequest(
                 approvalRequest.id,
-                changeType || 'significant',
                 comment || undefined,
                 drafts.map(({ id, ...rest }) => rest),
                 { requiresTraining, effectiveDate }
@@ -453,46 +446,22 @@ export function ApprovalDetailClient({
                                                 <div className="space-y-4 p-4 bg-green-50/50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-xl">
                                                     <div className="flex items-center justify-between">
                                                         <span className="text-xs font-bold uppercase tracking-widest text-green-700 dark:text-green-400">
-                                                            {isHodReview ? 'HOD Endorsement' : 'Step 2: Classification'}
+                                                            {isHodReview ? 'HOD Endorsement' : 'QA Approval'}
                                                         </span>
                                                         <Button variant="ghost" size="sm" onClick={() => setAction(null)} className="h-6 w-6 p-0 text-green-700">×</Button>
                                                     </div>
 
-                                                    {!isHodReview && approvalRequest.type === 'update' ? (
-                                                        <div className="space-y-3">
-                                                            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Classify this update before activation:</p>
-                                                            <div className="grid grid-cols-2 gap-2">
-                                                                <button
-                                                                    onClick={() => setChangeType('minor')}
-                                                                    className={`p-3 rounded-xl border text-left transition-all ${
-                                                                        changeType === 'minor'
-                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm'
-                                                                        : 'bg-transparent border-slate-200 dark:border-slate-800 opacity-60'
-                                                                    }`}
-                                                                >
-                                                                    <p className="text-xs font-bold">Minor change</p>
-                                                                    <p className="text-[9px] text-muted-foreground">Activate immediately (v1.x)</p>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setChangeType('significant')}
-                                                                    className={`p-3 rounded-xl border text-left transition-all ${
-                                                                        changeType === 'significant'
-                                                                        ? 'bg-white dark:bg-slate-900 border-green-500 shadow-sm'
-                                                                        : 'bg-transparent border-slate-200 dark:border-slate-800 opacity-60'
-                                                                    }`}
-                                                                >
-                                                                    <p className="text-xs font-bold">Significant change</p>
-                                                                    <p className="text-[9px] text-muted-foreground">Change Control (vX.0)</p>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ) : isHodReview ? (
+                                                    {isHodReview ? (
                                                         <p className="text-sm font-medium text-green-800 dark:text-green-200">
                                                             Confirm this document is technically acceptable for QA review.
                                                         </p>
+                                                    ) : approvalRequest.type === 'update' ? (
+                                                        <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                                                            Approving this revision will issue Change Control for required signatures. The revised document becomes effective only after reconciliation and, where required, training completion.
+                                                        </p>
                                                     ) : (
                                                         <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                                                            Confirm activation for this new SOP?
+                                                            Confirm approval for this new document.
                                                         </p>
                                                     )}
 
@@ -524,7 +493,7 @@ export function ApprovalDetailClient({
                                                     <div className="space-y-2">
                                                         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-tight">Optional justification:</p>
                                                         <Textarea
-                                                            placeholder="Why was this classification chosen?"
+                                                            placeholder={approvalRequest.type === 'update' ? 'Approval note or Change Control rationale...' : 'Approval note...'}
                                                             value={comment}
                                                             onChange={(e) => setComment(e.target.value)}
                                                             className="text-xs min-h-[60px] bg-white/50 dark:bg-black/20"
@@ -539,7 +508,7 @@ export function ApprovalDetailClient({
 
                                                     <Button
                                                         onClick={isHodReview ? handleHodEndorse : handleApprove}
-                                                        disabled={loading || (!isHodReview && approvalRequest.type === 'update' && !changeType)}
+                                                        disabled={loading}
                                                         className="w-full bg-green-600 hover:bg-green-700 shadow-lg shadow-green-500/10"
                                                     >
                                                         {loading ? (

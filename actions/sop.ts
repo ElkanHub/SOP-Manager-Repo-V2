@@ -95,7 +95,7 @@ export async function submitSopForApproval(
                 department: formData.department,
                 secondary_departments: formData.secondaryDepartments,
                 document_level: formData.documentLevel || 'level_2',
-                version: 'v1.0',
+                version: '00',
                 status: initialStatus,
                 file_url: formData.fileUrl,
                 submitted_by: user.id,
@@ -416,7 +416,6 @@ async function insertApprovalAnnotations(
 
 export async function approveSopRequest(
     requestId: string,
-    changeType: 'minor' | 'significant' = 'significant',
     qaNote?: string,
     annotations?: Annotation[],
     options?: { requiresTraining?: boolean; effectiveDate?: string }
@@ -448,7 +447,6 @@ export async function approveSopRequest(
         const result = await supabase.rpc('approve_sop_request', {
             p_request_id: requestId,
             p_qa_user_id: user.id,
-            p_change_type: changeType,
             p_qa_note: qaNote || null,
             p_requires_training: options?.requiresTraining || false,
             p_effective_date: options?.effectiveDate || new Date().toISOString().slice(0, 10)

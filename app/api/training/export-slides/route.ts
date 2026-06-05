@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
                 })
 
                 // Small eyebrow (SOP / department)
-                const eyebrow = [sopNumber, mod.department, mod.sop_version ? `v${mod.sop_version}` : null]
+                const eyebrow = [sopNumber, mod.department, mod.sop_version ? `Revision ${mod.sop_version}` : null]
                     .filter(Boolean)
                     .join('   •   ')
                 if (eyebrow) {

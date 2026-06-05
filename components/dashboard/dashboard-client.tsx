@@ -521,7 +521,7 @@ export function DashboardClient({
                             {cc.sops?.title || 'Unknown Document'}
                             {isOverdue && <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-widest scale-90">SLA Breach</Badge>}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5 font-medium">Draft Version {cc.new_version} • <span className="uppercase tracking-widest text-[10px]">{cc.sops?.department}</span></div>
+                          <div className="text-xs text-muted-foreground mt-0.5 font-medium">Draft Rev. {cc.new_version} • <span className="uppercase tracking-widest text-[10px]">{cc.sops?.department}</span></div>
                         </div>
                         <Link href={`/change-control/${cc.id}`}>
                           <Button size="sm" variant={isActionRequired ? "default" : "outline"} className={`h-8 text-xs font-bold ${isActionRequired ? 'bg-amber-500 hover:bg-amber-600' : ''}`}>

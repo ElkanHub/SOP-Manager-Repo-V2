@@ -371,7 +371,7 @@ function ResultView({
                         {sopNumber && (
                             <div className="flex justify-between py-1 text-sm gap-3">
                                 <span className="text-muted-foreground shrink-0">SOP:</span>
-                                <span className="font-medium text-right">{sopNumber}{sopVersion ? ` • v${sopVersion}` : ""}</span>
+                                <span className="font-medium text-right">{sopNumber}{sopVersion ? ` • Rev. ${sopVersion}` : ""}</span>
                             </div>
                         )}
                         <div className="flex justify-between py-1 border-t border-border/50 mt-2 pt-2 text-sm">

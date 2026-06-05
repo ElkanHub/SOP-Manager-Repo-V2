@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
             setText([200, 215, 235])
             doc.setFontSize(8)
             doc.setFont('helvetica', 'normal')
-            const headerMeta = [sopNumber && `${sopNumber}${sopVersion ? ' v' + sopVersion : ''}`, dept]
+            const headerMeta = [sopNumber && `${sopNumber}${sopVersion ? ' Rev. ' + sopVersion : ''}`, dept]
                 .filter(Boolean)
                 .join('   •   ')
             if (headerMeta) doc.text(headerMeta, MARGIN, 13)
@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
                 setText(RGB.white)
                 doc.setFontSize(9)
                 doc.setFont('helvetica', 'bold')
-                doc.text(`v${q.version}`, PAGE_W - MARGIN, 7.5, { align: 'right' })
+                doc.text(`Questionnaire ${q.version}`, PAGE_W - MARGIN, 7.5, { align: 'right' })
             }
         }
 

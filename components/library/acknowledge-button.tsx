@@ -45,7 +45,7 @@ export function AcknowledgeButton({
       <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/40 border border-green-200 dark:border-green-800 rounded-md px-3 py-1.5">
         <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
         <span className="text-sm font-medium text-green-700 dark:text-green-400">
-          Acknowledged v{sopVersion}
+          Acknowledged Rev. {sopVersion}
         </span>
         {acknowledgedAt && (
           <span className="text-[11px] text-green-600 dark:text-green-500 ml-1">

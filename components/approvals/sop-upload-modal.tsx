@@ -361,7 +361,7 @@ export function SopUploadModal({
                                             id="sop-number"
                                             value={sopNumber}
                                             onChange={(e) => setSopNumber(e.target.value)}
-                                            placeholder="e.g., SOP-001"
+                                            placeholder="e.g., QA/SOP/007"
                                             pattern="[A-Za-z0-9]{2,10}/SOP/[0-9]{3,5}"
                                             className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
                                         />

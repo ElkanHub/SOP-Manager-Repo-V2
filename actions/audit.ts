@@ -202,7 +202,7 @@ async function buildReportRows(args: BuildArgs): Promise<{ headers: string[]; ro
         e.sops?.sop_number ?? "-",
         e.sops?.title ?? "-",
         e.sops?.department ?? "-",
-        e.old_version ?? "v0.0",
+        e.old_version ?? "00",
         e.new_version ?? "-",
         e.status ?? "-",
         String(e.signatories?.length ?? 0),

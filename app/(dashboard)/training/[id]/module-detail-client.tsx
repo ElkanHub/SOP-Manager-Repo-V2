@@ -82,7 +82,7 @@ export default function ModuleDetailClient({ moduleData, questionnaires, assignm
                     </div>
                     <p className="text-muted-foreground max-w-2xl">{moduleData.description}</p>
                     <div className="flex flex-wrap gap-4 mt-4 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1"><FileCheck className="h-4 w-4" /> SOP: {moduleData.sop?.sop_number} (v{moduleData.sop_version})</span>
+                        <span className="flex items-center gap-1"><FileCheck className="h-4 w-4" /> SOP: {moduleData.sop?.sop_number} (Rev. {moduleData.sop_version})</span>
                         <span className="flex items-center gap-1"><Users className="h-4 w-4" /> Dept: {moduleData.department}</span>
                     </div>
                 </div>
