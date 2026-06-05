@@ -17,17 +17,27 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree } from "lucide-react"
-import { logoutUser } from "@/actions/auth"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/user-avatar"
+import type { User } from "@supabase/supabase-js"
+import type { Profile } from "@/types/app.types"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  user: any;
-  profile: any;
+  user: User;
+  profile: Profile;
   isQa?: boolean;
+}
+
+type ConversationBadgeRow = {
+  last_message_at: string | null
+  conversation_members: { last_read_at: string | null }[]
+}
+
+type ApprovalBadgeRow = {
+  approval_stage: string | null
+  sops?: { status?: string | null } | { status?: string | null }[] | null
 }
 
 export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebarProps) {
@@ -74,8 +84,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .eq('is_archived', false)
 
     if (convData) {
-      const count = convData.filter((c: any) => {
-        const myMember = (c as any).conversation_members[0];
+      const count = (convData as ConversationBadgeRow[]).filter((c) => {
+        const myMember = c.conversation_members[0];
         return c.last_message_at && myMember?.last_read_at
           ? new Date(c.last_message_at) > new Date(myMember.last_read_at)
           : false;
@@ -85,12 +95,18 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
 
     // 2. Pending Approvals (SOPs)
     if (isQa) {
-      const { count: approvalCount } = await supabase
+      const { data: approvalRows } = await supabase
         .from('sop_approval_requests')
-        .select('*', { count: 'exact', head: true })
+        .select('id, approval_stage, sops(status)')
         .eq('status', 'pending')
 
-      setPendingApprovals(approvalCount || 0)
+      const approvalCount = ((approvalRows || []) as ApprovalBadgeRow[]).filter((request) => {
+        const sop = Array.isArray(request.sops) ? request.sops[0] : request.sops
+        const stage = request.approval_stage || (sop?.status === 'pending_hod' ? 'hod_review' : 'qa_review')
+        return stage === 'qa_review' || (!request.approval_stage && sop?.status === 'pending_qa')
+      }).length
+
+      setPendingApprovals(approvalCount)
     }
 
     // 3. Pending Equipment (Awaiting QA)
@@ -156,7 +172,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         .eq('needs_review', true)
       setReviewModules(revCount || 0)
     }
-  }, [user?.id, supabase, isQa, profile?.role, profile?.department, profile?.is_admin])
+  }, [user, supabase, isQa, profile])
 
   React.useEffect(() => {
     if (!user) return
@@ -178,7 +194,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, supabase, fetchCounts])
+  }, [user, supabase, fetchCounts])
 
   React.useEffect(() => {
     if (pathname.startsWith("/library")) {

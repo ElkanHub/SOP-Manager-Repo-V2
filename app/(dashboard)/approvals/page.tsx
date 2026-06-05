@@ -2,6 +2,12 @@ import { redirect } from 'next/navigation'
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { ApprovalQueueTable } from '@/components/approvals/approval-queue-table'
 import { ClipboardCheck } from 'lucide-react'
+import type { SopRecord } from '@/types/app.types'
+
+type PendingTrainingSop = Pick<SopRecord, 'id' | 'sop_number' | 'title' | 'department' | 'status' | 'training_deadline' | 'document_level'> & {
+    approved_date?: string
+    effective_date?: string
+}
 
 export default async function ApprovalsPage() {
     const supabase = await createClient()
@@ -31,22 +37,29 @@ export default async function ApprovalsPage() {
         redirect('/dashboard')
     }
 
-    let approvalQuery = serviceClient
+    const { data: rawApprovalRequests, error } = await serviceClient
         .from('sop_approval_requests')
         .select(`
             *,
-            profiles!inner(id, full_name, avatar_url, department),
-            sops!inner(id, sop_number, title, department, status, training_deadline, document_level)
+            profiles(id, full_name, avatar_url, department),
+            sops(id, sop_number, title, department, status, training_deadline, document_level)
         `)
         .order('created_at', { ascending: false })
 
-    if (isQa) {
-        approvalQuery = approvalQuery.eq('approval_stage', 'qa_review')
-    } else {
-        approvalQuery = approvalQuery.eq('approval_stage', 'hod_review').eq('sops.department', profile.department)
-    }
+    const approvalRequests = (rawApprovalRequests || []).filter((request) => {
+        const sop = Array.isArray(request.sops) ? request.sops[0] : request.sops
+        const stage = request.approval_stage || (sop?.status === 'pending_hod' ? 'hod_review' : 'qa_review')
 
-    const { data: approvalRequests, error } = await approvalQuery
+        if (isQa) {
+            return stage === 'qa_review' || (!request.approval_stage && sop?.status === 'pending_qa')
+        }
+
+        return (
+            profile.role === 'manager' &&
+            profile.department === sop?.department &&
+            (stage === 'hod_review' || (!request.approval_stage && sop?.status === 'pending_hod'))
+        )
+    })
 
     const { data: pendingTrainingSops } = isQa
         ? await serviceClient
@@ -54,7 +67,7 @@ export default async function ApprovalsPage() {
             .select('id, sop_number, title, department, status, training_deadline, approved_date, effective_date, document_level')
             .eq('status', 'approved_pending_training')
             .order('training_deadline', { ascending: true })
-        : { data: [] as any[] }
+        : { data: [] as PendingTrainingSop[] }
 
     if (error) {
         console.error('Error fetching approval requests:', error)
