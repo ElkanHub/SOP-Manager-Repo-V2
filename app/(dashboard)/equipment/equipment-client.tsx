@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { EquipmentTable } from "@/components/equipment/equipment-table"
 import { AddEquipmentModal } from "@/components/equipment/add-equipment-modal"
 import { Wrench, Plus } from "lucide-react"
@@ -124,8 +125,9 @@ function StatusFilterTab({
   href: string
 }) {
   return (
-    <a
+    <Link
       href={href}
+      prefetch
       className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
         active
           ? "bg-card shadow-sm border border-border text-brand-blue"
@@ -133,6 +135,6 @@ function StatusFilterTab({
       }`}
     >
       {label}
-    </a>
+    </Link>
   )
 }

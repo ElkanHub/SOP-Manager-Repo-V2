@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
 import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
@@ -188,14 +189,15 @@ function StatusFilterTab({
   href: string
 }) {
   return (
-    <a
+    <Link
       href={href}
+      prefetch
       className={`px-4 py-1.5 rounded-md text-xs font-semibold whitespace-nowrap transition-all ${active
         ? "bg-background text-brand-blue shadow-sm border border-border/50"
         : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
         }`}
     >
       {label}
-    </a>
+    </Link>
   )
 }
