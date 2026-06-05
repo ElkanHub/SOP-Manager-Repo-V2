@@ -3,7 +3,7 @@
 **Audit date:** 2026-05-26  
 **Audit type:** Static application, security, data-integrity, and delivery-readiness review  
 **Auditor perspective:** Independent project/code auditor  
-**Application stack observed:** Next.js 16, React 19, Supabase Auth/Postgres/Storage/Realtime, Serwist PWA, Gemini integration.
+**Application stack observed:** Next.js 16, React 19, Supabase Auth/Postgres/Storage/Realtime, Serwist PWA, Gemini integration...
 
 ## Executive Summary
 
