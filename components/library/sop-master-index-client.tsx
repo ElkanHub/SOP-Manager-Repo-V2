@@ -7,7 +7,7 @@ import { BookOpen, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { DeptBadge } from "@/components/ui/dept-badge"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SopRecord } from "@/types/app.types"
 
 interface SopMasterIndexClientProps {
@@ -87,11 +87,20 @@ export function SopMasterIndexClient({ sops, departments, queryError }: SopMaste
             />
           </div>
 
-          <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted/50 p-1 no-scrollbar">
-            <FilterButton label="All Departments" active={department === "all"} onClick={() => setDepartment("all")} />
-            {departments.map((dept) => (
-              <FilterButton key={dept.name} label={dept.code || dept.name} title={dept.name} active={department === dept.name} onClick={() => setDepartment(dept.name)} />
-            ))}
+          <div className="w-full lg:w-64">
+            <Select value={department} onValueChange={(value) => value && setDepartment(value)}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="All departments" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[320px]">
+                <SelectItem value="all">All departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.name} value={dept.name}>
+                    {dept.code ? `${dept.code} - ${dept.name}` : dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -168,30 +177,5 @@ export function SopMasterIndexClient({ sops, departments, queryError }: SopMaste
         </div>
       </div>
     </div>
-  )
-}
-
-function FilterButton({
-  label,
-  title,
-  active,
-  onClick,
-}: {
-  label: string
-  title?: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <Button
-      type="button"
-      variant={active ? "secondary" : "ghost"}
-      size="sm"
-      onClick={onClick}
-      title={title}
-      className="h-8 shrink-0 rounded-md px-3 text-xs font-semibold"
-    >
-      {label}
-    </Button>
   )
 }
