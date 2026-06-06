@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   applicationName: "QMS-MANAJA",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
     title: "QMS-MANAJA",
   },
   formatDetection: {

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next"
 
 type PwaManifest = MetadataRoute.Manifest & {
-  display_override?: Array<"fullscreen" | "standalone" | "minimal-ui" | "browser">
+  display_override?: Array<"standalone" | "minimal-ui" | "browser">
 }
 
 export default function manifest(): PwaManifest {
@@ -12,8 +12,8 @@ export default function manifest(): PwaManifest {
     description: "Industrial compliance, simplified",
     start_url: "/dashboard",
     scope: "/",
-    display: "fullscreen",
-    display_override: ["fullscreen", "standalone"],
+    display: "standalone",
+    display_override: ["standalone"],
     orientation: "portrait",
     background_color: "#ffffff",
     theme_color: "#0D2B55",
