@@ -1,7 +1,6 @@
 "use client"
 import React from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import {
   BookOpen, Shield, ClipboardCheck, GitBranch, Cog, CalendarDays,
   BarChart2, MessageSquare, Settings, ChevronRight, FileText,
@@ -10,11 +9,7 @@ import {
 } from 'lucide-react'
 import { Search as DocsSearch } from '@/components/docs'
 import { cn } from '@/lib/utils/cn'
-
-const Lanyard = dynamic(() => import('@/components/Lanyard'), {
-  ssr: false,
-  loading: () => <div className="h-[180px] w-full" />,
-})
+import DecryptedText from '@/components/DecryptedText'
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DATA
@@ -171,17 +166,23 @@ export function DocsHomeContent() {
     <div className="min-h-screen bg-background font-sans">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative border-b border-border bg-background">
-        <div className="pointer-events-auto absolute right-4 top-3 hidden h-[210px] w-[230px] lg:block xl:right-[calc(50%-34rem)]">
-          <Lanyard className="h-full w-full" position={[0, 0, 18]} fov={25} />
-        </div>
+      <section className="border-b border-border bg-background">
         <div className="max-w-6xl mx-auto px-6 md:px-10 pt-16 pb-14">
 
           {/* Title row */}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
               <h1 className="text-[32px] md:text-[40px] font-extrabold text-foreground tracking-tight leading-[1.15] mb-3">
-                QMS-MANAJA User Guide
+                <DecryptedText
+                  text="QMS-MANAJA User Guide"
+                  animateOn="view"
+                  sequential
+                  revealDirection="start"
+                  speed={34}
+                  parentClassName="inline-block"
+                  className="text-foreground"
+                  encryptedClassName="text-brand-teal"
+                />
               </h1>
               <p className="text-[16px] text-muted-foreground max-w-lg leading-relaxed">
                 Comprehensive guides for every feature, workflow, and administrative task. Find answers fast with search or browse by category below.
@@ -190,10 +191,6 @@ export function DocsHomeContent() {
             <div className="w-full md:w-[360px] shrink-0">
               <DocsSearch variant="large" />
             </div>
-          </div>
-
-          <div className="mb-8 h-[180px] overflow-hidden rounded-lg border border-border bg-muted/20 md:hidden">
-            <Lanyard className="h-full w-full" position={[0, 0, 19]} fov={27} />
           </div>
 
           {/* Two-column quick access */}
