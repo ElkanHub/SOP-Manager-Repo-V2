@@ -123,6 +123,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS change_control_documents_cc_doc_key
   ON change_control_documents(change_control_id, document_id)
   WHERE document_id IS NOT NULL;
 
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;
+
 DROP TRIGGER IF EXISTS trg_change_control_documents_updated_at ON change_control_documents;
 CREATE TRIGGER trg_change_control_documents_updated_at
 BEFORE UPDATE ON change_control_documents
@@ -160,7 +170,7 @@ SELECT
   cc.new_file_url,
   COALESCE(cc.delta_summary, cc.rationale),
   CASE WHEN cc.status IN ('complete', 'pending_activation') THEN 'approved' ELSE 'pending' END,
-  COALESCE(s.requires_training, false),
+  COALESCE(s.training_required, false),
   s.effective_date
 FROM change_controls cc
 JOIN sops s ON s.id = cc.sop_id
@@ -322,7 +332,7 @@ BEGIN
     p_old_file_url,
     p_new_file_url,
     p_delta_summary,
-    COALESCE(v_sop.requires_training, false),
+    COALESCE(v_sop.training_required, false),
     v_sop.effective_date
   );
 
