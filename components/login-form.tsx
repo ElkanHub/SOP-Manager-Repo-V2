@@ -7,14 +7,13 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Field,
-  FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { loginUser, signInWithGoogle } from "@/actions/auth"
+import { loginUser } from "@/actions/auth"
+import { createClient } from "@/lib/supabase/client"
 
 export function LoginForm({
   className,
@@ -23,6 +22,7 @@ export function LoginForm({
   const searchParams = useSearchParams()
   const reason = searchParams.get('reason')
   const setup = searchParams.get('setup')
+  const authError = searchParams.get('error')
 
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -45,9 +45,20 @@ export function LoginForm({
   async function handleGoogleLogin() {
     setGoogleLoading(true)
     setError(null)
-    const result = await signInWithGoogle()
-    if (result && result.error) {
-      setError(result.error)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    })
+
+    if (error) {
+      setError(error.message)
       setGoogleLoading(false)
     }
   }
@@ -74,9 +85,9 @@ export function LoginForm({
           </div>
         )}
 
-        {error && (
+        {(error || authError) && (
           <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-            {error}
+            {error || authError}
           </div>
         )}
 
@@ -143,7 +154,7 @@ export function LoginForm({
         {/* create account */}
         <div className="flex items-center justify-center">
           <p className="text-sm text-balance text-muted-foreground">
-            Don't have an account? <Link href="/signup" className="text-brand-teal hover:underline">Create an account</Link>
+            Don&apos;t have an account? <Link href="/signup" className="text-brand-teal hover:underline">Create an account</Link>
           </p>
         </div>
       </FieldGroup>

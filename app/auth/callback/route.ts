@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const { searchParams } = requestUrl
   const code = searchParams.get('code')
+  const providerError = searchParams.get('error_description') ?? searchParams.get('error')
   const rawNext = searchParams.get('next') ?? '/dashboard'
   const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard'
   const forwardedHost = request.headers.get('x-forwarded-host')
@@ -16,6 +17,11 @@ export async function GET(request: Request) {
     : process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || requestUrl.origin
 
   console.log('>>> auth/callback hit:', { code: !!code, next, origin })
+
+  if (providerError) {
+    console.error('>>> auth/callback: provider error:', providerError)
+    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(providerError)}`)
+  }
 
   if (code) {
     const supabase = await createClient()
@@ -30,5 +36,5 @@ export async function GET(request: Request) {
   }
 
   console.log('>>> auth/callback: no code or error, redirecting to login')
-  return NextResponse.redirect(`${origin}/login?error=Could not authenticate user`)
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent('Could not authenticate user')}`)
 }
