@@ -243,7 +243,7 @@ async function buildReportRows(args: BuildArgs): Promise<{ headers: string[]; ro
     let q = service
       .from("pm_tasks")
       .select(
-        `id, completed_at, notes,
+        `id, due_date, completed_at, notes,
          equipment:equipment_id(asset_id, name, department),
          assigned_to_user:profiles!pm_tasks_assigned_to_fkey(full_name),
          completed_by_user:profiles!pm_tasks_completed_by_fkey(full_name)`,
@@ -255,13 +255,14 @@ async function buildReportRows(args: BuildArgs): Promise<{ headers: string[]; ro
     if (toIso) q = q.lte("completed_at", toIso)
     const { data, error } = await q
     if (error) throw new Error(error.message)
-    const headers = ["Asset ID", "Equipment", "Department", "Assigned To", "Completed By", "Completed At", "Notes"]
+    const headers = ["Asset ID", "Equipment", "Department", "Assigned To", "Completed By", "Due Date", "Done Date", "Notes"]
     const rows = (data ?? []).map((e: any) => [
       e.equipment?.asset_id ?? "-",
       e.equipment?.name ?? "-",
       e.equipment?.department ?? "-",
       e.assigned_to_user?.full_name ?? "-",
       e.completed_by_user?.full_name ?? "-",
+      e.due_date ? new Date(e.due_date).toISOString().slice(0, 10) : "-",
       e.completed_at ? new Date(e.completed_at).toISOString() : "-",
       (e.notes ?? "").replace(/\r?\n/g, " "),
     ])

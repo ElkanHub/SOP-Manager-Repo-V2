@@ -67,7 +67,7 @@ export async function fetchPmCompletions({ page, dateFrom, dateTo }: DateParams)
   let query = supabase
     .from("pm_tasks")
     .select(
-      `id, completed_at, notes,
+      `id, due_date, completed_at, notes,
        equipment:equipment_id(asset_id, name, department),
        assigned_to_user:profiles!pm_tasks_assigned_to_fkey(full_name),
        completed_by_user:profiles!pm_tasks_completed_by_fkey(full_name)`,
