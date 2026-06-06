@@ -9,6 +9,39 @@ export type SettingsResult =
     | { success: true }
     | { success: false; error: string }
 
+const DEPARTMENT_CODE_PATTERN = /^[A-Z0-9]{2,10}$/
+const NUMBERING_TOKEN_PATTERN = /\{(DEPT|TYPE|SEQ|YYYY|YY)\}/g
+
+function normalizeDepartmentCode(code: string) {
+    return code.trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+}
+
+function validateDepartmentCode(code: string) {
+    const normalized = normalizeDepartmentCode(code)
+    if (!DEPARTMENT_CODE_PATTERN.test(normalized)) {
+        return { ok: false as const, error: 'Department code must be 2-10 uppercase letters/numbers with no spaces or slashes.' }
+    }
+    return { ok: true as const, code: normalized }
+}
+
+function validateNumberingTemplate(formatTemplate: string, sequencePadding: number) {
+    const template = formatTemplate.trim().toUpperCase()
+    if (!template.includes('{DEPT}') || !template.includes('{SEQ}')) {
+        return { ok: false as const, error: 'Format must include {DEPT} and {SEQ} tokens.' }
+    }
+    const stripped = template.replace(NUMBERING_TOKEN_PATTERN, '')
+    if (/[{}]/.test(stripped)) {
+        return { ok: false as const, error: 'Format contains unsupported tokens.' }
+    }
+    if (!template.includes('SOP') && !template.includes('{TYPE}')) {
+        return { ok: false as const, error: 'SOP format must include SOP or {TYPE}.' }
+    }
+    if (sequencePadding < 2 || sequencePadding > 8) {
+        return { ok: false as const, error: 'Sequence padding must be between 2 and 8.' }
+    }
+    return { ok: true as const, template }
+}
+
 // ─── Helper: assert active session ──────────────────────────────────────────
 async function getActiveUser() {
     const client = await createClient()
@@ -132,13 +165,16 @@ async function assertAdmin(): Promise<{ userId: string; service: Awaited<ReturnT
     return { userId: user.id, service }
 }
 
-export async function addDepartment(name: string, colour: string): Promise<SettingsResult> {
+export async function addDepartment(name: string, colour: string, code: string): Promise<SettingsResult> {
     const ctx = await assertAdmin()
     if ('error' in ctx) return { success: false, error: ctx.error }
 
-    const { error } = await ctx.service.from('departments').insert({ name, colour })
+    const validated = validateDepartmentCode(code)
+    if (!validated.ok) return { success: false, error: validated.error }
+
+    const { error } = await ctx.service.from('departments').insert({ name, colour, code: validated.code })
     if (error) {
-        if (error.code === '23505') return { success: false, error: 'A department with that name already exists.' }
+        if (error.code === '23505') return { success: false, error: 'A department with that name or code already exists.' }
         return { success: false, error: error.message }
     }
 
@@ -152,6 +188,79 @@ export async function updateDepartmentColour(id: string, colour: string): Promis
 
     const { error } = await ctx.service.from('departments').update({ colour }).eq('id', id)
     if (error) return { success: false, error: error.message }
+
+    revalidatePath('/settings')
+    return { success: true }
+}
+
+export async function updateDepartmentDetails(id: string, data: { colour: string; code: string }): Promise<SettingsResult> {
+    const ctx = await assertAdmin()
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const validated = validateDepartmentCode(data.code)
+    if (!validated.ok) return { success: false, error: validated.error }
+
+    const { error } = await ctx.service
+        .from('departments')
+        .update({ colour: data.colour, code: validated.code })
+        .eq('id', id)
+
+    if (error) {
+        if (error.code === '23505') return { success: false, error: 'A department with that code already exists.' }
+        return { success: false, error: error.message }
+    }
+
+    await ctx.service.from('audit_log').insert({
+        actor_id: ctx.userId,
+        action: 'department_document_code_updated',
+        entity_type: 'department',
+        entity_id: id,
+        metadata: { code: validated.code, colour: data.colour },
+    })
+
+    revalidatePath('/settings')
+    return { success: true }
+}
+
+export async function updateDocumentNumberingSettings(data: {
+    formatTemplate: string
+    sequencePadding: number
+}): Promise<SettingsResult> {
+    const ctx = await assertAdmin()
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const validated = validateNumberingTemplate(data.formatTemplate, data.sequencePadding)
+    if (!validated.ok) return { success: false, error: validated.error }
+
+    const { data: existing } = await ctx.service
+        .from('document_numbering_settings')
+        .select('id')
+        .eq('document_type', 'SOP')
+        .eq('is_active', true)
+        .single()
+
+    const payload = {
+        format_template: validated.template,
+        sequence_padding: data.sequencePadding,
+        sequence_scope: 'department_document_type',
+        document_type: 'SOP',
+        is_active: true,
+        updated_at: new Date().toISOString(),
+    }
+
+    const { error } = existing?.id
+        ? await ctx.service.from('document_numbering_settings').update(payload).eq('id', existing.id)
+        : await ctx.service.from('document_numbering_settings').insert(payload)
+
+    if (error) return { success: false, error: error.message }
+
+    await ctx.service.from('audit_log').insert({
+        actor_id: ctx.userId,
+        action: 'document_numbering_settings_updated',
+        entity_type: 'document_numbering_settings',
+        entity_id: existing?.id || null,
+        metadata: { format_template: validated.template, sequence_padding: data.sequencePadding },
+    })
 
     revalidatePath('/settings')
     return { success: true }

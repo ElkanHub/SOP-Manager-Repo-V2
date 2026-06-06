@@ -1,7 +1,7 @@
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { SettingsClient } from "@/components/settings/settings-client"
-import type { Profile, Department } from "@/types/app.types"
+import type { Profile, Department, DocumentNumberingSettings } from "@/types/app.types"
 
 export const metadata = {
     title: "Settings — QMS-MANAJA",
@@ -57,6 +57,13 @@ export default async function SettingsPage() {
         .select('*')
         .order('name')
 
+    const { data: numberingSettings } = await service
+        .from('document_numbering_settings')
+        .select('*')
+        .eq('document_type', 'SOP')
+        .eq('is_active', true)
+        .single()
+
     // Admin-only: fetch all users
     let users: (Profile & { email?: string })[] = []
     if (isAdmin) {
@@ -86,7 +93,7 @@ export default async function SettingsPage() {
                 }
             })
 
-            let signedUrls: any[] = []
+            let signedUrls: { path: string | null; signedUrl: string }[] = []
             if (pathsToSign.length > 0) {
                 const { data } = await service.storage.from('signatures').createSignedUrls(pathsToSign, 3600)
                 signedUrls = data || []
@@ -120,6 +127,7 @@ export default async function SettingsPage() {
             }}
             isAdmin={isAdmin}
             departments={(departments as Department[]) ?? []}
+            numberingSettings={(numberingSettings as DocumentNumberingSettings) ?? null}
             users={users}
             currentUserId={user.id}
         />

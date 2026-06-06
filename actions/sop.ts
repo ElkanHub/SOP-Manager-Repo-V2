@@ -2,14 +2,50 @@
 
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { sendPulseEmail } from './email'
+
+type SupabaseServiceClient = Awaited<ReturnType<typeof createServiceClient>>
+type RelatedSop = {
+    title?: string | null
+    sop_number?: string | null
+    department?: string | null
+}
+
+function getRelatedSop(value: unknown): RelatedSop | null {
+    if (!value) return null
+    const relation = value as { sops?: RelatedSop | RelatedSop[] | null }
+    return Array.isArray(relation.sops) ? relation.sops[0] ?? null : relation.sops ?? null
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+    return error instanceof Error ? error.message : fallback
+}
 
 export type SubmitSopResult =
     | { success: true; requestId: string }
     | { success: false; error: string }
 
-const SOP_NUMBER_PATTERN = /^[A-Z0-9]{2,10}\/SOP\/\d{3,5}$/
+export async function previewNextSopNumber(department: string): Promise<{ success: true; sopNumber: string } | { success: false; error: string }> {
+    const client = await createClient()
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const supabase = await createServiceClient()
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_active')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_active) return { success: false, error: 'User is not active' }
+
+    const { data, error } = await supabase.rpc('preview_next_sop_number', {
+        p_department_name: department,
+    })
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, sopNumber: String(data) }
+}
 
 export async function submitSopForApproval(
     formData: {
@@ -48,10 +84,6 @@ export async function submitSopForApproval(
         return { success: false, error: 'Only active employees and managers can submit SOPs for approval' }
     }
 
-    if (!SOP_NUMBER_PATTERN.test(formData.sopNumber.trim().toUpperCase())) {
-        return { success: false, error: 'SOP number must follow DEPT/SOP/000 format, for example QA/SOP/007' }
-    }
-
     if (!formData.reasonForChange?.trim()) {
         return { success: false, error: 'Reason for Change is required for GMP document control' }
     }
@@ -68,33 +100,33 @@ export async function submitSopForApproval(
         }
     }
 
-    if (formData.type === 'new') {
-        const { data: existingSop } = await supabase
-            .from('sops')
-            .select('id')
-            .eq('sop_number', formData.sopNumber)
-            .single()
-
-        if (existingSop) {
-            return { success: false, error: 'SOP number already exists' }
-        }
-    }
-
     const versionLabel = formData.type === 'new' ? 'Submission 1' : 'Submission 1'
     const approvalStage = profile.role === 'employee' ? 'hod_review' : 'qa_review'
     const initialStatus = profile.role === 'employee' ? 'pending_hod' : 'pending_qa'
 
     let sopId = formData.sopId
+    let controlledSopNumber = formData.sopNumber.trim().toUpperCase()
 
     if (formData.type === 'new') {
+        if ((formData.documentLevel || 'level_2') === 'level_2') {
+            const { data: generatedNumber, error: numberError } = await supabase.rpc('generate_next_sop_number', {
+                p_department_name: formData.department,
+            })
+            if (numberError || !generatedNumber) {
+                return { success: false, error: numberError?.message || 'Failed to generate controlled SOP number' }
+            }
+            controlledSopNumber = String(generatedNumber)
+        }
+
         const { data: newSop, error: sopError } = await supabase
             .from('sops')
             .insert({
-                sop_number: formData.sopNumber,
+                sop_number: controlledSopNumber,
                 title: formData.title,
                 department: formData.department,
                 secondary_departments: formData.secondaryDepartments,
                 document_level: formData.documentLevel || 'level_2',
+                document_type: 'SOP',
                 version: '00',
                 status: initialStatus,
                 file_url: formData.fileUrl,
@@ -223,7 +255,7 @@ export async function submitSopForApproval(
             entity_type: 'sop',
             entity_id: sopId,
             metadata: {
-                sop_number: formData.sopNumber,
+                sop_number: controlledSopNumber,
                 title: formData.title,
                 department: formData.department,
                 approval_request_id: approvalRequest.id,
@@ -390,7 +422,7 @@ type Annotation = {
 }
 
 async function insertApprovalAnnotations(
-    supabase: any,
+    supabase: SupabaseServiceClient,
     requestId: string,
     authorId: string,
     annotations: Annotation[] | undefined
@@ -466,7 +498,7 @@ export async function approveSopRequest(
             .eq('id', requestId)
             .single()
 
-        const reqSop = Array.isArray((request as any)?.sops) ? (request as any)?.sops[0] : (request as any)?.sops
+        const reqSop = getRelatedSop(request)
         const sopTitle = reqSop?.title || 'Your SOP'
         const sopNumber = reqSop?.sop_number || ''
         const sopLabel = sopNumber ? `${sopNumber} — ${sopTitle}` : sopTitle
@@ -552,8 +584,8 @@ export async function approveSopRequest(
             result: resultData.result as 'activated' | 'change_control_issued' | 'pending_training',
             changeControlId: resultData.change_control_id
         }
-    } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to approve SOP request' }
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Failed to approve SOP request') }
     }
 }
 
@@ -583,7 +615,7 @@ export async function endorseSopToQa(
         .eq('id', requestId)
         .single()
 
-    const sop = Array.isArray((request as any)?.sops) ? (request as any).sops[0] : (request as any)?.sops
+    const sop = getRelatedSop(request)
     if (!request || request.approval_stage !== 'hod_review') {
         return { success: false, error: 'Request is not waiting for HOD review' }
     }
@@ -820,7 +852,7 @@ export async function requestChangesSop(
         return { success: false, error: 'Request not found' }
     }
 
-    const reqSop = Array.isArray((request as any).sops) ? (request as any).sops[0] : (request as any).sops
+    const reqSop = getRelatedSop(request)
     const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
     const isHodReviewer = request.approval_stage === 'hod_review' && profile.role === 'manager' && profile.department === reqSop?.department
 
@@ -958,7 +990,7 @@ export async function signChangeControl(changeControlId: string): Promise<SignRe
         .eq('id', changeControlId)
         .single()
 
-    const ccSop = Array.isArray((changeControl as any)?.sops) ? (changeControl as any)?.sops[0] : (changeControl as any)?.sops
+    const ccSop = getRelatedSop(changeControl)
     const sopTitle = ccSop?.title || 'an SOP'
     const sopNumber = ccSop?.sop_number || ''
     const sopLabel = sopNumber ? `${sopNumber} — ${sopTitle}` : sopTitle
@@ -1057,8 +1089,8 @@ export async function waiveSignature(
             p_admin_id: user.id,
             p_reason: reason,
         })
-    } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to waive signature' }
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Failed to waive signature') }
     }
 
     revalidatePath('/change-control')
@@ -1092,7 +1124,7 @@ export async function generateDeltaSummary(changeControlId: string): Promise<{ s
         })
 
         if (!response.ok) {
-            const error = await response.json()
+            const error = await response.json() as { message?: string }
             return { success: false, error: error.message || 'Failed to generate summary' }
         }
 
@@ -1106,8 +1138,8 @@ export async function generateDeltaSummary(changeControlId: string): Promise<{ s
         revalidatePath('/change-control')
         return { success: true, summary: data.summary }
 
-    } catch (error: any) {
-        return { success: false, error: error.message || 'Failed to generate summary' }
+    } catch (error: unknown) {
+        return { success: false, error: getErrorMessage(error, 'Failed to generate summary') }
     }
 }
 

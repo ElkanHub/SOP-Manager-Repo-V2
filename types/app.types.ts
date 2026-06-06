@@ -28,14 +28,28 @@ export interface Profile {
 export interface Department {
     id: string;
     name: string;
+    code: string;
     colour: string;
     is_qa: boolean;
     created_at: string;
 }
 
+export interface DocumentNumberingSettings {
+    id: string;
+    document_type: 'SOP';
+    format_template: string;
+    sequence_padding: number;
+    sequence_scope: 'department_document_type';
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface SopRecord {
     id: string;
     sop_number: string;
+    legacy_sop_number?: string | null;
+    document_type?: 'SOP';
     title: string;
     department: string;
     secondary_departments: string[];

@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { submitSopForApproval } from "@/actions/sop"
+import { previewNextSopNumber, submitSopForApproval } from "@/actions/sop"
 import { Profile, Department, SopRecord } from "@/types/app.types"
 
 interface SopUploadModalProps {
@@ -39,6 +39,9 @@ export function SopUploadModal({
 
     const [sopType, setSopType] = useState<'new' | 'update'>('new')
     const [sopNumber, setSopNumber] = useState('')
+    const [generatedSopNumber, setGeneratedSopNumber] = useState('')
+    const [numberPreviewError, setNumberPreviewError] = useState<string | null>(null)
+    const [numberPreviewLoading, setNumberPreviewLoading] = useState(false)
     const [title, setTitle] = useState('')
     const [primaryDept, setPrimaryDept] = useState(user.department)
     const [secondaryDepts, setSecondaryDepts] = useState<string[]>([])
@@ -54,6 +57,9 @@ export function SopUploadModal({
 
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    const getErrorMessage = (err: unknown, fallback: string) =>
+        err instanceof Error ? err.message : fallback
+
     useEffect(() => {
         if (!open) {
             setStep(1)
@@ -63,6 +69,9 @@ export function SopUploadModal({
             setUploadError(null)
             setSopType('new')
             setSopNumber('')
+            setGeneratedSopNumber('')
+            setNumberPreviewError(null)
+            setNumberPreviewLoading(false)
             setTitle('')
             setPrimaryDept(user.department)
             setSecondaryDepts([])
@@ -92,10 +101,7 @@ export function SopUploadModal({
         return null
     }
 
-    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFile = e.target.files?.[0]
-        if (!selectedFile) return
-
+    const uploadSelectedFile = async (selectedFile: File) => {
         const error = validateFile(selectedFile)
         if (error) {
             setUploadError(error)
@@ -123,12 +129,18 @@ export function SopUploadModal({
 
             setFileUrl(data.fileUrl)   // signed URL — for preview only
             setFilePath(data.filePath) // storage path — stored in DB
-        } catch (err: any) {
-            setUploadError(err.message)
+        } catch (err: unknown) {
+            setUploadError(getErrorMessage(err, 'Failed to upload file'))
             setFile(null)
         } finally {
             setUploading(false)
         }
+    }
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedFile = e.target.files?.[0]
+        if (!selectedFile) return
+        await uploadSelectedFile(selectedFile)
     }
 
     const handleDrop = async (e: React.DragEvent) => {
@@ -139,7 +151,7 @@ export function SopUploadModal({
                 const dt = new DataTransfer()
                 dt.items.add(droppedFile)
                 fileInputRef.current.files = dt.files
-                await handleFileChange({ target: { files: dt.files } } as any)
+                await uploadSelectedFile(droppedFile)
             }
         }
     }
@@ -162,10 +174,39 @@ export function SopUploadModal({
         }
     }
 
+    useEffect(() => {
+        let cancelled = false
+
+        async function loadPreview() {
+            if (!open || sopType !== 'new' || documentLevel !== 'level_2' || !primaryDept) {
+                setGeneratedSopNumber('')
+                setNumberPreviewError(null)
+                return
+            }
+
+            setNumberPreviewLoading(true)
+            setNumberPreviewError(null)
+            const result = await previewNextSopNumber(primaryDept)
+            if (cancelled) return
+            setNumberPreviewLoading(false)
+            if (!result.success) {
+                setGeneratedSopNumber('')
+                setNumberPreviewError(result.error)
+                return
+            }
+            setGeneratedSopNumber(result.sopNumber)
+            setSopNumber(result.sopNumber)
+        }
+
+        loadPreview()
+        return () => { cancelled = true }
+    }, [open, sopType, documentLevel, primaryDept])
+
     const canProceedStep2 = () => {
         if (!fileUrl) return false
         if (sopType === 'new') {
-            return sopNumber.trim() !== '' && title.trim() !== '' && reasonForChange.trim() !== ''
+            const hasNumber = documentLevel === 'level_2' ? generatedSopNumber.trim() !== '' && !numberPreviewError : sopNumber.trim() !== ''
+            return hasNumber && title.trim() !== '' && reasonForChange.trim() !== ''
         }
         return selectedSopId !== '' && !lockedError && reasonForChange.trim() !== ''
     }
@@ -179,7 +220,7 @@ export function SopUploadModal({
                 fileUrl: filePath!,
                 type: sopType,
                 sopId: sopType === 'update' ? selectedSopId : undefined,
-                sopNumber: sopNumber.trim(),
+                sopNumber: documentLevel === 'level_2' ? generatedSopNumber : sopNumber.trim(),
                 title: title.trim(),
                 department: primaryDept || '',
                 secondaryDepartments: secondaryDepts,
@@ -199,8 +240,8 @@ export function SopUploadModal({
             setTimeout(() => {
                 onOpenChange(false)
             }, 2000)
-        } catch (err: any) {
-            setSubmitError(err.message || 'Failed to submit SOP')
+        } catch (err: unknown) {
+            setSubmitError(getErrorMessage(err, 'Failed to submit SOP'))
         } finally {
             setSubmitting(false)
         }
@@ -357,17 +398,36 @@ export function SopUploadModal({
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="sop-number" className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">SOP Number</Label>
-                                        <Input
-                                            id="sop-number"
-                                            value={sopNumber}
-                                            onChange={(e) => setSopNumber(e.target.value)}
-                                            placeholder="e.g., QA/SOP/007"
-                                            pattern="[A-Za-z0-9]{2,10}/SOP/[0-9]{3,5}"
-                                            className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
-                                        />
-                                        <p className="text-[10px] text-muted-foreground font-medium">
-                                            Format: DEPT/SOP/000, for example QA/SOP/007.
-                                        </p>
+                                        {documentLevel === 'level_2' ? (
+                                            <>
+                                                <div className="flex h-10 items-center rounded-md border border-border/50 bg-muted/30 px-3 font-mono text-sm font-bold text-foreground">
+                                                    {numberPreviewLoading ? (
+                                                        <span className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating...</span>
+                                                    ) : generatedSopNumber || (
+                                                        <span className="text-muted-foreground">Select a department</span>
+                                                    )}
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground font-medium">
+                                                    Generated from Department Code / SOP / Sequence. Configure codes in Settings → Departments.
+                                                </p>
+                                                {numberPreviewError && (
+                                                    <p className="text-[10px] font-semibold text-destructive">{numberPreviewError}</p>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Input
+                                                    id="sop-number"
+                                                    value={sopNumber}
+                                                    onChange={(e) => setSopNumber(e.target.value)}
+                                                    placeholder="Document reference"
+                                                    className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20"
+                                                />
+                                                <p className="text-[10px] text-muted-foreground font-medium">
+                                                    Structured numbering is enforced for Level II SOPs in this phase.
+                                                </p>
+                                            </>
+                                        )}
                                     </div>
 
                                     <div className="space-y-2">
