@@ -1,13 +1,19 @@
 import type { MetadataRoute } from "next"
 
-export default function manifest(): MetadataRoute.Manifest {
+type PwaManifest = MetadataRoute.Manifest & {
+  display_override?: Array<"fullscreen" | "standalone" | "minimal-ui" | "browser">
+}
+
+export default function manifest(): PwaManifest {
   return {
+    id: "/dashboard",
     name: "QMS-MANAJA",
     short_name: "QMS-MANAJA",
     description: "Industrial compliance, simplified",
     start_url: "/dashboard",
     scope: "/",
-    display: "standalone",
+    display: "fullscreen",
+    display_override: ["fullscreen", "standalone"],
     orientation: "portrait",
     background_color: "#ffffff",
     theme_color: "#0D2B55",
