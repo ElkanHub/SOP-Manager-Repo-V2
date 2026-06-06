@@ -18,7 +18,7 @@ export async function fetchSopPage({ page, department, role, isAdmin, isQa, stat
 
   let query = supabase
     .from("sops")
-    .select("*, departments(colour)", { count: "exact" })
+    .select("*, departments(colour, code)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 

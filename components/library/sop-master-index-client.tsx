@@ -12,7 +12,7 @@ import { SopRecord } from "@/types/app.types"
 
 interface SopMasterIndexClientProps {
   sops: SopRecord[]
-  departments: string[]
+  departments: { name: string; code?: string | null }[]
   queryError?: string | null
 }
 
@@ -28,6 +28,9 @@ const levelOrder = ["level_1", "level_2", "level_3", "level_4"]
 export function SopMasterIndexClient({ sops, departments, queryError }: SopMasterIndexClientProps) {
   const [department, setDepartment] = useState("all")
   const [search, setSearch] = useState("")
+  const departmentCodeByName = useMemo(() => {
+    return new Map(departments.map((dept) => [dept.name, dept.code || dept.name]))
+  }, [departments])
 
   const filteredSops = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -87,7 +90,7 @@ export function SopMasterIndexClient({ sops, departments, queryError }: SopMaste
           <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted/50 p-1 no-scrollbar">
             <FilterButton label="All Departments" active={department === "all"} onClick={() => setDepartment("all")} />
             {departments.map((dept) => (
-              <FilterButton key={dept} label={dept} active={department === dept} onClick={() => setDepartment(dept)} />
+              <FilterButton key={dept.name} label={dept.code || dept.name} title={dept.name} active={department === dept.name} onClick={() => setDepartment(dept.name)} />
             ))}
           </div>
         </div>
@@ -137,7 +140,7 @@ export function SopMasterIndexClient({ sops, departments, queryError }: SopMaste
                               </Link>
                             </td>
                             <td className="px-4 py-3 text-sm font-semibold text-foreground">{sop.title}</td>
-                            <td className="px-4 py-3"><DeptBadge department={sop.department} colour="blue" /></td>
+                            <td className="px-4 py-3"><DeptBadge department={sop.department} code={departmentCodeByName.get(sop.department)} colour="blue" /></td>
                             <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{sop.version}</td>
                             <td className="px-4 py-3 text-xs text-muted-foreground">
                               {sop.effective_date ? format(new Date(sop.effective_date), "dd MMM yyyy") : "-"}
@@ -170,10 +173,12 @@ export function SopMasterIndexClient({ sops, departments, queryError }: SopMaste
 
 function FilterButton({
   label,
+  title,
   active,
   onClick,
 }: {
   label: string
+  title?: string
   active: boolean
   onClick: () => void
 }) {
@@ -183,6 +188,7 @@ function FilterButton({
       variant={active ? "secondary" : "ghost"}
       size="sm"
       onClick={onClick}
+      title={title}
       className="h-8 shrink-0 rounded-md px-3 text-xs font-semibold"
     >
       {label}

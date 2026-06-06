@@ -14,7 +14,11 @@ interface SearchResult {
   sop_number: string
   title: string
   department: string
-  departments?: { colour: string }
+  departments?: { colour: string; code?: string | null }
+}
+
+type SearchResultRow = Omit<SearchResult, "departments"> & {
+  departments?: SearchResult["departments"] | SearchResult["departments"][]
 }
 
 export function GlobalSearch() {
@@ -50,13 +54,13 @@ export function GlobalSearch() {
       try {
         const { data, error } = await supabase
           .from("sops")
-          .select("id, sop_number, title, department, departments(colour)")
+          .select("id, sop_number, title, department, departments(colour, code)")
           .eq("status", "active")
           .or(`title.ilike.%${query}%,sop_number.ilike.%${query}%`)
           .limit(20)
 
         if (error) throw error
-        const formatted = (data || []).map((d: any) => ({
+        const formatted: SearchResult[] = ((data || []) as SearchResultRow[]).map((d) => ({
           ...d,
           departments: Array.isArray(d.departments) ? d.departments[0] : d.departments,
         }))
@@ -163,6 +167,7 @@ export function GlobalSearch() {
                   </span>
                   <DeptBadge
                     department={result.department}
+                    code={result.departments?.code}
                     colour={result.departments?.colour}
                     size="sm"
                   />

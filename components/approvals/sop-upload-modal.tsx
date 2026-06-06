@@ -13,12 +13,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { previewNextSopNumber, submitSopForApproval } from "@/actions/sop"
 import { Profile, Department, SopRecord } from "@/types/app.types"
 
+export type ExistingSopOption = Pick<SopRecord, "id" | "sop_number" | "title" | "department" | "status" | "locked">
+
 interface SopUploadModalProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     user: Profile
     departments: Department[]
-    existingSops?: SopRecord[]
+    existingSops?: ExistingSopOption[]
     onSuccess?: () => void
 }
 

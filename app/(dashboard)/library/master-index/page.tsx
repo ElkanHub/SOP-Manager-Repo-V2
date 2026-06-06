@@ -143,19 +143,19 @@ export default async function SopMasterIndexPage() {
 
   const { data: departments } = await serviceClient
     .from("departments")
-    .select("name")
+    .select("name, code")
     .order("name", { ascending: true })
 
   const normalizedSops = ((sops as MasterIndexSop[]) || []).map(normalizeSop)
-  const departmentNames = Array.from(new Set([
-    ...((departments || []).map((dept) => dept.name)),
-    ...normalizedSops.map((sop) => sop.department),
-  ])).sort((a, b) => a.localeCompare(b))
+  const departmentOptions = Array.from(new Map([
+    ...((departments || []).map((dept) => [dept.name, { name: dept.name, code: dept.code }] as const)),
+    ...normalizedSops.map((sop) => [sop.department, { name: sop.department, code: null }] as const),
+  ]).values()).sort((a, b) => a.name.localeCompare(b.name))
 
   return (
     <SopMasterIndexClient
       sops={normalizedSops}
-      departments={departmentNames}
+      departments={departmentOptions}
       queryError={sopsError?.message || null}
     />
   )

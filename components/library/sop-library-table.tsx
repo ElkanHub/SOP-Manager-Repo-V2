@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { Lock, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
@@ -114,7 +113,7 @@ export function SopLibraryTable({
         header: "Department",
         cell: ({ row }) => {
           const dept = row.getValue("department") as string
-          return <DeptBadge department={dept} colour="blue" />
+          return <DeptBadge department={dept} code={row.original.departments?.code} colour={row.original.departments?.colour || "blue"} />
         },
         size: 140,
       },

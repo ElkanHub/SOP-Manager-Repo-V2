@@ -73,6 +73,10 @@ export interface SopRecord {
     approved_by?: string;
     created_at: string;
     updated_at: string;
+    departments?: {
+        colour?: string | null;
+        code?: string | null;
+    } | null;
 }
 
 export interface SopVersion {

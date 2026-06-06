@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import LibraryViewClient from "./library-view-client"
-import { Profile, SopVersion } from "@/types/app.types"
+import { Profile, SopRecord } from "@/types/app.types"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -34,7 +34,7 @@ export default async function SopViewerPage({ params }: PageProps) {
 
   const { data: sop } = await supabase
     .from("sops")
-    .select("*, departments(colour)")
+    .select("*, departments(colour, code)")
     .eq("id", id)
     .single()
 
@@ -54,10 +54,6 @@ export default async function SopViewerPage({ params }: PageProps) {
       .createSignedUrl(sop.file_url, 3600)
     signedFileUrl = signed?.signedUrl ?? null
   }
-
-  const isOwnDept =
-    sop.department === profile.department ||
-    (sop.secondary_departments || []).includes(profile.department || '')
 
   const { data: acknowledgement } = await supabase
     .from("sop_acknowledgements")
@@ -81,10 +77,6 @@ export default async function SopViewerPage({ params }: PageProps) {
       .single()
     : { data: null }
 
-  const isManager = profile.role === "manager"
-  const isCrossDept = !isOwnDept
-  const isLocked = sop.locked
-
   let activeChangeControlId: string | null = null
   if (sop.status === 'pending_cc') {
     const { data: cc } = await supabase
@@ -100,7 +92,7 @@ export default async function SopViewerPage({ params }: PageProps) {
 
   return (
     <LibraryViewClient
-      sop={sop}
+      sop={sop as SopRecord}
       profile={profile as Profile}
       acknowledgement={acknowledgement}
       versions={versions || []}
