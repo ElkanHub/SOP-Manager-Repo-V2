@@ -22,6 +22,7 @@ interface ProfileWithEmail extends Profile {
 
 interface SettingsClientProps {
     profile: Profile
+    profileEmail?: string | null
     isAdmin: boolean
     departments: Department[]
     numberingSettings: DocumentNumberingSettings | null
@@ -31,6 +32,7 @@ interface SettingsClientProps {
 
 export function SettingsClient({
     profile,
+    profileEmail,
     isAdmin,
     departments,
     numberingSettings,
@@ -89,7 +91,7 @@ export function SettingsClient({
                 </div>
 
                 <TabsContent value="profile" className="mt-0">
-                    <ProfileTab profile={profile} />
+                    <ProfileTab profile={profile} email={profileEmail} />
                 </TabsContent>
 
                 <TabsContent value="notifications" className="mt-0">

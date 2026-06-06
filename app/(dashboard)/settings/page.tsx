@@ -125,6 +125,7 @@ export default async function SettingsPage() {
                 initials_url: initialsUrl,
                 notification_prefs: profile.notification_prefs ?? { email: true, pulse: true },
             }}
+            profileEmail={user.email ?? null}
             isAdmin={isAdmin}
             departments={(departments as Department[]) ?? []}
             numberingSettings={(numberingSettings as DocumentNumberingSettings) ?? null}
