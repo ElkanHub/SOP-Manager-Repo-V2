@@ -280,8 +280,8 @@ export function DashboardClient({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-0 mt-6">
         <Link href="/library?status=active">
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-blue shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-blue shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Active SOPs</div>
                   <FileText className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -293,17 +293,17 @@ export function DashboardClient({
                   className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-slate-100"
                 />
               </div>
-              <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-brand-teal">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>+{kpi.sopsAddedThisMonth} this month</span>
+              <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold text-brand-teal">
+                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 truncate">+{kpi.sopsAddedThisMonth} this month</span>
               </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={isQa ? "/approvals" : "/library"}>
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Pending Approvals</div>
                   <ClipboardCheck className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -318,16 +318,16 @@ export function DashboardClient({
                     }`}
                 />
               </div>
-              <div className={`mt-3 flex items-center gap-1.5 text-xs font-semibold ${kpi.pendingApprovals === 0 ? 'text-green-600' : 'text-amber-600'}`}>
+              <div className={`mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold ${kpi.pendingApprovals === 0 ? 'text-green-600' : 'text-amber-600'}`}>
                 {kpi.pendingApprovals === 0 ? (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>All clear</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 truncate">All clear</span>
                   </>
                 ) : (
                   <>
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Oldest: {kpi.oldestApprovalDate ? formatDistanceToNow(new Date(kpi.oldestApprovalDate), { addSuffix: true }) : 'N/A'}</span>
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 truncate">Oldest: {kpi.oldestApprovalDate ? formatDistanceToNow(new Date(kpi.oldestApprovalDate), { addSuffix: true }) : 'N/A'}</span>
                   </>
                 )}
               </div>
@@ -336,8 +336,8 @@ export function DashboardClient({
         </Link>
 
         <Link href="/equipment">
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-blue-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-blue-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">PM Compliance</div>
                   <Wrench className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -350,17 +350,17 @@ export function DashboardClient({
                 />
                 <span className={`text-lg md:text-xl font-bold ${getComplianceColor(kpi.pmCompliance)}`}>%</span>
               </div>
-              <div className={`mt-3 flex items-center gap-1.5 text-xs font-semibold ${kpi.pmCompliance >= kpi.prevPmCompliance ? 'text-green-600' : 'text-amber-600'}`}>
-                {kpi.pmCompliance >= kpi.prevPmCompliance ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                <span>from {kpi.prevPmCompliance}% last month</span>
+              <div className={`mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold ${kpi.pmCompliance >= kpi.prevPmCompliance ? 'text-green-600' : 'text-amber-600'}`}>
+                {kpi.pmCompliance >= kpi.prevPmCompliance ? <TrendingUp className="h-3.5 w-3.5 shrink-0" /> : <TrendingDown className="h-3.5 w-3.5 shrink-0" />}
+                <span className="min-w-0 truncate">from {kpi.prevPmCompliance}% last month</span>
               </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/library?filter=due">
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-amber-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-amber-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Due For Revision</div>
                   <AlertCircle className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -375,9 +375,9 @@ export function DashboardClient({
                     }`}
                 />
               </div>
-              <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Next due: {kpi.nextRevisionDate ? format(new Date(kpi.nextRevisionDate), 'dd MMM') : 'None'}</span>
+              <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold text-slate-500">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 truncate">Next due: {kpi.nextRevisionDate ? format(new Date(kpi.nextRevisionDate), 'dd MMM') : 'None'}</span>
               </div>
             </CardContent>
           </Card>
