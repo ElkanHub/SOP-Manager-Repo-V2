@@ -21,6 +21,7 @@ import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, Cl
 
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
+import { clearAppBadgeSource, publishAppBadgeSource } from "@/lib/pwa/app-badge"
 import type { User } from "@supabase/supabase-js"
 import type { Profile } from "@/types/app.types"
 
@@ -253,6 +254,26 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       setRequestHubOpen(true)
     }
   }, [pathname])
+
+  React.useEffect(() => {
+    const sidebarTotal =
+      unreadConversations +
+      pendingApprovals +
+      pendingEquipmentCount +
+      pendingRequests +
+      pendingTraining +
+      reviewModules
+
+    publishAppBadgeSource("sidebar", sidebarTotal)
+    return () => clearAppBadgeSource("sidebar")
+  }, [
+    unreadConversations,
+    pendingApprovals,
+    pendingEquipmentCount,
+    pendingRequests,
+    pendingTraining,
+    reviewModules,
+  ])
 
 
   const navItems: NavItem[] = [

@@ -6,24 +6,27 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { ThePulse } from "./the-pulse"
+import { clearAppBadgeSource, publishAppBadgeSource } from "@/lib/pwa/app-badge"
+import type { User } from "@supabase/supabase-js"
+import type { Profile } from "@/types/app.types"
 
 interface PulseWrapperProps {
-    user: any
-    profile: any
+    user: User
+    profile: Profile
+}
+
+type PulseAcknowledgementRow = {
+    pulse_item_id: string
 }
 
 export function PulseWrapper({ user, profile }: PulseWrapperProps) {
-    const [isOpen, setIsOpen] = useState(true)
-    const [isMounted, setIsMounted] = useState(false)
+    const [isOpen, setIsOpen] = useState(() => {
+        if (typeof window === "undefined") return true
+        const saved = window.localStorage.getItem("pulse-sidebar-open")
+        return saved === null ? true : saved === "true"
+    })
     const [badgeCount, setBadgeCount] = useState(0)
     const prevCountRef = useRef(0)
-
-    // Restore open state from localStorage on mount
-    useEffect(() => {
-        const saved = localStorage.getItem("pulse-sidebar-open")
-        if (saved !== null) setIsOpen(saved === "true")
-        setIsMounted(true)
-    }, [])
 
     // Sound notification when new items arrive
     useEffect(() => {
@@ -36,6 +39,11 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         }
         prevCountRef.current = badgeCount
     }, [badgeCount, profile?.notification_prefs?.notice_sound, isOpen])
+
+    useEffect(() => {
+        publishAppBadgeSource("pulse", badgeCount)
+        return () => clearAppBadgeSource("pulse")
+    }, [badgeCount])
 
     const fetchBadgeCount = useCallback(async () => {
         if (!user) return
@@ -60,7 +68,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             .select('pulse_item_id')
             .eq('user_id', user.id)
 
-        const ackedIds = new Set((acks || []).map((a: any) => a.pulse_item_id))
+        const ackedIds = new Set(((acks || []) as PulseAcknowledgementRow[]).map((a) => a.pulse_item_id))
         const now = Date.now()
 
         // Count based on three buckets.
@@ -117,7 +125,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         if (!user) return
         const supabase = createClient()
 
-        fetchBadgeCount()
+        const initialFetch = window.setTimeout(fetchBadgeCount, 0)
 
         const channel = supabase.channel('pulse-wrapper-badges')
             .on('postgres_changes', {
@@ -153,6 +161,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
         const dueTicker = setInterval(fetchBadgeCount, 60_000)
 
         return () => {
+            window.clearTimeout(initialFetch)
             supabase.removeChannel(channel)
             window.removeEventListener('pulse-viewed', handlePulseViewed)
             window.removeEventListener('pulse-toggle', handleToggle)
@@ -174,8 +183,6 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             setTimeout(fetchBadgeCount, 30)
         }
     }
-
-    if (!isMounted) return null
 
     return (
         <>
