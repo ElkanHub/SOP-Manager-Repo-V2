@@ -4,8 +4,8 @@
 
 This alignment note is based on:
 
-- `V2DOCS/v2.2/QA-SOP-007-02 - SOP FOR DOCUMENT CONTROL.doc`
-- `V2DOCS/v2.2/SOP Process Consolidation - What Needs to Change in SOP-Guard Pro.md`
+- `V2DOCS/v2.2/source-documents/QA-SOP-007-02 - SOP FOR DOCUMENT CONTROL.doc`
+- `V2DOCS/v2.2/strategy/SOP Process Consolidation — What Needs to Change in SOP-Guard Pro.md`
 
 ## Core Decision
 
