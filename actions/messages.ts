@@ -2,6 +2,12 @@
 
 import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { logAudit } from "@/lib/audit"
+import { sendPwaPushToUsers } from "@/lib/pwa/push-server"
+
+type ConversationMemberRow = {
+  user_id: string
+  notify_setting?: "all" | "mentions_only" | "muted" | null
+}
 
 export async function sendMessage({ 
   conversationId, 
@@ -62,6 +68,37 @@ export async function sendMessage({
     .update({ last_read_at: new Date().toISOString() })
     .eq('conversation_id', conversationId)
     .eq('user_id', user.id)
+
+  try {
+    const { data: senderProfile } = await adminClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    const { data: recipients } = await adminClient
+      .from('conversation_members')
+      .select('user_id, notify_setting')
+      .eq('conversation_id', conversationId)
+      .neq('user_id', user.id)
+
+    const recipientIds = ((recipients || []) as ConversationMemberRow[])
+      .filter((recipient) => {
+        if (recipient.notify_setting === 'muted') return false
+        if (recipient.notify_setting === 'mentions_only') return mentions.includes(recipient.user_id)
+        return true
+      })
+      .map((recipient) => recipient.user_id)
+
+    await sendPwaPushToUsers(recipientIds, {
+      title: senderProfile?.full_name ? `Message from ${senderProfile.full_name}` : 'New message',
+      body: body.trim().slice(0, 140),
+      url: '/messages',
+      tag: `message-${conversationId}`,
+    })
+  } catch (pushError) {
+    console.error("[PWA] Message push dispatch failed:", pushError)
+  }
 
   return message
 }
@@ -148,7 +185,7 @@ export async function createConversation({ type, memberIds, name }: { type: 'dir
 
       if (sharedDMs) {
          for (const dm of sharedDMs) {
-            const members = dm.members as any[]
+            const members = dm.members as ConversationMemberRow[]
             if (members?.length === 2 && members.find(m => m.user_id === otherId)) {
                return { id: dm.id } // return existing
             }

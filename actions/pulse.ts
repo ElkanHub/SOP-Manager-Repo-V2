@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendPulseEmail } from "./email"
 import { logAudit } from "@/lib/audit"
+import { sendPwaPushToUsers } from "@/lib/pwa/push-server"
 
 export async function broadcastNotice(formData: FormData) {
     const supabase = await createClient()
@@ -62,6 +63,28 @@ export async function broadcastNotice(formData: FormData) {
     // ─── EMAIL NOTIFICATION DISPATCH ───
     try {
         const service = await createServiceClient()
+        let pushQuery = service
+            .from('profiles')
+            .select('id')
+            .eq('is_active', true)
+            .neq('id', user.id)
+
+        if (audience === 'department') {
+            pushQuery = pushQuery.eq('department', profile?.department)
+        }
+
+        const { data: pushRecipients } = await pushQuery
+        const pushRecipientIds = (pushRecipients || []).map(r => r.id)
+
+        if (pushRecipientIds.length > 0) {
+            await sendPwaPushToUsers(pushRecipientIds, {
+                title: `New Notice from ${profile?.full_name || 'QMS-MANAJA'}`,
+                body: content,
+                url: '/dashboard',
+                tag: `pulse-notice-${inserted?.id || Date.now()}`,
+            })
+        }
+
         let query = service
             .from('profiles')
             .select('id')
@@ -125,7 +148,7 @@ export async function createTodo(formData: FormData) {
         dueAtIso = parsed.toISOString()
     }
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
         .from('pulse_items')
         .insert({
             sender_id: user.id,
@@ -136,12 +159,24 @@ export async function createTodo(formData: FormData) {
             audience: 'self',
             due_at: dueAtIso,
         })
+        .select('id')
+        .single()
 
     if (error) {
         return { error: error.message }
     }
 
     revalidatePath('/dashboard')
+
+    const shouldNotifyNow = !dueAtIso || new Date(dueAtIso).getTime() <= Date.now()
+    if (shouldNotifyNow) {
+        await sendPwaPushToUsers([user.id], {
+            title: 'Personal To-Do',
+            body: content,
+            url: '/dashboard',
+            tag: `pulse-todo-${inserted?.id || Date.now()}`,
+        })
+    }
 
     return { success: true }
 }
@@ -234,7 +269,7 @@ export async function replyToNotice(parentId: string, content: string) {
         .eq('id', user.id)
         .single()
 
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
         .from('pulse_items')
         .insert({
             sender_id: user.id,
@@ -245,6 +280,8 @@ export async function replyToNotice(parentId: string, content: string) {
             parent_id: parentId,
             thread_depth: 1
         })
+        .select('id')
+        .single()
 
     if (error) {
         return { error: error.message }
@@ -255,6 +292,24 @@ export async function replyToNotice(parentId: string, content: string) {
     // ─── EMAIL NOTIFICATION DISPATCH (REPLY) ───
     try {
         const service = await createServiceClient()
+
+        const { data: pushRecipients } = await service
+            .from('profiles')
+            .select('id')
+            .eq('is_active', true)
+            .neq('id', user.id)
+            .or(`id.eq.${parentNode.sender_id},department.eq.${profile?.department}`)
+
+        const pushRecipientIds = (pushRecipients || []).map(r => r.id)
+
+        if (pushRecipientIds.length > 0) {
+            await sendPwaPushToUsers(pushRecipientIds, {
+                title: `Pulse Reply from ${profile?.full_name || 'Personnel'}`,
+                body: content,
+                url: '/dashboard',
+                tag: `pulse-reply-${inserted?.id || Date.now()}`,
+            })
+        }
         
         // Find the sender of the original notice to notify them
         // Also notify the department if it was a department-scoped notice
