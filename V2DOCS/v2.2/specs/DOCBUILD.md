@@ -18,8 +18,8 @@ When BUILD.md and the implemented codebase agree, use both. When they differ, **
 Do this before writing a single page. It takes 10 minutes and prevents every content error.
 
 **Step 1 — Read these files in full:**
-- `V2DOCS/v2.2/BUILD-v2.2.md` — the complete build specification. Primary content source.
-- `V2DOCS/v2.2/UI-DESIGN-SPEC-v2.2.md` — the UI specification. Use it to describe what things look like.
+- `V2DOCS/v2.2/specs/BUILD-v2.2.md` — the complete build specification. Primary content source.
+- `V2DOCS/v2.2/specs/UI-DESIGN-SPEC-v2.2.md` — the UI specification. Use it to describe what things look like.
 - Any files in `/V2DOCS/` or `/content/` in the codebase root.
 
 **Step 2 — Inspect the implemented app:**

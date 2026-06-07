@@ -4,12 +4,12 @@
 
 This plan implements the alignment described in:
 
-- `V2DOCS/v2.2/Change Control Multi-Document Alignment.md`
+- `V2DOCS/v2.2/reference/Change Control Multi-Document Alignment.md`
 
 It is also based on:
 
-- `V2DOCS/v2.2/QA-SOP-007-02 - SOP FOR DOCUMENT CONTROL.doc`
-- `V2DOCS/v2.2/SOP Process Consolidation - What Needs to Change in SOP-Guard Pro.md`
+- `V2DOCS/v2.2/source-documents/QA-SOP-007-02 - SOP FOR DOCUMENT CONTROL.doc`
+- `V2DOCS/v2.2/strategy/SOP Process Consolidation — What Needs to Change in SOP-Guard Pro.md`
 
 ## Objective
 

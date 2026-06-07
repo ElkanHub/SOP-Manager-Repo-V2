@@ -1,5 +1,12 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Documentation
+
+Project documentation is organized in [V2DOCS/README.md](E:/Projects/sop-manager-v2/V2DOCS/README.md).
+
+- Current v2.2 docs: [V2DOCS/v2.2/README.md](E:/Projects/sop-manager-v2/V2DOCS/v2.2/README.md)
+- Historical v2.1 docs: [V2DOCS/v2.1/README.md](E:/Projects/sop-manager-v2/V2DOCS/v2.1/README.md)
+
 ## Getting Started
 
 First, run the development server:
