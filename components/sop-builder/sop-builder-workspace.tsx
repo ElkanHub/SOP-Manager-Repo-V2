@@ -27,7 +27,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Lightfall } from "@/components/ui/lightfall"
+import Lightfall from "@/components/Lightfall"
 import { SopViewerLazy as SopViewer } from "@/components/library/sop-viewer-lazy"
 import { MarkdownViewer } from "./markdown-viewer"
 import type { SopBuilderComment, SopBuilderDraft, SopBuilderSession } from "@/lib/sop-builder/types"
@@ -753,4 +753,3 @@ function getPrimaryAction(args: {
     loading: args.busy === "outline",
   }
 }
-
