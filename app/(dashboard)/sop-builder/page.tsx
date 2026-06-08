@@ -10,7 +10,7 @@ export default async function SopBuilderPage() {
   const service = await createServiceClient()
   const { data: profile } = await service
     .from("profiles")
-    .select("is_active, is_admin, role")
+    .select("is_active, is_admin, role, full_name")
     .eq("id", user.id)
     .single()
   const { data: isQa } = await service.rpc("is_qa_manager", { user_id: user.id })
@@ -27,6 +27,5 @@ export default async function SopBuilderPage() {
     `)
     .order("updated_at", { ascending: false })
 
-  return <SopBuilderHome sessions={sessions || []} />
+  return <SopBuilderHome sessions={sessions || []} profileName={profile.full_name} />
 }
-
