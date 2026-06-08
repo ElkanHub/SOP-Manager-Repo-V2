@@ -17,7 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree, Bot } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
@@ -295,6 +295,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <ClipboardCheck className="w-5 h-5" />,
       isActive: pathname.startsWith("/approvals"),
       badge: pendingApprovals,
+    }] : []),
+    ...((profile?.role === 'manager' || profile?.is_admin || isQa) ? [{
+      title: "AI SOP Builder",
+      url: "/sop-builder",
+      icon: <Bot className="w-5 h-5" />,
+      isActive: pathname.startsWith("/sop-builder"),
     }] : []),
     {
       title: "My Training",
