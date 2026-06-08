@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai"
+import { GoogleGenAI, type SchemaUnion } from "@google/genai"
 import { logAudit } from "@/lib/audit"
 
 /**
@@ -21,8 +21,8 @@ import { logAudit } from "@/lib/audit"
 export type AIModelTier = "fast" | "quality"
 
 const MODEL_DEFAULTS: Record<AIModelTier, string> = {
-  fast: "gemini-2.0-flash",
-  quality: "gemini-2.5-pro",
+  fast: "gemini-2.5-flash",
+  quality: "gemini-2.5-flash",
 }
 
 function resolveModel(tier: AIModelTier): string {
@@ -160,7 +160,7 @@ export async function generateText(
       options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     )
 
-    const text = (response as any).text ?? ""
+    const text = getResponseText(response)
     const latencyMs = Date.now() - started
 
     if (options.audit !== false) {
@@ -214,13 +214,13 @@ export async function generateJson<T = unknown>(
           maxOutputTokens: options.maxOutputTokens ?? DEFAULT_MAX_OUTPUT,
           responseMimeType: "application/json",
           ...(options.systemInstruction ? { systemInstruction: options.systemInstruction } : {}),
-          ...(options.schema ? { responseSchema: options.schema as any } : {}),
+          ...(options.schema ? { responseSchema: options.schema as SchemaUnion } : {}),
         },
       }),
       options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
     )
 
-    const raw = (response as any).text ?? ""
+    const raw = getResponseText(response)
     let parsed: unknown
     try {
       parsed = JSON.parse(raw)
@@ -291,6 +291,14 @@ function mapProviderError(err: unknown): AIError {
     return new AIError("AI_RATE_LIMITED", msg)
   }
   return new AIError("AI_UPSTREAM_ERROR", msg)
+}
+
+function getResponseText(response: unknown): string {
+  if (typeof response === "object" && response !== null && "text" in response) {
+    const text = (response as { text?: unknown }).text
+    return typeof text === "string" ? text : ""
+  }
+  return ""
 }
 
 async function logAiCall(entry: {
