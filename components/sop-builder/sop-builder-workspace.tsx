@@ -37,6 +37,24 @@ type Message = {
 type DocumentView = "markdown" | "word"
 type SelectionDraft = { text: string; sectionHeading: string | null }
 
+const sopBuilderLightfall = {
+  colors: ["#a6faff", "#27ffdd", "#9fabff"],
+  backgroundColor: "#27358b",
+  speed: 0.2,
+  streakCount: 2,
+  streakWidth: 1.3,
+  streakLength: 2.6,
+  density: 0.5,
+  twinkle: 0.75,
+  glow: 1,
+  backgroundGlow: 0,
+  zoom: 2.1,
+  opacity: 1,
+  mouseInteraction: false,
+  mouseStrength: 0,
+  mouseRadius: 0.1,
+}
+
 export function SopBuilderWorkspace({
   initialSession,
   initialDrafts,
@@ -228,15 +246,15 @@ export function SopBuilderWorkspace({
   })
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[#f8f8f6]">
-      <header className="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-[#fbfbf9]/95 px-4 py-3 backdrop-blur">
+    <div className="flex h-full min-h-0 flex-col bg-[#f8f8f6] dark:bg-background">
+      <header className="z-20 flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-[#fbfbf9]/95 px-4 py-3 backdrop-blur dark:border-border dark:bg-background/95">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <Badge className="bg-brand-teal text-white">AI Draft</Badge>
             <Badge variant="outline" className="capitalize">{session.status.replace(/_/g, " ")}</Badge>
             {selectedDraft && <Badge variant="secondary">v{selectedDraft.version}</Badge>}
           </div>
-          <h1 className="mt-1 truncate text-sm font-semibold text-slate-950 sm:text-base">{session.title}</h1>
+          <h1 className="mt-1 truncate text-sm font-semibold text-slate-950 dark:text-foreground sm:text-base">{session.title}</h1>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Button variant="outline" onClick={() => setDocumentOpen((open) => !open)}>
@@ -365,30 +383,29 @@ function WelcomeScreen({
   onQuickPrompt: (text: string) => void
 }) {
   return (
-    <div className="relative flex min-h-[min(720px,calc(100vh-12rem))] items-center justify-center overflow-hidden rounded-[8px] bg-[#052b1e] px-6 py-12 text-white shadow-sm">
+    <div className="relative flex min-h-[min(720px,calc(100vh-12rem))] items-center justify-center overflow-hidden rounded-[8px] bg-[#27358b] px-6 py-12 text-white shadow-sm">
       <Lightfall
-        colors={["#a6c8ff", "#27ffee", "#48acbc"]}
-        backgroundColor="#052b1e"
-        speed={0.2}
-        streakCount={1}
-        streakWidth={0.2}
-        streakLength={0.4}
-        density={0.6}
-        twinkle={1}
-        glow={1}
-        backgroundGlow={0.1}
-        zoom={1}
-        opacity={0.6}
-        mouseInteraction={false}
-        mouseStrength={0.5}
-        mouseRadius={1.75}
+        colors={sopBuilderLightfall.colors}
+        backgroundColor={sopBuilderLightfall.backgroundColor}
+        speed={sopBuilderLightfall.speed}
+        streakCount={sopBuilderLightfall.streakCount}
+        streakWidth={sopBuilderLightfall.streakWidth}
+        streakLength={sopBuilderLightfall.streakLength}
+        density={sopBuilderLightfall.density}
+        twinkle={sopBuilderLightfall.twinkle}
+        glow={sopBuilderLightfall.glow}
+        backgroundGlow={sopBuilderLightfall.backgroundGlow}
+        zoom={sopBuilderLightfall.zoom}
+        opacity={sopBuilderLightfall.opacity}
+        mouseInteraction={sopBuilderLightfall.mouseInteraction}
+        mouseStrength={sopBuilderLightfall.mouseStrength}
+        mouseRadius={sopBuilderLightfall.mouseRadius}
       />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(5,43,30,0.04),rgba(5,43,30,0.78))]" />
       <div className="relative z-10 max-w-2xl text-center">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-white/10 backdrop-blur">
-          <Bot className="h-6 w-6 text-[#27ffee]" />
+          <Bot className="h-6 w-6 text-[#27ffdd]" />
         </div>
-        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-[#a6c8ff]">{department || "QMS-MANAJA"} SOP Agent</p>
+        <p className="mt-6 text-xs font-semibold uppercase tracking-[0.24em] text-[#a6faff]">{department || "QMS-MANAJA"} SOP Agent</p>
         <h2 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">{title}</h2>
         <div className="mt-8 flex flex-wrap justify-center gap-2">
           {["Start with an outline", "Ask what details are missing", "Draft the first version"].map((prompt) => (
@@ -737,4 +754,3 @@ function getPrimaryAction(args: {
     loading: args.busy === "outline",
   }
 }
-

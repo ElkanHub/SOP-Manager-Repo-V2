@@ -4,10 +4,16 @@ import Link from "next/link"
 import { formatDistanceToNow } from "date-fns"
 import { ArrowRight, FileText, Menu, Plus, Search, X } from "lucide-react"
 import { useEffect, useMemo, useState } from "react"
-import { useTheme } from "next-themes"
 import Lightfall from "@/components/Lightfall"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 
@@ -20,18 +26,22 @@ type SessionRow = {
   active_draft?: { version?: number | null; docx_path?: string | null } | null
 }
 
-const darkLightfall = {
-  colors: ["#a6c8ff", "#27ffee", "#48acbc"],
-  backgroundColor: "#052b1e",
-  opacity: 0.6,
-  backgroundGlow: 0.1,
-}
-
-const lightLightfall = {
-  colors: ["#0f766e", "#22d3ee", "#7dd3fc"],
-  backgroundColor: "#f5fbfa",
-  opacity: 0.48,
-  backgroundGlow: 0.18,
+const sopBuilderLightfall = {
+  colors: ["#a6faff", "#27ffdd", "#9fabff"],
+  backgroundColor: "#27358b",
+  speed: 0.2,
+  streakCount: 2,
+  streakWidth: 1.3,
+  streakLength: 2.6,
+  density: 0.5,
+  twinkle: 0.75,
+  glow: 1,
+  backgroundGlow: 0,
+  zoom: 2.1,
+  opacity: 1,
+  mouseInteraction: false,
+  mouseStrength: 0,
+  mouseRadius: 0.1,
 }
 
 function getTimeGreeting() {
@@ -74,12 +84,9 @@ export function SopBuilderHome({
   sessions: SessionRow[]
   profileName?: string | null
 }) {
-  const { resolvedTheme } = useTheme()
   const [query, setQuery] = useState("")
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const isLight = resolvedTheme === "light"
-  const lightfall = isLight ? lightLightfall : darkLightfall
   const firstName = (profileName || "there").trim().split(/\s+/)[0] || "there"
   const welcomeMessage = useMemo(() => getWelcomeMessage(firstName, sessions), [firstName, sessions])
   const typedGreeting = useTypewriter(welcomeMessage)
@@ -96,50 +103,34 @@ export function SopBuilderHome({
     <div
       className={cn(
         "relative isolate min-h-[calc(100vh-4rem)] overflow-hidden md:-m-6",
-        isLight ? "bg-[#f5fbfa] text-slate-950" : "bg-[#052b1e] text-white"
+        "bg-[#27358b] text-white"
       )}
     >
       <div className="absolute inset-0">
         <Lightfall
-          colors={lightfall.colors}
-          backgroundColor={lightfall.backgroundColor}
-          speed={0.2}
-          streakCount={1}
-          streakWidth={0.2}
-          streakLength={0.4}
-          density={0.6}
-          twinkle={1}
-          glow={1}
-          backgroundGlow={lightfall.backgroundGlow}
-          zoom={1}
-          opacity={lightfall.opacity}
-          mouseInteraction={false}
-          mouseStrength={0.5}
-          mouseRadius={1.75}
+          colors={sopBuilderLightfall.colors}
+          backgroundColor="#27358b"
+          speed={sopBuilderLightfall.speed}
+          streakCount={sopBuilderLightfall.streakCount}
+          streakWidth={sopBuilderLightfall.streakWidth}
+          streakLength={sopBuilderLightfall.streakLength}
+          density={sopBuilderLightfall.density}
+          twinkle={sopBuilderLightfall.twinkle}
+          glow={sopBuilderLightfall.glow}
+          backgroundGlow={sopBuilderLightfall.backgroundGlow}
+          zoom={sopBuilderLightfall.zoom}
+          opacity={sopBuilderLightfall.opacity}
+          mouseInteraction={sopBuilderLightfall.mouseInteraction}
+          mouseStrength={sopBuilderLightfall.mouseStrength}
+          mouseRadius={sopBuilderLightfall.mouseRadius}
         />
       </div>
 
-      <div
-        className={cn(
-          "absolute inset-0",
-          isLight
-            ? "bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.16),rgba(245,251,250,0.72)_58%,rgba(245,251,250,0.9))]"
-            : "bg-[radial-gradient(circle_at_50%_35%,rgba(5,43,30,0.02),rgba(5,43,30,0.52)_58%,rgba(5,43,30,0.88))]"
-        )}
-      />
-
       <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <div className={cn("text-sm font-semibold tracking-tight", isLight ? "text-slate-950" : "text-white")}>
-          AI SOP Builder
-        </div>
+        <div className="text-sm font-semibold tracking-tight text-white">AI SOP Builder</div>
         <Button
           render={<Link href="/sop-builder/new" />}
-          className={cn(
-            "h-10 rounded-full px-4 shadow-sm",
-            isLight
-              ? "bg-slate-950 text-white hover:bg-slate-800"
-              : "bg-white text-slate-950 hover:bg-white/90"
-          )}
+          className="h-10 rounded-full bg-white px-4 text-slate-950 shadow-sm hover:bg-white/90"
         >
           <Plus className="h-4 w-4" />
           Start New SOP
@@ -149,13 +140,10 @@ export function SopBuilderHome({
       <main className="relative z-10 flex min-h-[calc(100vh-9rem)] items-center justify-center px-6 py-16 text-center sm:px-8">
         <div className="mx-auto max-w-4xl">
           <h1
-            className={cn(
-              "min-h-[4.5rem] text-balance text-4xl font-semibold tracking-normal sm:text-6xl",
-              isLight ? "text-slate-950" : "text-white"
-            )}
+            className="min-h-[4.5rem] text-balance text-4xl font-semibold tracking-normal text-white sm:text-6xl"
           >
             {typedGreeting}
-            <span className={cn("ml-1 inline-block w-3 animate-pulse", isLight ? "text-brand-teal" : "text-[#27ffee]")}>
+            <span className="ml-1 inline-block w-3 animate-pulse text-[#27ffdd]">
               |
             </span>
           </h1>
@@ -165,41 +153,31 @@ export function SopBuilderHome({
       <div className="relative z-10 flex justify-center px-5 pb-8 sm:px-8">
         <Button
           type="button"
-          variant={isLight ? "outline" : "secondary"}
           onClick={() => setMenuOpen(true)}
-          className={cn(
-            "h-10 rounded-full border px-4 backdrop-blur",
-            isLight
-              ? "border-slate-200 bg-white/78 text-slate-900 hover:bg-white"
-              : "border-white/15 bg-white/10 text-white hover:bg-white/18"
-          )}
+          className="h-10 rounded-full border border-white/15 bg-white/10 px-4 text-white backdrop-blur hover:bg-white/18"
         >
           <Menu className="h-4 w-4" />
           Chats
         </Button>
       </div>
 
-      {menuOpen && (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            aria-label="Close chats"
-            className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"
-            onClick={() => setMenuOpen(false)}
-          />
-          <aside className="absolute bottom-0 right-0 top-0 flex w-full max-w-md flex-col border-l border-border bg-background shadow-2xl sm:w-[28rem]">
-            <div className="flex items-center justify-between border-b border-border px-4 py-4">
-              <div>
-                <h2 className="text-base font-semibold text-foreground">Chats</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">Continue an SOP draft session.</p>
+      <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
+        <DrawerContent className="mx-auto h-[min(82vh,760px)] max-w-4xl rounded-t-2xl border-border shadow-2xl">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <DrawerHeader className="border-b border-border px-4 py-4 text-left sm:px-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <DrawerTitle>Chats</DrawerTitle>
+                  <DrawerDescription>Continue an SOP draft session.</DrawerDescription>
+                </div>
+                <Button type="button" variant="ghost" size="icon-sm" onClick={() => setMenuOpen(false)}>
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </Button>
               </div>
-              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setMenuOpen(false)}>
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </div>
+            </DrawerHeader>
 
-            <div className="border-b border-border p-4">
+            <div className="border-b border-border p-4 sm:px-6">
               <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
@@ -211,7 +189,7 @@ export function SopBuilderHome({
               </div>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
               {filtered.length === 0 ? (
                 <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border text-center">
                   <FileText className="h-8 w-8 text-muted-foreground" />
@@ -226,6 +204,7 @@ export function SopBuilderHome({
                     <Link
                       key={session.id}
                       href={`/sop-builder/${session.id}`}
+                      onClick={() => setMenuOpen(false)}
                       className="block rounded-lg border border-transparent px-3 py-3 transition hover:border-border hover:bg-muted/60"
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -250,9 +229,9 @@ export function SopBuilderHome({
                 </div>
               )}
             </div>
-          </aside>
-        </div>
-      )}
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   )
 }
