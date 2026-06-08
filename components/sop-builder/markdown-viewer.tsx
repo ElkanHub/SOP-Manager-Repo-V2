@@ -1,12 +1,37 @@
 "use client"
 
+import { MouseEvent, useRef } from "react"
 import { cn } from "@/lib/utils"
 
-export function MarkdownViewer({ markdown, className }: { markdown: string; className?: string }) {
+export function MarkdownViewer({
+  markdown,
+  className,
+  onTextSelected,
+}: {
+  markdown: string
+  className?: string
+  onTextSelected?: (selection: { text: string; sectionHeading: string | null }) => void
+}) {
   const blocks = markdown.split(/\n{2,}/).filter((block) => block.trim().length > 0)
+  const rootRef = useRef<HTMLElement | null>(null)
+
+  function handleMouseUp(event: MouseEvent<HTMLElement>) {
+    if (!onTextSelected) return
+    const selection = window.getSelection()
+    const text = selection?.toString().trim()
+    if (!text || text.length < 3) return
+    const target = event.target instanceof HTMLElement ? event.target : null
+    const sectionNode = target?.closest("[data-section-heading]")
+    const sectionHeading = sectionNode?.getAttribute("data-section-heading") || findPreviousHeading(target)
+    onTextSelected({ text, sectionHeading })
+  }
 
   return (
-    <article className={cn("prose prose-slate max-w-none text-sm dark:prose-invert", className)}>
+    <article
+      ref={rootRef}
+      onMouseUp={handleMouseUp}
+      className={cn("prose prose-slate max-w-none text-sm dark:prose-invert", className)}
+    >
       {blocks.map((block, index) => renderBlock(block, index))}
     </article>
   )
@@ -18,7 +43,8 @@ function renderBlock(block: string, index: number) {
     return <h1 key={index} className="mb-4 text-2xl font-bold tracking-tight text-slate-900">{trimmed.slice(2)}</h1>
   }
   if (trimmed.startsWith("## ")) {
-    return <h2 key={index} className="mt-6 border-b border-slate-200 pb-1 text-lg font-semibold text-slate-800">{trimmed.slice(3)}</h2>
+    const heading = trimmed.slice(3)
+    return <h2 key={index} data-section-heading={heading} className="mt-6 border-b border-slate-200 pb-1 text-lg font-semibold text-slate-800">{heading}</h2>
   }
   if (trimmed.startsWith("> ")) {
     return (
@@ -49,6 +75,16 @@ function renderBlock(block: string, index: number) {
     )
   }
   return <p key={index} className="leading-7 text-slate-700 whitespace-pre-wrap">{trimmed}</p>
+}
+
+function findPreviousHeading(target: HTMLElement | null) {
+  let node = target
+  while (node && node.previousElementSibling) {
+    node = node.previousElementSibling as HTMLElement
+    const heading = node.getAttribute("data-section-heading")
+    if (heading) return heading
+  }
+  return null
 }
 
 function renderTable(block: string, index: number) {
@@ -83,4 +119,3 @@ function renderTable(block: string, index: number) {
     </div>
   )
 }
-
