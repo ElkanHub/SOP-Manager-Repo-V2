@@ -51,7 +51,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
-    "react-signature-canvas": "^1.1.0-alpha.2",
+    "react-signature-canvas": "^1.0.7",
     "recharts": "^2.15.4",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
