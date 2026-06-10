@@ -94,11 +94,23 @@ interface PmTask {
 
 interface OpenCC {
   id: string
-  new_version: string
+  sop_id?: string | null
+  cc_number?: string | null
+  title?: string | null
+  new_version?: string | null
   created_at: string
+  submitted_at?: string | null
   status: string
   deadline?: string | null
-  sops: { title: string; department: string }
+  originating_department?: string | null
+  sops?: { title: string; department: string } | null
+  documents?: {
+    document_number: string
+    document_title: string
+    department?: string | null
+    old_revision?: string | null
+    new_revision?: string | null
+  }[]
   required_signatories: any[]
   signature_certificates: any[]
 }
@@ -268,8 +280,8 @@ export function DashboardClient({
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-4 md:px-0 mt-6">
         <Link href="/library?status=active">
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-blue shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-blue shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Active SOPs</div>
                   <FileText className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -281,17 +293,17 @@ export function DashboardClient({
                   className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-slate-100"
                 />
               </div>
-              <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-brand-teal">
-                <TrendingUp className="w-3.5 h-3.5" />
-                <span>+{kpi.sopsAddedThisMonth} this month</span>
+              <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold text-brand-teal">
+                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 truncate">+{kpi.sopsAddedThisMonth} this month</span>
               </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href={isQa ? "/approvals" : "/library"}>
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Pending Approvals</div>
                   <ClipboardCheck className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -306,16 +318,16 @@ export function DashboardClient({
                     }`}
                 />
               </div>
-              <div className={`mt-3 flex items-center gap-1.5 text-xs font-semibold ${kpi.pendingApprovals === 0 ? 'text-green-600' : 'text-amber-600'}`}>
+              <div className={`mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold ${kpi.pendingApprovals === 0 ? 'text-green-600' : 'text-amber-600'}`}>
                 {kpi.pendingApprovals === 0 ? (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>All clear</span>
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 truncate">All clear</span>
                   </>
                 ) : (
                   <>
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>Oldest: {kpi.oldestApprovalDate ? formatDistanceToNow(new Date(kpi.oldestApprovalDate), { addSuffix: true }) : 'N/A'}</span>
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <span className="min-w-0 truncate">Oldest: {kpi.oldestApprovalDate ? formatDistanceToNow(new Date(kpi.oldestApprovalDate), { addSuffix: true }) : 'N/A'}</span>
                   </>
                 )}
               </div>
@@ -324,8 +336,8 @@ export function DashboardClient({
         </Link>
 
         <Link href="/equipment">
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-blue-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-blue-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">PM Compliance</div>
                   <Wrench className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -338,17 +350,17 @@ export function DashboardClient({
                 />
                 <span className={`text-lg md:text-xl font-bold ${getComplianceColor(kpi.pmCompliance)}`}>%</span>
               </div>
-              <div className={`mt-3 flex items-center gap-1.5 text-xs font-semibold ${kpi.pmCompliance >= kpi.prevPmCompliance ? 'text-green-600' : 'text-amber-600'}`}>
-                {kpi.pmCompliance >= kpi.prevPmCompliance ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                <span>from {kpi.prevPmCompliance}% last month</span>
+              <div className={`mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold ${kpi.pmCompliance >= kpi.prevPmCompliance ? 'text-green-600' : 'text-amber-600'}`}>
+                {kpi.pmCompliance >= kpi.prevPmCompliance ? <TrendingUp className="h-3.5 w-3.5 shrink-0" /> : <TrendingDown className="h-3.5 w-3.5 shrink-0" />}
+                <span className="min-w-0 truncate">from {kpi.prevPmCompliance}% last month</span>
               </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/library?filter=due">
-          <Card className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-amber-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
-            <CardContent className="pt-6 px-4 md:px-6">
+          <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-amber-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
+            <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
               <div className="flex justify-between items-start">
                   <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] md:text-xs">Due For Revision</div>
                   <AlertCircle className="w-4 h-4 text-slate-400 opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -363,9 +375,9 @@ export function DashboardClient({
                     }`}
                 />
               </div>
-              <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                <Clock className="w-3.5 h-3.5" />
-                <span>Next due: {kpi.nextRevisionDate ? format(new Date(kpi.nextRevisionDate), 'dd MMM') : 'None'}</span>
+              <div className="mt-auto flex min-w-0 items-center gap-1.5 pt-3 text-xs font-semibold text-slate-500">
+                <Clock className="h-3.5 w-3.5 shrink-0" />
+                <span className="min-w-0 truncate">Next due: {kpi.nextRevisionDate ? format(new Date(kpi.nextRevisionDate), 'dd MMM') : 'None'}</span>
               </div>
             </CardContent>
           </Card>
@@ -512,18 +524,25 @@ export function DashboardClient({
                   const progressPct = requiredCount > 0 ? (signedCount / requiredCount) * 100 : 0;
                   const isActionRequired = !cc.signature_certificates?.some((c: any) => c.user_id === profile.id) && cc.required_signatories?.some((s: any) => s.user_id === profile.id);
                   const isOverdue = cc.deadline ? isPast(new Date(cc.deadline)) : false;
+                  const documentCount = cc.documents?.length || (cc.sop_id ? 1 : 0);
+                  const displayTitle = cc.title || cc.sops?.title || 'Change Control Package';
+                  const displayDepartment = cc.originating_department || cc.sops?.department || cc.documents?.[0]?.department || 'QA';
+                  const displayRevision = cc.new_version || cc.documents?.[0]?.new_revision || 'TBD';
+                  const detailHref = cc.sop_id ? `/change-control/${cc.id}` : (isQa ? '/requests/hub/change-control' : '/requests/change-control');
                   
                   return (
                     <div key={cc.id} className={`flex flex-col p-4 rounded-xl border ${isActionRequired ? 'border-amber-300 bg-amber-50/30 dark:border-amber-700/50 dark:bg-amber-900/10' : 'border-border bg-card'} gap-3 transition-colors hover:border-slate-300`}>
                       <div className="flex justify-between items-start">
                         <div>
                           <div className="font-bold text-sm text-foreground flex items-center gap-2">
-                            {cc.sops?.title || 'Unknown Document'}
+                            {displayTitle}
                             {isOverdue && <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-widest scale-90">SLA Breach</Badge>}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-0.5 font-medium">Draft Version {cc.new_version} • <span className="uppercase tracking-widest text-[10px]">{cc.sops?.department}</span></div>
+                          <div className="text-xs text-muted-foreground mt-0.5 font-medium">
+                            {cc.cc_number || 'Change Control'} • {documentCount} document{documentCount === 1 ? '' : 's'} • Rev. {displayRevision} • <span className="uppercase tracking-widest text-[10px]">{displayDepartment}</span>
+                          </div>
                         </div>
-                        <Link href={`/change-control/${cc.id}`}>
+                        <Link href={detailHref}>
                           <Button size="sm" variant={isActionRequired ? "default" : "outline"} className={`h-8 text-xs font-bold ${isActionRequired ? 'bg-amber-500 hover:bg-amber-600' : ''}`}>
                             {isActionRequired ? 'Sign Now' : 'View'}
                           </Button>

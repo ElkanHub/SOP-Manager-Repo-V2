@@ -17,8 +17,9 @@ export async function fetchSopChanges({ page, dateFrom, dateTo }: DateParams) {
   let query = supabase
     .from("change_controls")
     .select(
-      `id, old_version, new_version, status, created_at, completed_at,
+      `id, sop_id, cc_number, title, originating_department, old_version, new_version, status, created_at, completed_at,
        sops(sop_number, title, department),
+       documents:change_control_documents(document_number, document_title, department, old_revision, new_revision),
        signatories:signature_certificates(id)`,
       { count: "exact" }
     )
@@ -66,7 +67,7 @@ export async function fetchPmCompletions({ page, dateFrom, dateTo }: DateParams)
   let query = supabase
     .from("pm_tasks")
     .select(
-      `id, completed_at, notes,
+      `id, due_date, completed_at, notes,
        equipment:equipment_id(asset_id, name, department),
        assigned_to_user:profiles!pm_tasks_assigned_to_fkey(full_name),
        completed_by_user:profiles!pm_tasks_completed_by_fkey(full_name)`,

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { useOfflineSeed } from "@/hooks/use-offline-seed"
+import { usePwaPushNotifications } from "@/hooks/use-pwa-push-notifications"
 import { useSyncOnReconnect } from "@/hooks/use-sync-on-reconnect"
 import { useSwUpdate } from "@/hooks/use-sw-update"
 import { OfflineBanner } from "@/components/offline-banner"
@@ -13,6 +14,7 @@ export function PwaProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   useOfflineSeed()
+  usePwaPushNotifications()
   useSyncOnReconnect()
   useSwUpdate()
 

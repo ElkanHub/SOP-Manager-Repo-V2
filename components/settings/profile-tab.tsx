@@ -14,9 +14,10 @@ import Image from "next/image"
 
 interface ProfileTabProps {
     profile: Profile
+    email?: string | null
 }
 
-export function ProfileTab({ profile }: ProfileTabProps) {
+export function ProfileTab({ profile, email }: ProfileTabProps) {
     const [fullName, setFullName] = useState(profile.full_name)
     const [jobTitle, setJobTitle] = useState(profile.job_title)
     const [employeeId, setEmployeeId] = useState(profile.employee_id || "")
@@ -106,6 +107,10 @@ export function ProfileTab({ profile }: ProfileTabProps) {
 
             {/* Form */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="settings-email">Email</Label>
+                    <Input id="settings-email" value={email || "No email on file"} readOnly className="bg-muted/50 text-muted-foreground" />
+                </div>
                 <div className="space-y-2">
                     <Label htmlFor="settings-full-name">Full Name <span className="text-red-500">*</span></Label>
                     <Input id="settings-full-name" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="John Doe" />

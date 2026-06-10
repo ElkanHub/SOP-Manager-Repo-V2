@@ -17,17 +17,43 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, LogOut, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree } from "lucide-react"
-import { logoutUser } from "@/actions/auth"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree, Bot } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/user-avatar"
+import { clearAppBadgeSource, publishAppBadgeSource } from "@/lib/pwa/app-badge"
+import type { User } from "@supabase/supabase-js"
+import type { Profile } from "@/types/app.types"
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
-  user: any;
-  profile: any;
+  user: User;
+  profile: Profile;
   isQa?: boolean;
+}
+
+type ConversationBadgeRow = {
+  last_message_at: string | null
+  conversation_members: { last_read_at: string | null }[]
+}
+
+type ApprovalBadgeRow = {
+  approval_stage: string | null
+  sops?: { status?: string | null } | { status?: string | null }[] | null
+}
+
+type NavSubItem = {
+  title: string
+  url: string
+  badge?: number
+}
+
+type NavItem = {
+  title: string
+  url: string
+  icon: React.ReactNode
+  isActive: boolean
+  badge?: number
+  submenu?: NavSubItem[]
 }
 
 export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebarProps) {
@@ -37,9 +63,13 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
   const [pendingEquipmentCount, setPendingEquipmentCount] = React.useState(0)
   const [pendingRequests, setPendingRequests] = React.useState(0)
   const [pendingHubSubmissions, setPendingHubSubmissions] = React.useState(0)
+  const [pendingChangeControls, setPendingChangeControls] = React.useState(0)
+  const [pendingHubChangeControls, setPendingHubChangeControls] = React.useState(0)
   const [pendingTraining, setPendingTraining] = React.useState(0)
   const [reviewModules, setReviewModules] = React.useState(0)
   const [libraryOpen, setLibraryOpen] = React.useState(pathname.startsWith("/library"))
+  const [requestsOpen, setRequestsOpen] = React.useState(pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub"))
+  const [requestHubOpen, setRequestHubOpen] = React.useState(pathname.startsWith("/requests/hub"))
   const supabase = createClient()
 
   const prevUnreadRef = React.useRef(0)
@@ -74,8 +104,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .eq('is_archived', false)
 
     if (convData) {
-      const count = convData.filter((c: any) => {
-        const myMember = (c as any).conversation_members[0];
+      const count = (convData as ConversationBadgeRow[]).filter((c) => {
+        const myMember = c.conversation_members[0];
         return c.last_message_at && myMember?.last_read_at
           ? new Date(c.last_message_at) > new Date(myMember.last_read_at)
           : false;
@@ -85,12 +115,18 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
 
     // 2. Pending Approvals (SOPs)
     if (isQa) {
-      const { count: approvalCount } = await supabase
+      const { data: approvalRows } = await supabase
         .from('sop_approval_requests')
-        .select('*', { count: 'exact', head: true })
+        .select('id, approval_stage, sops(status)')
         .eq('status', 'pending')
 
-      setPendingApprovals(approvalCount || 0)
+      const approvalCount = ((approvalRows || []) as ApprovalBadgeRow[]).filter((request) => {
+        const sop = Array.isArray(request.sops) ? request.sops[0] : request.sops
+        const stage = request.approval_stage || (sop?.status === 'pending_hod' ? 'hod_review' : 'qa_review')
+        return stage === 'qa_review' || (!request.approval_stage && sop?.status === 'pending_qa')
+      }).length
+
+      setPendingApprovals(approvalCount)
     }
 
     // 3. Pending Equipment (Awaiting QA)
@@ -111,9 +147,22 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     }
     setPendingEquipmentCount(equipCount)
 
-    // 4. Pending Requests badge (new + legacy tables)
+    const openChangeControlStatuses = [
+      'submitted',
+      'qa_screening',
+      'clarification_requested',
+      'approved_for_document_work',
+      'documents_in_review',
+      'signatures_pending',
+      'pending',
+      'pending_reconciliation',
+      'pending_training',
+      'pending_activation',
+    ]
+
+    // 4. Pending Requests badge (new + legacy tables + Change Control packages)
     if (isQa || profile?.is_admin) {
-      const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
+      const [{ count: rfsCount }, { count: legacyCount }, { count: ccCount }] = await Promise.all([
         supabase
           .from('request_form_submissions')
           .select('*', { count: 'exact', head: true })
@@ -122,11 +171,17 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
           .in('status', ['submitted', 'received', 'approved']),
+        supabase
+          .from('change_controls')
+          .select('*', { count: 'exact', head: true })
+          .in('status', openChangeControlStatuses),
       ])
-      setPendingRequests((rfsCount || 0) + (legacyCount || 0))
+      setPendingRequests((rfsCount || 0) + (legacyCount || 0) + (ccCount || 0))
       setPendingHubSubmissions(rfsCount || 0)
+      setPendingChangeControls(ccCount || 0)
+      setPendingHubChangeControls(ccCount || 0)
     } else {
-      const [{ count: rfsCount }, { count: legacyCount }] = await Promise.all([
+      const [{ count: rfsCount }, { count: legacyCount }, { count: ccCount }] = await Promise.all([
         supabase
           .from('request_form_submissions')
           .select('*', { count: 'exact', head: true })
@@ -137,8 +192,14 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
           .select('*', { count: 'exact', head: true })
           .eq('requester_id', user.id)
           .in('status', ['submitted', 'received', 'approved']),
+        supabase
+          .from('change_controls')
+          .select('*', { count: 'exact', head: true })
+          .eq('requester_id', user.id)
+          .in('status', openChangeControlStatuses),
       ])
-      setPendingRequests((rfsCount || 0) + (legacyCount || 0))
+      setPendingRequests((rfsCount || 0) + (legacyCount || 0) + (ccCount || 0))
+      setPendingChangeControls(ccCount || 0)
     }
 
     // 5. Training
@@ -156,7 +217,7 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
         .eq('needs_review', true)
       setReviewModules(revCount || 0)
     }
-  }, [user?.id, supabase, isQa, profile?.role, profile?.department, profile?.is_admin])
+  }, [user, supabase, isQa, profile])
 
   React.useEffect(() => {
     if (!user) return
@@ -171,6 +232,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'document_requests' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'request_form_submissions' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'change_controls' }, fetchCounts)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'change_control_documents' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'training_assignments' }, fetchCounts)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'training_modules' }, fetchCounts)
       .subscribe()
@@ -178,16 +241,42 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [user?.id, supabase, fetchCounts])
+  }, [user, supabase, fetchCounts])
 
   React.useEffect(() => {
     if (pathname.startsWith("/library")) {
       setLibraryOpen(true)
     }
+    if (pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub")) {
+      setRequestsOpen(true)
+    }
+    if (pathname.startsWith("/requests/hub")) {
+      setRequestHubOpen(true)
+    }
   }, [pathname])
 
+  React.useEffect(() => {
+    const sidebarTotal =
+      unreadConversations +
+      pendingApprovals +
+      pendingEquipmentCount +
+      pendingRequests +
+      pendingTraining +
+      reviewModules
 
-  const navItems = [
+    publishAppBadgeSource("sidebar", sidebarTotal)
+    return () => clearAppBadgeSource("sidebar")
+  }, [
+    unreadConversations,
+    pendingApprovals,
+    pendingEquipmentCount,
+    pendingRequests,
+    pendingTraining,
+    reviewModules,
+  ])
+
+
+  const navItems: NavItem[] = [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -206,6 +295,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <ClipboardCheck className="w-5 h-5" />,
       isActive: pathname.startsWith("/approvals"),
       badge: pendingApprovals,
+    }] : []),
+    ...((profile?.role === 'manager' || profile?.is_admin || isQa) ? [{
+      title: "AI SOP Builder",
+      url: "/sop-builder",
+      icon: <Bot className="w-5 h-5" />,
+      isActive: pathname.startsWith("/sop-builder"),
     }] : []),
     {
       title: "My Training",
@@ -241,13 +336,21 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <ClipboardList className="w-5 h-5" />,
       isActive: pathname === "/requests" || (pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub")),
       badge: pendingRequests,
+      submenu: [
+        { title: "Document Requests", url: "/requests", badge: Math.max(0, pendingRequests - pendingChangeControls) },
+        { title: "Change Control", url: "/requests/change-control", badge: pendingChangeControls },
+      ],
     },
     ...(isQa ? [{
       title: "Request Hub",
       url: "/requests/hub",
       icon: <Sparkles className="w-5 h-5" />,
       isActive: pathname.startsWith("/requests/hub"),
-      badge: pendingHubSubmissions,
+      badge: pendingHubSubmissions + pendingHubChangeControls,
+      submenu: [
+        { title: "Document Request Hub", url: "/requests/hub", badge: pendingHubSubmissions },
+        { title: "Change Control Hub", url: "/requests/hub/change-control", badge: pendingHubChangeControls },
+      ],
     }] : []),
     {
       title: "Calendar",
@@ -316,6 +419,62 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
                           <span>Master Index</span>
                         </SidebarMenuSubButton>
                       </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                  )}
+                </>
+              ) : item.submenu ? (
+                <>
+                  <div className="flex items-center">
+                    <SidebarMenuButton
+                      render={<Link href={item.url} />}
+                      isActive={item.isActive}
+                      className={`
+                        flex items-center gap-3 px-3 py-2 md:py-2.5 rounded-md transition-all duration-200 ease-in-out
+                        md:text-sm text-base py-3 flex-1
+                        ${item.isActive
+                          ? "bg-brand-navy/5 text-brand-navy font-semibold border-l-4 border-brand-teal shadow-soft dark:bg-brand-teal/10 dark:text-brand-teal"
+                          : "text-muted-foreground hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-foreground border-l-4 border-transparent hover:translate-x-1"
+                        }
+                      `}
+                    >
+                      {item.icon}
+                      <span>{item.title}</span>
+                      {item.badge !== undefined && item.badge > 0 && (
+                        <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
+                          {item.badge > 99 ? '99+' : item.badge}
+                        </Badge>
+                      )}
+                    </SidebarMenuButton>
+                    <button
+                      type="button"
+                      onClick={() => item.title === "Requests"
+                        ? setRequestsOpen((open) => !open)
+                        : setRequestHubOpen((open) => !open)
+                      }
+                      className="ml-1 flex h-9 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-slate-100 hover:text-foreground dark:hover:bg-slate-800"
+                      aria-label={`Toggle ${item.title} submenu`}
+                    >
+                      <ChevronDown className={`h-4 w-4 transition-transform ${(item.title === "Requests" ? requestsOpen : requestHubOpen) ? "rotate-180" : ""}`} />
+                    </button>
+                  </div>
+                  {(item.title === "Requests" ? requestsOpen : requestHubOpen) && (
+                    <SidebarMenuSub>
+                      {item.submenu.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.url}>
+                          <SidebarMenuSubButton
+                            render={<Link href={subItem.url} />}
+                            isActive={pathname === subItem.url}
+                            className="gap-2"
+                          >
+                            <span>{subItem.title}</span>
+                            {subItem.badge !== undefined && subItem.badge > 0 && (
+                              <Badge className="ml-auto bg-brand-teal text-white border-0 h-5 px-1.5 min-w-[1.25rem] flex items-center justify-center text-[10px] font-bold">
+                                {subItem.badge > 99 ? '99+' : subItem.badge}
+                              </Badge>
+                            )}
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
                     </SidebarMenuSub>
                   )}
                 </>

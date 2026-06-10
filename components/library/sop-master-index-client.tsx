@@ -7,12 +7,13 @@ import { BookOpen, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { DeptBadge } from "@/components/ui/dept-badge"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { SopRecord } from "@/types/app.types"
 
 interface SopMasterIndexClientProps {
   sops: SopRecord[]
-  departments: string[]
+  departments: { name: string; code?: string | null }[]
+  queryError?: string | null
 }
 
 const levelLabels: Record<string, { title: string; description: string }> = {
@@ -24,9 +25,12 @@ const levelLabels: Record<string, { title: string; description: string }> = {
 
 const levelOrder = ["level_1", "level_2", "level_3", "level_4"]
 
-export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClientProps) {
+export function SopMasterIndexClient({ sops, departments, queryError }: SopMasterIndexClientProps) {
   const [department, setDepartment] = useState("all")
   const [search, setSearch] = useState("")
+  const departmentCodeByName = useMemo(() => {
+    return new Map(departments.map((dept) => [dept.name, dept.code || dept.name]))
+  }, [departments])
 
   const filteredSops = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -66,6 +70,12 @@ export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClient
       </div>
 
       <div className="px-4 md:px-0 mt-6 space-y-5">
+        {queryError && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            Master Index is using the legacy SOP schema fallback. Active SOPs remain listed; apply the latest database migration to enable document-level metadata.
+          </div>
+        )}
+
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -77,15 +87,33 @@ export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClient
             />
           </div>
 
-          <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted/50 p-1 no-scrollbar">
-            <FilterButton label="All Departments" active={department === "all"} onClick={() => setDepartment("all")} />
-            {departments.map((dept) => (
-              <FilterButton key={dept} label={dept} active={department === dept} onClick={() => setDepartment(dept)} />
-            ))}
+          <div className="w-full lg:w-64">
+            <Select value={department} onValueChange={(value) => value && setDepartment(value)}>
+              <SelectTrigger className="w-full bg-background">
+                <SelectValue placeholder="All departments" />
+              </SelectTrigger>
+              <SelectContent className="max-h-[320px]">
+                <SelectItem value="all">All departments</SelectItem>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.name} value={dept.name}>
+                    {dept.code ? `${dept.code} - ${dept.name}` : dept.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="space-y-6">
+          {filteredSops.length === 0 && (
+            <div className="rounded-lg border border-border bg-card px-4 py-10 text-center">
+              <p className="text-sm font-semibold text-foreground">No active SOPs found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                The Master Index only includes SOPs with status Active.
+              </p>
+            </div>
+          )}
+
           {grouped.map(({ level, items }) => {
             const label = levelLabels[level]
             return (
@@ -121,7 +149,7 @@ export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClient
                               </Link>
                             </td>
                             <td className="px-4 py-3 text-sm font-semibold text-foreground">{sop.title}</td>
-                            <td className="px-4 py-3"><DeptBadge department={sop.department} colour="blue" /></td>
+                            <td className="px-4 py-3"><DeptBadge department={sop.department} code={departmentCodeByName.get(sop.department)} colour="blue" /></td>
                             <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{sop.version}</td>
                             <td className="px-4 py-3 text-xs text-muted-foreground">
                               {sop.effective_date ? format(new Date(sop.effective_date), "dd MMM yyyy") : "-"}
@@ -149,27 +177,5 @@ export function SopMasterIndexClient({ sops, departments }: SopMasterIndexClient
         </div>
       </div>
     </div>
-  )
-}
-
-function FilterButton({
-  label,
-  active,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <Button
-      type="button"
-      variant={active ? "secondary" : "ghost"}
-      size="sm"
-      onClick={onClick}
-      className="h-8 shrink-0 rounded-md px-3 text-xs font-semibold"
-    >
-      {label}
-    </Button>
   )
 }

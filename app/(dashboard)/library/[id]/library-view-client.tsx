@@ -7,7 +7,6 @@ import {
   PenLine,
   Lock,
   ChevronUp,
-  Info,
   ArrowLeft,
   ChevronDown
 } from "lucide-react"
@@ -17,15 +16,15 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { DeptBadge } from "@/components/ui/dept-badge"
 import { Button } from "@/components/ui/button"
 import VersionHistorySheetButton from "@/components/library/version-history-button"
-import { Profile, SopVersion } from "@/types/app.types"
+import { Profile, SopRecord, SopVersion } from "@/types/app.types"
 import { cn } from "@/lib/utils"
 
 interface LibraryViewClientProps {
-  sop: any
+  sop: SopRecord
   profile: Profile
-  acknowledgement: any
+  acknowledgement: { acknowledged_at?: string | null } | null
   versions: SopVersion[]
-  approverProfile: any
+  approverProfile: { full_name?: string | null } | null
   signedFileUrl: string | null
   activeChangeControlId: string | null
 }
@@ -108,7 +107,7 @@ export default function LibraryViewClient({
                 {/* Desktop compact metadata */}
                 {!isHeaderExpanded && (
                   <div className="hidden sm:flex flex-wrap items-center gap-2 mt-1.5">
-                    <DeptBadge department={sop.department} colour={sop.departments?.colour} className="h-5 text-[10px]" />
+                    <DeptBadge department={sop.department} code={sop.departments?.code} colour={sop.departments?.colour} className="h-5 text-[10px]" />
                     <span className="font-mono text-[10px] text-muted-foreground font-bold bg-muted px-1.5 rounded-sm">
                       {sop.version}
                     </span>
@@ -127,7 +126,7 @@ export default function LibraryViewClient({
                     sopId={sop.id}
                     sopVersion={sop.version}
                     hasAcknowledged={!!acknowledgement}
-                    acknowledgedAt={acknowledgement?.acknowledged_at}
+                    acknowledgedAt={acknowledgement?.acknowledged_at || undefined}
                   />
                 </div>
               )}
@@ -160,7 +159,7 @@ export default function LibraryViewClient({
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Ownership</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <DeptBadge department={sop.department} colour={sop.departments?.colour} />
+                  <DeptBadge department={sop.department} code={sop.departments?.code} colour={sop.departments?.colour} />
                   {isCrossDept && (
                     <span className="text-[10px] text-brand-teal font-bold bg-teal-50 px-1.5 rounded-sm">
                       READ-ONLY

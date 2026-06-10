@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { signupUser, signInWithGoogle } from "@/actions/auth"
+import { signupUser } from "@/actions/auth"
+import { createClient } from "@/lib/supabase/client"
 
 export function SignupForm({
   className,
@@ -53,9 +54,20 @@ export function SignupForm({
   async function handleGoogleLogin() {
     setGoogleLoading(true)
     setError(null)
-    const result = await signInWithGoogle()
-    if (result && result.error) {
-      setError(result.error)
+
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
+      },
+    })
+
+    if (error) {
+      setError(error.message)
       setGoogleLoading(false)
     }
   }
@@ -65,7 +77,7 @@ export function SignupForm({
       <div className={cn("flex flex-col gap-6 text-center", className)}>
         <h1 className="text-2xl font-bold">Check your email</h1>
         <p className="text-muted-foreground">
-          We've sent you an email with a link to confirm your account.
+          We&apos;ve sent you an email with a link to confirm your account.
         </p>
         <div className="bg-brand-navy/5 border border-brand-navy/10 rounded-lg p-4 mt-2">
           <p className="text-sm text-balance font-medium text-muted-foreground">

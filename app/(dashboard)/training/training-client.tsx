@@ -117,7 +117,7 @@ export default function TrainingClient({ modules, activeSops, profile, isQa }: P
                                         <div className="mt-auto pt-4 space-y-2">
                                             <div className="flex justify-between text-xs text-muted-foreground">
                                                 <span>SOP: {mod.sop?.sop_number || 'Unknown'}</span>
-                                                <span>v{mod.sop_version}</span>
+                                                <span>Rev. {mod.sop_version}</span>
                                             </div>
                                             <div className="text-xs text-muted-foreground flex items-center justify-between">
                                                 <span>Dept: {mod.department}</span>

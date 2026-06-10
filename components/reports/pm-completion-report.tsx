@@ -17,7 +17,36 @@ interface PmCompletionReportProps {
   isAdmin: boolean
 }
 
-export function PmCompletionReport({ dateFrom, dateTo, isQa, isAdmin }: PmCompletionReportProps) {
+interface PmCompletionRow {
+  id: string
+  due_date: string | null
+  completed_at: string | null
+  notes: string | null
+  equipment?: {
+    asset_id?: string | null
+    name?: string | null
+    department?: string | null
+  } | null
+  assigned_to_user?: {
+    full_name?: string | null
+  } | null
+  completed_by_user?: {
+    full_name?: string | null
+  } | null
+}
+
+type JoinedPmCompletionRow = Omit<PmCompletionRow, "equipment" | "assigned_to_user" | "completed_by_user"> & {
+  equipment?: PmCompletionRow["equipment"] | PmCompletionRow["equipment"][]
+  assigned_to_user?: PmCompletionRow["assigned_to_user"] | PmCompletionRow["assigned_to_user"][]
+  completed_by_user?: PmCompletionRow["completed_by_user"] | PmCompletionRow["completed_by_user"][]
+}
+
+function firstJoin<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] || null
+  return value || null
+}
+
+export function PmCompletionReport({ dateFrom, dateTo, isAdmin }: PmCompletionReportProps) {
   const [page, setPage] = useState(0)
   const queryClient = useQueryClient()
 
@@ -39,13 +68,18 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa, isAdmin }: PmComple
     })
   }, [page, dateFrom, dateTo, queryClient])
 
-  const data = result?.data ?? []
+  const data = ((result?.data ?? []) as unknown as JoinedPmCompletionRow[]).map((row) => ({
+    ...row,
+    equipment: firstJoin(row.equipment),
+    assigned_to_user: firstJoin(row.assigned_to_user),
+    completed_by_user: firstJoin(row.completed_by_user),
+  })) satisfies PmCompletionRow[]
   const totalCount = result?.count ?? 0
   const pageSize = result?.pageSize ?? 50
   const totalPages = Math.ceil(totalCount / pageSize)
   const loading = isLoading || isFetching
 
-  const columns: ColumnDef<any>[] = [
+  const columns: ColumnDef<PmCompletionRow>[] = [
     {
       accessorKey: "equipment.asset_id",
       header: "Asset ID",
@@ -59,7 +93,7 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa, isAdmin }: PmComple
       accessorKey: "equipment.name",
       header: "Asset Name",
       cell: ({ row }) => (
-        <div className="text-sm font-semibold truncate max-w-[180px]" title={row.original.equipment?.name}>
+        <div className="text-sm font-semibold truncate max-w-[180px]" title={row.original.equipment?.name ?? undefined}>
           {row.original.equipment?.name || "-"}
         </div>
       ),
@@ -86,8 +120,17 @@ export function PmCompletionReport({ dateFrom, dateTo, isQa, isAdmin }: PmComple
       ),
     },
     {
+      accessorKey: "due_date",
+      header: "Due Date",
+      cell: ({ row }) => (
+        <div className="text-xs font-medium text-muted-foreground">
+          {row.getValue("due_date") ? format(new Date(row.getValue("due_date") as string), "MMM d, yyyy") : "-"}
+        </div>
+      ),
+    },
+    {
       accessorKey: "completed_at",
-      header: "Date",
+      header: "Done Date",
       cell: ({ row }) => (
         <div className="text-xs font-medium text-muted-foreground">
           {row.getValue("completed_at") ? format(new Date(row.getValue("completed_at") as string), "MMM d, yyyy") : "-"}

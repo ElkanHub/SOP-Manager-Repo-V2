@@ -1,0 +1,357 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
+
+export type ChangeControlActionResult =
+  | { success: true; id?: string; ccNumber?: string; data?: unknown }
+  | { success: false; error: string }
+
+export type ChangeControlLifecycleStatus =
+  | 'documents_in_review'
+  | 'signatures_pending'
+  | 'pending_reconciliation'
+  | 'pending_training'
+  | 'effective'
+  | 'closed'
+
+export type ChangeControlDocumentInput = {
+  documentId?: string | null
+  documentNumber: string
+  documentTitle: string
+  documentLevel?: string | null
+  documentType?: string | null
+  department?: string | null
+  oldRevision?: string | null
+  newRevision?: string | null
+  reasonForChange?: string | null
+  trainingRequired?: boolean
+}
+
+export type ChangeControlRequestInput = {
+  title: string
+  originatingDepartment: string
+  rationale: string
+  impactAssessment: string
+  affectedDepartments: string[]
+  requestedDueDate?: string | null
+  documents: ChangeControlDocumentInput[]
+}
+
+const OPEN_PACKAGE_PATHS = [
+  '/requests/change-control',
+  '/requests/hub/change-control',
+  '/dashboard',
+  '/reports',
+]
+
+async function getActiveUser() {
+  const client = await createClient()
+  const { data: { user } } = await client.auth.getUser()
+  if (!user) return null
+
+  const service = await createServiceClient()
+  const { data: profile } = await service
+    .from('profiles')
+    .select('id, full_name, department, role, is_active, is_admin, onboarding_complete')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.is_active) return null
+  return { user, profile, service }
+}
+
+async function isQaOrAdmin(userId: string, isAdmin: boolean, service: Awaited<ReturnType<typeof createServiceClient>>) {
+  if (isAdmin) return true
+  const { data: isQa } = await service.rpc('is_qa_manager', { user_id: userId })
+  return !!isQa
+}
+
+function cleanText(value: unknown, maxLength: number) {
+  if (typeof value !== 'string') return ''
+  return value.trim().slice(0, maxLength)
+}
+
+function revalidateChangeControlPaths(id?: string) {
+  OPEN_PACKAGE_PATHS.forEach((path) => revalidatePath(path))
+  if (id) {
+    revalidatePath(`/requests/change-control/${id}`)
+    revalidatePath(`/requests/hub/change-control/${id}`)
+    revalidatePath(`/change-control/${id}`)
+  }
+}
+
+async function notifyQaManagers(args: {
+  service: Awaited<ReturnType<typeof createServiceClient>>
+  senderId: string
+  ccId: string
+  title: string
+  body: string
+}) {
+  const { service, senderId, ccId, title, body } = args
+  const { data: qaDept } = await service
+    .from('departments')
+    .select('name')
+    .eq('is_qa', true)
+    .single()
+
+  if (!qaDept?.name) return
+
+  const { data: qaUsers } = await service
+    .from('profiles')
+    .select('id')
+    .eq('department', qaDept.name)
+    .eq('role', 'manager')
+    .eq('is_active', true)
+
+  const inserts = (qaUsers || []).map((qa) => ({
+    sender_id: senderId,
+    recipient_id: qa.id,
+    type: 'request_update' as const,
+    title,
+    body,
+    entity_type: 'change_control',
+    entity_id: ccId,
+    audience: 'self' as const,
+  }))
+
+  if (inserts.length > 0) {
+    await service.from('pulse_items').insert(inserts)
+  }
+}
+
+async function notifyRequester(args: {
+  service: Awaited<ReturnType<typeof createServiceClient>>
+  senderId: string
+  requesterId: string | null
+  ccId: string
+  title: string
+  body: string
+}) {
+  if (!args.requesterId) return
+
+  await args.service.from('pulse_items').insert({
+    sender_id: args.senderId,
+    recipient_id: args.requesterId,
+    type: 'request_update',
+    title: args.title,
+    body: args.body,
+    entity_type: 'change_control',
+    entity_id: args.ccId,
+    audience: 'self',
+  })
+}
+
+export async function submitChangeControlRequest(input: ChangeControlRequestInput): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { user, profile, service } = ctx
+
+  const title = cleanText(input.title, 160)
+  const originatingDepartment = cleanText(input.originatingDepartment, 120)
+  const rationale = cleanText(input.rationale, 4000)
+  const impactAssessment = cleanText(input.impactAssessment, 4000)
+  const affectedDepartments = Array.from(new Set((input.affectedDepartments || []).map((d) => cleanText(d, 120)).filter(Boolean)))
+  const documents = (input.documents || [])
+    .map((doc) => ({
+      document_id: doc.documentId || null,
+      document_number: cleanText(doc.documentNumber, 120),
+      document_title: cleanText(doc.documentTitle, 220),
+      document_level: cleanText(doc.documentLevel || 'level_2', 40) || 'level_2',
+      document_type: cleanText(doc.documentType || 'sop', 80) || 'sop',
+      department: cleanText(doc.department || originatingDepartment, 120) || originatingDepartment,
+      old_revision: cleanText(doc.oldRevision || '', 40) || null,
+      new_revision: cleanText(doc.newRevision || '', 40) || null,
+      reason_for_change: cleanText(doc.reasonForChange || rationale, 1500) || rationale,
+      training_required: !!doc.trainingRequired,
+    }))
+    .filter((doc) => doc.document_number && doc.document_title)
+
+  if (title.length < 5) return { success: false, error: 'Title must be at least 5 characters' }
+  if (!originatingDepartment) return { success: false, error: 'Originating department is required' }
+  if (rationale.length < 20) return { success: false, error: 'Rationale must be at least 20 characters' }
+  if (impactAssessment.length < 20) return { success: false, error: 'Impact assessment must be at least 20 characters' }
+  if (documents.length === 0) return { success: false, error: 'Add at least one affected document' }
+  if (documents.length > 25) return { success: false, error: 'A Change Control package can include up to 25 documents' }
+
+  const dueDate = input.requestedDueDate ? new Date(input.requestedDueDate) : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+  if (dueDate && Number.isNaN(dueDate.getTime())) {
+    return { success: false, error: 'Requested due date is invalid' }
+  }
+
+  const { data: changeControl, error: ccError } = await service
+    .from('change_controls')
+    .insert({
+      title,
+      requester_id: user.id,
+      originating_department: originatingDepartment,
+      rationale,
+      impact_assessment: impactAssessment,
+      affected_departments: affectedDepartments.length > 0 ? affectedDepartments : [originatingDepartment],
+      status: 'submitted',
+      submitted_at: new Date().toISOString(),
+      deadline: dueDate ? dueDate.toISOString() : null,
+      issued_by: user.id,
+      required_signatories: [],
+    })
+    .select('id, cc_number')
+    .single()
+
+  if (ccError || !changeControl) {
+    return { success: false, error: ccError?.message || 'Failed to submit Change Control' }
+  }
+
+  const documentRows = documents.map((doc) => ({
+    ...doc,
+    change_control_id: changeControl.id,
+  }))
+
+  const { error: docError } = await service
+    .from('change_control_documents')
+    .insert(documentRows)
+
+  if (docError) {
+    await service.from('change_controls').delete().eq('id', changeControl.id)
+    return { success: false, error: docError.message }
+  }
+
+  await notifyQaManagers({
+    service,
+    senderId: user.id,
+    ccId: changeControl.id,
+    title: `Change Control submitted: ${changeControl.cc_number}`,
+    body: `${profile.full_name || 'A department user'} submitted ${changeControl.cc_number} for QA screening.`,
+  })
+
+  await service.from('audit_log').insert({
+    actor_id: user.id,
+    action: 'change_control_submitted',
+    entity_type: 'change_control',
+    entity_id: changeControl.id,
+  })
+
+  revalidateChangeControlPaths(changeControl.id)
+  return { success: true, id: changeControl.id, ccNumber: changeControl.cc_number }
+}
+
+export async function screenChangeControlRequest(
+  changeControlId: string,
+  decision: 'approve' | 'clarification' | 'reject',
+  note?: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { user, profile, service } = ctx
+  const canScreen = await isQaOrAdmin(user.id, !!profile.is_admin, service)
+  if (!canScreen) return { success: false, error: 'Only QA can screen Change Controls' }
+
+  const qaNote = cleanText(note || '', 1500)
+
+  const { data: current, error: fetchError } = await service
+    .from('change_controls')
+    .select('id, cc_number, title, requester_id, status')
+    .eq('id', changeControlId)
+    .single()
+
+  if (fetchError || !current) {
+    return { success: false, error: fetchError?.message || 'Change Control not found' }
+  }
+
+  const update: Record<string, unknown> = {
+    qa_owner_id: user.id,
+    screened_at: new Date().toISOString(),
+  }
+
+  let auditAction = 'change_control_screened'
+  let requesterTitle = `Change Control screened: ${current.cc_number}`
+  let requesterBody = `${current.cc_number} has been screened by QA.`
+
+  if (decision === 'approve') {
+    update.status = 'approved_for_document_work'
+    update.clarification_request = null
+    update.rejection_reason = null
+    auditAction = 'change_control_approved_for_document_work'
+    requesterTitle = `Change Control approved: ${current.cc_number}`
+    requesterBody = `${current.cc_number} is approved for document work.`
+  } else if (decision === 'clarification') {
+    if (qaNote.length < 5) return { success: false, error: 'Clarification note is required' }
+    update.status = 'clarification_requested'
+    update.clarification_request = qaNote
+    update.clarification_requested_at = new Date().toISOString()
+    auditAction = 'change_control_clarification_requested'
+    requesterTitle = `Clarification requested: ${current.cc_number}`
+    requesterBody = qaNote
+  } else {
+    if (qaNote.length < 5) return { success: false, error: 'Rejection reason is required' }
+    update.status = 'rejected'
+    update.rejection_reason = qaNote
+    update.rejected_at = new Date().toISOString()
+    auditAction = 'change_control_rejected'
+    requesterTitle = `Change Control rejected: ${current.cc_number}`
+    requesterBody = qaNote
+  }
+
+  const { data: updated, error: updateError } = await service
+    .from('change_controls')
+    .update(update)
+    .eq('id', changeControlId)
+    .select('*')
+    .single()
+
+  if (updateError) return { success: false, error: updateError.message }
+
+  await notifyRequester({
+    service,
+    senderId: user.id,
+    requesterId: current.requester_id,
+    ccId: changeControlId,
+    title: requesterTitle,
+    body: requesterBody,
+  })
+
+  await service.from('audit_log').insert({
+    actor_id: user.id,
+    action: auditAction,
+    entity_type: 'change_control',
+    entity_id: changeControlId,
+  })
+
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true, data: updated }
+}
+
+export async function updateChangeControlStatus(
+  changeControlId: string,
+  status: ChangeControlLifecycleStatus,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { user, profile, service } = ctx
+  const canUpdate = await isQaOrAdmin(user.id, !!profile.is_admin, service)
+  if (!canUpdate) return { success: false, error: 'Only QA can update Change Control status' }
+
+  const update: Record<string, unknown> = { status }
+  if (status === 'closed') update.closed_at = new Date().toISOString()
+
+  const { data, error } = await service
+    .from('change_controls')
+    .update(update)
+    .eq('id', changeControlId)
+    .select('*')
+    .single()
+
+  if (error) return { success: false, error: error.message }
+
+  await service.from('audit_log').insert({
+    actor_id: user.id,
+    action: `change_control_status_${status}`,
+    entity_type: 'change_control',
+    entity_id: changeControlId,
+  })
+
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true, data }
+}

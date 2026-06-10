@@ -135,7 +135,7 @@ export default function CreateModuleModal({ isOpen, onOpenChange, activeSops, pr
                                         <SelectContent className="max-h-[300px]">
                                             {sortedSops.filter(s => isQa || s.department === department).map(sop => (
                                                 <SelectItem key={sop.id} value={sop.id}>
-                                                    {sop.sop_number} - {sop.title} ({sop.document_level === 'level_2' ? 'Level II' : sop.document_level?.replace('_', ' ')}, v{sop.version})
+                                                    {sop.sop_number} - {sop.title} ({sop.document_level === 'level_2' ? 'Level II' : sop.document_level?.replace('_', ' ')}, Rev. {sop.version})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

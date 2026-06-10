@@ -13,9 +13,22 @@ declare global {
   interface ServiceWorkerGlobalScope extends SerwistGlobalConfig {
     __SW_MANIFEST: (PrecacheEntry | string)[] | undefined
   }
+
+  interface ServiceWorkerRegistration {
+    setAppBadge?: (contents?: number) => Promise<void>
+    clearAppBadge?: () => Promise<void>
+  }
 }
 
 declare const self: ServiceWorkerGlobalScope
+
+type PushNotificationPayload = {
+  title?: string
+  body?: string
+  url?: string
+  tag?: string
+  badgeCount?: number
+}
 
 // SKIP_WAITING is driven by the window via postMessage so the user gets a
 // chance to consent to the update via an in-app toast.
@@ -23,6 +36,68 @@ self.addEventListener("message", (event) => {
   if ((event as ExtendableMessageEvent).data?.type === "SKIP_WAITING") {
     void self.skipWaiting()
   }
+})
+
+self.addEventListener("push", (event) => {
+  const pushEvent = event as PushEvent
+  let payload: PushNotificationPayload = {}
+
+  try {
+    payload = pushEvent.data?.json() as PushNotificationPayload
+  } catch {
+    payload = {
+      title: "QMS-MANAJA",
+      body: pushEvent.data?.text() || "You have a new update.",
+      url: "/dashboard",
+    }
+  }
+
+  const title = payload.title || "QMS-MANAJA"
+  const targetUrl = payload.url || "/dashboard"
+  const options: NotificationOptions = {
+    body: payload.body || "You have a new update.",
+    icon: "/icons/icon-192x192.png",
+    badge: "/icons/icon-192x192.png",
+    tag: payload.tag,
+    data: { url: targetUrl },
+  }
+
+  pushEvent.waitUntil((async () => {
+    if (typeof payload.badgeCount === "number") {
+      if (payload.badgeCount > 0) {
+        await self.registration.setAppBadge?.(payload.badgeCount)
+      } else {
+        await self.registration.clearAppBadge?.()
+      }
+    }
+
+    await self.registration.showNotification(title, options)
+  })())
+})
+
+self.addEventListener("notificationclick", (event) => {
+  const notificationEvent = event as NotificationEvent
+  notificationEvent.notification.close()
+
+  const targetUrl = new URL(
+    String(notificationEvent.notification.data?.url || "/dashboard"),
+    self.location.origin
+  ).href
+
+  notificationEvent.waitUntil((async () => {
+    const clientList = await self.clients.matchAll({
+      type: "window",
+      includeUncontrolled: true,
+    })
+
+    for (const client of clientList) {
+      if ("focus" in client && client.url === targetUrl) {
+        return client.focus()
+      }
+    }
+
+    return self.clients.openWindow(targetUrl)
+  })())
 })
 
 // Pages we explicitly want available with no network, on top of whatever the

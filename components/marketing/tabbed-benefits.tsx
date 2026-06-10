@@ -40,7 +40,7 @@ const TABS: Tab[] = [
     panels: [
       {
         title: "Versioned. Audited. Locked.",
-        body: "Major-minor versioning with one-click increments. When a Change Control opens against an SOP, the document locks until completion — no parallel edits, no race conditions.",
+        body: "Two-digit GMP revision control with Change Control signoff. When a Change Control opens against an SOP, the document locks until completion — no parallel edits, no race conditions.",
         visual: <VersionsMock />,
       },
       {
@@ -207,9 +207,9 @@ export default function TabbedBenefits() {
 
 function VersionsMock() {
   const versions = [
-    { v: "v3.2", status: "Active", locked: true },
-    { v: "v3.1", status: "Archived", locked: false },
-    { v: "v3.0", status: "Archived", locked: false },
+    { v: "02", status: "Active", locked: true },
+    { v: "01", status: "Archived", locked: false },
+    { v: "00", status: "Archived", locked: false },
   ]
   return (
     <div className="space-y-3">
@@ -308,7 +308,7 @@ function QAStampMock() {
           <p className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
             Approval required
           </p>
-          <p className="mt-1.5 text-base font-semibold text-foreground">SOP-014 v2.1</p>
+          <p className="mt-1.5 text-base font-semibold text-foreground">SOP-014 Rev. 02</p>
           <p className="text-xs text-muted-foreground">Tablet Coating procedure</p>
         </div>
         <div className="grid size-11 place-items-center rounded-full bg-brand-blue/10">
@@ -373,7 +373,7 @@ function MobileSigMock() {
           <p className="text-[10px] font-semibold tracking-wide uppercase text-muted-foreground">
             Sign here
           </p>
-          <p className="mt-1 text-[11px] font-semibold text-foreground">SOP-014 v2.1</p>
+          <p className="mt-1 text-[11px] font-semibold text-foreground">SOP-014 Rev. 02</p>
           <div className="mt-2 h-24 rounded-md border border-dashed border-border bg-card">
             <svg className="h-full w-full" viewBox="0 0 200 100" preserveAspectRatio="none">
               <path
@@ -395,7 +395,7 @@ function MobileSigMock() {
 
 function LivePulseMock() {
   const items = [
-    { kind: "Approval", title: "SOP-014 v2.1", time: "2m" },
+    { kind: "Approval", title: "SOP-014 Rev. 02", time: "2m" },
     { kind: "PM Due", title: "Autoclave-3", time: "1h" },
     { kind: "Training", title: "Sarah K. — Cleanroom", time: "3h" },
   ]

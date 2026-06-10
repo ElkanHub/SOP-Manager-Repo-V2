@@ -34,15 +34,19 @@ const deptColourMap: Record<string, { bg: string; text: string; border: string }
 
 interface DeptBadgeProps extends VariantProps<typeof deptBadgeVariants> {
   department: string
-  colour?: string
+  code?: string | null
+  colour?: string | null
   className?: string
 }
 
-export function DeptBadge({ department, colour = "blue", variant, size, className }: DeptBadgeProps) {
-  const colourClasses = deptColourMap[colour] || deptColourMap.blue
+export function DeptBadge({ department, code, colour = "blue", variant, size, className }: DeptBadgeProps) {
+  const colourClasses = deptColourMap[colour || "blue"] || deptColourMap.blue
+  const label = code?.trim() || department
 
   return (
     <span
+      title={code ? department : undefined}
+      aria-label={code ? `${department} department` : undefined}
       className={cn(
         variant === "outline"
           ? `border ${colourClasses.text} ${colourClasses.bg}`
@@ -51,7 +55,7 @@ export function DeptBadge({ department, colour = "blue", variant, size, classNam
         className
       )}
     >
-      {department.slice(0, 16)}
+      {label.slice(0, 16)}
     </span>
   )
 }

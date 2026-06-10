@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic"
 
 // Canonical status enums (must match DB CHECK constraints)
 // pm_tasks.status:        'pending' | 'complete' | 'overdue'
-// change_controls.status: 'pending' | 'complete' | 'waived'
+// change_controls.status: legacy signoff states plus multi-document package lifecycle states.
 // sops.status:            'draft' | 'pending_qa' | 'active' | 'superseded' | 'pending_cc'
 // sop_approval_requests:  'pending' | 'changes_requested' | 'approved' | 'rejected'
 
@@ -39,6 +39,18 @@ export default async function DashboardPage() {
   const thirtyDaysFromNow = addDays(todayObj, 30).toISOString().split('T')[0]
   const thirtyDaysAgo = subDays(todayObj, 30).toISOString()
   const sevenDaysAgo = subDays(todayObj, 7).toISOString()
+  const openChangeControlStatuses = [
+    'submitted',
+    'qa_screening',
+    'clarification_requested',
+    'approved_for_document_work',
+    'documents_in_review',
+    'signatures_pending',
+    'pending',
+    'pending_reconciliation',
+    'pending_training',
+    'pending_activation',
+  ]
   const startOfMonth = dfStartOfMonth(todayObj).toISOString()
   const startOfMonthDate = dfStartOfMonth(todayObj).toISOString().split('T')[0]
   const startOfPrevMonthDate = dfStartOfMonth(subMonths(todayObj, 1)).toISOString().split('T')[0]
@@ -175,13 +187,13 @@ export default async function DashboardPage() {
   }
   const { count: pmCompletedThisMonth } = await pmCompletedQuery
 
-  // Open change controls (pending — the only "open" status per schema)
+  // Open change controls include legacy single-SOP signoffs and new package workflow states.
   let openCCsCountQuery = serviceClient
     .from('change_controls')
-    .select('id, sops!inner(department)', { count: 'exact', head: true })
-    .eq('status', 'pending')
+    .select('id, originating_department', { count: 'exact', head: true })
+    .in('status', openChangeControlStatuses)
   if (!hasOrgWideOversight && deptName) {
-    openCCsCountQuery = openCCsCountQuery.eq('sops.department', deptName)
+    openCCsCountQuery = openCCsCountQuery.eq('originating_department', deptName)
   }
   const { count: openChangeControlsCount } = await openCCsCountQuery
 
@@ -322,9 +334,9 @@ export default async function DashboardPage() {
       // Open change controls for SOPs owned by this department
       const { count: openCCs } = await serviceClient
         .from('change_controls')
-        .select('id, sops!inner(department)', { count: 'exact', head: true })
-        .eq('status', 'pending')
-        .eq('sops.department', d.name)
+        .select('id', { count: 'exact', head: true })
+        .in('status', openChangeControlStatuses)
+        .eq('originating_department', d.name)
 
       // Pending acknowledgements: for each active SOP owned by this dept,
       // how many of the dept's staff have NOT yet acked the current version.
@@ -409,14 +421,15 @@ export default async function DashboardPage() {
   let ccQuery = serviceClient
     .from('change_controls')
     .select(`
-      id, new_version, created_at, status, deadline, required_signatories,
-      sops!inner(title, department),
+      id, sop_id, cc_number, title, new_version, created_at, submitted_at, status, deadline, required_signatories, originating_department,
+      sops(title, department),
+      documents:change_control_documents(document_number, document_title, department, old_revision, new_revision),
       signature_certificates(user_id)
     `)
-    .eq('status', 'pending')
+    .in('status', openChangeControlStatuses)
     .order('created_at', { ascending: false })
   if (!hasOrgWideOversight && deptName) {
-    ccQuery = ccQuery.eq('sops.department', deptName)
+    ccQuery = ccQuery.eq('originating_department', deptName)
   }
   const { data: openChangeControlsResult } = await ccQuery
   const openChangeControls = openChangeControlsResult || []

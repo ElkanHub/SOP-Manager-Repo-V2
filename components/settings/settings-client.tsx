@@ -7,7 +7,7 @@ import { NotificationsTab } from "./notifications-tab"
 import { DepartmentsTab } from "./departments-tab"
 import { UsersTab } from "./users-tab"
 import { SpecimenTab } from "./specimen-tab"
-import type { Profile, Department } from "@/types/app.types"
+import type { Profile, Department, DocumentNumberingSettings } from "@/types/app.types"
 
 interface NotifPrefs {
     email: boolean
@@ -22,16 +22,20 @@ interface ProfileWithEmail extends Profile {
 
 interface SettingsClientProps {
     profile: Profile
+    profileEmail?: string | null
     isAdmin: boolean
     departments: Department[]
+    numberingSettings: DocumentNumberingSettings | null
     users: ProfileWithEmail[]
     currentUserId: string
 }
 
 export function SettingsClient({
     profile,
+    profileEmail,
     isAdmin,
     departments,
+    numberingSettings,
     users,
     currentUserId,
 }: SettingsClientProps) {
@@ -87,7 +91,7 @@ export function SettingsClient({
                 </div>
 
                 <TabsContent value="profile" className="mt-0">
-                    <ProfileTab profile={profile} />
+                    <ProfileTab profile={profile} email={profileEmail} />
                 </TabsContent>
 
                 <TabsContent value="notifications" className="mt-0">
@@ -97,7 +101,7 @@ export function SettingsClient({
                 {isAdmin && (
                     <>
                         <TabsContent value="departments" className="mt-0">
-                            <DepartmentsTab initialDepts={departments} />
+                            <DepartmentsTab initialDepts={departments} numberingSettings={numberingSettings} />
                         </TabsContent>
                         <TabsContent value="users" className="mt-0">
                             <UsersTab

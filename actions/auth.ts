@@ -205,23 +205,3 @@ export async function updatePassword(formData: FormData) {
     return { success: true }
 }
 
-export async function signInWithGoogle() {
-    const supabase = await createClient()
-
-    const appUrl = await getRequestOrigin()
-
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: `${appUrl}/auth/callback`,
-        },
-    })
-
-    if (error) {
-        return { error: error.message }
-    }
-
-    if (data.url) {
-        redirect(data.url)
-    }
-}

@@ -13,8 +13,8 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction,
 } from "@/components/ui/alert-dialog"
 import { Loader2, Plus, Pencil, Trash2, ShieldCheck, AlertCircle } from "lucide-react"
-import { addDepartment, updateDepartmentColour, deleteDepartment } from "@/actions/settings"
-import type { Department } from "@/types/app.types"
+import { addDepartment, updateDepartmentDetails, deleteDepartment, updateDocumentNumberingSettings } from "@/actions/settings"
+import type { Department, DocumentNumberingSettings } from "@/types/app.types"
 
 const COLOUR_SWATCHES = [
     { label: "blue", value: "blue", hex: "#1A5EA8" },
@@ -39,19 +39,26 @@ function ColourDot({ colour }: { colour: string }) {
 
 interface DepartmentsTabProps {
     initialDepts: Department[]
+    numberingSettings: DocumentNumberingSettings | null
 }
 
-export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
+export function DepartmentsTab({ initialDepts, numberingSettings }: DepartmentsTabProps) {
     const [depts, setDepts] = useState<Department[]>(initialDepts)
     const [addOpen, setAddOpen] = useState(false)
     const [newName, setNewName] = useState("")
+    const [newCode, setNewCode] = useState("")
     const [newColour, setNewColour] = useState("blue")
     const [addError, setAddError] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
+    const [formatTemplate, setFormatTemplate] = useState(numberingSettings?.format_template || "{DEPT}/SOP/{SEQ}")
+    const [sequencePadding, setSequencePadding] = useState(String(numberingSettings?.sequence_padding || 3))
+    const [numberingError, setNumberingError] = useState<string | null>(null)
+    const [numberingSaved, setNumberingSaved] = useState(false)
 
-    // Edit colour
+    // Edit colour/code
     const [editingId, setEditingId] = useState<string | null>(null)
     const [editColour, setEditColour] = useState("blue")
+    const [editCode, setEditCode] = useState("")
 
     // Delete
     const [deleteTarget, setDeleteTarget] = useState<Department | null>(null)
@@ -60,6 +67,7 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
 
     function handleAddOpen() {
         setNewName("")
+        setNewCode("")
         setNewColour("blue")
         setAddError(null)
         setAddOpen(true)
@@ -67,25 +75,40 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
 
     function handleAdd() {
         if (!newName.trim()) { setAddError("Name is required."); return }
+        if (!newCode.trim()) { setAddError("Department code is required for controlled SOP numbering."); return }
         startTransition(async () => {
             setAddError(null)
-            const result = await addDepartment(newName.trim(), newColour)
+            const result = await addDepartment(newName.trim(), newColour, newCode)
             if (!result.success) { setAddError(result.error); return }
             // optimistic: re-fetch would need a router.refresh() call but we just close and let page revalidate
             setAddOpen(false)
             setDepts((prev) => [
                 ...prev,
-                { id: crypto.randomUUID(), name: newName.trim(), colour: newColour, is_qa: false, created_at: new Date().toISOString() }
+                { id: crypto.randomUUID(), name: newName.trim(), code: newCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, ''), colour: newColour, is_qa: false, created_at: new Date().toISOString() }
             ])
         })
     }
 
-    function handleEditColour(id: string) {
+    function handleEditDepartment(id: string) {
         startTransition(async () => {
-            const result = await updateDepartmentColour(id, editColour)
+            const result = await updateDepartmentDetails(id, { colour: editColour, code: editCode })
             if (!result.success) return
-            setDepts((prev) => prev.map((d) => d.id === id ? { ...d, colour: editColour } : d))
+            setDepts((prev) => prev.map((d) => d.id === id ? { ...d, colour: editColour, code: editCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') } : d))
             setEditingId(null)
+        })
+    }
+
+    function handleSaveNumbering() {
+        startTransition(async () => {
+            setNumberingError(null)
+            setNumberingSaved(false)
+            const padding = Number(sequencePadding)
+            const result = await updateDocumentNumberingSettings({ formatTemplate, sequencePadding: padding })
+            if (!result.success) {
+                setNumberingError(result.error)
+                return
+            }
+            setNumberingSaved(true)
         })
     }
 
@@ -112,12 +135,55 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                 </Button>
             </div>
 
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="space-y-1">
+                        <h4 className="text-sm font-bold text-foreground">SOP Numbering Format</h4>
+                        <p className="max-w-2xl text-xs text-muted-foreground">
+                            Level II SOPs use department codes in controlled numbers. Keep the format stable once documents are issued.
+                        </p>
+                    </div>
+                    <div className="grid w-full gap-3 sm:grid-cols-[1fr_120px_auto] lg:max-w-xl">
+                        <div className="space-y-1.5">
+                            <Label htmlFor="sop-number-format" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Format</Label>
+                            <Input
+                                id="sop-number-format"
+                                value={formatTemplate}
+                                onChange={(e) => setFormatTemplate(e.target.value.toUpperCase())}
+                                className="font-mono text-xs"
+                            />
+                        </div>
+                        <div className="space-y-1.5">
+                            <Label htmlFor="sequence-padding" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Padding</Label>
+                            <Input
+                                id="sequence-padding"
+                                value={sequencePadding}
+                                onChange={(e) => setSequencePadding(e.target.value.replace(/\D/g, '').slice(0, 1))}
+                                className="font-mono text-xs"
+                            />
+                        </div>
+                        <Button size="sm" onClick={handleSaveNumbering} disabled={isPending} className="self-end bg-brand-navy text-white hover:bg-brand-navy/90">
+                            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save Format"}
+                        </Button>
+                    </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs">
+                    <span className="rounded-md bg-muted px-2 py-1 font-mono text-foreground">
+                        Preview: {formatTemplate.replace("{DEPT}", "QA").replace("{TYPE}", "SOP").replace("{SEQ}", "007").replace("{YYYY}", new Date().getFullYear().toString()).replace("{YY}", new Date().getFullYear().toString().slice(-2))}
+                    </span>
+                    <span className="text-muted-foreground">Tokens: {"{DEPT}"}, {"{TYPE}"}, {"{SEQ}"}, {"{YYYY}"}, {"{YY}"}</span>
+                </div>
+                {numberingError && <p className="mt-2 text-xs font-semibold text-destructive">{numberingError}</p>}
+                {numberingSaved && <p className="mt-2 text-xs font-semibold text-emerald-600">Numbering format saved.</p>}
+            </div>
+
             <div className="rounded-xl border border-border bg-card overflow-hidden shadow-md">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-sm min-w-[650px]">
+                    <table className="w-full text-sm min-w-[760px]">
                         <thead className="bg-muted/30 text-muted-foreground border-b border-border/40">
                             <tr>
                                 <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Department Name</th>
+                                <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Document Code</th>
                                 <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Visual Identifier</th>
                                 <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Segment Class</th>
                                 <th className="text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em]">Provisioned Date</th>
@@ -129,6 +195,17 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                                 <tr key={dept.id} className="group hover:bg-muted/10 transition-colors">
                                     <td className="px-6 py-4">
                                         <span className="font-bold text-foreground text-sm tracking-tight">{dept.name}</span>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {editingId === dept.id ? (
+                                            <Input
+                                                value={editCode}
+                                                onChange={(e) => setEditCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
+                                                className="h-8 w-28 font-mono text-xs font-bold"
+                                            />
+                                        ) : (
+                                            <span className="rounded-md bg-muted px-2 py-1 font-mono text-xs font-bold text-foreground">{dept.code}</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">
                                         {editingId === dept.id ? (
@@ -146,7 +223,7 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                                                     ))}
                                                 </div>
                                                 <div className="flex gap-1">
-                                                    <Button size="sm" variant="outline" onClick={() => handleEditColour(dept.id)} disabled={isPending} className="h-8 font-bold text-[10px] uppercase tracking-widest px-3 border-brand-teal/30 text-brand-teal hover:bg-brand-teal/5">
+                                                    <Button size="sm" variant="outline" onClick={() => handleEditDepartment(dept.id)} disabled={isPending} className="h-8 font-bold text-[10px] uppercase tracking-widest px-3 border-brand-teal/30 text-brand-teal hover:bg-brand-teal/5">
                                                         {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save Changes"}
                                                     </Button>
                                                     <Button size="sm" variant="ghost" onClick={() => setEditingId(null)} className="h-8 font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Cancel</Button>
@@ -182,7 +259,7 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                                         <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                                             <Button
                                                 variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                                onClick={() => { setEditingId(dept.id); setEditColour(dept.colour) }}
+                                                onClick={() => { setEditingId(dept.id); setEditColour(dept.colour); setEditCode(dept.code) }}
                                                 disabled={editingId === dept.id}
                                             >
                                                 <Pencil className="w-3.5 h-3.5" />
@@ -216,6 +293,19 @@ export function DepartmentsTab({ initialDepts }: DepartmentsTabProps) {
                         <div className="space-y-2">
                             <Label htmlFor="new-dept-name" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Department Nomenclature <span className="text-red-500">*</span></Label>
                             <Input id="new-dept-name" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Clinical Research & Development" className="bg-muted/30 border-border/50 focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="new-dept-code" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Document Code <span className="text-red-500">*</span></Label>
+                            <Input
+                                id="new-dept-code"
+                                value={newCode}
+                                onChange={(e) => setNewCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
+                                placeholder="e.g. QA"
+                                className="bg-muted/30 border-border/50 font-mono font-bold focus:border-brand-teal/50 focus:ring-brand-teal/20 transition-all"
+                            />
+                            <p className="text-[10px] text-muted-foreground">
+                                Used in controlled SOP numbers such as QA/SOP/007. Use stable codes like QA, QC, PROD, or ENG.
+                            </p>
                         </div>
                         <div className="space-y-2">
                             <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Identity Colour Assignment</Label>

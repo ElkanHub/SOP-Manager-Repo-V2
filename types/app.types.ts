@@ -28,14 +28,28 @@ export interface Profile {
 export interface Department {
     id: string;
     name: string;
+    code: string;
     colour: string;
     is_qa: boolean;
     created_at: string;
 }
 
+export interface DocumentNumberingSettings {
+    id: string;
+    document_type: 'SOP';
+    format_template: string;
+    sequence_padding: number;
+    sequence_scope: 'department_document_type';
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
 export interface SopRecord {
     id: string;
     sop_number: string;
+    legacy_sop_number?: string | null;
+    document_type?: 'SOP';
     title: string;
     department: string;
     secondary_departments: string[];
@@ -59,6 +73,10 @@ export interface SopRecord {
     approved_by?: string;
     created_at: string;
     updated_at: string;
+    departments?: {
+        colour?: string | null;
+        code?: string | null;
+    } | null;
 }
 
 export interface SopVersion {
@@ -136,13 +154,28 @@ export interface CcSignatory {
 export interface ChangeControl {
     id: string;
     sop_id: string;
+    cc_number?: string | null;
+    title?: string | null;
+    requester_id?: string | null;
+    originating_department?: string | null;
+    rationale?: string | null;
+    impact_assessment?: string | null;
+    affected_departments?: string[] | null;
+    qa_owner_id?: string | null;
+    submitted_at?: string | null;
+    screened_at?: string | null;
+    closed_at?: string | null;
+    rejected_at?: string | null;
+    rejection_reason?: string | null;
+    clarification_request?: string | null;
+    clarification_requested_at?: string | null;
     old_version: string;
     new_version: string;
     old_file_url: string;
     new_file_url: string;
     diff_json?: any;
     delta_summary?: string;
-    status: 'pending' | 'pending_activation' | 'complete' | 'waived';
+    status: ChangeControlPackageStatus;
     required_signatories: CcSignatory[];
     deadline: string;
     issued_by?: string;
@@ -151,6 +184,53 @@ export interface ChangeControl {
     reconciliation_confirmed_by?: string;
     reconciliation_confirmed_at?: string;
     reconciliation_note?: string;
+}
+
+export type ChangeControlPackageStatus =
+    | 'draft'
+    | 'submitted'
+    | 'qa_screening'
+    | 'clarification_requested'
+    | 'approved_for_document_work'
+    | 'documents_in_review'
+    | 'signatures_pending'
+    | 'pending_reconciliation'
+    | 'pending_training'
+    | 'effective'
+    | 'closed'
+    | 'rejected'
+    | 'pending'
+    | 'pending_activation'
+    | 'complete'
+    | 'waived';
+
+export interface ChangeControlDocumentRecord {
+    id: string;
+    change_control_id: string;
+    document_id?: string | null;
+    document_number: string;
+    document_title: string;
+    document_level: string;
+    document_type: string;
+    department?: string | null;
+    old_revision?: string | null;
+    new_revision?: string | null;
+    old_file_url?: string | null;
+    new_file_url?: string | null;
+    reason_for_change?: string | null;
+    review_status: 'pending' | 'in_review' | 'approved' | 'changes_requested' | 'rejected' | 'effective';
+    training_required: boolean;
+    training_deadline?: string | null;
+    training_status: 'not_required' | 'pending' | 'in_progress' | 'complete';
+    effective_date?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ChangeControlPackage extends ChangeControl {
+    documents?: ChangeControlDocumentRecord[];
+    requester?: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'department' | 'role'> | null;
+    qa_owner?: Pick<Profile, 'id' | 'full_name' | 'avatar_url' | 'department' | 'role'> | null;
 }
 
 export interface SignatureCertificate {

@@ -89,7 +89,7 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa, isAdmin }: Ac
       header: "Version",
       cell: ({ row }) => (
         <Badge variant="secondary" className="font-mono text-[10px] font-bold px-1.5 h-4">
-          v{row.getValue("version")}
+          Rev. {row.getValue("version")}
         </Badge>
       ),
     },

@@ -287,7 +287,7 @@ All server actions follow a consistent pattern: **Manual validation** (auth and 
 
 ## 8. THINGS THAT WERE NOT IMPLEMENTED (COMPARED TO BUILD PLAN)
 
-- **Custom Metadata / Dynamic Fields (Phase 15)**: Although marked as complete in [PROGRESS.md](file:///e:/Projects/sop-manager-v2/V2DOCS/PROGRESS.md), the `custom_field_definitions` table and associated rendering logic are MISSING from the actual database and UI.
+- **Custom Metadata / Dynamic Fields (Phase 15)**: Although marked as complete in [PROGRESS.md](file:///e:/Projects/sop-manager-v2/V2DOCS/v2.2/operations/PROGRESS.md), the `custom_field_definitions` table and associated rendering logic are MISSING from the actual database and UI.
 - **SOP Version Rollback**: The UI allows viewing history but lacks a "Promote to Current" one-click button for version rollback.
 - **mammoth.js for SOP Rendering**: The plan suggested mammoth.js for the main viewer; the app actually uses an Office Viewer iframe for better fidelity (mammoth is used for diffing).
 

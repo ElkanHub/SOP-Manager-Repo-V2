@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
 import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
+import type { ExistingSopOption } from "@/components/approvals/sop-upload-modal"
 import { Upload, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Profile, Department } from "@/types/app.types"
@@ -11,7 +12,7 @@ import { Profile, Department } from "@/types/app.types"
 interface LibraryPageClientProps {
   profile: Profile
   departments: Department[]
-  existingSops: any[]
+  existingSops: ExistingSopOption[]
   isManager: boolean
   isAdmin: boolean
   isQa: boolean

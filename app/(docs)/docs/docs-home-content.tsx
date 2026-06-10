@@ -4,10 +4,12 @@ import Link from 'next/link'
 import {
   BookOpen, Shield, ClipboardCheck, GitBranch, Cog, CalendarDays,
   BarChart2, MessageSquare, Settings, ChevronRight, FileText,
-  BookmarkCheck, ArrowRight, Zap, Users, Database, Lock
+  BookmarkCheck, ArrowRight, Zap, Users, Database, Lock,
+  type LucideIcon,
 } from 'lucide-react'
 import { Search as DocsSearch } from '@/components/docs'
 import { cn } from '@/lib/utils/cn'
+import DecryptedText from '@/components/DecryptedText'
 
 /* ═══════════════════════════════════════════════════════════════════════════
    DATA
@@ -152,7 +154,7 @@ const DIRECTORY: CategoryBlock[] = [
    ═══════════════════════════════════════════════════════════════════════════ */
 
 interface ModuleLink { label: string; href: string }
-interface Module { id: string; icon: React.ElementType; title: string; desc: string; badge?: string; links: ModuleLink[] }
+interface Module { id: string; icon: LucideIcon; title: string; desc: string; badge?: string; links: ModuleLink[] }
 interface CategoryBlock { category: string; modules: Module[] }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -171,7 +173,16 @@ export function DocsHomeContent() {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
             <div>
               <h1 className="text-[32px] md:text-[40px] font-extrabold text-foreground tracking-tight leading-[1.15] mb-3">
-                QMS-MANAJA User Guide
+                <DecryptedText
+                  text="QMS-MANAJA User Guide"
+                  animateOn="view"
+                  sequential
+                  revealDirection="start"
+                  speed={34}
+                  parentClassName="inline-block"
+                  className="text-foreground"
+                  encryptedClassName="text-brand-teal"
+                />
               </h1>
               <p className="text-[16px] text-muted-foreground max-w-lg leading-relaxed">
                 Comprehensive guides for every feature, workflow, and administrative task. Find answers fast with search or browse by category below.
@@ -289,7 +300,7 @@ export function DocsHomeContent() {
       <section className="border-t border-border bg-card">
         <div className="max-w-6xl mx-auto px-6 md:px-10 py-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
           <div>
-            <h4 className="text-[16px] font-bold text-foreground mb-1">Can't find what you need?</h4>
+            <h4 className="text-[16px] font-bold text-foreground mb-1">Can&apos;t find what you need?</h4>
             <p className="text-[14px] text-muted-foreground">
               Reach out to our support team for configuration help and troubleshooting.
             </p>
