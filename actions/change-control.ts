@@ -355,3 +355,130 @@ export async function updateChangeControlStatus(
   revalidateChangeControlPaths(changeControlId)
   return { success: true, data }
 }
+
+// Set the draft (proposed new revision + uploaded file) for one affected document.
+export async function setChangeControlDocumentDraft(
+  documentRowId: string,
+  input: { newRevision?: string | null; newFileUrl?: string | null; trainingRequired?: boolean },
+  changeControlId?: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can set document drafts' }
+  }
+
+  const { error } = await service.rpc('set_cc_document_draft', {
+    p_doc_id: documentRowId,
+    p_actor: user.id,
+    p_new_revision: cleanText(input.newRevision || '', 40) || null,
+    p_new_file_url: cleanText(input.newFileUrl || '', 1000) || null,
+    p_training_required: typeof input.trainingRequired === 'boolean' ? input.trainingRequired : null,
+  })
+
+  if (error) return { success: false, error: error.message }
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true }
+}
+
+// QA review decision on one affected document. When every document is approved,
+// the package auto-advances to signatures_pending (see set_cc_document_review).
+export async function reviewChangeControlDocument(
+  documentRowId: string,
+  decision: 'in_review' | 'approved' | 'changes_requested' | 'rejected',
+  comment?: string,
+  changeControlId?: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can review documents' }
+  }
+
+  const { error } = await service.rpc('set_cc_document_review', {
+    p_doc_id: documentRowId,
+    p_actor: user.id,
+    p_decision: decision,
+    p_comment: cleanText(comment || '', 1500) || null,
+  })
+
+  if (error) return { success: false, error: error.message }
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true }
+}
+
+// Release a training-required affected document to effective once its SOP's
+// training-completion threshold is met. When every document is effective the
+// package auto-advances to effective (cc_recheck_effective).
+export async function releaseChangeControlDocumentTraining(
+  documentRowId: string,
+  effectiveDate: string,
+  changeControlId?: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can release training gates' }
+  }
+
+  const { data: doc } = await service
+    .from('change_control_documents')
+    .select('id, document_id, change_control_id')
+    .eq('id', documentRowId)
+    .single()
+
+  if (!doc?.document_id) return { success: false, error: 'Document is not linked to an SOP' }
+
+  const { data: sop } = await service
+    .from('sops')
+    .select('training_required, training_completion_threshold')
+    .eq('id', doc.document_id)
+    .single()
+
+  if (sop?.training_required) {
+    const { data: modules } = await service
+      .from('training_modules')
+      .select('id')
+      .eq('sop_id', doc.document_id)
+      .neq('status', 'archived')
+    const moduleIds = (modules || []).map((m) => m.id)
+    if (moduleIds.length === 0) {
+      return { success: false, error: 'Training is required, but no linked training module exists for this SOP.' }
+    }
+    const { data: assignments } = await service
+      .from('training_assignments')
+      .select('status')
+      .in('module_id', moduleIds)
+    const total = assignments?.length || 0
+    const completed = assignments?.filter((a) => a.status === 'completed').length || 0
+    const rate = total === 0 ? 0 : Math.round((completed / total) * 100)
+    const threshold = sop.training_completion_threshold ?? 80
+    if (total === 0 || rate < threshold) {
+      return { success: false, error: `Training completion is ${rate}%. Required threshold is ${threshold}%.` }
+    }
+  }
+
+  const { error: actErr } = await service.rpc('activate_sop_effective', {
+    p_sop_id: doc.document_id,
+    p_effective_date: effectiveDate,
+    p_actor_id: user.id,
+    p_audit_action: 'cc_training_gate_released',
+  })
+  if (actErr) return { success: false, error: actErr.message }
+
+  await service
+    .from('change_control_documents')
+    .update({ review_status: 'effective', effective_date: effectiveDate, training_status: 'complete' })
+    .eq('id', documentRowId)
+
+  await service.rpc('cc_recheck_effective', { p_cc_id: doc.change_control_id })
+
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true }
+}

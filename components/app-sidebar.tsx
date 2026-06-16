@@ -154,10 +154,8 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       'approved_for_document_work',
       'documents_in_review',
       'signatures_pending',
-      'pending',
       'pending_reconciliation',
       'pending_training',
-      'pending_activation',
     ]
 
     // 4. Pending Requests badge (new + legacy tables + Change Control packages)

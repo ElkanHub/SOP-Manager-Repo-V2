@@ -266,7 +266,11 @@ export function ChangeControlRequestClient({ profile, departments, activeSops, m
                                 <TableBody>
                                     {myChangeControls.map((cc) => (
                                         <TableRow key={cc.id}>
-                                            <TableCell className="font-mono text-xs">{cc.cc_number || cc.id.slice(0, 8)}</TableCell>
+                                            <TableCell className="font-mono text-xs">
+                                                <a href={`/requests/change-control/${cc.id}`} className="text-brand-teal hover:underline">
+                                                    {cc.cc_number || cc.id.slice(0, 8)}
+                                                </a>
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="font-medium">{cc.title || "Change Control"}</div>
                                                 {cc.clarification_request && <div className="text-xs text-orange-700">{cc.clarification_request}</div>}

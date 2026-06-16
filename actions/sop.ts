@@ -1223,3 +1223,77 @@ export async function getSopSignedUrl(sopId: string): Promise<{ success: boolean
 
     return { success: true, signedUrl: data.signedUrl }
 }
+
+// Explicit rejection of an SOP approval request by QA (distinct from "request
+// changes"). Terminal for the request; a 'new' SOP returns to draft so the
+// owner can revise and resubmit.
+export async function rejectSopRequest(
+    requestId: string,
+    reason: string
+): Promise<{ success: boolean; error?: string }> {
+    const supabase = await createServiceClient()
+    const client = await createClient()
+
+    const { data: { user } } = await client.auth.getUser()
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    const cleanReason = (reason || '').trim().slice(0, 1500)
+    if (cleanReason.length < 5) return { success: false, error: 'A rejection reason is required' }
+
+    const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
+    const { data: isAdmin } = await supabase.rpc('is_admin', { user_id: user.id })
+    if (!isQa && !isAdmin) return { success: false, error: 'Only QA can reject requests' }
+
+    const { data: request } = await supabase
+        .from('sop_approval_requests')
+        .select('id, sop_id, submitted_by, type, status')
+        .eq('id', requestId)
+        .single()
+
+    if (!request) return { success: false, error: 'Request not found' }
+    if (request.submitted_by === user.id) return { success: false, error: 'You cannot reject your own submission' }
+    if (['approved', 'rejected'].includes(request.status)) {
+        return { success: false, error: `Request is already ${request.status}` }
+    }
+
+    const { error: updErr } = await supabase
+        .from('sop_approval_requests')
+        .update({ status: 'rejected', updated_at: new Date().toISOString() })
+        .eq('id', requestId)
+    if (updErr) return { success: false, error: updErr.message }
+
+    await supabase.from('sop_approval_comments').insert({
+        request_id: requestId,
+        author_id: user.id,
+        comment: `Rejected: ${cleanReason}`,
+        action: 'comment',
+    })
+
+    // A brand-new SOP that was awaiting approval returns to draft for revision.
+    if (request.type === 'new') {
+        await supabase.from('sops').update({ status: 'draft', locked: false, updated_at: new Date().toISOString() }).eq('id', request.sop_id)
+    }
+
+    await supabase.from('pulse_items').insert({
+        sender_id: user.id,
+        recipient_id: request.submitted_by,
+        type: 'approval_update',
+        title: 'SOP request rejected',
+        body: cleanReason,
+        entity_type: 'sop_approval_request',
+        entity_id: requestId,
+        audience: 'self',
+    })
+
+    await supabase.from('audit_log').insert({
+        actor_id: user.id,
+        action: 'sop_request_rejected',
+        entity_type: 'sop_approval_request',
+        entity_id: requestId,
+        metadata: { sop_id: request.sop_id, reason: cleanReason },
+    })
+
+    revalidatePath('/approvals')
+    revalidatePath('/library')
+    return { success: true }
+}

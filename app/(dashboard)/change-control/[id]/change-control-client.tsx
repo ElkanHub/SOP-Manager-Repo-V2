@@ -57,7 +57,7 @@ export function ChangeControlClient({
     }).length
 
     const ccRef = `CC-${new Date(changeControl.created_at).getFullYear()}-${changeControl.id.slice(0, 4).toUpperCase()}`
-    const canConfirmReconciliation = (isAdmin || isQa) && changeControl.status === 'pending_activation'
+    const canConfirmReconciliation = (isAdmin || isQa) && changeControl.status === 'pending_reconciliation'
 
     const handleRegenerateSummary = async () => {
         const result = await generateDeltaSummary(changeControl.id)
@@ -145,7 +145,7 @@ export function ChangeControlClient({
                                         setWaiveTarget({ id: userId, name: signatory?.full_name || 'Unknown' })
                                         setWaiveModalOpen(true)
                                     }}
-                                    isLocked={changeControl.status === 'complete' || changeControl.status === 'pending_activation'}
+                                    isLocked={['pending_reconciliation', 'pending_training', 'effective', 'closed'].includes(changeControl.status)}
                                 />
                             </div>
                         </div>

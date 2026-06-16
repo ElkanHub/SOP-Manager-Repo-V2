@@ -155,6 +155,7 @@ export interface ChangeControl {
     id: string;
     sop_id: string;
     cc_number?: string | null;
+    origin?: 'request' | 'sop_revision';
     title?: string | null;
     requester_id?: string | null;
     originating_department?: string | null;
@@ -198,11 +199,7 @@ export type ChangeControlPackageStatus =
     | 'pending_training'
     | 'effective'
     | 'closed'
-    | 'rejected'
-    | 'pending'
-    | 'pending_activation'
-    | 'complete'
-    | 'waived';
+    | 'rejected';
 
 export interface ChangeControlDocumentRecord {
     id: string;
