@@ -1,0 +1,848 @@
+
+
+
+
+
+APPROVAL OF DOCUMENT:
+
+|Details       |Name                 |Designation         |Sign & Date          |
+|Prepared By   |                     |                    |                     |
+|User Dept.    |                     |                    |                     |
+|Reviewed By   |                     |                    |                     |
+|User          |                     |                    |                     |
+|HOD/Designee  |                     |                    |                     |
+|Reviewed by QA|                     |                    |                     |
+|Approved By QA|                     |                    |                     |
+|Head /        |                     |                    |                     |
+|Designee*     |                     |                    |                     |
+
+
+*This approval applies to each page of this SOP.
+
+
+
+|Effective Date                 |                                               |
+|Next Review Date               |                                               |
+|Recorded by QA (Sign & date)   |                                               |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   OBJECTIVE:
+
+        The purpose of this Standard Operating Procedure is to  establish  a
+        comprehensive, well-controlled,  risk-based,  and  lifecycle-managed
+        system  governing  the  creation,  formatting,   review,   approval,
+        issuance, reconciliation, revision, archival, retrieval, protection,
+        and controlled destruction of all GMP-relevant documents and records
+        at Atlantic Lifesciences Ltd, such that all  documented  information
+        remains accurate, contemporaneous, traceable, tamper-protected,  and
+        inspection-ready throughout its entire retention lifecycle.
+
+
+   SCOPE:
+
+                This SOP applies to all  documented  information  generated,
+        received, processed, reviewed, approved, or retained within ALS that
+        relates to GMP systems and QMS of the company. These include  paper-
+        based documentation, hybrid documentation, electronic documentation,
+        and audit trails.
+
+
+   DEFINITIONS AND Abbreviations:
+
+
+4 Definitions:
+
+
+5 Controlled Document
+
+
+        A formally approved instruction, specification, method, or procedure
+        that is issued under QA authority and subject to version control and
+        controlled distribution.
+
+
+7 Record
+
+        Documented evidence demonstrating that an  activity,  test,  review,
+        decision, or verification step has been performed in accordance with
+        approved procedures. Once data is entered, the document  transitions
+        from “document” to “record.”
+
+8 Master Copy
+
+        The officially approved and  archived  original  version  maintained
+        exclusively under QA documentation control.
+
+9 Controlled Copy
+
+
+        A traceable issued copy distributed for  operational  use,  recorded
+        within document issuance logs.
+
+
+11 Uncontrolled Copy
+
+        An uncontrolled copy is a document  provided  for  information  only
+        that is not tracked, updated, or retrieved by the  document  control
+        system and therefore shall not be used to perform GMP activities.
+
+12 Display Copy
+
+
+        A Display Copy is an authorized photocopy of the Master  copy  of  a
+        document that is placed at a specific location within  the  facility
+        for the purpose of guiding personnel in  the  correct  execution  of
+        operations or procedures.
+
+
+14 Obsolete Document
+
+        A superseded version withdrawn from operational use but retained for
+        historical traceability until end of its defined retention period.
+
+15 Product Lifecycle
+
+        The stages of  a  product’s  life  from  pharmaceutical  development
+        through technology transfer, commercial manufacturing,  and  product
+        discontinuation.
+
+16 Abbreviations:
+
+        SOP    :  Standard Operating Procedure
+        ALS    :  Atlantic Lifesciences Ltd
+        QA      :      Quality Assurance
+        QC      :       Quality Control
+        HOD   :   Head of Department
+        GMP   :        Good Manufacturing Practices
+        QMS   :        Quality Management System
+        BMR   :        Batch Manufacturing Record
+        BPR    :       Batch Packaging Record.
+        No.      :           Number
+        STPs   :       Standard Testing Procedure
+        MOAs :         Method of Analysis
+        ALCOA+:    Attributable,  Legible,  contemporaneous,  original,  and
+        accurate
+
+
+     3.     RESPONSIBILITY
+
+17      User Department:
+
+
+18 Responsible for the initiation of document request followed  by  document
+        receipt and implementation/ execution of documents.
+
+
+19   Upon   complete   execution   of    the    documents    (Logbooks/Batch
+        records/Protocols), responsible personnel shall submit the documents
+to QA.
+
+
+20 The user department is  also  responsible  for  the  submission  of  non-
+        executed documents, submitted or  superseded  documents  to  the  QA
+        department.
+
+
+
+21 Heads of Department
+
+
+22 HODs shall review all documents generated  within  their  department  and
+        participate in cross-functional review  of  documents  that  impact
+        their department.
+
+
+23 HODs shall ensure that  only  current  approved  versions  are  used  and
+        completed records are reviewed promptly.
+
+
+24 HODs shall ensure that document deviations are reported  immediately  and
+        all personnel follow Good Documentation Practices and  observe  the
+        principles of Data Integrity.
+
+
+
+25     Quality Assurance Department:
+
+
+26 Responsible for the receipt  of  the  document  requests  from  the  user
+        departments, followed by  issuance of  requested  documents  to  the
+        user departments.
+
+     1.     To ensure the retrieval of completed /superseded documents  from
+        user  departments  before   the   issuance   of   a   new   set   of
+        documents/logbooks and their handling, such as archival/destruction,
+        as per the applicable procedures.
+     2.      It is the responsibility of QA personnel  to  randomly  verify
+        the documents weekly, once before transferring  the  documents  for
+        shredding.
+
+
+
+        27 Quality Assurance Head:
+
+     3.      QA Head / Designee shall be responsible for approval of all GMP
+        procedural documents
+     4. QA Head / Designee  shall  be  responsible  for  approving  document
+        archival and destruction
+     5. QA Head  /  Designee  shall  be  responsible  for  ensuring  overall
+        regulatory compliance of documentation systems.
+
+     4.     PROCEDURE
+
+28     Document Hierarchy Structure
+
+        1. Documents are covered under Level I, Level II,  Level  III,  and
+           Level IV as follows
+
+
+           |Level    |Document Category|Examples                                 |
+|Level-I  |Quality Manual & |Quality Policy, Quality Manual, Site     |
+|(APEX)   |Policies         |Master file, Validation Master Plan,     |
+|         |(The "Why")      |Calibration Manual, Contamination Control|
+|         |                 |Strategy                                 |
+|Level-II |Standard         |SOPs, Qualification/Validation Protocols,|
+|         |Operating        |Stability Protocols                      |
+|         |Procedures &     |                                         |
+|         |Protocols        |                                         |
+|         |(The "How")      |                                         |
+|Level-III|Work             |Specifications, STPs, and MOAs.          |
+|         |Instructions,    |                                         |
+|         |Specs, and       |                                         |
+|         |Methods (The     |                                         |
+|         |"Details")       |                                         |
+|Level-IV |Records, Forms,  |Standard formats, Logbooks, Records,     |
+|         |and Logs         |Annexures, BMR, BPR, Certificate of      |
+|         |(The "Proof")    |Analysis (COA), Reports.                 |
+|         |                 |                                         |
+
+     2. The structure shall be from top (highest  authority/broadest  scope)
+        to bottom (lowest, most specific).
+     3.  Level-I  documents  define  the  overall  QMS,  quality   policies,
+        objectives, and organizational structure.
+     4. Level-II documents shall include detailed,  step-by-step  procedures
+        for activities affecting product quality. They define how to perform
+        tasks.
+     5.  Level-III  documents  are  specific,  technical   instructions   or
+        requirements for a particular process or material.
+     6. Level-IV documents include completed documents that provide evidence
+        that activities were performed according to procedures.
+
+
+29   Preparation and Numbering of Document
+
+     7. All Level I-IV documents shall be prepared as per  their  respective
+        SOPs.
+     8. Preparation of new documents shall be initiated through the  process
+        of change control as per SOP No: QA/SOP/006.
+     9. All documents  shall  be  numbered  as  per  the  SOP  for  Document
+        Numbering (SOP No. QA/SOP/002.
+    10. QA shall verify the assigned document number  for  correctness  upon
+        receipt of the Change Control form with the attached  document  from
+        the initiating department for review. Documents  shall  be  reviewed
+        thoroughly as per the procedure outlined in section 5.3.
+    11. Documents shall be prepared in soft copy to be printed on either  A4
+        or A3 size paper. Layouts/Drawings may be printed on A0,  A1  or  A2
+        size paper as per requirement.
+    12. The formatting requirements (including font type, font  style,  font
+        size, font colour, page border, line spacing, and paragraph spacing)
+        shall  be  the  same  as  defined  in  the  SOP  for  SOP  (SOP  No.
+        QA/SOP/001).
+    13. All documents shall be prepared mainly in English Language.
+    14. Page numbering format shall be Page X of Y. For example,  a  Logbook
+        having 20 pages will be paginated as Page 1 of 20, Page 2 of 20…  up
+        to Page 20 of 20.
+    15. Documents should have unambiguous contents: the title,  nature/type,
+        and purpose (where applicable) should be clearly stated.
+    16. After preparation of any document, such document shall be  subjected
+        to review prior to approval.
+
+30 Document Review and Approval Workflow
+
+    17. No GMP document shall be issued unless it  has  undergone  technical
+        review by the Head of User Department or subject  matter  expert(s),
+        quality system compliance review by QA, and final approval by  Head-
+        QA/Designee.
+    18. All new GMP documents and any revisions to  existing  GMP  documents
+        that  may  affect  product  quality,  patient   safety,   regulatory
+        compliance,    validated    processes,    data     integrity,     or
+        interdepartmental workflow shall undergo a  cross-functional  review
+        prior to final approval and issuance.
+    19. QA shall initially  perform  an  impact  assessment  on  the  Change
+        Control  Form  to  identify  all   departments   whose   operations,
+        responsibilities,  equipment,  systems,   records,   or   regulatory
+        commitments may be affected by the document.
+    20.  Cross-functional  documents  shall  be  reviewed  by  the  HODs  or
+        qualified representatives from all concerned departments.
+    21. The Document owner (User department) shall submit the draft document
+        in soft copy (Ms  Word  version)  to  all  impacted  departments  as
+        indicated in the Change Control Form  for  cross-functional  review.
+        The draft document shall  be  clearly  marked  “DRAFT”  as  diagonal
+        watermark on each page.
+    22. The reviewing department shall display from  the  beginning  of  the
+        document, the “Comments” pane and  keep  “Tracked  Changes”  on.  To
+        enable these features in Ms  Word,  the  following  steps  shall  be
+        followed:
+   a) To display Comments pane, click on Review > New Comment
+   b) To keep Tracked changes on: click on Review > Track Changes  >  Track
+      Changes
+    23. Each reviewing department shall conduct a structured  evaluation  of
+        the draft document to confirm that:
+     a) the procedure is technically accurate and  consistent  with  current
+        validated processes,  approved  specifications,  current  regulatory
+        guidelines, and equipment capability (where applicable);
+     b) the procedure is operationally feasible and can be executed  without
+        ambiguity or procedural conflict;
+     c)  responsibilities,  authorization  levels,   and   interdepartmental
+        interfaces are clearly defined and acceptable;
+     d) the document  does  not  introduce  unacceptable  risks  to  product
+        quality, sterility assurance, patient safety, cold chain  integrity,
+        or data integrity;
+     e)  referenced  forms,  records,  systems,  protocols,  guidelines  and
+        related SOPs exist and are correctly identified.
+     f) Spelling and Grammar check is complete, and there  are  no  spelling
+        errors or grammatically incorrect statements.
+
+
+
+
+    24. Document Reviewer Feedback
+     1.       All  reviewers  shall  provide   comments,   suggestions,   or
+        corrections using the Comments pane of the document and return it to
+        the Document owner after review.
+     2.     The document owner, in coordination with QA,  shall  consolidate
+        all reviewer comments  and  ensure  that  required  corrections  are
+        incorporated. Where conflicting technical opinions arise,  QA  shall
+        coordinate resolution discussions, and  the  final  agreed  decision
+        shall be applied to the document.
+     3.     The reviewed draft document shall be modified to incorporate all
+        agreed  changes,  and  such  modifications  shall  be  traceable  to
+        reviewer comments. Where  substantial  technical  modifications  are
+        made that could affect previously  reviewed  sections,  the  revised
+        draft  shall  be   re-circulated   to   affected   departments   for
+        confirmation of acceptance prior to approval.
+     4.     Cross-functional review shall be considered complete  only  when
+        designated departmental representatives  have  formally  signed  and
+        dated  the  document,  thereby  confirming  that  the  procedure  is
+        technically acceptable, operationally feasible, and  compliant  with
+        applicable GMP requirements.
+
+    25. Quality Assurance Final Review
+      1. Following completion of cross-functional review, QA shall perform a
+         final independent verification to confirm that:
+           a) all required reviews are completed,
+           b) document numbering and version control are correct,
+           c) referenced documents are valid and current,
+           d) training requirements are identified where applicable.
+
+    26. Authorization/Approval for Issue of Documents
+      1. Final authorization for document release shall only be  granted  by
+         the QA Head or authorized  designee  after  confirmation  that  the
+         cross-functional review process has been fully completed.
+    27. The reviewed document shall be printed on A4-size paper  or  A3-size
+        paper where appropriate.
+    28. All authorized signatories, including the author,  the  reviewer(s),
+        and the approver, shall append their signatures and date in blue ink
+        at the approval page/sections of the document.
+    29. The approved document shall  then  be  issued  by  QA  to  the  User
+        Department for training purpose. The responsible  QA  Officer  shall
+        write the “Issue Date” at the designated section.
+
+
+
+        31 Training on Approved Document
+
+    30. Wherever required,  training  shall  be  imparted  as  per  SOP  No.
+        QA/SOP/003, to concerned personnel within fifteen (15) working  days
+        after issuance of the approved document.
+    31. After training has been completed, the User Department shall  return
+        the issued document to QA to be made effective.
+    32. The QA Officer  responsible  for  document  control  shall  apply  a
+        ‘MASTER COPY’ stamp in blue ink at the top left corner of the Header
+        on each page, sign, and write the Effective Date in the Master  Copy
+        stamp.
+
+32 All master documents shall be stored with the QA department  in  a  sheet
+        protector and well-archived to protect them from damage, loss,  pest
+        infestation and deterioration due to  environmental  conditions  and
+        unauthorized access.
+
+
+
+33 Control of Documents
+
+
+34 The User Department shall raise a request for issuance  of  documents  by
+        completing the Document Request Form (Format No:  QA/SOP/007/F03-02)
+        and submitting it to QA.
+
+
+35 The QA  Officer  in-charge  shall  review  the  request  information  and
+        approve if found satisfactory, by signing with date.
+
+
+36 The required number of copies shall then be photocopied from  the  Master
+        copy and stamped as “CONTROLLED COPY” and “ISSUED BY QA” in blue ink
+at  the  top  right  corner  and  bottom-right  corner,  respectively.   The
+        responsible QA person shall sign and indicate the Issue date in  the
+        “ISSUED BY QA” stamp.
+
+
+37 Each copy of the individual document shall be issued with a  unique  copy
+        number, as mentioned below
+
+               YY/DC/NNNN
+      Where YY: Indicates the last two digits of the calendar year
+      DC: Indicates the Department Code
+      NNNN: Represents the serial no. of  a  specific-format  copy  starting
+        from ‘0001’.
+
+38 The copy number shall be appended on the top right corner  on  the  first
+        page of the format.
+
+
+39 In the case of formats with multiple pages, which  shall  be  stapled  or
+        bound together, the “ISSUED BY QA” stamp shall  be  applied  on  the
+        first page only with sign & date, while all other  subsequent  pages
+        shall be controlled by applying the “CONTROLLED COPY”  stamp,  which
+        shall  also  be  on  the  first  page.  This  is  to  prevent   page
+        substitution and ensure data integrity.
+
+
+40 However, documents with loose sheets to be issued  as  unbound  documents
+        shall have the “ISSUED BY QA” stamp applied  on  each  page  at  the
+        bottom right corner.
+
+
+41 QA shall issue all Level IV documents, and the issuance details shall  be
+recorded  in  “Daily  Document  Issuance,  Retrieval  and  Disposal  Record”
+        (Format No.: QA/SOP/007/F01-02).
+
+
+42 For Level II & III documents, such  as  Specifications,  MOA,  Protocols,
+        Reports, and Laboratory note books, entry shall be made in the “Non-
+        Routine Document Retrieval and Disposal Record” logbook (Format  No.
+        QA/SOP/007/F02-02) and the Controlled copies shall be distributed to
+the User HOD/Designee, who shall append his/her  signature  as  evidence  of
+        receipt.
+
+
+43 In  case  of  computer-generated  formats  (such  as  SOP  Master  Index,
+       Equipment Master List), the soft copy of the  format  shall  be  used
+       directly as  a  template  by  providing  the  required  data  without
+       altering the structure or sections  of  the  approved  template.  The
+       completed document shall then be  printed  and  controlled  with  the
+       MASTER COPY stamp,  and  copies  made  for  distribution  shall  have
+       CONTROLLED COPY stamp applied by QA as appropriate.
+
+
+44 Soft copies of all quality documents shall be stored  and  maintained  by
+       the QA documentation team for backup and future retrieval.
+
+
+45 Reproduced documents should be clear and legible and without errors  from
+the reproduction process.
+
+
+46 When auditors who are conducting on-site audits  request  for  documents,
+       any document issued (usually controlled copies)  shall  be  retrieved
+       after  completion  of  the  audit  or  review  activity  by  the   QA
+       responsible person and returned to  the  original  storage  location.
+       The same shall apply to documents  requested  by  other  persons  for
+       reading, evaluation or due diligence purposes. All  recipients  shall
+       be required to maintain confidentiality and shall  not  reproduce  or
+       distribute the documents without prior authorization from QA.
+
+
+
+
+
+
+        48 Issuance of Uncontrolled Copies
+
+
+49 Documents which may be requested by external parties such as  regulators,
+third-party auditors,   vendors  or  service  providers  shall  be  sent  as
+       Uncontrolled copies, except for dossier submission.
+
+
+50 Uncontrolled copies issued for reference or  information  purposes  shall
+       be clearly identified as such and shall not be used  for  operational
+       purposes.
+
+
+51 Such uncontrolled copies shall be photocopies of the original  or  master
+       documents, which shall be stamped at the top  right  corner  of  each
+       page as ‘UNCONTROLLED COPY’ in blue ink by QA.
+
+
+
+
+
+
+        53 Issuance of Display Copies
+
+
+54 Display copy of documents shall be made by photocopying the  Master  copy
+       and applying the “DISPLAY COPY” stamp at the top right corner.
+
+
+55 Whenever display copies of a document is required,  the  User  Department
+       shall make a request using the Document Request Form, and this  shall
+       be reviewed, approved, and issued by QA.
+
+
+56 Upon receipt, the User Department shall place the Display copies  at  the
+       designated operational areas  where  the  document  is  required  for
+       reference during routine activities.
+
+
+57 Issuance of display copies  shall  be  recorded  in  the  Daily  Document
+       Issuance, Retrieval, and Disposal Record to  ensure  proper  tracking
+       and control.
+
+
+58 When a document is revised,  superseded,  or  withdrawn,  all  previously
+       issued display copies shall be promptly retrieved and  replaced  with
+       the updated version.
+
+
+
+59 Issuance of Logbooks
+
+
+60 The user  shall  request  Logbook(s)  using  the  Document  Request  Form
+       (Format No. QA/SOP/007/F03-02).  Upon  receipt  of  the  request,  QA
+       responsible person shall review, approve, and record the  details  in
+       the Logbook Issuance Record (Format No. QA/SOP/007/F04-00).
+
+
+61 Each Logbook shall be assigned a unique number to  identify  and  control
+       same. Once a number  is  allotted,  the  same  number  shall  not  be
+       reassigned to any other logbook. The  number  shall  be  as  per  the
+       format:
+
+       LOG/XX/DC/YYYY
+       ➢ Where XX indicates the last two digits of the calendar year
+       ➢ DC: Indicates the Department Code
+       ➢ YYYY: represents serial no. of logbook starting from ‘0001’.
+
+62 The Logbooks shall be prepared from the respective formats and  paginated
+in the format Page X of Y, where Y represents the  total  number  of  pages,
+       including the cover page. For example, for  a  50-page  logbook,  the
+       page numbering shall begin from Page 1 of 50, Page 2 of 50…up to Page
+       50 of 50. Each page shall be controlled by  applying  the  CONTROLLED
+       COPY stamp  on  the  top  right  corner.  This  is  to  prevent  page
+       substitution and ensure data integrity.
+
+
+63 The Cover Page of the Logbook shall be as per the  template  provided  in
+       Format No. QA/SOP/001/F05-00 if portrait presentation is desired,  or
+       Format No. QA/SOP/001/F06-00, if a landscape presentation is desired.
+
+
+
+64 Logbooks shall either be stapled or comb-bound, depending on the size.
+
+
+65 After recording relevant details, QA Officer in charge  shall  issue  the
+       logbook to the user who shall sign  to  acknowledge  receipt  of  the
+       document.
+
+
+66 Laboratory notebooks shall be treated as  controlled  GMP  documents  and
+       shall be issued by QA to the respective Quality Control Analysts upon
+receipt of duly completed Document Request Form.
+
+
+67 Each Laboratory notebook shall have a unique  identification  number  and
+       issuance shall be recorded in the “Non-Routine Document Retrieval and
+Disposal Record” logbook.
+
+
+68 Completed laboratory notebooks shall be reviewed by  the  Lab-QA  Officer
+       before archival and shall be in accordance with the approved document
+retention schedule.
+
+
+
+69 Control of Records (Reports Generated from Approved Templates)
+
+
+70 All reports or records generated  using  approved  templates  or  formats
+       shall  be  considered  GMP  records  upon  completion  and  shall  be
+       maintained as  documented  evidence  of  activities  performed.  Such
+       records shall  comply  with  ALCOA+  principles,  and  shall  clearly
+       indicate the report title, report number (where applicable), date  of
+       preparation,  and  signatures  of  the  responsible   personnel   for
+       preparation, review, and approval.
+
+
+71 Records generated in soft copy and subsequently printed shall be  derived
+only from current  approved  templates/formats  without  alteration  of  the
+       template structure or content. Upon printing, such records shall  not
+       be  stamped  as  “MASTER  COPY”  or  “CONTROLLED  COPY”,   as   these
+       designations apply only to controlled documents. Reports shall not be
+       subject  to  version  update  and  shall   not   require   controlled
+       distribution tracking. The authenticity and  control  of  the  record
+       shall be ensured through proper completion,  signatures,  pagination,
+       and traceability to the originating template version.
+
+
+72 Copies of completed records generated for internal  circulation,  review,
+       or reference shall be clear, complete, and legible  reproductions  of
+       the original record. Such copies shall not be stamped as  “CONTROLLED
+       COPY”. The original record shall be  securely  maintained  by  QA  in
+       accordance with the approved retention schedule to ensure  protection
+       against loss, damage, or unauthorized access.
+
+
+73 Revision of Documents
+
+
+74 Documents shall be revised in accordance with the  stated  review  period
+       of each document as per their respective SOPs.   The  generic  review
+       period shall be every three years.
+
+
+75 Any revision with a change shall undergo change control procedure as  per
+SOP No. QA/006. No document should  be  changed  without  authorization  and
+       approval.
+
+
+76 Summary of changes in the document shall  be  provided  in  the  Revision
+       History section of the document.
+
+
+77 Retrieval and Archiving of Documents
+
+
+78 The user department shall submit executed/completed documents to  the  QA
+       department for archiving.
+
+
+79 Un-executed/Superseded logbooks shall  also  be  submitted  to  QA  after
+       verification.
+
+
+80 Whenever a format is revised or obsoleted, all the  previous  un-executed
+       formats shall be reconciled by the User department.
+
+
+81  Upon  SOP/format  revision,  all  existing   related   logbooks/formats,
+       controlled copies, and  display  copies  shall  be  retrieved  before
+       issuance of the revised format/logbook. A new logbook shall be issued
+only upon submission of the old logbook.
+
+
+82 In some exceptional cases, a maximum of two logbooks  can  be  held  with
+       the user department, and a new logbook shall  be  issued  only  after
+       submission of the old executed logbook. Example: In the 1st  logbook,
+       some of the continuous  entries  are  still  pending,  then  the  2nd
+       logbook can be issued. Before  the  3rd  logbook  issuance,  the  1st
+       logbook should be submitted to QA.
+
+
+83 Before making SOP obsolete, all related formats  and  logbooks  shall  be
+       retrieved from users.
+
+
+       Note: If any recording or data entries are initiated in the  existing
+       format, the same can be utilized until closure of respective entries.
+       However, further columns/pages/rows of the logbooks/formats shall  be
+       marked as ‘NA’.
+
+
+85 All Logbooks issued to functional departments shall be replaced with  new
+logbooks at the end of every year +1 month.
+
+
+86 The user department shall  complete  the  empty/left  over  spaces/fields
+       available in the  old  log  books  by  following  good  documentation
+       practices and shall submit the books to QA for archiving.
+
+               Note:  To  facilitate  issuance  of  new  logbooks  to   user
+       departments for the upcoming year, QA Documentation shall  issue  the
+       required number of "Log book issuance records" to record the issuance
+       details  of  upcoming  year  log  books   required   for   functional
+       departments (with upcoming numbering pattern) in the  existing  year,
+       and the same log books shall be used until the completion  of  books.
+
+
+
+
+       87 Retention of Documents
+
+
+88 All GMP documents and records shall be retained  for  specific  retention
+       periods  to  ensure  traceability,  regulatory  compliance,  and  the
+       ability to reconstruct all manufacturing, testing, distribution,  and
+       quality-related activities associated with products  manufactured  or
+       marketed by the company.
+
+
+89 Batch manufacturing, packaging, testing, and distribution  records  shall
+       be retained for one year after expiry of  the  batch  or  five  years
+       after batch certification, whichever is longer.
+
+
+90 Records supporting  marketing  authorization,  including  validation  and
+       stability data, shall be retained for the  entire  lifecycle  of  the
+       product’s marketing authorization.
+
+
+91 Electronic records shall remain accessible and  readable  throughout  the
+       retention period  and  shall  be  preserved  using  validated  backup
+       systems.
+
+
+92 Specific retention periods for all GMP documents  and  records  generated
+       in ALS have been provided in Annexure No. QA/SOP/001/A01-00.
+
+
+93 Obsolete Master copies of documents shall be retained until  the  end  of
+       their retention period.
+
+
+
+94 Destruction of Documents
+
+
+95 Approved GMP documents shall only  be  destroyed  after  their  retention
+       period has expired and upon written authorization from QA.
+
+
+96  Being  the  custodian  of  most  GMP  documents,  QA  may  initiate  the
+       destruction of master documents that have  outlived  their  retention
+       period or documents that are draft copies or obsolete  controlled  or
+       uncontrolled copies. However, a formal request for destruction of any
+document  shall  be  made  by  the  User  Department  using  the   “Document
+       Destruction  Request  Form”  (Format   No.   QA/SOP/001/F07-00)   and
+       submitted to QA  for  review  and  approval  before  the  destruction
+       process is initiated.
+
+
+97 Prior to destruction, QA  shall  verify  that  the  applicable  retention
+       period  has  been  met  in  accordance  with  the  approved  Document
+       Retention Schedule.
+
+
+98 All documents approved for destruction shall be recorded in  a  “Document
+       Destruction Register” (Format No. QA/SOP/001/F08-00), indicating  the
+       document  title,  document  number,  revision   number,   originating
+       department, date of destruction, and responsible personnel.
+
+
+99 Documents shall be destroyed using  secure  methods  such  as  shredding,
+       pulping, incineration, or validated electronic  deletion  to  prevent
+       reconstruction or unauthorized access.
+
+
+100  Destruction  activities   shall   be   witnessed   by   an   authorized
+       representative of  QA  Department  to  ensure  compliance  with  this
+       procedure.
+
+
+101 Third-Party Destruction Services: When external  service  providers  are
+       used for document destruction, they  shall  be  approved  by  QA  and
+       appropriate  records  or  certificates  of   destruction   shall   be
+       maintained.
+
+
+102  Legal  and  Regulatory  Hold:   Documents   associated   with   ongoing
+       investigations, complaints, recalls, legal proceedings, or regulatory
+inquiries shall not be destroyed (even if  they  are  past  their  retention
+       period) until written clearance is provided by QA where applicable.
+
+
+103 Document destruction shall be suspended  during  regulatory  inspections
+       or internal investigations if the records may be required for review.
+
+
+104 Records of document destruction shall be retained as controlled  quality
+records and maintained for the life of the company.
+
+
+    5.   REFERENCE DOCUMENTS
+         1. SOP for SOP (QA/SOP/001, current version).
+         2. SOP for Training (QA/SOP/003, current version)
+    3. WHO good manufacturing practices for  pharmaceutical  products:  main
+       principles, WHO Technical Report Series No. 986, 2014, Annex 2.
+
+
+FORMATS & ANNEXURES
+
+|S. No.|Format/Annexure No.|Format / Annexure Title        |Use As           |
+|1     |QA/SOP/007/F01-02  |Daily Document Issuance,       |Logbook          |
+|      |                   |Retrieval, and Disposal Record |                 |
+|2     |QA/SOP/007/F02-02  |Non-routine Document Issuance, | Logbook         |
+|      |                   |Retrieval, and Disposal Record |                 |
+|3     |QA/SOP/007/F03-02  |Document Request Form          | Use as such     |
+|4     |QA/SOP/007/F04-00  |Logbook Issuance Record        | Logbook         |
+|5     |QA/SOP/007/F05-00  |Cover Page Template (Portrait) | Logbook cover   |
+|      |                   |                               |page             |
+|6     |QA/SOP/007/F06-00  |Cover Page Template (Landscape)|Logbook cover    |
+|      |                   |                               |page             |
+|7     |QA/SOP/007/F07-00  |Document Destruction Request   |Use as such      |
+|      |                   |Form                           |                 |
+|8     |QA/SOP/007/F08-00  |Document Destruction Register  |Logbook          |
+|9     |QA/SOP/007/A01-00  |Retention Schedule for GMP     |Use as such      |
+|      |                   |Documents and Records          |                 |
+
+
+
+SOP DISTRIBUTION LIST
+
+|Department                        |Type of Copy            |No. of Copies   |
+|QA (Archived)                     |Master copy             |1               |
+|QA                                |Controlled copy         |1               |
+|Regulatory Affairs                |Controlled copy         |1               |
+|Quality Control (Physicochemical) |Controlled copy         |1               |
+|Quality Microbiology              |Controlled copy         |1               |
+|Human Resource & Administration   |Controlled copy         |1               |
+|Warehouse                         |Controlled copy         |1               |
+|Production (All Blocks/Units)     |Controlled copy         |1 Each          |
+|Engineering                       |Controlled copy         |1               |
+|Health, Safety & Environment      |Controlled copy         |1               |
+|Procurement & Logistics           |Controlled copy         |1               |
+|Pharmacovigilance                 |Controlled copy         |1               |
+|Marketing                         |Controlled copy         |1               |
+
+
+
+
+
+
+REVISION HISTORY:
+
+|Superseded     |Change Control |Revision Summary                             |
+|Version No. &  |No. & Approval |                                             |
+|Effective date |Date           |                                             |
+|00 & 01/2021   |NA             |New Document                                 |
+|01 & 22/02/2023|CC/QA/25/012   |                                             |
+|               |& 06/11/2025   |SOP was due for review.                      |
+|               |               |Changes were made as per the revised SOP for |
+|               |CC/QA/26/001 & |SOP.                                         |
+|               |15/01/2026     |All sections have been amended.              |
+|               |               |New formats and an annexure have been added. |
+
+
+
+
+
+                               END OF DOCUMENT
+

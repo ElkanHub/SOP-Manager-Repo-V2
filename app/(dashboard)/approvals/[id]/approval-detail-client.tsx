@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
 import { SopViewer } from "@/components/library/sop-viewer"
 import { AnnotatedSopViewer, ViewerAnnotation } from "@/components/approvals/annotated-sop-viewer"
-import { approveSopRequest, endorseSopToQa, requestChangesSop } from "@/actions/sop"
+import { approveSopRequest, endorseSopToQa, requestChangesSop, rejectSopRequest } from "@/actions/sop"
 import { SopApprovalRequest, Profile, SopRecord, SopAnnotationDraft } from "@/types/app.types"
 
 interface ApprovalDetailClientProps {
@@ -43,7 +43,7 @@ export function ApprovalDetailClient({
     reviewStage,
 }: ApprovalDetailClientProps) {
     const [loading, setLoading] = useState(false)
-    const [action, setAction] = useState<'approve' | 'changes' | null>(null)
+    const [action, setAction] = useState<'approve' | 'changes' | 'reject' | null>(null)
     const [requiresTraining, setRequiresTraining] = useState(true)
     const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10))
     const [comment, setComment] = useState('')
@@ -163,6 +163,25 @@ export function ApprovalDetailClient({
             setTimeout(() => { window.location.href = '/approvals' }, 2000)
         } catch (err: any) {
             setError(err.message || 'Failed to request changes')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleReject = async () => {
+        if (!comment.trim()) { setError('A rejection reason is required'); return }
+        setLoading(true)
+        setError(null)
+        try {
+            const result = await rejectSopRequest(approvalRequest.id, comment)
+            if (!result.success) {
+                setError(result.error || 'Failed to reject')
+                return
+            }
+            setSuccess('Request rejected. The submitter has been notified.')
+            setTimeout(() => { window.location.href = '/approvals' }, 2000)
+        } catch (err: any) {
+            setError(err.message || 'Failed to reject')
         } finally {
             setLoading(false)
         }
@@ -530,6 +549,16 @@ export function ApprovalDetailClient({
                                                 <AlertCircle className="h-4 w-4 mr-2" />
                                                 Request Changes
                                             </Button>
+
+                                            <Button
+                                                onClick={() => setAction('reject')}
+                                                variant="outline"
+                                                disabled={loading || action === 'approve'}
+                                                className="w-full border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50"
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" />
+                                                Reject Request
+                                            </Button>
                                         </div>
 
                                         {action === 'changes' && (
@@ -567,6 +596,26 @@ export function ApprovalDetailClient({
                                                             setComment('')
                                                         }}
                                                     >
+                                                        Cancel
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {action === 'reject' && (
+                                            <div className="space-y-2">
+                                                <Textarea
+                                                    placeholder="Reason for rejection (required)…"
+                                                    value={comment}
+                                                    onChange={(e) => setComment(e.target.value)}
+                                                    rows={3}
+                                                />
+                                                <div className="flex gap-2">
+                                                    <Button onClick={handleReject} disabled={loading} size="sm" className="flex-1 bg-red-600 hover:bg-red-700">
+                                                        {loading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Send className="h-4 w-4 mr-1" />}
+                                                        Reject
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" onClick={() => { setAction(null); setComment('') }}>
                                                         Cancel
                                                     </Button>
                                                 </div>

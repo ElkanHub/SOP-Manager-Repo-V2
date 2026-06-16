@@ -116,7 +116,7 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
       header: "Status",
       cell: ({ row }) => {
         const statusStr = String(row.original.status || 'unknown')
-        if (statusStr === 'complete') {
+        if (statusStr === 'effective' || statusStr === 'closed') {
           return <Badge variant="outline" className="border-green-200 text-green-700 bg-green-50">Executed</Badge>
         }
         return <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 capitalize">{statusStr.replace('_', ' ')}</Badge>

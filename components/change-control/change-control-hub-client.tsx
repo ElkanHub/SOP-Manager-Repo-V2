@@ -27,10 +27,8 @@ const openStatuses: ChangeControlPackageStatus[] = [
     "approved_for_document_work",
     "documents_in_review",
     "signatures_pending",
-    "pending",
     "pending_reconciliation",
     "pending_training",
-    "pending_activation",
 ]
 
 const lifecycleOptions: { value: ChangeControlPackageStatus; label: string }[] = [
@@ -177,7 +175,14 @@ export function ChangeControlHubClient({ departments, changeControls }: Props) {
                                         data-state={selected?.id === cc.id ? "selected" : undefined}
                                         onClick={() => setSelectedId(cc.id)}
                                     >
-                                        <TableCell className="font-mono text-xs">{cc.cc_number || cc.id.slice(0, 8)}</TableCell>
+                                        <TableCell className="font-mono text-xs">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); router.push(`/requests/hub/change-control/${cc.id}`) }}
+                                                className="text-brand-teal hover:underline"
+                                            >
+                                                {cc.cc_number || cc.id.slice(0, 8)}
+                                            </button>
+                                        </TableCell>
                                         <TableCell>
                                             <div className="font-medium">{cc.title || "Change Control"}</div>
                                             <div className="text-xs text-muted-foreground">{cc.originating_department || "No department"} · {cc.submitted_at ? format(new Date(cc.submitted_at), "dd MMM yyyy") : "-"}</div>

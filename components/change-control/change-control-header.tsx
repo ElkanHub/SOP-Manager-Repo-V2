@@ -32,16 +32,17 @@ export function ChangeControlHeader({
     const isOverdue = daysUntilDeadline < 0
     const isDueSoon = daysUntilDeadline >= 0 && daysUntilDeadline <= 3
     
-    const ccRef = `CC-${new Date(changeControl.created_at).getFullYear()}-${changeControl.id.slice(0, 4).toUpperCase()}`
+    const ccRef = changeControl.cc_number || `CC-${new Date(changeControl.created_at).getFullYear()}-${changeControl.id.slice(0, 4).toUpperCase()}`
+    const isComplete = changeControl.status === 'effective' || changeControl.status === 'closed'
 
     return (
         <div className={`
             relative rounded-lg border p-6
-            ${changeControl.status === 'pending' 
-                ? 'bg-card dark:bg-card border-border' 
+            ${!isComplete
+                ? 'bg-card dark:bg-card border-border'
                 : 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800'}
         `}>
-            {changeControl.status === 'pending' && (
+            {!isComplete && (
                 <div className="absolute inset-0 rounded-lg overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-brand-teal/5 to-transparent animate-pulse" />
                 </div>
@@ -57,13 +58,13 @@ export function ChangeControlHeader({
                             <Badge 
                                 variant="outline"
                                 className={`
-                                    ${changeControl.status === 'complete' 
-                                        ? 'border-green-500 text-green-600 dark:text-green-400' 
+                                    ${isComplete
+                                        ? 'border-green-500 text-green-600 dark:text-green-400'
                                         : 'border-red-500 text-red-600 dark:text-red-400'}
                                 `}
                             >
-                                {changeControl.status === 'complete' ? (
-                                    <><CheckCircle2 className="h-3 w-3 mr-1" />Complete</>
+                                {isComplete ? (
+                                    <><CheckCircle2 className="h-3 w-3 mr-1" />{changeControl.status === 'closed' ? 'Closed' : 'Effective'}</>
                                 ) : (
                                     <><Clock className="h-3 w-3 mr-1" />Pending Signatures</>
                                 )}

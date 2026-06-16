@@ -46,10 +46,8 @@ export default async function DashboardPage() {
     'approved_for_document_work',
     'documents_in_review',
     'signatures_pending',
-    'pending',
     'pending_reconciliation',
     'pending_training',
-    'pending_activation',
   ]
   const startOfMonth = dfStartOfMonth(todayObj).toISOString()
   const startOfMonthDate = dfStartOfMonth(todayObj).toISOString().split('T')[0]
