@@ -22,6 +22,13 @@ export const metadata: Metadata = {
   title: "QMS-MANAJA",
   description: "Industrial compliance, simplified",
   applicationName: "QMS-MANAJA",
+  // The SVG mark is the browser-tab icon; it adapts to the browser's light/dark
+  // chrome via a prefers-color-scheme rule inside the file. favicon.ico (app/)
+  // remains the legacy fallback for older browsers.
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/apple-touch-icon.png" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
