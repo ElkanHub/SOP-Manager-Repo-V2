@@ -1,16 +1,74 @@
 import type { SopBuilderComment, SopBuilderSession, SopOutline } from "./types"
 
 export function buildSystemInstruction(templateContext?: string | null) {
-  return `You are a compliance-aware SOP drafting agent for QMS-MANAJA.
-You generate DRAFT SOPs only. Never write as if a document is approved, effective, or released.
-Every draft must include this exact warning field: "AI-generated draft only. Not approved, not effective, and not released for operational use."
-If intake information is insufficient, ask concise clarification questions. Do not invent facts.
-Responsibilities must be explicit. If unclear, use [CONFIRM OWNER].
-Acceptance criteria, frequencies, limits, regulatory claims, and ownership assignments must be confirmed. If unclear, use [CONFIRM VALUE], [CONFIRM FREQUENCY], or [CONFIRM ACCEPTANCE CRITERIA].
-Write procedure steps using clear imperative language such as "Verify", "Record", "Ensure", and "Notify".
-Return JSON only for outline, draft, and revision operations. Do not wrap JSON in markdown.
-Use a practical industrial compliance tone. Keep wording direct and auditable.
-${templateContext ? `Template context:\n${templateContext}` : "No tenant template context is available. Use the QMS-MANAJA default SOP structure."}`
+  return `You are an expert SOP-writing agent for QMS-MANAJA, serving regulated (GMP/pharmaceutical) manufacturers. You write thorough, detailed, audit-ready DRAFT Standard Operating Procedures that a Quality Assurance team would respect.
+
+Quality bar — every SOP you produce must be:
+- COMPLETE: full purpose, scope, definitions, an explicit RACI-style responsibilities table, materials/equipment, a detailed numbered procedure, safety & quality controls, records/forms, references, and a revision-history table.
+- SPECIFIC and PRACTICAL: real, actionable steps in clear imperative voice ("Verify", "Record", "Ensure", "Notify", "Label", "Reconcile"). No vague filler. Prefer concrete detail over generic statements.
+- AUDITABLE: each step should be observable/verifiable. Call out acceptance criteria, limits, and frequencies.
+
+Honesty rules (never invent facts):
+- Where a value, owner, frequency, or acceptance criterion is genuinely unknown, insert a clear placeholder — [CONFIRM VALUE], [CONFIRM OWNER], [CONFIRM FREQUENCY], [CONFIRM ACCEPTANCE CRITERIA] — rather than guessing or omitting the section.
+- Always set the warning field exactly to: "AI-generated draft only. Not approved, not effective, and not released for operational use."
+- Never write as if the document is approved, effective, or released.
+
+Output rules:
+- For draft and revision operations, return JSON ONLY (no markdown fences, no prose outside the JSON).
+- Be generous with detail in procedure steps — a good SOP procedure typically has many concrete steps, grouped logically.
+
+${templateContext ? `Template context:\n${templateContext}` : "Use the QMS-MANAJA default SOP structure."}`
+}
+
+const SOP_JSON_SHAPE = `Return ONLY this JSON shape (no markdown):
+{
+  "title": "string",
+  "ai_draft_warning": "AI-generated draft only. Not approved, not effective, and not released for operational use.",
+  "department": "string",
+  "sections": [
+    { "heading": "1. Purpose", "type": "text", "content": "..." },
+    { "heading": "2. Scope", "type": "text", "content": "..." },
+    { "heading": "3. Definitions", "type": "table", "rows": [["Term", "Definition"], ["...", "..."]] },
+    { "heading": "4. Responsibilities", "type": "table", "rows": [["Role", "Responsibility"], ["...", "..."]] },
+    { "heading": "5. Materials & Equipment", "type": "text", "content": "..." },
+    { "heading": "6. Procedure", "type": "steps", "steps": ["Verify ...", "Record ...", "Ensure ..."] },
+    { "heading": "7. Safety & Quality Controls", "type": "text", "content": "..." },
+    { "heading": "8. Records & Forms", "type": "text", "content": "..." },
+    { "heading": "9. References", "type": "text", "content": "..." },
+    { "heading": "10. Revision History", "type": "table", "rows": [["Version", "Date", "Change"], ["00", "[CONFIRM VALUE]", "Initial AI draft"]] }
+  ]
+}`
+
+/**
+ * Single-pass full draft from the conversation — used by the chat agent so one
+ * user message produces a complete, detailed SOP (no separate outline step).
+ */
+export function buildFullDraftPrompt(session: SopBuilderSession, messages: Array<{ sender: string; message: string }>) {
+  return `Write a COMPLETE, detailed, audit-ready draft SOP based on the request and conversation below. Cover every standard section thoroughly; the procedure must contain specific, numbered, imperative steps. Use [CONFIRM ...] placeholders for anything genuinely unknown — never drop a section.
+
+${buildIntakeContext(session)}
+
+Conversation:
+${formatMessages(messages)}
+
+${SOP_JSON_SHAPE}`
+}
+
+/**
+ * Revise the current draft from a plain chat instruction (no anchored comments).
+ */
+export function buildChatRevisionPrompt(session: SopBuilderSession, currentDraftJson: unknown, instruction: string) {
+  return `Revise the current SOP draft to satisfy the user's instruction, then return the COMPLETE revised SOP as JSON. Apply the change precisely and keep everything else intact and consistent. Preserve [CONFIRM ...] placeholders where facts are still unconfirmed; remove a placeholder only if the instruction supplies the value.
+
+${buildIntakeContext(session)}
+
+Current draft JSON:
+${JSON.stringify(currentDraftJson, null, 2)}
+
+User instruction:
+"${instruction}"
+
+${SOP_JSON_SHAPE}`
 }
 
 export function buildIntakeContext(session: SopBuilderSession) {
