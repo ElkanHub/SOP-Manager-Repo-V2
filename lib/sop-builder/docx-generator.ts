@@ -22,6 +22,26 @@ import type { SopSection, SopStructuredContent } from "./types"
 const LINE = { style: BorderStyle.SINGLE, size: 2, color: "000000" }
 const CELL_BORDERS = { top: LINE, bottom: LINE, left: LINE, right: LINE }
 
+/**
+ * The numbered SOP sections (+ a revision-history fallback). This is the body
+ * that fills either the default template below or a per-tenant template's
+ * content region — it deliberately excludes the title block / approval table /
+ * header / footer, which the surrounding template owns.
+ */
+export function buildSopBodyContent(content: SopStructuredContent): Array<Paragraph | Table> {
+  const body: Array<Paragraph | Table> = [...content.sections.flatMap(sectionToDocx)]
+
+  if (!content.sections.some((section) => /revision history/i.test(section.heading))) {
+    body.push(headingPara("Revision History"))
+    body.push(buildTable([
+      ["Version", "Date", "Change", "Change Control No."],
+      ["00", "[CONFIRM VALUE]", "Initial AI draft", "[CONFIRM VALUE]"],
+    ]))
+  }
+
+  return body
+}
+
 export async function generateSopDocx(content: SopStructuredContent) {
   const body: Array<Paragraph | Table> = [
     new Paragraph({
@@ -36,16 +56,8 @@ export async function generateSopDocx(content: SopStructuredContent) {
     }),
     approvalBlock(),
     new Paragraph({ spacing: { after: 200 }, children: [] }),
-    ...content.sections.flatMap(sectionToDocx),
+    ...buildSopBodyContent(content),
   ]
-
-  if (!content.sections.some((section) => /revision history/i.test(section.heading))) {
-    body.push(headingPara("Revision History"))
-    body.push(buildTable([
-      ["Version", "Date", "Change", "Change Control No."],
-      ["00", "[CONFIRM VALUE]", "Initial AI draft", "[CONFIRM VALUE]"],
-    ]))
-  }
 
   const document = new Document({
     creator: "QMS-MANAJA",

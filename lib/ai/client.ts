@@ -136,6 +136,11 @@ export interface GenerateJsonOptions<T> extends GenerateTextOptions {
   schema?: Record<string, unknown>
 }
 
+export interface GenerateJsonStreamOptions<T> extends GenerateJsonOptions<T> {
+  /** Called with each raw text chunk as it streams from the model. */
+  onChunk?: (textDelta: string) => void
+}
+
 export interface AIResult<T> {
   data: T
   modelUsed: string
@@ -280,6 +285,89 @@ export async function generateJson<T = unknown>(
         actorId: options.actorId ?? null,
         success: false,
         errorCode: mapped.code,
+      })
+    }
+    throw mapped
+  }
+}
+
+/**
+ * Streaming JSON generation. Same contract as `generateJson` — parses,
+ * validates and meters identically once the stream closes — but forwards each
+ * raw text chunk to `onChunk` so the caller can show output as it arrives.
+ */
+export async function generateJsonStream<T = unknown>(
+  options: GenerateJsonStreamOptions<T>,
+): Promise<AIResult<T>> {
+  if (!isAiConfigured()) {
+    throw new AIError("AI_NOT_CONFIGURED", "GEMINI_API_KEY is not set")
+  }
+
+  const tier = options.tier ?? "fast"
+  const model = resolveModel(tier)
+  const started = Date.now()
+
+  try {
+    let raw = ""
+    let usage = { prompt: null as number | null, completion: null as number | null, total: null as number | null }
+
+    const consume = (async () => {
+      const stream = await getClient().models.generateContentStream({
+        model,
+        contents: options.prompt,
+        config: {
+          temperature: options.temperature ?? DEFAULT_TEMPERATURE,
+          maxOutputTokens: options.maxOutputTokens ?? DEFAULT_MAX_OUTPUT,
+          responseMimeType: "application/json",
+          ...(options.systemInstruction ? { systemInstruction: options.systemInstruction } : {}),
+          ...(options.schema ? { responseSchema: options.schema as SchemaUnion } : {}),
+        },
+      })
+      for await (const chunk of stream) {
+        const text = getResponseText(chunk)
+        if (text) {
+          raw += text
+          options.onChunk?.(text)
+        }
+        const u = getResponseUsage(chunk)
+        if (u.total !== null || u.prompt !== null || u.completion !== null) usage = u
+      }
+    })()
+
+    await withTimeout(consume, options.timeoutMs ?? DEFAULT_TIMEOUT_MS)
+
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      const match = raw.match(/\{[\s\S]*\}|\[[\s\S]*\]/)
+      if (!match) throw new AIError("AI_PARSE_ERROR", "Model did not return JSON")
+      try {
+        parsed = JSON.parse(match[0])
+      } catch {
+        throw new AIError("AI_PARSE_ERROR", "Model returned malformed JSON")
+      }
+    }
+
+    if (options.validate && !options.validate(parsed)) {
+      throw new AIError("AI_VALIDATION_ERROR", "AI output failed validation")
+    }
+
+    const latencyMs = Date.now() - started
+    if (options.meter !== false) {
+      await meterSuccess(options, model, tier, usage, latencyMs)
+    }
+    if (options.audit !== false) {
+      await logAiCall({ purpose: options.purpose, model, tier, latencyMs, actorId: options.actorId ?? null, success: true })
+    }
+    return { data: parsed as T, modelUsed: model, tier, latencyMs, usage }
+  } catch (err) {
+    const mapped = mapProviderError(err)
+    await meterFailure(options, model, tier, mapped.code, Date.now() - started)
+    if (options.audit !== false) {
+      await logAiCall({
+        purpose: options.purpose, model, tier, latencyMs: Date.now() - started,
+        actorId: options.actorId ?? null, success: false, errorCode: mapped.code,
       })
     }
     throw mapped

@@ -45,6 +45,8 @@ export function SopBuilderWorkspace({
   const [messages, setMessages] = useState(initialMessages)
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
+  const [streamReply, setStreamReply] = useState("")
+  const [statusAction, setStatusAction] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [selection, setSelection] = useState<Selection | null>(null)
   const [pane, setPane] = useState<Pane>("chat")
@@ -76,7 +78,7 @@ export function SopBuilderWorkspace({
 
   useEffect(() => {
     if (pane === "chat") scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
-  }, [visibleMessages.length, busy, pane])
+  }, [visibleMessages.length, busy, pane, streamReply])
 
   useEffect(() => {
     if (kicked.current) return
@@ -95,6 +97,8 @@ export function SopBuilderWorkspace({
     const sel = selection
     setSelection(null)
     setBusy(true)
+    setStreamReply("")
+    setStatusAction(null)
     const optimistic: Message = {
       id: `tmp-${Date.now()}`,
       sender: "user",
@@ -112,11 +116,46 @@ export function SopBuilderWorkspace({
           selection: sel ? { quoted: sel.text, sectionHeading: sel.sectionHeading } : undefined,
         }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "The agent could not respond")
-      setSession(data.session)
-      setDrafts(data.drafts)
-      setMessages(data.messages)
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || "The agent could not respond")
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ""
+      let done: { session: SessionRow; drafts: SopBuilderDraft[]; messages: Message[] } | null = null
+      let streamError: string | null = null
+
+      // The response is newline-delimited JSON events.
+      while (true) {
+        const { value, done: streamDone } = await reader.read()
+        if (streamDone) break
+        buffer += decoder.decode(value, { stream: true })
+        let nl: number
+        while ((nl = buffer.indexOf("\n")) !== -1) {
+          const line = buffer.slice(0, nl).trim()
+          buffer = buffer.slice(nl + 1)
+          if (!line) continue
+          const evt = JSON.parse(line) as Record<string, unknown>
+          if (evt.type === "status") setStatusAction(evt.action as string)
+          else if (evt.type === "reply") setStreamReply((r) => r + (evt.delta as string))
+          else if (evt.type === "error") streamError = (evt.error as string) || "The agent could not respond"
+          else if (evt.type === "done") {
+            done = {
+              session: evt.session as SessionRow,
+              drafts: (evt.drafts as SopBuilderDraft[]) || [],
+              messages: (evt.messages as Message[]) || [],
+            }
+          }
+        }
+      }
+
+      if (streamError) throw new Error(streamError)
+      if (!done) throw new Error("The agent did not finish responding")
+      setSession(done.session as unknown as SopBuilderSession)
+      setDrafts(done.drafts)
+      setMessages(done.messages)
       router.refresh()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Something went wrong")
@@ -125,6 +164,8 @@ export function SopBuilderWorkspace({
       if (sel) setSelection(sel)
     } finally {
       setBusy(false)
+      setStreamReply("")
+      setStatusAction(null)
     }
   }
 
@@ -216,7 +257,7 @@ export function SopBuilderWorkspace({
                     {visibleMessages.map((m) => (
                       <Bubble key={m.id} message={m} />
                     ))}
-                    {busy && <Thinking hasDoc={hasDoc} />}
+                    {busy && <StreamingTurn reply={streamReply} action={statusAction} hasDoc={hasDoc} />}
                   </div>
                 </div>
                 <motion.div layoutId="sop-composer" transition={SPRING} className="border-t border-border px-4 py-3">
@@ -356,15 +397,38 @@ function Bubble({ message }: { message: Message }) {
   )
 }
 
-function Thinking({ hasDoc }: { hasDoc: boolean }) {
+const STATUS_LABEL: Record<string, string> = {
+  discuss: "Thinking…",
+  draft: "Drafting the SOP…",
+  revise_section: "Updating the section…",
+  revise_full: "Revising the document…",
+}
+
+function StreamingTurn({ reply, action, hasDoc }: { reply: string; action: string | null; hasDoc: boolean }) {
+  const label = action ? STATUS_LABEL[action] ?? "Working…" : hasDoc ? "Working on the document…" : "Thinking…"
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-3 duration-300 animate-in fade-in slide-in-from-bottom-1">
       <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-teal/10 text-brand-teal">
         <Bot className="h-4 w-4" />
       </div>
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        {hasDoc ? "Working on the document…" : "Thinking…"}
+      <div className="min-w-0 flex-1">
+        {reply ? (
+          <div className="max-w-[85%] whitespace-pre-wrap text-sm leading-7 text-foreground/90">
+            {reply}
+            <span className="ml-0.5 inline-block h-3.5 w-1.5 animate-pulse bg-brand-teal/60 align-middle" />
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {label}
+          </div>
+        )}
+        {reply && action && action !== "discuss" && (
+          <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            {STATUS_LABEL[action] ?? "Working…"}
+          </div>
+        )}
       </div>
     </div>
   )

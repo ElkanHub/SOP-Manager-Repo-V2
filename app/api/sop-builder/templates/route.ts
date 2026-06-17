@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireSopBuilderTemplateManager, requireSopBuilderUser } from "@/lib/sop-builder/access"
 import { cleanText } from "@/lib/sop-builder/api"
+import { validateTenantTemplate } from "@/lib/sop-builder/docx-template-fill"
 
 export async function GET() {
   const ctx = await requireSopBuilderUser()
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
   const path = `sop-builder/templates/${templateId}.docx`
   const buffer = Buffer.from(await file.arrayBuffer())
 
+  const validation = validateTenantTemplate(buffer)
+
   const { error: uploadError } = await ctx.service.storage
     .from("documents")
     .upload(path, buffer, {
@@ -58,8 +61,8 @@ export async function POST(request: NextRequest) {
       version: version || null,
       is_default: makeDefault,
       status: "active",
-      validation_status: "valid",
-      validation_notes: "Basic DOCX validation passed.",
+      validation_status: validation.valid ? "valid" : "invalid",
+      validation_notes: validation.notes,
       uploaded_by: ctx.user.id,
     })
     .select("*")

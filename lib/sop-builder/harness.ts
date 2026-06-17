@@ -1,4 +1,5 @@
-import { AIError, friendlyAiMessage, generateJson } from "@/lib/ai/client"
+import { AIError, friendlyAiMessage, generateJson, generateJsonStream } from "@/lib/ai/client"
+import { AgentTurnStreamParser } from "./stream-parser"
 import { logAudit } from "@/lib/audit"
 import {
   buildAgentSystemInstruction,
@@ -304,6 +305,30 @@ export class SopBuilderHarness {
     userMessage: string,
     selection?: { quoted: string; sectionHeading: string | null } | null,
   ): Promise<{ reply: string; action: string; draft: SopBuilderDraft | null }> {
+    return this.runAgentTurn(session, userMessage, selection, null)
+  }
+
+  /**
+   * Streaming variant of agentTurn. The conversational reply is forwarded to
+   * `callbacks.onReplyDelta` token-by-token and the resolved action to
+   * `callbacks.onStatus` as soon as the model commits to it; the document
+   * operation is applied after the stream closes. Metering/audit are identical.
+   */
+  async agentTurnStream(
+    session: SopBuilderSession,
+    userMessage: string,
+    selection: { quoted: string; sectionHeading: string | null } | null,
+    callbacks: { onReplyDelta?: (delta: string) => void; onStatus?: (action: string) => void },
+  ): Promise<{ reply: string; action: string; draft: SopBuilderDraft | null }> {
+    return this.runAgentTurn(session, userMessage, selection, callbacks)
+  }
+
+  private async runAgentTurn(
+    session: SopBuilderSession,
+    userMessage: string,
+    selection: { quoted: string; sectionHeading: string | null } | null | undefined,
+    callbacks: { onReplyDelta?: (delta: string) => void; onStatus?: (action: string) => void } | null,
+  ): Promise<{ reply: string; action: string; draft: SopBuilderDraft | null }> {
     void userMessage // the message is already persisted; the model reads it from loadMessages
     const messages = await this.loadMessages(session.id)
 
@@ -318,9 +343,9 @@ export class SopBuilderHarness {
 
     const current = (latestDraft as SopBuilderDraft | null) || null
 
-    const result = await generateJson<Record<string, unknown>>({
+    const callOptions = {
       purpose: "sop-builder-discuss",
-      tier: "quality",
+      tier: "quality" as const,
       prompt: buildAgentTurnPrompt({
         session,
         messages,
@@ -332,56 +357,27 @@ export class SopBuilderHarness {
       timeoutMs: 120_000,
       actorId: this.actorId,
       meter: false,
-      validate: (v): v is Record<string, unknown> => typeof v === "object" && v !== null,
-    })
+      validate: (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null,
+    }
+
+    let result
+    if (callbacks) {
+      const parser = new AgentTurnStreamParser()
+      result = await generateJsonStream<Record<string, unknown>>({
+        ...callOptions,
+        onChunk: (chunk) => {
+          const { replyDelta, actionResolved } = parser.push(chunk)
+          if (actionResolved) callbacks.onStatus?.(actionResolved)
+          if (replyDelta) callbacks.onReplyDelta?.(replyDelta)
+        },
+      })
+    } else {
+      result = await generateJson<Record<string, unknown>>(callOptions)
+    }
 
     const turn = result.data
     const reply = typeof turn.reply === "string" && turn.reply.trim() ? turn.reply.trim() : "Okay."
-    let action = typeof turn.action === "string" ? turn.action : "discuss"
-    if (!["discuss", "draft", "revise_section", "revise_full"].includes(action)) action = "discuss"
-    if (action === "revise_section" && !current) action = "discuss"
-
-    let draft: SopBuilderDraft | null = current
-
-    if (action === "draft" || action === "revise_full") {
-      const content = ensureSections(normalizeStructuredSop(turn.document, session.title), session)
-      draft = await this.createDraft(session, {
-        outline: current?.outline_json || null,
-        content,
-        markdown: structuredSopToMarkdown(content),
-        modelUsed: result.modelUsed,
-        status: "ready",
-        changeSummary: action === "revise_full" ? "Full revision." : undefined,
-      })
-      if (current && action === "revise_full") {
-        await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
-      }
-      await this.service.from("sop_builder_sessions").update({ status: "draft_ready", active_draft_id: draft.id }).eq("id", session.id)
-    } else if (action === "revise_section" && current) {
-      const edit = (turn.section_edit || {}) as { heading?: string; section?: unknown }
-      const base = current.structured_content_json
-      const normalized = normalizeStructuredSop({ title: base.title, sections: [edit.section] }, session.title).sections[0]
-      if (normalized) {
-        const targetHeading = (edit.heading || normalized.heading || "").trim()
-        const sections = base.sections.slice()
-        const idx = sections.findIndex((s) => s.heading === targetHeading)
-        if (idx >= 0) sections[idx] = normalized
-        else sections.push(normalized)
-        const content: SopStructuredContent = { ...base, sections }
-        draft = await this.createDraft(session, {
-          outline: current.outline_json || null,
-          content,
-          markdown: structuredSopToMarkdown(content),
-          modelUsed: result.modelUsed,
-          status: "ready",
-          changeSummary: `Revised section: ${targetHeading}`,
-        })
-        await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
-        await this.service.from("sop_builder_sessions").update({ status: "draft_ready", active_draft_id: draft.id }).eq("id", session.id)
-      } else {
-        action = "discuss"
-      }
-    }
+    const { action, draft } = await this.applyTurn(session, turn, current, result.modelUsed)
 
     const purpose =
       action === "draft" ? "sop-builder-draft"
@@ -411,6 +407,62 @@ export class SopBuilderHarness {
     })
 
     return { reply, action, draft }
+  }
+
+  /** Route the model's structured turn to a document operation (or none). */
+  private async applyTurn(
+    session: SopBuilderSession,
+    turn: Record<string, unknown>,
+    current: SopBuilderDraft | null,
+    modelUsed: string,
+  ): Promise<{ action: string; draft: SopBuilderDraft | null }> {
+    let action = typeof turn.action === "string" ? turn.action : "discuss"
+    if (!["discuss", "draft", "revise_section", "revise_full"].includes(action)) action = "discuss"
+    if (action === "revise_section" && !current) action = "discuss"
+
+    let draft: SopBuilderDraft | null = current
+
+    if (action === "draft" || action === "revise_full") {
+      const content = ensureSections(normalizeStructuredSop(turn.document, session.title), session)
+      draft = await this.createDraft(session, {
+        outline: current?.outline_json || null,
+        content,
+        markdown: structuredSopToMarkdown(content),
+        modelUsed,
+        status: "ready",
+        changeSummary: action === "revise_full" ? "Full revision." : undefined,
+      })
+      if (current && action === "revise_full") {
+        await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
+      }
+      await this.service.from("sop_builder_sessions").update({ status: "draft_ready", active_draft_id: draft.id }).eq("id", session.id)
+    } else if (action === "revise_section" && current) {
+      const edit = (turn.section_edit || {}) as { heading?: string; section?: unknown }
+      const base = current.structured_content_json
+      const normalized = normalizeStructuredSop({ title: base.title, sections: [edit.section] }, session.title).sections[0]
+      if (normalized) {
+        const targetHeading = (edit.heading || normalized.heading || "").trim()
+        const sections = base.sections.slice()
+        const idx = sections.findIndex((s) => s.heading === targetHeading)
+        if (idx >= 0) sections[idx] = normalized
+        else sections.push(normalized)
+        const content: SopStructuredContent = { ...base, sections }
+        draft = await this.createDraft(session, {
+          outline: current.outline_json || null,
+          content,
+          markdown: structuredSopToMarkdown(content),
+          modelUsed,
+          status: "ready",
+          changeSummary: `Revised section: ${targetHeading}`,
+        })
+        await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
+        await this.service.from("sop_builder_sessions").update({ status: "draft_ready", active_draft_id: draft.id }).eq("id", session.id)
+      } else {
+        action = "discuss"
+      }
+    }
+
+    return { action, draft }
   }
 
   private async postAgentMessage(sessionId: string, message: string, draftId: string | null, type: string) {
@@ -445,7 +497,7 @@ export class SopBuilderHarness {
       .eq("session_id", sessionId)
       .order("created_at", { ascending: true })
 
-    return (data || []) as Array<{ sender: string; message: string }>
+    return windowMessages((data || []) as Array<{ sender: string; message: string }>)
   }
 
   private async createDraft(
@@ -494,6 +546,18 @@ export class SopBuilderHarness {
 
 export function sopBuilderErrorMessage(error: unknown) {
   return friendlyAiMessage(error)
+}
+
+// Keep the prompt bounded once a thread gets long: always preserve the first
+// user message (the original intent anchor) plus the most recent turns, rather
+// than resending the entire history every turn. Cheaper, and stays in context.
+const WINDOW_RECENT = 24
+function windowMessages<T extends { sender: string; message: string }>(messages: T[]): T[] {
+  if (messages.length <= WINDOW_RECENT + 1) return messages
+  const firstUser = messages.find((m) => m.sender === "user")
+  const recent = messages.slice(-WINDOW_RECENT)
+  if (firstUser && !recent.includes(firstUser)) return [firstUser, ...recent]
+  return recent
 }
 
 function ensureSections(content: SopStructuredContent, session: SopBuilderSession): SopStructuredContent {
