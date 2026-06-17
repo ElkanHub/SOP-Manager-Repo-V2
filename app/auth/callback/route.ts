@@ -28,8 +28,11 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     
     if (!error) {
-        console.log('>>> auth/callback: session exchange success, redirecting to', next)
-        return NextResponse.redirect(`${origin}${next}`)
+        // Add the one-time brand-splash flag (WorkspaceLoader strips it client-side).
+        const target = new URL(`${origin}${next}`)
+        target.searchParams.set('welcome', '1')
+        console.log('>>> auth/callback: session exchange success, redirecting to', target.pathname)
+        return NextResponse.redirect(target.toString())
     } else {
         console.error('>>> auth/callback: session exchange error:', error.message)
     }

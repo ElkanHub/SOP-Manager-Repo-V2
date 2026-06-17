@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { PulseWrapper } from "@/components/pulse/pulse-wrapper"
 import { PresenceTracker } from "@/components/presence/presence-tracker"
 import { PwaProvider } from "@/components/pwa/pwa-provider"
+import { WorkspaceLoader } from "@/components/shell/workspace-loader"
 
 export default async function DashboardLayout({
     children,
@@ -41,6 +42,17 @@ export default async function DashboardLayout({
         <SidebarProvider>
             <TooltipProvider delay={300}>
                 <PwaProvider>
+                {/* Paint a themed cover before React hydrates so the dashboard never
+                    flashes behind the splash on the login → dashboard transition.
+                    WorkspaceLoader removes it once its overlay is mounted. */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html:
+                            "(function(){try{if(new URLSearchParams(location.search).get('welcome')==='1'){var e=document.createElement('div');e.id='__ws_precover';e.style.cssText='position:fixed;inset:0;z-index:99;background:var(--background)';document.body.appendChild(e);}}catch(_){}})();",
+                    }}
+                />
+                {/* Premium splash shown only on the login → dashboard transition. */}
+                <WorkspaceLoader />
                 <div className="flex flex-col h-screen w-full overflow-hidden bg-background">
                     <TopNav user={user} profile={profile} />
 

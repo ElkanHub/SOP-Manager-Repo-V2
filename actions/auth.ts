@@ -116,8 +116,9 @@ export async function loginUser(formData: FormData) {
         return { error: error.message }
     }
 
-    // Proxy handles redirection
-    redirect('/dashboard')
+    // Proxy handles redirection. `welcome=1` triggers the one-time brand splash
+    // on the dashboard (WorkspaceLoader), then the param is stripped client-side.
+    redirect('/dashboard?welcome=1')
 }
 
 export async function signupUser(formData: FormData) {

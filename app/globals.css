@@ -216,3 +216,12 @@
     @apply bg-slate-200 dark:bg-slate-800 rounded-full hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors;
   }
 }
+/* Brand workspace loader — premium login→dashboard splash (see WorkspaceLoader) */
+@keyframes wsldr-sweep {
+  from { background-position: 175% 0; }
+  to   { background-position: -75% 0; }
+}
+@keyframes wsldr-blink {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
