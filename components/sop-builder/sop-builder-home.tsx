@@ -1,21 +1,13 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useMemo, useState } from "react"
 import { formatDistanceToNow } from "date-fns"
-import { ArrowRight, FileText, Menu, Plus, Search, X } from "lucide-react"
-import { useEffect, useMemo, useState } from "react"
-import Lightfall from "@/components/Lightfall"
-import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
+import { Loader2, Plus, Search, Send, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer"
 import { Input } from "@/components/ui/input"
-import { cn } from "@/lib/utils"
 
 type SessionRow = {
   id: string
@@ -26,55 +18,11 @@ type SessionRow = {
   active_draft?: { version?: number | null; docx_path?: string | null } | null
 }
 
-const sopBuilderLightfall = {
-  colors: ["#a6faff", "#27ffdd", "#9fabff"],
-  backgroundColor: "#27358b",
-  speed: 0.2,
-  streakCount: 2,
-  streakWidth: 1.3,
-  streakLength: 2.6,
-  density: 0.5,
-  twinkle: 0.75,
-  glow: 1,
-  backgroundGlow: 0,
-  zoom: 2.1,
-  opacity: 1,
-  mouseInteraction: false,
-  mouseStrength: 0,
-  mouseRadius: 0.1,
-}
-
 function getTimeGreeting() {
   const hour = new Date().getHours()
   if (hour < 12) return "Good morning"
   if (hour < 17) return "Good afternoon"
   return "Good evening"
-}
-
-function getWelcomeMessage(firstName: string, sessions: SessionRow[]) {
-  const greeting = getTimeGreeting()
-  const latest = sessions[0]
-  if (!latest) return `${greeting}, ${firstName}. Ready to shape your first SOP?`
-  if (latest.active_draft?.docx_path) return `${greeting}, ${firstName}. Your latest SOP is ready for Word review.`
-  if (latest.status === "clarifying") return `${greeting}, ${firstName}. The agent is waiting for your answers.`
-  return `${greeting}, ${firstName}.`
-}
-
-function useTypewriter(text: string) {
-  const [value, setValue] = useState("")
-
-  useEffect(() => {
-    let index = 0
-    const timer = window.setInterval(() => {
-      index += 1
-      setValue(text.slice(0, index))
-      if (index >= text.length) window.clearInterval(timer)
-    }, 34)
-
-    return () => window.clearInterval(timer)
-  }, [text])
-
-  return value
 }
 
 export function SopBuilderHome({
@@ -84,154 +32,142 @@ export function SopBuilderHome({
   sessions: SessionRow[]
   profileName?: string | null
 }) {
+  const router = useRouter()
   const [query, setQuery] = useState("")
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [request, setRequest] = useState("")
+  const [pending, setPending] = useState(false)
 
   const firstName = (profileName || "there").trim().split(/\s+/)[0] || "there"
-  const welcomeMessage = useMemo(() => getWelcomeMessage(firstName, sessions), [firstName, sessions])
-  const typedGreeting = useTypewriter(welcomeMessage)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return sessions
-    return sessions.filter((session) =>
-      [session.title, session.department, session.status].filter(Boolean).join(" ").toLowerCase().includes(q)
+    return sessions.filter((s) =>
+      [s.title, s.department, s.status].filter(Boolean).join(" ").toLowerCase().includes(q),
     )
   }, [query, sessions])
 
+  async function start() {
+    const purpose = request.trim()
+    if (!purpose) {
+      toast.error("Describe the SOP you want to build.")
+      return
+    }
+    setPending(true)
+    try {
+      const res = await fetch("/api/sop-builder/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Untitled SOP", purpose }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to start")
+      router.push(`/sop-builder/${data.session.id}`)
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not start the agent")
+      setPending(false)
+    }
+  }
+
   return (
-    <div
-      className={cn(
-        "relative isolate min-h-[calc(100vh-4rem)] overflow-hidden md:-m-6",
-        "bg-[#27358b] text-white"
-      )}
-    >
-      <div className="absolute inset-0">
-        <Lightfall
-          colors={sopBuilderLightfall.colors}
-          backgroundColor="#27358b"
-          speed={sopBuilderLightfall.speed}
-          streakCount={sopBuilderLightfall.streakCount}
-          streakWidth={sopBuilderLightfall.streakWidth}
-          streakLength={sopBuilderLightfall.streakLength}
-          density={sopBuilderLightfall.density}
-          twinkle={sopBuilderLightfall.twinkle}
-          glow={sopBuilderLightfall.glow}
-          backgroundGlow={sopBuilderLightfall.backgroundGlow}
-          zoom={sopBuilderLightfall.zoom}
-          opacity={sopBuilderLightfall.opacity}
-          mouseInteraction={sopBuilderLightfall.mouseInteraction}
-          mouseStrength={sopBuilderLightfall.mouseStrength}
-          mouseRadius={sopBuilderLightfall.mouseRadius}
-        />
-      </div>
-
-      <header className="relative z-10 flex items-center justify-between gap-4 px-5 py-4 sm:px-8">
-        <div className="text-sm font-semibold tracking-tight text-white">AI SOP Builder</div>
-        <Button
-          render={<Link href="/sop-builder/new" />}
-          className="h-10 rounded-full bg-white px-4 text-slate-950 shadow-sm hover:bg-white/90"
-        >
-          <Plus className="h-4 w-4" />
-          Start New SOP
-        </Button>
-      </header>
-
-      <main className="relative z-10 flex min-h-[calc(100vh-9rem)] items-center justify-center px-6 py-16 text-center sm:px-8">
-        <div className="mx-auto max-w-4xl">
-          <h1
-            className="min-h-[4.5rem] text-balance text-4xl font-semibold tracking-normal text-white sm:text-6xl"
-          >
-            {typedGreeting}
-            <span className="ml-1 inline-block w-3 animate-pulse text-[#27ffdd]">
-              |
-            </span>
-          </h1>
+    <div className="flex min-h-[calc(100vh-4rem)] bg-background md:-m-6">
+      {/* Artifacts sidebar */}
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-muted/30 lg:flex">
+        <div className="px-4 py-3.5">
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Your SOPs</span>
         </div>
-      </main>
-
-      <div className="relative z-10 flex justify-center px-5 pb-8 sm:px-8">
-        <Button
-          type="button"
-          onClick={() => setMenuOpen(true)}
-          className="h-10 rounded-full border border-white/15 bg-white/10 px-4 text-white backdrop-blur hover:bg-white/18"
-        >
-          <Menu className="h-4 w-4" />
-          Chats
-        </Button>
-      </div>
-
-      <Drawer open={menuOpen} onOpenChange={setMenuOpen}>
-        <DrawerContent className="mx-auto h-[min(82vh,760px)] max-w-4xl rounded-t-2xl border-border shadow-2xl">
-          <div className="flex min-h-0 flex-1 flex-col">
-            <DrawerHeader className="border-b border-border px-4 py-4 text-left sm:px-6">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <DrawerTitle>Chats</DrawerTitle>
-                  <DrawerDescription>Continue an SOP draft session.</DrawerDescription>
-                </div>
-                <Button type="button" variant="ghost" size="icon-sm" onClick={() => setMenuOpen(false)}>
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Close</span>
-                </Button>
+        <div className="px-3">
+          <Button render={<Link href="/sop-builder/new" />} variant="outline" size="sm" className="w-full justify-start">
+            <Plus className="h-4 w-4" />
+            New SOP
+          </Button>
+        </div>
+        <div className="px-3 pt-3">
+          <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5">
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search"
+              className="h-6 border-0 px-0 text-sm shadow-none focus-visible:ring-0"
+            />
+          </div>
+        </div>
+        <div className="mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-4">
+          {filtered.map((s) => (
+            <Link
+              key={s.id}
+              href={`/sop-builder/${s.id}`}
+              className="block rounded-lg px-2.5 py-2 transition hover:bg-accent/60"
+            >
+              <div className="truncate text-sm text-foreground/80">{s.title || "Untitled SOP"}</div>
+              <div className="truncate text-[11px] text-muted-foreground">
+                {formatDistanceToNow(new Date(s.updated_at), { addSuffix: true })}
               </div>
-            </DrawerHeader>
+            </Link>
+          ))}
+          {filtered.length === 0 && <p className="px-2.5 py-4 text-xs text-muted-foreground">No SOPs yet.</p>}
+        </div>
+      </aside>
 
-            <div className="border-b border-border p-4 sm:px-6">
-              <div className="flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search chats"
-                  className="h-7 border-0 px-0 shadow-none focus-visible:ring-0"
-                />
-              </div>
+      {/* Centered start */}
+      <main className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 py-12">
+        <div className="w-full max-w-2xl">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal/10 text-brand-teal">
+              <Sparkles className="h-6 w-6" />
             </div>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{getTimeGreeting()}, {firstName}.</h1>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Describe the procedure and the agent will draft a detailed, audit-ready SOP. Refine it in one conversation.
+            </p>
+          </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-4">
-              {filtered.length === 0 ? (
-                <div className="flex min-h-72 flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border text-center">
-                  <FileText className="h-8 w-8 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">No chats found</p>
-                    <p className="mt-1 text-xs text-muted-foreground">Start a new SOP draft to create one.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filtered.map((session) => (
-                    <Link
-                      key={session.id}
-                      href={`/sop-builder/${session.id}`}
-                      onClick={() => setMenuOpen(false)}
-                      className="block rounded-lg border border-transparent px-3 py-3 transition hover:border-border hover:bg-muted/60"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-sm font-semibold text-foreground">{session.title}</h3>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {session.department || "No department"} ·{" "}
-                            {formatDistanceToNow(new Date(session.updated_at), { addSuffix: true })}
-                          </p>
-                        </div>
-                        <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        <Badge variant="outline" className="capitalize">
-                          {session.status.replace(/_/g, " ")}
-                        </Badge>
-                        {session.active_draft?.version && <Badge variant="secondary">v{session.active_draft.version}</Badge>}
-                        {session.active_draft?.docx_path && <Badge className="bg-brand-teal text-white">Word ready</Badge>}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+          <div className="mt-8 rounded-2xl border border-input bg-card p-3 shadow-sm focus-within:ring-1 focus-within:ring-ring">
+            <textarea
+              autoFocus
+              value={request}
+              onChange={(e) => setRequest(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                  e.preventDefault()
+                  start()
+                }
+              }}
+              rows={4}
+              placeholder="e.g. Write an SOP for cleaning and sanitising the tablet compression area, including frequency, materials, steps, and the records to complete."
+              className="w-full resize-none bg-transparent px-2 py-2 text-sm outline-none"
+            />
+            <div className="flex items-center justify-end px-1 pt-1">
+              <Button onClick={start} disabled={pending || !request.trim()}>
+                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                Build SOP
+              </Button>
             </div>
           </div>
-        </DrawerContent>
-      </Drawer>
+
+          {/* Recent (mobile, where the sidebar is hidden) */}
+          {sessions.length > 0 && (
+            <div className="mt-8 lg:hidden">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Your SOPs</p>
+              <div className="space-y-2">
+                {sessions.slice(0, 6).map((s) => (
+                  <Link
+                    key={s.id}
+                    href={`/sop-builder/${s.id}`}
+                    className="block rounded-lg border border-border px-3 py-2.5 transition hover:bg-accent/60"
+                  >
+                    <div className="truncate text-sm font-medium">{s.title || "Untitled SOP"}</div>
+                    <div className="truncate text-[11px] text-muted-foreground">
+                      {formatDistanceToNow(new Date(s.updated_at), { addSuffix: true })}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   )
 }
