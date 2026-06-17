@@ -10,6 +10,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { CalendarEvent, Equipment, Profile } from "@/types/app.types"
 import { deleteEvent } from "@/actions/events"
@@ -47,6 +48,7 @@ export function DayDetailSheet({
     try {
       const res = await deleteEvent(eventId)
       if (res.success) onDeleted?.()
+      else toast.error(res.error ?? "Couldn't delete the event.")
     } finally {
       setDeletingId(null)
     }

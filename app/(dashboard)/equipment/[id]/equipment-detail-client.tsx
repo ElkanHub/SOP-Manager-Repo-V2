@@ -4,6 +4,7 @@ import { useState, useRef } from "react"
 import { differenceInDays, format } from "date-fns"
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Loader2, Upload, X } from "lucide-react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { EquipmentQrCard } from "@/components/equipment/equipment-qr-card"
@@ -76,6 +77,8 @@ export function EquipmentDetailClient({
             const result = await approveEquipment(equipment.id)
             if (result.success) {
                 setSuccess('Equipment approved and activated!')
+            } else {
+                toast.error(result.error ?? 'Action failed.')
             }
         } finally {
             setLoading(false)
@@ -89,6 +92,8 @@ export function EquipmentDetailClient({
             const result = await rejectEquipment(equipment.id, rejectReason)
             if (result.success) {
                 setSuccess('Equipment rejected')
+            } else {
+                toast.error(result.error ?? 'Action failed.')
             }
         } finally {
             setLoading(false)
@@ -104,6 +109,8 @@ export function EquipmentDetailClient({
                 setAction(null)
                 setCompletionNotes('')
                 setCompletionPhoto(null)
+            } else {
+                toast.error(result.error ?? 'Action failed.')
             }
         } finally {
             setLoading(false)
@@ -115,10 +122,12 @@ export function EquipmentDetailClient({
         if (!file) return
 
         if (!file.type.startsWith('image/')) {
+            toast.error('Please select an image file.')
             return
         }
 
         if (file.size > 2 * 1024 * 1024) {
+            toast.error('Image must be 2MB or smaller.')
             return
         }
 
@@ -135,11 +144,13 @@ export function EquipmentDetailClient({
             const data = await response.json()
 
             if (!response.ok) {
+                toast.error(data?.error ?? 'Photo upload failed.')
                 return
             }
 
             setCompletionPhoto(data.fileUrl)
         } catch (err) {
+            toast.error('Photo upload failed.')
         } finally {
             setPhotoUploading(false)
         }
@@ -155,6 +166,8 @@ export function EquipmentDetailClient({
                 setAction(null)
                 setTaskToReassign(null)
                 setReassignUserId('')
+            } else {
+                toast.error(result.error ?? 'Action failed.')
             }
         } finally {
             setLoading(false)

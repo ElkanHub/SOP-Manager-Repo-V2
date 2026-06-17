@@ -7,6 +7,7 @@ import { fetchDocumentsDueForReview } from "@/lib/queries/reports"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StatusBadge } from "@/components/ui/status-badge"
+import { ErrorCard } from "@/components/ui/error-card"
 
 interface Props {
   dateFrom: string | null
@@ -22,7 +23,7 @@ const levelLabels: Record<string, string> = {
 
 export function DocumentsDueReviewReport({ dateFrom, dateTo }: Props) {
   const [page, setPage] = useState(0)
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["documents-due-review", page, dateFrom, dateTo],
     queryFn: () => fetchDocumentsDueForReview({ page, dateFrom, dateTo }),
   })
@@ -36,6 +37,10 @@ export function DocumentsDueReviewReport({ dateFrom, dateTo }: Props) {
         {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
       </div>
     )
+  }
+
+  if (isError) {
+    return <ErrorCard message="Couldn't load this report." onRetry={() => refetch()} />
   }
 
   return (

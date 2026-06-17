@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { format } from "date-fns"
-import { Lock, MoreHorizontal, ChevronLeft, ChevronRight } from "lucide-react"
+import { Lock, MoreHorizontal, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react"
 import {
   ColumnDef,
   flexRender,
@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from "@/components/ui/skeleton"
+import { ErrorCard } from "@/components/ui/error-card"
 import { cn } from "@/lib/utils/cn"
 import { useSopTabStore } from "@/store/sop-tabs"
 import { SopRecord } from "@/types/app.types"
@@ -59,7 +60,7 @@ export function SopLibraryTable({
 
   const queryKey = ["sops", page, userDepartment, userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchSopPage({ page, department: userDepartment, role: userRole, isAdmin, isQa, statusFilter, levelFilter, departmentFilter }),
     placeholderData: keepPreviousData,
@@ -228,6 +229,10 @@ export function SopLibraryTable({
     getSortedRowModel: getSortedRowModel(),
   })
 
+  if (isError && !result) {
+    return <ErrorCard message="Couldn't load SOPs." onRetry={() => refetch()} />
+  }
+
   if (isLoading && !result) {
     return (
       <div className="rounded-lg border border-border bg-card">
@@ -247,6 +252,12 @@ export function SopLibraryTable({
 
   return (
     <div className="space-y-3">
+      {isFetching && !isLoading && (
+        <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
+          <RefreshCw className="h-3 w-3 animate-spin" />
+          Refreshing…
+        </div>
+      )}
       <div className={cn("rounded-xl border border-border bg-card overflow-hidden shadow-md transition-opacity", isFetching && "opacity-70")}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px]">

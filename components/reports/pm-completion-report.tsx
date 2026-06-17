@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Download, Wrench, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
+import { ErrorCard } from "@/components/ui/error-card"
 
 interface PmCompletionReportProps {
   dateFrom: string | null
@@ -54,7 +55,7 @@ export function PmCompletionReport({ dateFrom, dateTo, isAdmin }: PmCompletionRe
 
   const queryKey = ["report-pm-completions", page, dateFrom, dateTo]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchPmCompletions({ page, dateFrom, dateTo }),
     placeholderData: keepPreviousData,
@@ -182,7 +183,7 @@ export function PmCompletionReport({ dateFrom, dateTo, isAdmin }: PmCompletionRe
           <Button
             variant="outline"
             onClick={handleExport}
-            disabled={data.length === 0 || exporting}
+            disabled={(!loading && data.length === 0) || exporting}
             className="rounded-xl border-orange-500/20 hover:bg-orange-500/5 hover:text-orange-500 shadow-sm group/btn"
           >
             {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
@@ -191,15 +192,19 @@ export function PmCompletionReport({ dateFrom, dateTo, isAdmin }: PmCompletionRe
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={loading}
-        noDataMessage={loading ? "Loading logs..." : "No PM records found."}
-        pageSize={pageSize}
-      />
+      {isError ? (
+        <ErrorCard message="Couldn't load this report." onRetry={() => refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          noDataMessage={loading ? "Loading logs..." : "No PM records found."}
+          pageSize={pageSize}
+        />
+      )}
 
-      {totalPages > 1 && (
+      {!isError && totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
             Page {page + 1} of {totalPages} &middot; {totalCount} records

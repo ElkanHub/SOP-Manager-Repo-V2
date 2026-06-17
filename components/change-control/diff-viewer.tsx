@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { FileText, Loader2, Info } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { FileText, Loader2, Info, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChangeControl } from "@/types/app.types"
 import { Badge } from "@/components/ui/badge"
@@ -17,26 +18,28 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-        async function fetchDiff() {
-            setLoading(true)
-            try {
-                const response = await fetch('/api/change-control/diff', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ old_file_url: oldFileUrl, new_file_url: newFileUrl }),
-                })
-                if (!response.ok) throw new Error('Failed to fetch document comparison')
-                const data = await response.json()
-                setDiffHtml(data.diffHtml)
-            } catch (err: any) {
-                setError(err.message)
-            } finally {
-                setLoading(false)
-            }
+    const fetchDiff = useCallback(async () => {
+        setLoading(true)
+        setError(null)
+        try {
+            const response = await fetch('/api/change-control/diff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ old_file_url: oldFileUrl, new_file_url: newFileUrl }),
+            })
+            if (!response.ok) throw new Error('Failed to fetch document comparison')
+            const data = await response.json()
+            setDiffHtml(data.diffHtml)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to load comparison')
+        } finally {
+            setLoading(false)
         }
-        fetchDiff()
     }, [oldFileUrl, newFileUrl])
+
+    useEffect(() => {
+        fetchDiff()
+    }, [fetchDiff])
 
     if (loading) {
         return (
@@ -56,6 +59,10 @@ export function DiffViewer({ changeControl, oldFileUrl, newFileUrl }: DiffViewer
                     <Info className="h-8 w-8 mx-auto text-destructive" />
                     <p className="text-sm font-medium text-destructive">{error}</p>
                     <p className="text-xs text-muted-foreground">Ensure both documents are valid .docx files and accessible.</p>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => fetchDiff()}>
+                        <RefreshCw className="h-4 w-4" />
+                        Try again
+                    </Button>
                 </div>
             </Card>
         )

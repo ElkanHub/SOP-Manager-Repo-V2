@@ -194,7 +194,7 @@ export function AuditTrailReport({ dateFrom, dateTo, isAdmin }: AuditTrailReport
           <Button
             variant="outline"
             onClick={handleExport}
-            disabled={data.length === 0 || exporting}
+            disabled={(!loading && data.length === 0) || exporting}
             className="rounded-xl border-purple-500/20 hover:bg-purple-500/5 hover:text-purple-600 shadow-sm"
           >
             {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}

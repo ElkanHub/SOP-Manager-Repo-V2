@@ -10,6 +10,7 @@ import { Download, Users, ShieldCheck, ChevronLeft, ChevronRight, Loader2 } from
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
+import { ErrorCard } from "@/components/ui/error-card"
 
 interface AcknowledgementLogReportProps {
   dateFrom: string | null
@@ -26,7 +27,7 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa, isAdmin }: Ac
 
   const queryKey = ["report-acknowledgements", page, dateFrom, dateTo]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchAcknowledgements({ page, dateFrom, dateTo }),
     placeholderData: keepPreviousData,
@@ -140,7 +141,7 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa, isAdmin }: Ac
           <Button
             variant="outline"
             onClick={handleExport}
-            disabled={data.length === 0 || exporting}
+            disabled={(!loading && data.length === 0) || exporting}
             className="rounded-xl border-blue-500/20 hover:bg-blue-500/5 hover:text-blue-500 shadow-sm group/btn"
           >
             {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
@@ -149,15 +150,19 @@ export function AcknowledgementLogReport({ dateFrom, dateTo, isQa, isAdmin }: Ac
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={loading}
-        noDataMessage={loading ? "Loading records..." : "No acknowledgements found."}
-        pageSize={pageSize}
-      />
+      {isError ? (
+        <ErrorCard message="Couldn't load this report." onRetry={() => refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          noDataMessage={loading ? "Loading records..." : "No acknowledgements found."}
+          pageSize={pageSize}
+        />
+      )}
 
-      {totalPages > 1 && (
+      {!isError && totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
             Page {page + 1} of {totalPages} &middot; {totalCount} records

@@ -10,6 +10,7 @@ import { Download, Bell, MailOpen, ChevronLeft, ChevronRight, Loader2 } from "lu
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
+import { ErrorCard } from "@/components/ui/error-card"
 
 interface PulseNoticeReportProps {
   dateFrom: string | null
@@ -25,7 +26,7 @@ export function PulseNoticeReport({ dateFrom, dateTo, isAdmin }: PulseNoticeRepo
 
   const queryKey = ["report-pulse-notices", page, dateFrom, dateTo]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchPulseNotices({ page, dateFrom, dateTo }),
     placeholderData: keepPreviousData,
@@ -131,7 +132,7 @@ export function PulseNoticeReport({ dateFrom, dateTo, isAdmin }: PulseNoticeRepo
           <Button
             variant="outline"
             onClick={handleExport}
-            disabled={data.length === 0 || exporting}
+            disabled={(!loading && data.length === 0) || exporting}
             className="rounded-xl border-indigo-500/20 hover:bg-indigo-500/5 hover:text-indigo-500 shadow-sm group/btn"
           >
             {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
@@ -140,15 +141,19 @@ export function PulseNoticeReport({ dateFrom, dateTo, isAdmin }: PulseNoticeRepo
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={loading}
-        noDataMessage={loading ? "Loading logs..." : "No notices found."}
-        pageSize={pageSize}
-      />
+      {isError ? (
+        <ErrorCard message="Couldn't load this report." onRetry={() => refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          noDataMessage={loading ? "Loading logs..." : "No notices found."}
+          pageSize={pageSize}
+        />
+      )}
 
-      {totalPages > 1 && (
+      {!isError && totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
             Page {page + 1} of {totalPages} &middot; {totalCount} records

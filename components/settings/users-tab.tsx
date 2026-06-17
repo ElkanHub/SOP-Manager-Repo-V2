@@ -21,6 +21,7 @@ import {
     changeUserRole, changeUserDepartment, grantAdmin, revokeAdmin, deactivateUser, reactivateUser, approveUser, rejectUser
 } from "@/actions/settings"
 import { createClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 import type { Profile, Department } from "@/types/app.types"
 import { UserAvatar } from "@/components/user-avatar"
 
@@ -106,9 +107,14 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
                 
                 const handleDeptChange = (newDept: string | null) => {
                     if (!newDept) return
+                    const prevDept = user.department
+                    handleUpdate(user.id, { department: newDept })
                     startTransition(async () => {
                         const result = await changeUserDepartment(user.id, newDept)
-                        if (result.success) handleUpdate(user.id, { department: newDept })
+                        if (!result.success) {
+                            handleUpdate(user.id, { department: prevDept })
+                            toast.error(result.error || "Couldn't update department.")
+                        }
                     })
                 }
 
@@ -137,9 +143,14 @@ export function UsersTab({ users: initialUsers, departments, currentUserId }: Us
 
                 const handleRoleChange = (newRole: string | null) => {
                     if (!newRole) return
+                    const prevRole = user.role
+                    handleUpdate(user.id, { role: newRole as 'manager' | 'employee' })
                     startTransition(async () => {
                         const result = await changeUserRole(user.id, newRole as 'manager' | 'employee')
-                        if (result.success) handleUpdate(user.id, { role: newRole as 'manager' | 'employee' })
+                        if (!result.success) {
+                            handleUpdate(user.id, { role: prevRole })
+                            toast.error(result.error || "Couldn't update role.")
+                        }
                     })
                 }
 

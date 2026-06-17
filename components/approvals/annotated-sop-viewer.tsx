@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState, useCallback } from "react"
-import { Loader2, MessageSquarePlus, AlertTriangle } from "lucide-react"
+import { Loader2, MessageSquarePlus, AlertTriangle, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils/cn"
@@ -43,6 +43,8 @@ export function AnnotatedSopViewer({
     const [draftComment, setDraftComment] = useState('')
     const viewerRef = useRef<HTMLDivElement>(null)
 
+    const [reloadKey, setReloadKey] = useState(0)
+
     useEffect(() => {
         let cancelled = false
         setLoadError(null)
@@ -55,7 +57,7 @@ export function AnnotatedSopViewer({
             .then(data => { if (!cancelled) setHtml(data.html) })
             .catch(err => { if (!cancelled) setLoadError(err.message) })
         return () => { cancelled = true }
-    }, [requestId])
+    }, [requestId, reloadKey])
 
     const handleMouseUp = useCallback(() => {
         if (readOnly) return
@@ -134,9 +136,13 @@ export function AnnotatedSopViewer({
 
     if (loadError) {
         return (
-            <div className={cn("flex flex-col items-center justify-center p-12 bg-red-50/50 rounded-lg", className)}>
-                <AlertTriangle className="h-8 w-8 text-red-500 mb-2" />
+            <div className={cn("flex flex-col items-center justify-center gap-3 p-12 bg-red-50/50 rounded-lg", className)}>
+                <AlertTriangle className="h-8 w-8 text-red-500" />
                 <p className="text-sm font-bold text-red-600 uppercase tracking-widest">{loadError}</p>
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => setReloadKey(k => k + 1)}>
+                    <RefreshCw className="h-4 w-4" />
+                    Try again
+                </Button>
             </div>
         )
     }

@@ -33,8 +33,8 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
             if (newSummary && typeof newSummary === 'string') {
                 setSummary(newSummary)
             }
-        } catch (err: any) {
-            setError(err.message || 'Failed to generate summary')
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to generate summary')
         } finally {
             setLoading(false)
         }
@@ -59,9 +59,21 @@ export function DeltaSummaryCard({ changeControl, onRegenerate }: DeltaSummaryCa
             </CardHeader>
             <CardContent>
                 {error && (
-                    <div className="flex items-center gap-2 text-destructive text-sm mb-4">
+                    <div className="flex flex-wrap items-center gap-2 text-destructive text-sm mb-4">
                         <AlertCircle className="h-4 w-4" />
                         {error}
+                        {onRegenerate && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 gap-1.5"
+                                disabled={loading}
+                                onClick={handleRegenerate}
+                            >
+                                <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
+                                Try again
+                            </Button>
+                        )}
                     </div>
                 )}
 

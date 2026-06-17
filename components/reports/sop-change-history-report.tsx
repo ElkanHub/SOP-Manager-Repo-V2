@@ -12,6 +12,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { DataTable } from "@/components/ui/data-table"
 import { ColumnDef } from "@tanstack/react-table"
+import { ErrorCard } from "@/components/ui/error-card"
 
 interface SopChangeHistoryReportProps {
   dateFrom: string | null
@@ -29,7 +30,7 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
 
   const queryKey = ["report-sop-changes", page, dateFrom, dateTo]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchSopChanges({ page, dateFrom, dateTo }),
     placeholderData: keepPreviousData,
@@ -167,7 +168,7 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
           <Button
             variant="outline"
             onClick={handleExport}
-            disabled={data.length === 0 || exporting}
+            disabled={(!loading && data.length === 0) || exporting}
             className="rounded-xl border-brand-teal/20 hover:bg-brand-teal/5 hover:text-brand-teal shadow-sm group/btn"
           >
             {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
@@ -176,15 +177,19 @@ export function SopChangeHistoryReport({ dateFrom, dateTo, isQa, isAdmin }: SopC
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={loading}
-        noDataMessage={loading ? "Loading audit logs..." : "No data found. Try adjusting your date range."}
-        pageSize={pageSize}
-      />
+      {isError ? (
+        <ErrorCard message="Couldn't load this report." onRetry={() => refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          noDataMessage={loading ? "Loading audit logs..." : "No data found. Try adjusting your date range."}
+          pageSize={pageSize}
+        />
+      )}
 
-      {totalPages > 1 && (
+      {!isError && totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
             Page {page + 1} of {totalPages} &middot; {totalCount} records

@@ -21,6 +21,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { cn } from "@/lib/utils"
 import { SopReadModal } from "@/components/library/sop-read-modal"
 import { DataTable } from "@/components/ui/data-table"
+import { ErrorCard } from "@/components/ui/error-card"
 
 interface EquipmentTableProps {
   userDepartment: string
@@ -40,7 +41,7 @@ export function EquipmentTable({ userDepartment, userRole, isAdmin, statusFilter
 
   const queryKey = ["equipment", page, userDepartment, userRole, isAdmin, statusFilter]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchEquipmentPage({ page, department: userDepartment, role: userRole, isAdmin, statusFilter }),
     placeholderData: keepPreviousData,
@@ -192,17 +193,23 @@ export function EquipmentTable({ userDepartment, userRole, isAdmin, statusFilter
     [router, userRole]
   )
 
+  if (isError) {
+    return <ErrorCard message="Couldn't load equipment." onRetry={() => refetch()} />
+  }
+
   return (
     <div className="space-y-3">
-      <DataTable
-        columns={columns}
-        data={equipment}
-        isLoading={loading}
-        pagination={false}
-        pageSize={pageSize}
-        onRowClick={(row) => router.push(`/equipment/${row.id}`)}
-        noDataMessage={loading ? "Loading equipment..." : "No equipment matching your criteria was found."}
-      />
+      <div className={cn("transition-opacity", isFetching && !isLoading && "opacity-60")}>
+        <DataTable
+          columns={columns}
+          data={equipment}
+          isLoading={loading}
+          pagination={false}
+          pageSize={pageSize}
+          onRowClick={(row) => router.push(`/equipment/${row.id}`)}
+          noDataMessage={loading ? "Loading equipment..." : "No equipment matching your criteria was found."}
+        />
+      </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between px-1">

@@ -243,7 +243,7 @@ export function ChangeControlHubClient({ departments, changeControls }: Props) {
 
                                 <div className="space-y-2">
                                     <Label>Lifecycle Status</Label>
-                                    <Select onValueChange={(value) => value && runStatusUpdate(value as ChangeControlLifecycleStatus)}>
+                                    <Select disabled={isPending} onValueChange={(value) => value && runStatusUpdate(value as ChangeControlLifecycleStatus)}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Move package to..." />
                                         </SelectTrigger>

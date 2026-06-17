@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { ErrorCard } from "@/components/ui/error-card"
 import { SopVersion } from "@/types/app.types"
 
 interface VersionHistorySheetProps {
@@ -14,6 +15,8 @@ interface VersionHistorySheetProps {
   versions: SopVersion[]
   currentVersion: string
   isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
   onViewVersion?: (version: SopVersion) => void
 }
 
@@ -23,6 +26,8 @@ export function VersionHistorySheet({
   versions,
   currentVersion,
   isLoading,
+  isError,
+  onRetry,
   onViewVersion,
 }: VersionHistorySheetProps) {
   return (
@@ -45,6 +50,10 @@ export function VersionHistorySheet({
                 <Skeleton className="h-3 w-48 bg-muted/40" />
               </div>
             ))
+          ) : isError ? (
+            <div className="p-6">
+              <ErrorCard message="Couldn't load version history." onRetry={onRetry} />
+            </div>
           ) : versions.length === 0 ? (
             <div className="px-6 py-12 text-center">
                <FileText className="h-8 w-8 mx-auto mb-3 text-muted-foreground/20" />

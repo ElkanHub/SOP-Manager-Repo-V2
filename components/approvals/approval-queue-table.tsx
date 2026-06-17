@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
-import { FileText, Clock, CheckCircle2, AlertCircle, RefreshCw, GraduationCap } from "lucide-react"
+import { toast } from "sonner"
+import { FileText, Clock, CheckCircle2, AlertCircle, RefreshCw, GraduationCap, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,6 +24,7 @@ interface ApprovalQueueTableProps {
 }
 
 export function ApprovalQueueTable({ requests, currentUserId, mode = 'qa', pendingTrainingSops = [] }: ApprovalQueueTableProps) {
+    const router = useRouter()
     const [filter, setFilter] = useState<'all' | 'pending' | 'changes_requested' | 'approved' | 'rejected'>('all')
     const [effectiveDateBySop, setEffectiveDateBySop] = useState<Record<string, string>>({})
     const [releasingId, setReleasingId] = useState<string | null>(null)
@@ -65,10 +68,10 @@ export function ApprovalQueueTable({ requests, currentUserId, mode = 'qa', pendi
         try {
             const result = await setSopEffectiveDate(sopId, effectiveDate)
             if (!result.success) {
-                alert(result.error)
+                toast.error(result.error || "Failed to set effective date")
                 return
             }
-            window.location.reload()
+            router.refresh()
         } finally {
             setReleasingId(null)
         }
@@ -136,6 +139,7 @@ export function ApprovalQueueTable({ requests, currentUserId, mode = 'qa', pendi
                                             disabled={releasingId === sop.id}
                                             onClick={() => releaseEffectiveDate(sop.id)}
                                         >
+                                            {releasingId === sop.id && <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />}
                                             Set Effective Date
                                         </Button>
                                     </div>

@@ -12,6 +12,7 @@ import { ColumnDef } from '@tanstack/react-table'
 import { RequestStatusPill } from '@/components/requests/request-status-pill'
 import { RequestStatus, DocumentRequest } from '@/types/app.types'
 import { RequestDetailModal } from '@/components/requests/request-detail-modal'
+import { ErrorCard } from '@/components/ui/error-card'
 
 interface DocumentRequestsReportProps {
   dateFrom: string | null
@@ -33,7 +34,7 @@ export function DocumentRequestsReport({ dateFrom, dateTo, isAdmin }: DocumentRe
 
   const queryKey = ['report-document-requests', page, dateFrom, dateTo]
 
-  const { data: result, isLoading, isFetching } = useQuery({
+  const { data: result, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey,
     queryFn: () => fetchDocumentRequests({ page, dateFrom, dateTo }),
     placeholderData: keepPreviousData,
@@ -182,7 +183,7 @@ export function DocumentRequestsReport({ dateFrom, dateTo, isAdmin }: DocumentRe
           <Button
             variant="outline"
             onClick={handleExport}
-            disabled={data.length === 0 || exporting}
+            disabled={(!loading && data.length === 0) || exporting}
             className="rounded-xl border-amber-500/20 hover:bg-amber-500/5 hover:text-amber-600 shadow-sm group/btn"
           >
             {exporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2 group-hover/btn:scale-110 transition-transform" />}
@@ -191,15 +192,19 @@ export function DocumentRequestsReport({ dateFrom, dateTo, isAdmin }: DocumentRe
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={data}
-        isLoading={loading}
-        noDataMessage={loading ? 'Loading records...' : 'No document requests found.'}
-        pageSize={pageSize}
-      />
+      {isError ? (
+        <ErrorCard message="Couldn't load this report." onRetry={() => refetch()} />
+      ) : (
+        <DataTable
+          columns={columns}
+          data={data}
+          isLoading={loading}
+          noDataMessage={loading ? 'Loading records...' : 'No document requests found.'}
+          pageSize={pageSize}
+        />
+      )}
 
-      {totalPages > 1 && (
+      {!isError && totalPages > 1 && (
         <div className="flex items-center justify-between pt-2">
           <p className="text-xs text-muted-foreground">
             Page {page + 1} of {totalPages} · {totalCount} records

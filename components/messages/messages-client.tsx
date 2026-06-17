@@ -13,16 +13,8 @@ import { ConversationThread } from "./conversation-thread"
 import { NewConversationModal } from "./new-conversation-modal"
 import { Conversation, ConversationMember } from "@/types/app.types"
 import { UserAvatar } from "@/components/user-avatar"
-
-
-// Temporary stub components
-const EmptyState = ({ title, description }: { title: string, description: string }) => (
-  <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-muted/20">
-    <MessageSquare className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
-    <h3 className="text-lg font-semibold text-foreground mb-1">{title}</h3>
-    <p className="text-sm text-muted-foreground max-w-sm">{description}</p>
-  </div>
-)
+import { EmptyState } from "@/components/ui/empty-state"
+import { toast } from "sonner"
 
 const GroupAvatar = ({ members = [] }: { members: any[] }) => {
   return (
@@ -63,6 +55,7 @@ export function MessagesClient({ userId, initialActiveId }: { userId: string, in
         }
       } else {
         console.error("Failed to load conversations:", error)
+        toast.error("Couldn't load conversations.")
       }
     }
     
@@ -214,10 +207,13 @@ export function MessagesClient({ userId, initialActiveId }: { userId: string, in
             onBack={() => setActive(null)}
           />
         ) : (
-          <EmptyState 
-            title="Select a conversation" 
-            description="Choose a conversation from the list or start a new one." 
-          />
+          <div className="flex-1 flex items-center justify-center bg-muted/20">
+            <EmptyState
+              icon={MessageSquare}
+              title="Select a conversation"
+              description="Choose a conversation from the list or start a new one."
+            />
+          </div>
         )}
       </div>
       

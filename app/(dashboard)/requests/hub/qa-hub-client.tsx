@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react"
 import Link from "next/link"
 import { format } from "date-fns"
-import { ArrowLeft, ClipboardList, Plus, Edit3, Archive, EyeOff, Eye, FileText, Inbox } from "lucide-react"
+import { ArrowLeft, ClipboardList, Plus, Edit3, Archive, EyeOff, Eye, FileText, Inbox, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -47,6 +48,9 @@ export function QaHubClient({ profile, forms: initialForms, submissions: initial
     const [search, setSearch] = useState("")
     const [statusFilter, setStatusFilter] = useState<StatusFilter>("all")
 
+    const [publishingId, setPublishingId] = useState<string | null>(null)
+    const [archivingId, setArchivingId] = useState<string | null>(null)
+
     const openCreate = () => {
         setEditingForm(null)
         setBuilderOpen(true)
@@ -61,17 +65,45 @@ export function QaHubClient({ profile, forms: initialForms, submissions: initial
     }
 
     const togglePublish = async (f: RequestForm) => {
-        const res = await setFormPublishState(f.id, !f.is_published)
-        if (res.success) {
-            setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_published: !x.is_published } : x))
+        if (publishingId) return
+        const next = !f.is_published
+        // optimistic
+        setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_published: next } : x))
+        setPublishingId(f.id)
+        try {
+            const res = await setFormPublishState(f.id, next)
+            if (!res.success) {
+                // rollback
+                setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_published: f.is_published } : x))
+                toast.error(res.error ?? "Couldn't update publish state.")
+            }
+        } catch {
+            setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_published: f.is_published } : x))
+            toast.error("Couldn't update publish state.")
+        } finally {
+            setPublishingId(null)
         }
     }
 
     const onArchive = async (f: RequestForm) => {
+        if (archivingId) return
         if (!confirm(`Archive "${f.title}"? In-flight submissions will continue normally.`)) return
-        const res = await archiveRequestForm(f.id)
-        if (res.success) {
-            setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_archived: true, is_published: false } : x))
+        const prevPublished = f.is_published
+        // optimistic
+        setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_archived: true, is_published: false } : x))
+        setArchivingId(f.id)
+        try {
+            const res = await archiveRequestForm(f.id)
+            if (!res.success) {
+                // rollback
+                setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_archived: false, is_published: prevPublished } : x))
+                toast.error(res.error ?? "Couldn't archive the form.")
+            }
+        } catch {
+            setForms((prev) => prev.map((x) => x.id === f.id ? { ...x, is_archived: false, is_published: prevPublished } : x))
+            toast.error("Couldn't archive the form.")
+        } finally {
+            setArchivingId(null)
         }
     }
 
@@ -266,15 +298,21 @@ export function QaHubClient({ profile, forms: initialForms, submissions: initial
                                             <Button size="sm" variant="outline" onClick={() => openEdit(f)}>
                                                 <Edit3 className="h-3.5 w-3.5 mr-1" /> Edit
                                             </Button>
-                                            <Button size="sm" variant="outline" onClick={() => togglePublish(f)}>
-                                                {f.is_published ? (
+                                            <Button size="sm" variant="outline" onClick={() => togglePublish(f)} disabled={publishingId === f.id || archivingId === f.id}>
+                                                {publishingId === f.id ? (
+                                                    <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> {f.is_published ? "Unpublishing" : "Publishing"}</>
+                                                ) : f.is_published ? (
                                                     <><EyeOff className="h-3.5 w-3.5 mr-1" /> Unpublish</>
                                                 ) : (
                                                     <><Eye className="h-3.5 w-3.5 mr-1" /> Publish</>
                                                 )}
                                             </Button>
-                                            <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => onArchive(f)}>
-                                                <Archive className="h-3.5 w-3.5 mr-1" /> Archive
+                                            <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive" onClick={() => onArchive(f)} disabled={archivingId === f.id || publishingId === f.id}>
+                                                {archivingId === f.id ? (
+                                                    <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Archiving</>
+                                                ) : (
+                                                    <><Archive className="h-3.5 w-3.5 mr-1" /> Archive</>
+                                                )}
                                             </Button>
                                         </div>
                                     </CardContent>

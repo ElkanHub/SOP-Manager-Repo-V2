@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MoreHorizontal, UserPlus, Settings, Paperclip, Send, FileText, Cog, GitBranch, BellOff, ArrowLeft } from "lucide-react"
+import { MoreHorizontal, UserPlus, Settings, Paperclip, Send, FileText, Cog, GitBranch, BellOff, ArrowLeft, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import { format, isSameDay } from "date-fns"
@@ -10,6 +10,7 @@ import { Message, Conversation, Profile } from "@/types/app.types"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { UserAvatar } from "@/components/user-avatar"
+import { EmptyState } from "@/components/ui/empty-state"
 import { ReferencePicker } from "./reference-picker"
 import { SopReadModal } from "@/components/library/sop-read-modal"
 import { sendMessage, editMessage, deleteMessage, markConversationRead, leaveGroup, deleteConversation, updateNotifySetting } from "@/actions/messages"
@@ -436,7 +437,17 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
     return <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading thread...</div>
   }
 
-  if (!conversation) return null
+  if (!conversation) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-muted/20">
+        <EmptyState
+          icon={MessageSquare}
+          title="Conversation unavailable"
+          description="This conversation couldn't be loaded. It may have been deleted or you no longer have access."
+        />
+      </div>
+    )
+  }
 
   const otherUser = conversation.type === 'direct'
     ? conversation.members?.find(m => m.user_id !== userId)?.profile
@@ -660,10 +671,16 @@ export function ConversationThread({ conversationId, userId, onBack }: { convers
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={async () => {
-                const newSetting = isMuted ? 'all' : 'muted'
-                setIsMuted(!isMuted)
-                await updateNotifySetting(conversationId, newSetting)
-                toast.success(isMuted ? "Notifications unmuted" : "Notifications muted")
+                const wasMuted = isMuted
+                const newSetting = wasMuted ? 'all' : 'muted'
+                setIsMuted(!wasMuted)
+                try {
+                  await updateNotifySetting(conversationId, newSetting)
+                  toast.success(wasMuted ? "Notifications unmuted" : "Notifications muted")
+                } catch {
+                  setIsMuted(wasMuted)
+                  toast.error("Couldn't update notification setting.")
+                }
               }}>
                 <div className="flex items-center">
                   <BellOff className="w-4 h-4 mr-2" />

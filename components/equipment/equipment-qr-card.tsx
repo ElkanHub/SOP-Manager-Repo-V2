@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react"
 import { QRCodeSVG } from "qrcode.react"
+import { toast } from "sonner"
 import { Check, Copy, Download, Share2 } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -77,6 +78,7 @@ export function EquipmentQrCard({ equipmentId, equipmentName, assetId }: Props) 
             URL.revokeObjectURL(url)
         } catch (err) {
             console.error("QR download failed:", err)
+            toast.error("Couldn't download the QR code.")
         } finally {
             setDownloading(false)
         }
@@ -102,6 +104,7 @@ export function EquipmentQrCard({ equipmentId, equipmentName, assetId }: Props) 
             setTimeout(() => setCopied(false), 2000)
         } catch (err) {
             console.error("Clipboard write failed:", err)
+            toast.error("Couldn't copy the link.")
         }
     }
 
