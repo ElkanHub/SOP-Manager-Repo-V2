@@ -12,7 +12,7 @@ interface EquipmentPageClientProps {
   departments: Department[]
   assignableUsers: any[]
   availableSops: any[]
-  isManager: boolean
+  canManage: boolean
   isAdmin: boolean
   statusFilter?: string
 }
@@ -22,7 +22,7 @@ export function EquipmentPageClient({
   departments,
   assignableUsers,
   availableSops,
-  isManager,
+  canManage,
   isAdmin,
   statusFilter,
 }: EquipmentPageClientProps) {
@@ -40,7 +40,7 @@ export function EquipmentPageClient({
     <div className="p-0 md:p-6">
       {/* <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-foreground">Equipment Registry</h1>
-        {isManager && (
+        {canManage && (
           <Button
             className="bg-brand-teal hover:bg-teal-600"
             onClick={() => setAddModalOpen(true)}
@@ -61,7 +61,7 @@ export function EquipmentPageClient({
             <p className="text-muted-foreground">Manage equipment and maintenance schedules</p>
           </div>
         </div>
-        {isManager && (
+        {canManage && (
           <Button
             className="bg-brand-teal hover:bg-teal-600"
             onClick={() => setAddModalOpen(true)}
@@ -83,7 +83,7 @@ export function EquipmentPageClient({
           active={activeStatus === "active"}
           onClick={() => setActiveStatus("active")}
         />
-        {isManager && (
+        {canManage && (
           <>
             <StatusFilterTab
               label="Pending QA"
@@ -108,7 +108,7 @@ export function EquipmentPageClient({
         />
       </div>
 
-      {isManager && (
+      {canManage && (
         <AddEquipmentModal
           open={addModalOpen}
           onOpenChange={setAddModalOpen}

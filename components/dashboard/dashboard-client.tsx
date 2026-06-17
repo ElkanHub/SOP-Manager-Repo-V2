@@ -31,6 +31,7 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { usePresenceStore } from "@/store/presence-store"
 import { RollingNumber } from "@/components/ui/rolling-number"
+import { getCapabilities } from "@/lib/utils/permissions"
 
 interface KpiData {
   activeSops: number
@@ -148,6 +149,9 @@ export function DashboardClient({
   // their own department. Until the first presence sync arrives we fall
   // back to the server-rendered value to avoid a flash of "0".
   const hasOrgWideOversight = profile.is_admin || (profile.department === 'QA' && profile.role === 'manager')
+  // Role-scoped UI: hide supervisory cards / role-irrelevant actions so a user
+  // never sees an empty card or a grey "0" that doesn't apply to them.
+  const caps = getCapabilities(profile)
   const presenceSynced = usePresenceStore((s) => s.synced)
   const onlineUsers = usePresenceStore((s) => s.onlineUsers)
   const liveUsersOnline = hasOrgWideOversight
@@ -301,6 +305,9 @@ export function DashboardClient({
           </Card>
         </Link>
 
+        {/* Pending Approvals — only shown when there's actually something pending
+            (avoids a grey "0"). QA sees the queue; others see their own submissions. */}
+        {kpi.pendingApprovals > 0 && (
         <Link href={isQa ? "/approvals" : "/library"}>
           <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-brand-teal shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
             <CardContent className="flex h-full flex-col pt-6 px-4 md:px-6">
@@ -334,6 +341,7 @@ export function DashboardClient({
             </CardContent>
           </Card>
         </Link>
+        )}
 
         <Link href="/equipment">
           <Card className="h-full min-h-[150px] hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all duration-300 cursor-pointer rounded-xl border-t-4 border-t-blue-500 shadow-soft hover:-translate-y-1 hover:shadow-lg rounded-b-none group">
@@ -400,6 +408,7 @@ export function DashboardClient({
               </div>
             </Button>
           </Link>
+          {caps.canManageEquipment && (
           <Link href="/equipment?add=true" className="w-full">
             <Button variant="ghost" className="w-full justify-start h-auto py-3 px-4 hover:bg-blue-500/5 hover:text-blue-600 group">
               <div className="flex items-center gap-3">
@@ -413,7 +422,8 @@ export function DashboardClient({
               </div>
             </Button>
           </Link>
-          <Button 
+          )}
+          <Button
             variant="ghost" 
             className="w-full justify-start h-auto py-3 px-4 hover:bg-amber-500/5 hover:text-amber-600 group"
             onClick={() => document.dispatchEvent(new CustomEvent('pulse-toggle'))}
@@ -446,7 +456,10 @@ export function DashboardClient({
         </div>
       </div>
 
-      {/* Operations Row 1: Compliance Health & Department Overview (or CC Tracker) */}
+      {/* Operations Row 1: Compliance Health + Change Control tracker — supervisory
+          read cards. Hidden for standard/Engineering employees; shown to managers,
+          admins, and all QA (elevated read). */}
+      {caps.canSeeSupervisory && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 px-4 md:px-0">
         
         {/* Compliance Health Card */}
@@ -577,6 +590,7 @@ export function DashboardClient({
           </CardContent>
         </Card>
       </div>
+      )}
 
       {/* Operations Row 2: Department Overview (Managers/Admins only) */}
       {(profile.role === 'manager' || profile.is_admin) && departmentStats.length > 0 && (
@@ -633,8 +647,9 @@ export function DashboardClient({
         </div>
       )}
 
-      {/* Operations Row 3: PM Tasks & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 px-4 md:px-0">
+      {/* Operations Row 3: PM Tasks (everyone) & Live Audit Trail (supervisory).
+          PM tasks go full-width when the audit feed is hidden. */}
+      <div className={`grid grid-cols-1 gap-6 px-4 md:px-0 ${caps.canSeeSupervisory ? 'lg:grid-cols-2' : ''}`}>
         <Card className="shadow-sm border-slate-200 dark:border-slate-800 flex flex-col">
           <CardHeader className="pb-3 border-b border-border/50">
             <div className="flex justify-between items-center">
@@ -698,6 +713,7 @@ export function DashboardClient({
           </CardContent>
         </Card>
 
+        {caps.canSeeSupervisory && (
         <Card className="shadow-sm border-slate-200 dark:border-slate-800 flex flex-col">
           <CardHeader className="pb-3 border-b border-border/50 flex flex-row items-center justify-between gap-3">
             <CardTitle className="text-sm font-bold uppercase tracking-widest flex items-center gap-2 text-slate-700 dark:text-slate-300">
@@ -755,6 +771,7 @@ export function DashboardClient({
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
     </div>
   )

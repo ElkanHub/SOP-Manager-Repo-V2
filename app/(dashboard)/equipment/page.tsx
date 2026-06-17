@@ -5,6 +5,7 @@ import { EquipmentPageClient } from "./equipment-client"
 import { Wrench } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Department, Profile } from "@/types/app.types"
+import { getCapabilities } from "@/lib/utils/permissions"
 
 export const dynamic = "force-dynamic"
 
@@ -46,7 +47,9 @@ export default async function EquipmentPage({ searchParams }: PageProps) {
     .eq("is_active", true)
     .order("full_name")
 
-  const isManager = profile.role === "manager" || profile.is_admin
+  // Equipment management (add / pending-QA + inactive filters) is available to
+  // managers, admins, and ALL Engineering-department members regardless of role.
+  const canManage = getCapabilities(profile as Profile).canManageEquipment
 
   // Fetch active SOPs for the linked SOP dropdown in the add equipment modal
   const { data: availableSops } = await supabase
@@ -61,7 +64,7 @@ export default async function EquipmentPage({ searchParams }: PageProps) {
       departments={(departments as Department[]) || []}
       assignableUsers={allProfiles || []}
       availableSops={availableSops || []}
-      isManager={isManager}
+      canManage={canManage}
       isAdmin={profile.is_admin || false}
       statusFilter={statusFilter}
     />
