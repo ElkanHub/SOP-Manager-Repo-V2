@@ -1,6 +1,8 @@
 import { AIError, friendlyAiMessage, generateJson } from "@/lib/ai/client"
 import { logAudit } from "@/lib/audit"
 import {
+  buildAgentSystemInstruction,
+  buildAgentTurnPrompt,
   buildChatRevisionPrompt,
   buildDraftPrompt,
   buildFullDraftPrompt,
@@ -13,6 +15,8 @@ import {
   normalizeStructuredSop,
   structuredSopToMarkdown,
 } from "./markdown"
+import { recordAiUsage } from "@/lib/ai/usage"
+import { creditCostFor } from "@/lib/ai/credits"
 import type {
   SopBuilderComment,
   SopBuilderDraft,
@@ -289,7 +293,127 @@ export class SopBuilderHarness {
     return { draft, assistantMessage }
   }
 
-  private async postAgentMessage(sessionId: string, message: string, draftId: string, type: string) {
+  /**
+   * Collaborative agent turn. One model call returns a structured result that
+   * is routed to: discuss (no doc change), draft, revise_section (patch one
+   * section), or revise_full. Credits are metered per resolved action. The
+   * agent is locked to SOP authoring only (see buildAgentSystemInstruction).
+   */
+  async agentTurn(
+    session: SopBuilderSession,
+    userMessage: string,
+    selection?: { quoted: string; sectionHeading: string | null } | null,
+  ): Promise<{ reply: string; action: string; draft: SopBuilderDraft | null }> {
+    void userMessage // the message is already persisted; the model reads it from loadMessages
+    const messages = await this.loadMessages(session.id)
+
+    const { data: latestDraft } = await this.service
+      .from("sop_builder_drafts")
+      .select("*")
+      .eq("session_id", session.id)
+      .neq("status", "superseded")
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    const current = (latestDraft as SopBuilderDraft | null) || null
+
+    const result = await generateJson<Record<string, unknown>>({
+      purpose: "sop-builder-discuss",
+      tier: "quality",
+      prompt: buildAgentTurnPrompt({
+        session,
+        messages,
+        currentDoc: current?.structured_content_json || null,
+        selection: selection || null,
+      }),
+      systemInstruction: buildAgentSystemInstruction(),
+      maxOutputTokens: 8192,
+      timeoutMs: 120_000,
+      actorId: this.actorId,
+      meter: false,
+      validate: (v): v is Record<string, unknown> => typeof v === "object" && v !== null,
+    })
+
+    const turn = result.data
+    const reply = typeof turn.reply === "string" && turn.reply.trim() ? turn.reply.trim() : "Okay."
+    let action = typeof turn.action === "string" ? turn.action : "discuss"
+    if (!["discuss", "draft", "revise_section", "revise_full"].includes(action)) action = "discuss"
+    if (action === "revise_section" && !current) action = "discuss"
+
+    let draft: SopBuilderDraft | null = current
+
+    if (action === "draft" || action === "revise_full") {
+      const content = ensureSections(normalizeStructuredSop(turn.document, session.title), session)
+      draft = await this.createDraft(session, {
+        outline: current?.outline_json || null,
+        content,
+        markdown: structuredSopToMarkdown(content),
+        modelUsed: result.modelUsed,
+        status: "ready",
+        changeSummary: action === "revise_full" ? "Full revision." : undefined,
+      })
+      if (current && action === "revise_full") {
+        await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
+      }
+      await this.service.from("sop_builder_sessions").update({ status: "draft_ready", active_draft_id: draft.id }).eq("id", session.id)
+    } else if (action === "revise_section" && current) {
+      const edit = (turn.section_edit || {}) as { heading?: string; section?: unknown }
+      const base = current.structured_content_json
+      const normalized = normalizeStructuredSop({ title: base.title, sections: [edit.section] }, session.title).sections[0]
+      if (normalized) {
+        const targetHeading = (edit.heading || normalized.heading || "").trim()
+        const sections = base.sections.slice()
+        const idx = sections.findIndex((s) => s.heading === targetHeading)
+        if (idx >= 0) sections[idx] = normalized
+        else sections.push(normalized)
+        const content: SopStructuredContent = { ...base, sections }
+        draft = await this.createDraft(session, {
+          outline: current.outline_json || null,
+          content,
+          markdown: structuredSopToMarkdown(content),
+          modelUsed: result.modelUsed,
+          status: "ready",
+          changeSummary: `Revised section: ${targetHeading}`,
+        })
+        await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
+        await this.service.from("sop_builder_sessions").update({ status: "draft_ready", active_draft_id: draft.id }).eq("id", session.id)
+      } else {
+        action = "discuss"
+      }
+    }
+
+    const purpose =
+      action === "draft" ? "sop-builder-draft"
+        : action === "revise_full" ? "sop-builder-revise-full"
+          : action === "revise_section" ? "sop-builder-revise-section"
+            : "sop-builder-discuss"
+    await recordAiUsage({
+      purpose,
+      model: result.modelUsed,
+      tier: result.tier,
+      credits: creditCostFor(purpose),
+      promptTokens: result.usage?.prompt ?? null,
+      completionTokens: result.usage?.completion ?? null,
+      totalTokens: result.usage?.total ?? null,
+      success: true,
+      actorId: this.actorId,
+      latencyMs: result.latencyMs,
+    })
+
+    await this.postAgentMessage(session.id, reply, draft?.id ?? null, `agent_${action}`)
+    await logAudit({
+      actorId: this.actorId,
+      action: `sop_builder_${action}`,
+      entityType: "system",
+      entityId: session.id,
+      metadata: { draft_id: draft?.id ?? null },
+    })
+
+    return { reply, action, draft }
+  }
+
+  private async postAgentMessage(sessionId: string, message: string, draftId: string | null, type: string) {
     await this.service.from("sop_builder_messages").insert({
       session_id: sessionId,
       sender: "agent",

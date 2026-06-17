@@ -39,11 +39,20 @@ export async function POST(
     session.purpose = message.slice(0, 2000)
   }
 
+  // Optional highlight-to-comment selection from the document view.
+  const selectionRaw = body.selection && typeof body.selection === "object" ? (body.selection as Record<string, unknown>) : null
+  const selection = selectionRaw && cleanText(selectionRaw.quoted)
+    ? {
+        quoted: cleanText(selectionRaw.quoted).slice(0, 2000),
+        sectionHeading: cleanText(selectionRaw.sectionHeading).slice(0, 200) || null,
+      }
+    : null
+
   try {
-    const { draft, assistantMessage } = await new SopBuilderHarness(ctx.service, ctx.user.id).chatTurn(session, message)
+    const { draft, reply } = await new SopBuilderHarness(ctx.service, ctx.user.id).agentTurn(session, message, selection)
 
     // Adopt the AI-derived title while the session is still untitled.
-    const aiTitle = (draft.structured_content_json?.title || "").trim()
+    const aiTitle = (draft?.structured_content_json?.title || "").trim()
     if (aiTitle && (!session.title || session.title === "Untitled SOP")) {
       await ctx.service.from("sop_builder_sessions").update({ title: aiTitle }).eq("id", session.id)
     }
@@ -59,7 +68,7 @@ export async function POST(
       draft,
       drafts: drafts || [],
       messages: messages || [],
-      assistantMessage,
+      assistantMessage: reply,
     })
   } catch (error) {
     return NextResponse.json({ error: sopBuilderErrorMessage(error) }, { status: 500 })

@@ -118,6 +118,9 @@ export interface GenerateTextOptions {
   orgId?: string | null
   /** Override the per-purpose credit cost. Defaults to creditCostFor(purpose). */
   creditCost?: number
+  /** Skip automatic usage metering so the caller can meter with action-derived
+   *  credits (it gets the token usage back on the result). Default true. */
+  meter?: boolean
 }
 
 export interface GenerateJsonOptions<T> extends GenerateTextOptions {
@@ -138,6 +141,7 @@ export interface AIResult<T> {
   modelUsed: string
   tier: AIModelTier
   latencyMs: number
+  usage?: { prompt: number | null; completion: number | null; total: number | null }
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
@@ -249,7 +253,10 @@ export async function generateJson<T = unknown>(
     }
 
     const latencyMs = Date.now() - started
-    await meterSuccess(options, model, tier, getResponseUsage(response), latencyMs)
+    const usage = getResponseUsage(response)
+    if (options.meter !== false) {
+      await meterSuccess(options, model, tier, usage, latencyMs)
+    }
     if (options.audit !== false) {
       await logAiCall({
         purpose: options.purpose,
@@ -260,7 +267,7 @@ export async function generateJson<T = unknown>(
         success: true,
       })
     }
-    return { data: parsed as T, modelUsed: model, tier, latencyMs }
+    return { data: parsed as T, modelUsed: model, tier, latencyMs, usage }
   } catch (err) {
     const mapped = mapProviderError(err)
     await meterFailure(options, model, tier, mapped.code, Date.now() - started)

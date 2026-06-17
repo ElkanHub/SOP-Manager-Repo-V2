@@ -16,6 +16,11 @@ export const AI_CREDIT_COST: Record<string, number> = {
   "sop-builder-outline": 6,
   "sop-builder-draft": 12,
   "sop-builder-revision": 6,
+  // Collaborative agent turn — charged per resolved action:
+  "sop-builder-discuss": 1,
+  "sop-builder-revise-section": 3,
+  "sop-builder-revise-full": 6,
+  "sop-builder-word": 0,
 }
 
 /** Credits charged for a given purpose. Unknown purposes cost 1 (safe default). */
