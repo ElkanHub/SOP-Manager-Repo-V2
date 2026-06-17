@@ -1,7 +1,9 @@
 import { AIError, friendlyAiMessage, generateJson } from "@/lib/ai/client"
 import { logAudit } from "@/lib/audit"
 import {
+  buildChatRevisionPrompt,
   buildDraftPrompt,
+  buildFullDraftPrompt,
   buildOutlinePrompt,
   buildRevisionPrompt,
   buildSystemInstruction,
@@ -196,6 +198,105 @@ export class SopBuilderHarness {
     })
 
     return draft
+  }
+
+  /**
+   * One conversational turn. The first turn produces a complete draft directly
+   * from the conversation; later turns revise the live draft from the user's
+   * message. This is what powers the single-chat workspace.
+   */
+  async chatTurn(session: SopBuilderSession, userMessage: string): Promise<{ draft: SopBuilderDraft; assistantMessage: string }> {
+    const messages = await this.loadMessages(session.id)
+
+    const { data: latestDraft } = await this.service
+      .from("sop_builder_drafts")
+      .select("*")
+      .eq("session_id", session.id)
+      .neq("status", "superseded")
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (!latestDraft) {
+      const { data, modelUsed } = await generateJson<unknown>({
+        purpose: "sop-builder-draft",
+        tier: "quality",
+        prompt: buildFullDraftPrompt(session, messages),
+        systemInstruction: buildSystemInstruction(),
+        maxOutputTokens: 8192,
+        timeoutMs: 120_000,
+        actorId: this.actorId,
+      })
+      const content = ensureSections(normalizeStructuredSop(data, session.title), session)
+      const draft = await this.createDraft(session, {
+        outline: null,
+        content,
+        markdown: structuredSopToMarkdown(content),
+        modelUsed,
+        status: "ready",
+      })
+      await this.service
+        .from("sop_builder_sessions")
+        .update({ status: "draft_ready", active_draft_id: draft.id })
+        .eq("id", session.id)
+
+      const assistantMessage = `I've drafted "${content.title}" with ${content.sections.length} sections — it's in the document panel on the right. Anything I had to assume is flagged with [CONFIRM …]. Tell me what to refine: add detail to a step, adjust responsibilities, tighten the scope — whatever you need.`
+      await this.postAgentMessage(session.id, assistantMessage, draft.id, "draft_summary")
+      await logAudit({
+        actorId: this.actorId,
+        action: "sop_builder_draft_generated",
+        entityType: "system",
+        entityId: session.id,
+        metadata: { draft_id: draft.id, version: draft.version, via: "chat" },
+      })
+      return { draft, assistantMessage }
+    }
+
+    const current = latestDraft as SopBuilderDraft
+    const { data, modelUsed } = await generateJson<unknown>({
+      purpose: "sop-builder-revision",
+      tier: "quality",
+      prompt: buildChatRevisionPrompt(session, current.structured_content_json, userMessage),
+      systemInstruction: buildSystemInstruction(),
+      maxOutputTokens: 8192,
+      timeoutMs: 120_000,
+      actorId: this.actorId,
+    })
+    const content = ensureSections(normalizeStructuredSop(data, session.title), session)
+    const draft = await this.createDraft(session, {
+      outline: current.outline_json || null,
+      content,
+      markdown: structuredSopToMarkdown(content),
+      modelUsed,
+      status: "ready",
+      changeSummary: "Revised from chat instruction.",
+    })
+    await this.service.from("sop_builder_drafts").update({ status: "superseded" }).eq("id", current.id)
+    await this.service
+      .from("sop_builder_sessions")
+      .update({ status: "draft_ready", active_draft_id: draft.id })
+      .eq("id", session.id)
+
+    const assistantMessage = `Done — I've updated the draft (now v${draft.version}). Review the changes on the right, and tell me if you'd like more adjustments.`
+    await this.postAgentMessage(session.id, assistantMessage, draft.id, "revision_summary")
+    await logAudit({
+      actorId: this.actorId,
+      action: "sop_builder_draft_revised",
+      entityType: "system",
+      entityId: session.id,
+      metadata: { draft_id: draft.id, previous_draft_id: current.id, via: "chat" },
+    })
+    return { draft, assistantMessage }
+  }
+
+  private async postAgentMessage(sessionId: string, message: string, draftId: string, type: string) {
+    await this.service.from("sop_builder_messages").insert({
+      session_id: sessionId,
+      sender: "agent",
+      message,
+      message_type: type,
+      related_draft_id: draftId,
+    })
   }
 
   private async loadMessages(sessionId: string) {

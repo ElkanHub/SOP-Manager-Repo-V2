@@ -28,28 +28,11 @@ export default async function SopBuilderSessionPage({ params }: { params: Promis
 
   if (!session) notFound()
 
-  const activeDraft = (drafts || []).find((draft) => draft.id === session.active_draft_id) || (drafts || [])[0]
-  const { data: comments } = activeDraft
-    ? await service
-        .from("sop_builder_comments")
-        .select("*")
-        .eq("draft_id", activeDraft.id)
-        .order("created_at", { ascending: true })
-    : { data: [] }
-
-  let signedUrl: string | null = null
-  if (activeDraft?.docx_path) {
-    const { data: signed } = await service.storage.from("documents").createSignedUrl(activeDraft.docx_path, 3600)
-    signedUrl = signed?.signedUrl || null
-  }
-
   return (
     <SopBuilderWorkspace
       initialSession={session}
       initialDrafts={drafts || []}
       initialMessages={messages || []}
-      initialComments={comments || []}
-      initialSignedUrl={signedUrl}
     />
   )
 }

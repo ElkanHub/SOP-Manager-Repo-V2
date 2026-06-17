@@ -1,5 +1,7 @@
 import { GoogleGenAI, type SchemaUnion } from "@google/genai"
 import { logAudit } from "@/lib/audit"
+import { creditCostFor } from "@/lib/ai/credits"
+import { recordAiUsage } from "@/lib/ai/usage"
 
 /**
  * Central AI call point for SOP-Guard Pro.
@@ -110,6 +112,12 @@ export interface GenerateTextOptions {
   actorId?: string | null
   /** Record the call to audit_log. Default true (skip for hot-path noisy calls). */
   audit?: boolean
+  /** Department for usage attribution in the metering ledger. */
+  department?: string | null
+  /** Tenant id for usage attribution (nullable until multi-tenancy). */
+  orgId?: string | null
+  /** Override the per-purpose credit cost. Defaults to creditCostFor(purpose). */
+  creditCost?: number
 }
 
 export interface GenerateJsonOptions<T> extends GenerateTextOptions {
@@ -162,6 +170,7 @@ export async function generateText(
 
     const text = getResponseText(response)
     const latencyMs = Date.now() - started
+    await meterSuccess(options, model, tier, getResponseUsage(response), latencyMs)
 
     if (options.audit !== false) {
       await logAiCall({
@@ -177,6 +186,7 @@ export async function generateText(
     return { data: text, modelUsed: model, tier, latencyMs }
   } catch (err) {
     const mapped = mapProviderError(err)
+    await meterFailure(options, model, tier, mapped.code, Date.now() - started)
     if (options.audit !== false) {
       await logAiCall({
         purpose: options.purpose,
@@ -239,6 +249,7 @@ export async function generateJson<T = unknown>(
     }
 
     const latencyMs = Date.now() - started
+    await meterSuccess(options, model, tier, getResponseUsage(response), latencyMs)
     if (options.audit !== false) {
       await logAiCall({
         purpose: options.purpose,
@@ -252,6 +263,7 @@ export async function generateJson<T = unknown>(
     return { data: parsed as T, modelUsed: model, tier, latencyMs }
   } catch (err) {
     const mapped = mapProviderError(err)
+    await meterFailure(options, model, tier, mapped.code, Date.now() - started)
     if (options.audit !== false) {
       await logAiCall({
         purpose: options.purpose,
@@ -299,6 +311,35 @@ function getResponseText(response: unknown): string {
     return typeof text === "string" ? text : ""
   }
   return ""
+}
+
+function getResponseUsage(response: unknown): { prompt: number | null; completion: number | null; total: number | null } {
+  const u = (response as { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number; totalTokenCount?: number } } | null)?.usageMetadata
+  if (!u) return { prompt: null, completion: null, total: null }
+  return {
+    prompt: typeof u.promptTokenCount === "number" ? u.promptTokenCount : null,
+    completion: typeof u.candidatesTokenCount === "number" ? u.candidatesTokenCount : null,
+    total: typeof u.totalTokenCount === "number" ? u.totalTokenCount : null,
+  }
+}
+
+function meterSuccess(options: GenerateTextOptions, model: string, tier: AIModelTier, usage: { prompt: number | null; completion: number | null; total: number | null }, latencyMs: number) {
+  return recordAiUsage({
+    purpose: options.purpose, model, tier,
+    credits: options.creditCost ?? creditCostFor(options.purpose),
+    promptTokens: usage.prompt, completionTokens: usage.completion, totalTokens: usage.total,
+    success: true, actorId: options.actorId ?? null,
+    department: options.department ?? null, orgId: options.orgId ?? null, latencyMs,
+  })
+}
+
+function meterFailure(options: GenerateTextOptions, model: string, tier: AIModelTier, errorCode: string, latencyMs: number) {
+  return recordAiUsage({
+    purpose: options.purpose, model, tier, credits: 0,
+    success: false, errorCode,
+    actorId: options.actorId ?? null,
+    department: options.department ?? null, orgId: options.orgId ?? null, latencyMs,
+  })
 }
 
 async function logAiCall(entry: {
