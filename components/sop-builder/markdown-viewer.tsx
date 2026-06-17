@@ -30,7 +30,9 @@ export function MarkdownViewer({
     <article
       ref={rootRef}
       onMouseUp={handleMouseUp}
-      className={cn("prose prose-slate max-w-none text-sm dark:prose-invert", className)}
+      // Document always renders as a light "paper" surface (dark ink) so it is
+      // crisp and readable regardless of the app theme. No dark:prose-invert.
+      className={cn("prose prose-slate max-w-none text-sm", className)}
     >
       {blocks.map((block, index) => renderBlock(block, index))}
     </article>

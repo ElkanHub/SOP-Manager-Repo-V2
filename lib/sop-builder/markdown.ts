@@ -3,6 +3,19 @@ import type { SopOutline, SopStructuredContent } from "./types"
 const DRAFT_WARNING =
   "AI-generated draft only. Not approved, not effective, and not released for operational use."
 
+// Output bounds — defence against runaway model output (cost + DoS). The model
+// is asked for a reasonable SOP; anything past these limits is truncated, not
+// rejected, so a slightly over-long draft still renders.
+const MAX_SECTIONS = 25
+const MAX_STEPS = 60
+const MAX_TABLE_ROWS = 60
+const MAX_TABLE_COLS = 10
+const MAX_TITLE = 300
+const MAX_HEADING = 200
+const MAX_CONTENT = 20_000
+const MAX_STEP = 4_000
+const MAX_CELL = 2_000
+
 export function structuredSopToMarkdown(content: SopStructuredContent): string {
   const lines: string[] = []
   lines.push(`# ${content.title}`)
@@ -53,10 +66,10 @@ export function normalizeStructuredSop(value: unknown, fallbackTitle: string): S
   const sections = Array.isArray(raw.sections) ? raw.sections : []
 
   return {
-    title: safeText(raw.title) || fallbackTitle,
+    title: clamp(safeText(raw.title) || fallbackTitle, MAX_TITLE),
     ai_draft_warning: safeText(raw.ai_draft_warning) || DRAFT_WARNING,
-    department: safeText(raw.department) || null,
-    sections: sections.map(normalizeSection).filter(Boolean) as SopStructuredContent["sections"],
+    department: clamp(safeText(raw.department), MAX_HEADING) || null,
+    sections: (sections.slice(0, MAX_SECTIONS).map(normalizeSection).filter(Boolean) as SopStructuredContent["sections"]),
   }
 }
 
@@ -82,12 +95,14 @@ export function normalizeOutline(value: unknown, fallbackTitle: string): SopOutl
 
 function normalizeSection(value: unknown): SopStructuredContent["sections"][number] | null {
   const raw = typeof value === "object" && value !== null ? value as Record<string, unknown> : {}
-  const heading = safeText(raw.heading)
+  const heading = clamp(safeText(raw.heading), MAX_HEADING)
   const type = safeText(raw.type)
   if (!heading) return null
 
   if (type === "steps") {
-    const steps = Array.isArray(raw.steps) ? raw.steps.map(safeText).filter(Boolean) : []
+    const steps = Array.isArray(raw.steps)
+      ? raw.steps.map((s) => clamp(safeText(s), MAX_STEP)).filter(Boolean).slice(0, MAX_STEPS)
+      : []
     return { heading, type: "steps", steps }
   }
 
@@ -95,16 +110,23 @@ function normalizeSection(value: unknown): SopStructuredContent["sections"][numb
     const rows = Array.isArray(raw.rows)
       ? raw.rows
           .filter(Array.isArray)
-          .map((row) => (row as unknown[]).map(safeText))
+          .slice(0, MAX_TABLE_ROWS)
+          .map((row) => (row as unknown[]).slice(0, MAX_TABLE_COLS).map((c) => clamp(safeText(c), MAX_CELL)))
           .filter((row) => row.some(Boolean))
       : []
     return { heading, type: "table", rows }
   }
 
-  return { heading, type: "text", content: safeText(raw.content) }
+  return { heading, type: "text", content: clamp(safeText(raw.content), MAX_CONTENT) }
 }
 
 function safeText(value: unknown): string {
-  return typeof value === "string" ? value.trim() : ""
+  if (typeof value !== "string") return ""
+  // Strip control characters (except newline/tab) that can corrupt the docx/markdown render.
+  return value.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "").trim()
+}
+
+function clamp(text: string, max: number): string {
+  return text.length > max ? text.slice(0, max) : text
 }
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { logAudit } from "@/lib/audit"
 import { requireSopBuilderUser } from "@/lib/sop-builder/access"
 import { isRouteError, loadDraftForUser } from "@/lib/sop-builder/api"
-import { generateSopDocx } from "@/lib/sop-builder/docx-generator"
+import { renderSopWord } from "@/lib/sop-builder/word"
 
 export async function POST(
   _request: Request,
@@ -14,7 +14,7 @@ export async function POST(
   const draft = await loadDraftForUser(ctx.service, id)
   if (isRouteError(draft)) return draft
 
-  const buffer = await generateSopDocx(draft.structured_content_json)
+  const { buffer, usedTemplateId } = await renderSopWord(ctx.service, draft.session_id, draft.structured_content_json)
   const path = `sop-builder/sessions/${draft.session_id}/draft-${draft.version}.docx`
 
   const { error: uploadError } = await ctx.service.storage
@@ -51,7 +51,7 @@ export async function POST(
     action: "sop_builder_word_generated",
     entityType: "system",
     entityId: draft.session_id,
-    metadata: { draft_id: draft.id, file_path: path },
+    metadata: { draft_id: draft.id, file_path: path, template_id: usedTemplateId },
   })
 
   return NextResponse.json({ path, signedUrl: signed?.signedUrl || null })

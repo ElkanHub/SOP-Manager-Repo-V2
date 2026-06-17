@@ -1,7 +1,7 @@
-import Link from "next/link"
-import { ArrowRight, Calendar, Sparkles } from "lucide-react"
-import SectionGrainient from "@/components/marketing/section-grainient"
-import MetallicPaint from "@/components/ui/metallic-paint"
+import Link from "next/link";
+import { ArrowRight, Calendar, Sparkles } from "lucide-react";
+import SectionGrainient from "@/components/marketing/section-grainient";
+import MetallicPaint from "@/components/ui/metallic-paint";
 
 export default function Hero() {
   return (
@@ -10,18 +10,14 @@ export default function Hero() {
 
       <div className="relative mx-auto w-full max-w-7xl px-6 pt-32 pb-20 sm:pt-36 sm:pb-24 lg:px-8 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <div className="max-w-xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85 backdrop-blur-sm">
-            <Sparkles className="size-3" />
-            <span className="animate-pulse">QMS-MANAJA 2.0</span>
-          </span>
-
           <h1 className="mt-8 font-serif text-5xl font-medium tracking-tight text-white sm:text-7xl">
             Your procedures, in&nbsp;order.
           </h1>
 
           <p className="mt-8 max-w-lg text-lg text-white/70">
-            Manage SOPs, approvals, equipment PMs, and training in one controlled system. Real-time Pulse surfaces what
-            needs attention next. Built for QA-led teams.
+            Manage SOPs, approvals, equipment PMs, and training in one
+            controlled system. Real-time Pulse surfaces what needs attention
+            next. Built for QA-led teams.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -66,5 +62,5 @@ export default function Hero() {
         </div>
       </div>
     </section>
-  )
+  );
 }

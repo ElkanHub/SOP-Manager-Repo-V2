@@ -20,10 +20,16 @@ export default async function SopBuilderSessionPage({ params }: { params: Promis
     redirect("/dashboard")
   }
 
-  const [{ data: session }, { data: drafts }, { data: messages }] = await Promise.all([
+  const [{ data: session }, { data: drafts }, { data: messages }, { data: sessions }] = await Promise.all([
     service.from("sop_builder_sessions").select("*").eq("id", id).maybeSingle(),
     service.from("sop_builder_drafts").select("*").eq("session_id", id).order("version", { ascending: false }),
     service.from("sop_builder_messages").select("*").eq("session_id", id).order("created_at", { ascending: true }),
+    service
+      .from("sop_builder_sessions")
+      .select("id, title, status, updated_at, active_draft_id")
+      .eq("created_by", user.id)
+      .order("updated_at", { ascending: false })
+      .limit(60),
   ])
 
   if (!session) notFound()
@@ -33,6 +39,7 @@ export default async function SopBuilderSessionPage({ params }: { params: Promis
       initialSession={session}
       initialDrafts={drafts || []}
       initialMessages={messages || []}
+      sessions={sessions || []}
     />
   )
 }

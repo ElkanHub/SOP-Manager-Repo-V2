@@ -22,5 +22,9 @@
       "Bash(npx eslint *)",
       "Bash(git restore *)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "shadcn",
+    "sentry"
+  ]
 }
