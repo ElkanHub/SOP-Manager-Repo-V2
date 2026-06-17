@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import { motion } from "motion/react"
+import { listContainer, listItem } from "@/lib/motion"
 import { format } from "date-fns"
 import { ClipboardList, FileText, Send, Inbox, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -106,9 +108,10 @@ export function NewRequestsClient({ profile, isQa, publishedForms, mySubmissions
                                 </CardContent>
                             </Card>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-3" variants={listContainer} initial="hidden" animate="show">
                                 {visibleForms.map((f) => (
-                                    <Card key={f.id} className="hover:border-brand-teal/40 transition-colors">
+                                    <motion.div key={f.id} variants={listItem}>
+                                    <Card className="h-full hover:border-brand-teal/40 transition-colors">
                                         <CardHeader>
                                             <div className="flex items-start justify-between gap-2">
                                                 <CardTitle className="text-base line-clamp-1">{f.title}</CardTitle>
@@ -136,8 +139,9 @@ export function NewRequestsClient({ profile, isQa, publishedForms, mySubmissions
                                             </Button>
                                         </CardContent>
                                     </Card>
+                                    </motion.div>
                                 ))}
-                            </div>
+                            </motion.div>
                         )}
                     </TabsContent>
 
