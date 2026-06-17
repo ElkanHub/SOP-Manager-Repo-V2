@@ -414,13 +414,28 @@ export class SopBuilderHarness {
   }
 
   private async postAgentMessage(sessionId: string, message: string, draftId: string | null, type: string) {
-    await this.service.from("sop_builder_messages").insert({
+    // sop_builder_messages.message_type is constrained; coerce anything else to
+    // 'chat' (a conversational agent reply) so the insert never fails silently.
+    const ALLOWED = new Set([
+      "chat",
+      "clarification_question",
+      "clarification_answer",
+      "outline_feedback",
+      "revision_instruction",
+      "revision_summary",
+      "system_notice",
+    ])
+    const { error } = await this.service.from("sop_builder_messages").insert({
       session_id: sessionId,
       sender: "agent",
       message,
-      message_type: type,
+      message_type: ALLOWED.has(type) ? type : "chat",
       related_draft_id: draftId,
     })
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error("[sop-builder] agent message insert failed:", error.message)
+    }
   }
 
   private async loadMessages(sessionId: string) {
