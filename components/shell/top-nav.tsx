@@ -100,16 +100,10 @@ export function TopNav({ user, profile }: TopNavProps) {
     }, [user, profile, fetchPulseCounts])
 
     const handleBellClick = () => {
-        // Toggle the pulse sidebar
-        window.dispatchEvent(new CustomEvent('pulse-toggle', { detail: { open: true } }))
-        
-        const now = Date.now()
-        localStorage.setItem('last_pulse_view', now.toString())
-        setLastSeenPulse(now)
-        fetchPulseCounts()
-        
-        // Notify other components (like PulseWrapper) that it was viewed
-        window.dispatchEvent(new Event('pulse-viewed'))
+        // Toggle the pulse sidebar open/closed. The PulseWrapper owns the state
+        // and, when it opens, marks the pulse viewed and echoes a 'pulse-viewed'
+        // event back so this bell's count refreshes — so closing won't clear it.
+        window.dispatchEvent(new CustomEvent('pulse-toggle', { detail: { toggle: true } }))
     }
 
     return (
@@ -162,7 +156,7 @@ export function TopNav({ user, profile }: TopNavProps) {
                                     size="icon"
                                     className="text-white hover:bg-white/10 relative"
                                     onClick={handleBellClick}
-                                    aria-label="Open Pulse notifications"
+                                    aria-label="Toggle Pulse notifications"
                                 />
                             }
                         >

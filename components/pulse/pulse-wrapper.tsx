@@ -20,13 +20,30 @@ type PulseAcknowledgementRow = {
 }
 
 export function PulseWrapper({ user, profile }: PulseWrapperProps) {
-    const [isOpen, setIsOpen] = useState(() => {
-        if (typeof window === "undefined") return true
-        const saved = window.localStorage.getItem("pulse-sidebar-open")
-        return saved === null ? true : saved === "true"
-    })
+    // Start closed on the server and the first client paint so SSR and hydration
+    // agree (no "flash open"); the persisted state is restored on mount below.
+    const [isOpen, setIsOpen] = useState(false)
+    const [animate, setAnimate] = useState(false)
+    const isOpenRef = useRef(false)
     const [badgeCount, setBadgeCount] = useState(0)
     const prevCountRef = useRef(0)
+
+    // Restore the saved open/closed state once, on mount. Transitions are enabled
+    // a frame later so restoring an open panel snaps into place instead of sliding.
+    useEffect(() => {
+        const saved = window.localStorage.getItem("pulse-sidebar-open")
+        const open = saved === null ? true : saved === "true"
+        // Restoring persisted UI state on mount is the intended use here — the
+        // server always renders closed, so this can't cause a hydration mismatch.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsOpen(open)
+        isOpenRef.current = open
+        const id = requestAnimationFrame(() => setAnimate(true))
+        return () => cancelAnimationFrame(id)
+    }, [])
+
+    // Keep a ref in sync so event handlers always read the latest open state.
+    useEffect(() => { isOpenRef.current = isOpen }, [isOpen])
 
     // Sound notification when new items arrive
     useEffect(() => {
@@ -142,14 +159,22 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             setTimeout(fetchBadgeCount, 30)
         }
         const handleToggle = (e: Event) => {
-            const detail = (e as CustomEvent).detail
-            if (detail?.open !== undefined) {
-                setIsOpen(detail.open)
-                localStorage.setItem("pulse-sidebar-open", String(detail.open))
-                if (detail.open) {
-                    localStorage.setItem("last_pulse_view", Date.now().toString())
-                    setTimeout(fetchBadgeCount, 30)
-                }
+            const detail = (e as CustomEvent).detail || {}
+            // `toggle` flips the current state (used by the navbar bell); an
+            // explicit `open` boolean is still honoured for any other caller.
+            const next = detail.toggle
+                ? !isOpenRef.current
+                : detail.open !== undefined
+                    ? detail.open
+                    : isOpenRef.current
+            setIsOpen(next)
+            isOpenRef.current = next
+            localStorage.setItem("pulse-sidebar-open", String(next))
+            if (next) {
+                localStorage.setItem("last_pulse_view", Date.now().toString())
+                // Let the navbar bell clear its "new" count too.
+                window.dispatchEvent(new Event('pulse-viewed'))
+                setTimeout(fetchBadgeCount, 30)
             }
         }
 
@@ -190,7 +215,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             <div
                 className={`
                     fixed top-1/2 -translate-y-1/2 z-50 flex items-center
-                    transition-all duration-300 ease-in-out
+                    ${animate ? 'transition-all duration-300 ease-in-out' : ''}
                     ${isOpen ? 'right-80' : 'right-0'}
                 `}
             >
@@ -201,7 +226,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
                                 variant="ghost"
                                 size="icon"
                                 onClick={togglePulse}
-                                className="h-16 w-8 rounded-l-md border-l border-t border-b bg-muted/60 hover:bg-muted text-muted-foreground shadow-sm relative"
+                                className="h-16 w-8 rounded-l-md border-l border-t border-b border-brand-teal/40 bg-brand-teal/60 hover:bg-brand-teal/80 text-white shadow-sm relative"
                                 aria-label={isOpen ? "Close Pulse" : "Open Pulse"}
                             />
                         }
@@ -229,7 +254,7 @@ export function PulseWrapper({ user, profile }: PulseWrapperProps) {
             <div
                 className={`
                     fixed right-0 top-0 h-full z-40 w-80 flex flex-col overflow-hidden
-                    transition-transform duration-300 ease-in-out
+                    ${animate ? 'transition-transform duration-300 ease-in-out' : ''}
                     ${isOpen ? 'translate-x-0' : 'translate-x-full'}
                 `}
                 style={{ paddingTop: '56px' }}
