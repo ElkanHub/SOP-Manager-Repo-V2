@@ -166,8 +166,10 @@ interface MetallicPaintProps {
 }
 
 function processImage(img: HTMLImageElement): ImageData {
-  const MAX_SIZE = 1000;
-  const MIN_SIZE = 500;
+  // Smaller working grid keeps the synchronous SOR relaxation below cheap.
+  // The result is only used as a depth texture, so 600px is visually ample.
+  const MAX_SIZE = 600;
+  const MIN_SIZE = 400;
   let width = img.naturalWidth || img.width;
   let height = img.naturalHeight || img.height;
 
@@ -232,7 +234,7 @@ function processImage(img: HTMLImageElement): ImageData {
   }
 
   const u = new Float32Array(size);
-  const ITERATIONS = 200;
+  const ITERATIONS = 80;
   const C = 0.01;
   const omega = 1.85;
 
@@ -522,11 +524,46 @@ export default function MetallicPaint({
       rafRef.current = requestAnimationFrame(render);
     };
 
-    lastTimeRef.current = performance.now();
-    rafRef.current = requestAnimationFrame(render);
+    // Only run the WebGL loop while the canvas is on-screen and the tab is
+    // visible — a hero shader rendering off-screen is pure wasted GPU/battery.
+    let onScreen = true;
+    let pageVisible = !document.hidden;
+    const start = () => {
+      if (rafRef.current == null && onScreen && pageVisible) {
+        lastTimeRef.current = performance.now();
+        rafRef.current = requestAnimationFrame(render);
+      }
+    };
+    const stop = () => {
+      if (rafRef.current != null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        onScreen = entry.isIntersecting;
+        if (onScreen) start();
+        else stop();
+      },
+      { threshold: 0 }
+    );
+    io.observe(canvas);
+
+    const onVisibility = () => {
+      pageVisible = !document.hidden;
+      if (pageVisible) start();
+      else stop();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    start();
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      stop();
+      io.disconnect();
+      document.removeEventListener('visibilitychange', onVisibility);
       canvas.removeEventListener('mousemove', handleMouseMove);
     };
   }, [ready, textureReady]);

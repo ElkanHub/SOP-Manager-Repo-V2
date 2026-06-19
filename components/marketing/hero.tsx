@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Calendar, Sparkles } from "lucide-react";
 import SectionGrainient from "@/components/marketing/section-grainient";
-import MetallicPaint from "@/components/ui/metallic-paint";
+import MetallicLogo from "@/components/marketing/metallic-logo";
 
 export default function Hero() {
   return (
@@ -44,21 +44,9 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Right Side: Metallic Paint Component */}
+        {/* Right Side: Metallic Paint Component (code-split, hydrates after paint) */}
         <div className="relative w-full aspect-square max-w-lg mx-auto lg:mx-0">
-          <MetallicPaint
-            imageSrc="/marketing/logo.jpg"
-            mouseAnimation={true}
-            speed={0.25}
-            refraction={0.015}
-            blur={0.02}
-            brightness={2.2}
-            contrast={0.8}
-            liquid={0.8}
-            lightColor="#2DD4BF" // brand teal highlight
-            darkColor="#0f172a" // brand navy dark parts
-            tintColor="#38BDF8" // brand sky tint
-          />
+          <MetallicLogo />
         </div>
       </div>
     </section>

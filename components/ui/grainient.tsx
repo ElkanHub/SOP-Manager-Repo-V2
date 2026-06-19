@@ -232,6 +232,23 @@ const Grainient: React.FC<GrainientProps> = ({
       ro.observe(container)
       setSize()
 
+      // A grainient with no time-driven motion produces an identical frame
+      // forever — render it once and skip the rAF loop entirely. Most section
+      // presets are frozen, so this removes their continuous GPU cost.
+      const isStatic =
+        timeSpeed === 0 && warpSpeed === 0 && !grainAnimated
+
+      if (isStatic) {
+        renderer.render({ scene: mesh })
+        container.dataset.cleanupReady = 'true'
+        ;(container as any).__grainientCleanup = () => {
+          ro.disconnect()
+          ctxMap.delete(container)
+          try { container.removeChild(canvas) } catch { /* ignore */ }
+        }
+        return
+      }
+
       let raf = 0
       let isVisible = true
       let isPageVisible = !document.hidden
@@ -313,6 +330,9 @@ const Grainient: React.FC<GrainientProps> = ({
     u.uColor1.value         = new Float32Array(hexToRgb(color1))
     u.uColor2.value         = new Float32Array(hexToRgb(color2))
     u.uColor3.value         = new Float32Array(hexToRgb(color3))
+
+    // Static grainients have no rAF loop, so push the new uniforms to screen.
+    ctx.renderer.render({ scene: ctx.mesh })
   }, [
     timeSpeed, colorBalance, warpStrength, warpFrequency, warpSpeed,
     warpAmplitude, blendAngle, blendSoftness, rotationAmount, noiseScale,
