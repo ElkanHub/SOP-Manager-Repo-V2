@@ -5,6 +5,59 @@ import * as mammoth from 'mammoth'
 import { TrainingQuestion } from '@/types/app.types'
 import { generateJson, friendlyAiMessage } from '@/lib/ai/client'
 
+// Constrain the model to emit conforming JSON. Gemini honours type/enum/required.
+const QUESTIONNAIRE_SCHEMA = {
+    type: 'array',
+    items: {
+        type: 'object',
+        properties: {
+            question_text: { type: 'string' },
+            question_type: { type: 'string', enum: ['multiple_choice', 'true_false'] },
+            options: {
+                type: 'array',
+                items: {
+                    type: 'object',
+                    properties: {
+                        id: { type: 'string' },
+                        text: { type: 'string' },
+                        is_correct: { type: 'boolean' },
+                    },
+                    required: ['id', 'text', 'is_correct'],
+                },
+            },
+            sop_section_ref: { type: 'string' },
+        },
+        required: ['question_text', 'question_type', 'options'],
+    },
+} as const
+
+/**
+ * Defence in depth on top of the schema: refuse a set unless every question is
+ * answerable — has text, a known type, ≥2 fully-formed options, and EXACTLY one
+ * correct answer. A plausible-but-broken quiz must never reach the DB.
+ */
+function isValidQuestionSet(v: unknown): v is any[] {
+    if (!Array.isArray(v) || v.length === 0) return false
+    return v.every((q) => {
+        if (!q || typeof q !== 'object') return false
+        const qq = q as Record<string, unknown>
+        if (typeof qq.question_text !== 'string' || !qq.question_text.trim()) return false
+        if (qq.question_type !== 'multiple_choice' && qq.question_type !== 'true_false') return false
+        if (!Array.isArray(qq.options) || qq.options.length < 2) return false
+        const wellFormed = qq.options.every(
+            (o: unknown) =>
+                !!o &&
+                typeof o === 'object' &&
+                typeof (o as any).id === 'string' &&
+                typeof (o as any).text === 'string' &&
+                typeof (o as any).is_correct === 'boolean',
+        )
+        if (!wellFormed) return false
+        const correctCount = (qq.options as any[]).filter((o) => o.is_correct === true).length
+        return correctCount === 1
+    })
+}
+
 export async function POST(request: NextRequest) {
     const client = await createClient()
     const { data: { user }, error: authError } = await client.auth.getUser()
@@ -67,9 +120,13 @@ export async function POST(request: NextRequest) {
 Generate a questionnaire based ON THE PROVIDED SOP.
 Output ONLY a raw JSON array of objects.`
 
-        const prompt = `Generate EXACTLY ${questionCount} questions from this SOP.
-Each object must have: question_text, question_type (multiple_choice or true_false),
-options (array with ids 'a' to 'd' and is_correct boolean), and sop_section_ref.
+        const prompt = `Generate EXACTLY ${questionCount} questions from this SOP. Return a JSON array. Each question object must have:
+- question_text: string
+- question_type: "multiple_choice" or "true_false"
+- options: array of objects { id, text, is_correct }. For multiple_choice use ids "a","b","c","d" (4 options); for true_false use ids "true","false" (2 options). EXACTLY ONE option must have is_correct = true.
+- sop_section_ref: a short reference to the SOP section the question is drawn from
+
+Base every question strictly on the SOP content below. Do not invent facts or test material that is not present.
 
 SOP Content:
 ${documentText}`
@@ -82,7 +139,8 @@ ${documentText}`
             temperature: 0.2,
             maxOutputTokens: 4096,
             actorId: user.id,
-            validate: (v): v is any[] => Array.isArray(v),
+            schema: QUESTIONNAIRE_SCHEMA,
+            validate: isValidQuestionSet,
         })
 
         // 3. Database Operations

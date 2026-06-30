@@ -5,6 +5,39 @@ import * as mammoth from 'mammoth'
 import { TrainingSlide } from '@/types/app.types'
 import { generateJson, friendlyAiMessage } from '@/lib/ai/client'
 
+const SLIDE_TYPES = ['title', 'objectives', 'content', 'summary', 'edge_cases', 'resources'] as const
+
+// No `id` here — LLMs fabricate/collide UUIDs, so we assign them server-side.
+const SLIDE_SCHEMA = {
+    type: 'array',
+    items: {
+        type: 'object',
+        properties: {
+            type: { type: 'string', enum: [...SLIDE_TYPES] },
+            title: { type: 'string' },
+            body: { type: 'string' },
+            notes: { type: 'string' },
+            order: { type: 'number' },
+        },
+        required: ['type', 'title', 'body', 'order'],
+    },
+} as const
+
+type RawSlide = Omit<TrainingSlide, 'id'>
+
+function isValidSlideDeck(v: unknown): v is RawSlide[] {
+    if (!Array.isArray(v) || v.length === 0) return false
+    return v.every(
+        (s: unknown) =>
+            !!s &&
+            typeof s === 'object' &&
+            typeof (s as any).title === 'string' &&
+            typeof (s as any).body === 'string' &&
+            typeof (s as any).order === 'number' &&
+            (SLIDE_TYPES as readonly string[]).includes((s as any).type),
+    )
+}
+
 export async function POST(request: NextRequest) {
     const client = await createClient()
     const { data: { user }, error: authError } = await client.auth.getUser()
@@ -69,13 +102,19 @@ export async function POST(request: NextRequest) {
 Your task is to convert a Standard Operating Procedure (SOP) into a training slide deck.
 You must return a valid JSON array of objects.`
 
-        const prompt = `Convert the following SOP document into a slide deck.
-Each slide must have: id (UUID), type (title, objectives, content, summary, or edge_cases), title, body, notes, and order (number).
+        const prompt = `Convert the following SOP document into a training slide deck as a JSON array.
+Each slide must have:
+- type: one of "title", "objectives", "content", "summary", "edge_cases", "resources"
+- title: string
+- body: plain text (you may use \\n for line breaks)
+- notes: short presenter notes
+- order: 1-based slide number
+Do NOT include an "id" field — it is assigned by the system. Base all content strictly on the SOP.
 
 SOP Content:
 ${documentText}`
 
-        const { data: slideDeck } = await generateJson<TrainingSlide[]>({
+        const { data: rawSlides } = await generateJson<RawSlide[]>({
             purpose: 'training-slides',
             tier: 'fast',
             prompt,
@@ -83,8 +122,22 @@ ${documentText}`
             temperature: 0.1,
             maxOutputTokens: 8192,
             actorId: user.id,
-            validate: (v): v is TrainingSlide[] => Array.isArray(v),
+            schema: SLIDE_SCHEMA,
+            validate: isValidSlideDeck,
         })
+
+        // Assign stable server-side IDs and normalise ordering (the model only
+        // supplies relative order; we make it strictly sequential).
+        const slideDeck: TrainingSlide[] = [...rawSlides]
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map((s, i) => ({
+                id: crypto.randomUUID(),
+                type: s.type,
+                title: s.title,
+                body: s.body,
+                notes: typeof s.notes === 'string' ? s.notes : undefined,
+                order: i + 1,
+            }))
 
         // 3. Save to Database
         await saveSlideDeck(serviceClient, moduleId, slideDeck);
