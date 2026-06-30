@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ZenQMS — Competitive Strategy Brief</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #1c2733;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    margin: 0;
+  }
+  h1 {
+    font-size: 21pt;
+    color: #0f2942;
+    margin: 0 0 2px 0;
+    letter-spacing: -0.3px;
+  }
+  .sub { color: #5b6b7a; font-size: 10pt; margin: 0 0 18px 0; }
+  h2 {
+    font-size: 12.5pt;
+    color: #0f2942;
+    border-bottom: 2px solid #1f7a8c;
+    padding-bottom: 4px;
+    margin: 22px 0 10px 0;
+  }
+  h3 { font-size: 10.5pt; color: #1f7a8c; margin: 14px 0 4px 0; }
+  p { margin: 6px 0; }
+  ul { margin: 6px 0 6px 0; padding-left: 18px; }
+  li { margin: 3px 0; }
+  strong { color: #0f2942; }
+  .lead {
+    background: #f1f6f8;
+    border-left: 4px solid #1f7a8c;
+    padding: 12px 14px;
+    border-radius: 3px;
+    margin: 0 0 6px 0;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 9.8pt; }
+  th { background: #0f2942; color: #fff; text-align: left; padding: 7px 9px; font-weight: 600; }
+  td { padding: 7px 9px; border-bottom: 1px solid #e2e8ec; vertical-align: top; }
+  tr:nth-child(even) td { background: #f7fafb; }
+  .win td:first-child { font-weight: 600; color: #0f2942; }
+  .tag {
+    display: inline-block; font-size: 8pt; font-weight: 700;
+    padding: 1px 7px; border-radius: 10px; vertical-align: middle;
+  }
+  .now { background: #d6f0e0; color: #1a6b40; }
+  .build { background: #fde8cf; color: #9a5a12; }
+  .footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e2e8ec; color: #8a98a5; font-size: 8.5pt; }
+  .callout {
+    background: #0f2942; color: #fff; padding: 14px 16px; border-radius: 4px; margin: 16px 0;
+  }
+  .callout strong { color: #7fd0de; }
+  .nobreak { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+  <h1>ZenQMS — Competitive Strategy Brief</h1>
+  <p class="sub">How we match them on the essentials and win in our target market &nbsp;|&nbsp; June 2026</p>
+
+  <div class="lead">
+    <strong>Bottom line.</strong> ZenQMS is a solid, well-liked eQMS, but it wins on being
+    <em>simple and human</em>, not on being <em>modern</em>. Its product has known soft spots — sequential
+    (non-collaborative) document review, reporting it had to retrofit, a thin CAPA module, and an AI story
+    that is still mostly "coming soon." Those gaps are our opening. The plan below is short on them and long
+    on us: what we must match to be credible, and where we move to win.
+  </div>
+
+  <h2>Their position, in one glance</h2>
+  <p>
+    They serve small-to-mid life-sciences teams that have outgrown paper/SharePoint but find the enterprise
+    incumbents too heavy. Their two real strengths are <strong>responsive human support</strong> and
+    <strong>all-users / all-modules pricing</strong> (no per-seat fees). Everything else is competitive ground
+    we can take. Notably, pricing is fully hidden behind a sales demo, and onboarding is a 30–90 day,
+    salesperson-led process.
+  </p>
+
+  <h2>Where we win</h2>
+  <table class="win">
+    <tr><th style="width:26%">Their weakness</th><th style="width:37%">Our move</th><th>Why it lands</th></tr>
+    <tr>
+      <td>No real-time document collaboration — reviews are sequential, one signer at a time</td>
+      <td>Parallel review with inline comments inside a compliant, locked audit trail</td>
+      <td>This is their single most-repeated user complaint and is unsolved across the whole category</td>
+    </tr>
+    <tr>
+      <td>AI is mostly roadmap — only two features shipped, the rest "coming soon"</td>
+      <td>Ship genuinely useful, audit-safe AI now: change delta-summaries, risk insights, SOP Q&amp;A, CAPA/deviation drafting</td>
+      <td>We already have working AI summary &amp; risk endpoints — we are ahead here, not catching up</td>
+    </tr>
+    <tr>
+      <td>Reporting was historically weak (they only recently added it)</td>
+      <td>Flexible, role-aware dashboards and reporting out of the box</td>
+      <td>Closes a gap they spent years getting complaints about</td>
+    </tr>
+    <tr>
+      <td>Pricing is opaque and demo-gated; no self-serve</td>
+      <td>Transparent pricing and lighter, faster onboarding for smaller teams</td>
+      <td>Removes the friction early-stage buyers feel before they ever see the product</td>
+    </tr>
+    <tr>
+      <td>CAPA / issues module admitted to be light</td>
+      <td>Deeper, more configurable deviation &amp; CAPA workflows</td>
+      <td>Directly answers a stated limitation in their core quality module</td>
+    </tr>
+  </table>
+
+  <h2>What we must match first (table stakes)</h2>
+  <p>These are non-negotiable for any life-sciences buyer. We cannot win on UX or AI until we clear this bar — it is the price of being taken seriously.</p>
+  <ul>
+    <li><span class="tag now">HAVE</span> &nbsp; 21 CFR Part 11 / Annex 11 e-signatures with an immutable audit trail (our signature-certificate and audit model already aligns).</li>
+    <li><span class="tag now">HAVE</span> &nbsp; Connected modules — documents, training, change control, issues all link together (our model already does this).</li>
+    <li><span class="tag build">BUILD</span> &nbsp; A free, fast validation package (IQ/OQ/PQ, UAT templates, Part 11 checklist). They use this as a cheap, powerful sales lubricant — we should too.</li>
+    <li><span class="tag build">BUILD</span> &nbsp; Security posture buyers ask for: SOC 2 Type II and ISO 27001 on the roadmap, with a public trust/status page.</li>
+  </ul>
+
+  <h2>What this means for us — the plan</h2>
+  <div class="nobreak">
+    <h3>Near term — lead with what already separates us</h3>
+    <ul>
+      <li>Turn our existing AI (delta-summaries, risk insights) into a visible, front-and-centre selling point while they are still promising theirs.</li>
+      <li>Design document review as collaborative/parallel from the start — make it the demo moment that exposes their sequential model.</li>
+    </ul>
+    <h3>Mid term — remove their reasons to win</h3>
+    <ul>
+      <li>Ship strong reporting and a deeper CAPA/issues workflow so the two product objections disappear.</li>
+      <li>Produce the validation package and stand up the trust/compliance page.</li>
+    </ul>
+    <h3>Go-to-market — pick a different fight</h3>
+    <ul>
+      <li>Target the smaller / early-stage teams who find even their sales-led, demo-gated process heavy — compete with transparency and self-serve onboarding.</li>
+      <li>Do not try to out-support a company whose whole reputation is support. Match it; win on product and AI.</li>
+    </ul>
+  </div>
+
+  <div class="callout">
+    <strong>The one-line strategy:</strong> they are simple-but-dated; we are simple-and-modern. We match them
+    on compliance and connected workflows, then beat them on collaboration, real shipped AI, and an honest,
+    low-friction buying experience — aimed squarely at the lean teams they make work too hard to buy.
+  </div>
+
+  <div class="footer">
+    Prepared from ZenQMS public materials and third-party review/funding sources (G2, Capterra, company filings), June 2026.
+    Internal — competitive use only.
+  </div>
+
+</body>
+</html>
