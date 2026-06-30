@@ -355,6 +355,7 @@ export function IntakeClient({ profile, departments, activeSops }: Props) {
                 user={profile}
                 departments={departments}
                 existingSops={existingSops}
+                lockedType="new"
                 onSuccess={() => {
                     setUploadOpen(false)
                     setMessage({ type: "success", text: "New document submitted for review." })

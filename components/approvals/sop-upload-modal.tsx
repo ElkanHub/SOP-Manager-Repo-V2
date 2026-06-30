@@ -22,6 +22,10 @@ interface SopUploadModalProps {
     departments: Department[]
     existingSops?: ExistingSopOption[]
     onSuccess?: () => void
+    // When the request type was already inferred upstream (the unified intake),
+    // lock it so the modal doesn't ask the user to self-classify again. Intake only
+    // ever routes NEW documents here — revisions go through the Change Control pipe.
+    lockedType?: 'new' | 'update'
 }
 
 export function SopUploadModal({
@@ -31,6 +35,7 @@ export function SopUploadModal({
     departments,
     existingSops = [],
     onSuccess,
+    lockedType,
 }: SopUploadModalProps) {
     const [step, setStep] = useState(1)
     const [file, setFile] = useState<File | null>(null)
@@ -39,7 +44,7 @@ export function SopUploadModal({
     const [uploading, setUploading] = useState(false)
     const [uploadError, setUploadError] = useState<string | null>(null)
 
-    const [sopType, setSopType] = useState<'new' | 'update'>('new')
+    const [sopType, setSopType] = useState<'new' | 'update'>(lockedType ?? 'new')
     const [sopNumber, setSopNumber] = useState('')
     const [generatedSopNumber, setGeneratedSopNumber] = useState('')
     const [numberPreviewError, setNumberPreviewError] = useState<string | null>(null)
@@ -69,7 +74,7 @@ export function SopUploadModal({
             setFileUrl(null)
             setFilePath(null)
             setUploadError(null)
-            setSopType('new')
+            setSopType(lockedType ?? 'new')
             setSopNumber('')
             setGeneratedSopNumber('')
             setNumberPreviewError(null)
@@ -85,7 +90,7 @@ export function SopUploadModal({
             setSubmitError(null)
             setSubmitSuccess(false)
         }
-    }, [open, user.department])
+    }, [open, user.department, lockedType])
 
     const validateFile = (f: File): string | null => {
         const allowedTypes = [
@@ -275,7 +280,7 @@ export function SopUploadModal({
             <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-border/40 shadow-2xl bg-gradient-to-b from-background to-background/98">
                 <DialogHeader className="p-6 pb-4 bg-gradient-to-r from-brand-teal/10 via-brand-navy/5 to-transparent border-b border-border/50 relative">
                     <div className="space-y-1">
-                        <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">Submit SOP Document</DialogTitle>
+                        <DialogTitle className="text-2xl font-bold tracking-tight text-foreground">{lockedType === 'new' ? 'New SOP Document' : 'Submit SOP Document'}</DialogTitle>
                         <DialogDescription className="text-xs font-bold uppercase tracking-widest text-brand-teal/80">
                             Regulatory Compliance Submission
                         </DialogDescription>
@@ -378,23 +383,32 @@ export function SopUploadModal({
 
                     {step === 2 && (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                            <div className="space-y-3">
-                                <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Submission Type</Label>
-                                <RadioGroup
-                                    value={sopType}
-                                    onValueChange={(v) => setSopType(v as 'new' | 'update')}
-                                    className="flex gap-4"
-                                >
-                                    <div className="flex items-center space-x-2 p-3 rounded-xl border border-border/50 bg-muted/10 flex-1 hover:bg-muted/20 cursor-pointer transition-colors">
-                                        <RadioGroupItem value="new" id="type-new" className="text-brand-teal" />
-                                        <Label htmlFor="type-new" className="cursor-pointer font-bold text-sm">New SOP</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 p-3 rounded-xl border border-border/50 bg-muted/10 flex-1 hover:bg-muted/20 cursor-pointer transition-colors">
-                                        <RadioGroupItem value="update" id="type-update" className="text-brand-teal" />
-                                        <Label htmlFor="type-update" className="cursor-pointer font-bold text-sm">Update Existing</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
+                            {lockedType ? (
+                                <div className="flex items-center gap-2 p-3 rounded-xl border border-brand-teal/20 bg-brand-teal/5">
+                                    <CheckCircle2 className="h-4 w-4 text-brand-teal flex-shrink-0" />
+                                    <p className="text-xs font-medium text-foreground">
+                                        Determined at intake: <span className="font-bold">{lockedType === 'new' ? 'New Document' : 'Document Revision'}</span>. Complete the details below.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Submission Type</Label>
+                                    <RadioGroup
+                                        value={sopType}
+                                        onValueChange={(v) => setSopType(v as 'new' | 'update')}
+                                        className="flex gap-4"
+                                    >
+                                        <div className="flex items-center space-x-2 p-3 rounded-xl border border-border/50 bg-muted/10 flex-1 hover:bg-muted/20 cursor-pointer transition-colors">
+                                            <RadioGroupItem value="new" id="type-new" className="text-brand-teal" />
+                                            <Label htmlFor="type-new" className="cursor-pointer font-bold text-sm">New SOP</Label>
+                                        </div>
+                                        <div className="flex items-center space-x-2 p-3 rounded-xl border border-border/50 bg-muted/10 flex-1 hover:bg-muted/20 cursor-pointer transition-colors">
+                                            <RadioGroupItem value="update" id="type-update" className="text-brand-teal" />
+                                            <Label htmlFor="type-update" className="cursor-pointer font-bold text-sm">Update Existing</Label>
+                                        </div>
+                                    </RadioGroup>
+                                </div>
+                            )}
 
                             {sopType === 'new' ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
