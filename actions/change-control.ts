@@ -7,13 +7,14 @@ export type ChangeControlActionResult =
   | { success: true; id?: string; ccNumber?: string; data?: unknown }
   | { success: false; error: string }
 
+// Benign manual transitions QA can drive directly. Terminal transitions
+// (effective / closed) are NOT here — they go through guarded RPCs
+// (confirm reconciliation, close_change_control) so their preconditions hold.
 export type ChangeControlLifecycleStatus =
   | 'documents_in_review'
   | 'signatures_pending'
   | 'pending_reconciliation'
   | 'pending_training'
-  | 'effective'
-  | 'closed'
 
 export type ChangeControlDocumentInput = {
   documentId?: string | null
@@ -269,12 +270,15 @@ export async function screenChangeControlRequest(
   let requesterBody = `${current.cc_number} has been screened by QA.`
 
   if (decision === 'approve') {
-    update.status = 'approved_for_document_work'
+    // Begin screening. The change must complete its impact assessment and be
+    // classified (classifyChangeControl) before it can be approved for document
+    // work — there is no "submit anyway" (§7.2).
+    update.status = 'impact_pending'
     update.clarification_request = null
     update.rejection_reason = null
-    auditAction = 'change_control_approved_for_document_work'
-    requesterTitle = `Change Control approved: ${current.cc_number}`
-    requesterBody = `${current.cc_number} is approved for document work.`
+    auditAction = 'change_control_screening_started'
+    requesterTitle = `Change Control in screening: ${current.cc_number}`
+    requesterBody = `${current.cc_number} is being screened by QA (impact assessment + classification).`
   } else if (decision === 'clarification') {
     if (qaNote.length < 5) return { success: false, error: 'Clarification note is required' }
     update.status = 'clarification_requested'
@@ -333,12 +337,9 @@ export async function updateChangeControlStatus(
   const canUpdate = await isQaOrAdmin(user.id, !!profile.is_admin, service)
   if (!canUpdate) return { success: false, error: 'Only QA can update Change Control status' }
 
-  const update: Record<string, unknown> = { status }
-  if (status === 'closed') update.closed_at = new Date().toISOString()
-
   const { data, error } = await service
     .from('change_controls')
-    .update(update)
+    .update({ status })
     .eq('id', changeControlId)
     .select('*')
     .single()
@@ -354,6 +355,102 @@ export async function updateChangeControlStatus(
 
   revalidateChangeControlPaths(changeControlId)
   return { success: true, data }
+}
+
+// ─── Impact + classification gate (§7.2 / §7.3) ──────────────────────────────
+// Completes the impact assessment and assigns a risk class. Server-side the RPC
+// refuses to advance until every required impact field is present (no submit-anyway),
+// and the chosen class drives the signature matrix.
+export async function classifyChangeControl(
+  changeControlId: string,
+  classification: 'minor' | 'major' | 'critical',
+  impact: import('@/types/app.types').ChangeControlImpact,
+  reason?: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can classify a Change Control' }
+  }
+
+  const { error } = await service.rpc('classify_change_control', {
+    p_cc_id: changeControlId,
+    p_actor_id: user.id,
+    p_classification: classification,
+    p_impact: impact,
+    p_reason: cleanText(reason || '', 1500) || null,
+  })
+  if (error) return { success: false, error: error.message }
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true }
+}
+
+// Approve a classified change for document work. The RPC runs the concurrency
+// check: if an affected document is locked under another open CC it returns
+// 'queued' (waits); otherwise 'approved_for_document_work' and locks the docs.
+export async function approveChangeControlForWork(
+  changeControlId: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can approve a Change Control for work' }
+  }
+
+  const { data, error } = await service.rpc('approve_cc_for_work', {
+    p_cc_id: changeControlId,
+    p_actor_id: user.id,
+  })
+  if (error) return { success: false, error: error.message }
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true, data }
+}
+
+// ─── Effectiveness review before closure (§7.12) ─────────────────────────────
+export async function openEffectivenessReview(
+  changeControlId: string,
+  dueDate?: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can open an effectiveness review' }
+  }
+  const { error } = await service.rpc('enter_effectiveness_review', {
+    p_cc_id: changeControlId,
+    p_actor_id: user.id,
+    p_due: dueDate || null,
+  })
+  if (error) return { success: false, error: error.message }
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true }
+}
+
+// Close a change. The RPC enforces reviewer ≠ requester (independent approver).
+export async function closeChangeControl(
+  changeControlId: string,
+  outcome: string,
+): Promise<ChangeControlActionResult> {
+  const ctx = await getActiveUser()
+  if (!ctx) return { success: false, error: 'Not authenticated' }
+  const { user, profile, service } = ctx
+  if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
+    return { success: false, error: 'Only QA can close a Change Control' }
+  }
+  const cleanOutcome = cleanText(outcome, 2000)
+  if (cleanOutcome.length < 5) return { success: false, error: 'An effectiveness outcome statement is required' }
+
+  const { error } = await service.rpc('close_change_control', {
+    p_cc_id: changeControlId,
+    p_actor_id: user.id,
+    p_outcome: cleanOutcome,
+  })
+  if (error) return { success: false, error: error.message }
+  revalidateChangeControlPaths(changeControlId)
+  return { success: true }
 }
 
 // Set the draft (proposed new revision + uploaded file) for one affected document.

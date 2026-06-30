@@ -22,22 +22,25 @@ interface Props {
 
 const openStatuses: ChangeControlPackageStatus[] = [
     "submitted",
-    "qa_screening",
     "clarification_requested",
+    "impact_pending",
+    "classified",
+    "queued",
     "approved_for_document_work",
     "documents_in_review",
     "signatures_pending",
     "pending_reconciliation",
     "pending_training",
+    "effectiveness_review",
 ]
 
+// Only the benign manual transitions belong here. Terminal transitions (effective /
+// closed) go through guarded actions (reconciliation, close-after-effectiveness-review).
 const lifecycleOptions: { value: ChangeControlPackageStatus; label: string }[] = [
     { value: "documents_in_review", label: "Documents in Review" },
     { value: "signatures_pending", label: "Signatures Pending" },
     { value: "pending_reconciliation", label: "Pending Reconciliation" },
     { value: "pending_training", label: "Pending Training" },
-    { value: "effective", label: "Effective" },
-    { value: "closed", label: "Closed" },
 ]
 
 export function ChangeControlHubClient({ departments, changeControls }: Props) {

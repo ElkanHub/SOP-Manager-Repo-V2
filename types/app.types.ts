@@ -54,7 +54,7 @@ export interface SopRecord {
     department: string;
     secondary_departments: string[];
     version: string;
-    status: 'draft' | 'draft_in_review' | 'pending_hod' | 'pending_qa' | 'approved_pending_training' | 'pending_cc' | 'active' | 'superseded' | 'pending_destruction' | 'destroyed';
+    status: 'draft' | 'draft_in_review' | 'pending_hod' | 'pending_qa' | 'approved_pending_training' | 'scheduled' | 'pending_cc' | 'active' | 'superseded' | 'pending_destruction' | 'destroyed' | 'retired';
     locked: boolean;
     file_url?: string;
     date_listed?: string;
@@ -69,6 +69,7 @@ export interface SopRecord {
     training_deadline?: string;
     retention_period_years: number;
     retention_expires_at?: string;
+    periodic_review_interval_months?: number;
     submitted_by?: string;
     approved_by?: string;
     created_at: string;
@@ -79,6 +80,15 @@ export interface SopRecord {
     } | null;
 }
 
+export type VersionStatus =
+    | 'draft'
+    | 'in_approval'
+    | 'approved'
+    | 'effective'
+    | 'superseded'
+    | 'retained'
+    | 'destroyed';
+
 export interface SopVersion {
     id: string;
     sop_id: string;
@@ -88,6 +98,11 @@ export interface SopVersion {
     delta_summary?: string;
     uploaded_by?: string;
     change_type?: 'minor' | 'significant';
+    status: VersionStatus;
+    effective_from?: string | null;
+    superseded_at?: string | null;
+    retention_until?: string | null;
+    reason_for_change?: string | null;
     created_at: string;
 }
 
@@ -177,6 +192,12 @@ export interface ChangeControl {
     diff_json?: any;
     delta_summary?: string;
     status: ChangeControlPackageStatus;
+    classification?: 'minor' | 'major' | 'critical' | null;
+    impact_assessment_structured?: ChangeControlImpact | null;
+    classification_reason?: string | null;
+    effectiveness_review_due?: string | null;
+    closed_outcome?: string | null;
+    effectiveness_reviewed_by?: string | null;
     required_signatories: CcSignatory[];
     deadline: string;
     issued_by?: string;
@@ -187,17 +208,31 @@ export interface ChangeControl {
     reconciliation_note?: string;
 }
 
+// Structured impact assessment (§7.2). All keys required before classification.
+export interface ChangeControlImpact {
+    affected_documents: string;
+    training_required: boolean;
+    training_for?: string;
+    records_affected: string;
+    systems_equipment: string;
+    revalidation_needed: boolean;
+    regulatory_notification?: boolean;
+    notes?: string;
+}
+
 export type ChangeControlPackageStatus =
-    | 'draft'
     | 'submitted'
-    | 'qa_screening'
     | 'clarification_requested'
+    | 'impact_pending'
+    | 'classified'
+    | 'queued'
     | 'approved_for_document_work'
     | 'documents_in_review'
     | 'signatures_pending'
     | 'pending_reconciliation'
     | 'pending_training'
     | 'effective'
+    | 'effectiveness_review'
     | 'closed'
     | 'rejected';
 
@@ -222,6 +257,81 @@ export interface ChangeControlDocumentRecord {
     effective_date?: string | null;
     created_at: string;
     updated_at: string;
+}
+
+// ─── Retirement (document discontinuation) ───────────────────────────────────
+export type RetirementStatus =
+    | 'retirement_requested'
+    | 'retirement_approved'
+    | 'pending_destruction'
+    | 'destroyed'
+    | 'rejected';
+
+export interface RetirementPrecheckResults {
+    no_open_change_control: boolean;
+    open_change_control_count: number;
+    no_open_training: boolean;
+    open_training_count: number;
+    no_active_references: boolean;
+    references_check_enforced: boolean;
+    passed: boolean;
+}
+
+export interface Retirement {
+    id: string;
+    document_id: string;
+    status: RetirementStatus;
+    justification: string;
+    requester_id: string;
+    approver_id?: string | null;
+    precheck_results?: RetirementPrecheckResults | null;
+    rejection_reason?: string | null;
+    requested_at: string;
+    approved_at?: string | null;
+    retention_until?: string | null;
+    destroyed_at?: string | null;
+    destruction_method?: string | null;
+    destruction_approver_id?: string | null;
+}
+
+// ─── Controlled-copy register ─────────────────────────────────────────────────
+export interface ControlledCopy {
+    id: string;
+    document_id: string;
+    document_version: string;
+    copy_number: number;
+    holder: string;
+    issued_by?: string | null;
+    issued_at: string;
+    status: 'issued' | 'reconciled';
+    reconciled_at?: string | null;
+    reconciled_by?: string | null;
+    reconciled_method?: 'returned' | 'destroyed' | 'force_overridden' | null;
+    reconciliation_reason?: string | null;
+}
+
+// ─── Classification matrix (data-driven, QA-editable) ─────────────────────────
+export interface ClassificationMatrixRow {
+    classification: 'minor' | 'major' | 'critical';
+    require_qa: boolean;
+    require_owning_managers: boolean;
+    require_site_quality_head: boolean;
+    require_revalidation: boolean;
+    require_regulatory_notification: boolean;
+    description?: string | null;
+    updated_by?: string | null;
+    updated_at: string;
+}
+
+// ─── Periodic review ──────────────────────────────────────────────────────────
+export interface PeriodicReview {
+    id: string;
+    document_id: string;
+    reviewer_id: string;
+    reviewed_at: string;
+    outcome: 'no_change' | 'revision_needed' | 'retire';
+    notes?: string | null;
+    next_review_date?: string | null;
 }
 
 export interface ChangeControlPackage extends ChangeControl {

@@ -299,19 +299,32 @@ export async function resubmitSop(
         return { success: false, error: 'User is not active' }
     }
 
-    if (profile.role !== 'manager') {
-        return { success: false, error: 'Only managers can resubmit SOPs' }
+    if (profile.role !== 'manager' && profile.role !== 'employee') {
+        return { success: false, error: 'Only active staff can resubmit SOPs' }
     }
+
+    // Employees re-enter at HOD endorsement; managers go straight to QA — mirrors the
+    // original submission routing so a changes-requested employee submission isn't stuck.
+    const approvalStage = profile.role === 'employee' ? 'hod_review' : 'qa_review'
+    const reentryStatus = profile.role === 'employee' ? 'pending_hod' : 'pending_qa'
 
     const { data: existingRequests, error: countError } = await supabase
         .from('sop_approval_requests')
-        .select('id')
+        .select('id, type, submitted_by, created_at')
         .eq('sop_id', formData.sopId)
+        .order('created_at', { ascending: false })
 
     if (countError) {
         return { success: false, error: countError.message }
     }
 
+    // Only the original submitter may resubmit their own changes-requested work.
+    const priorOwn = (existingRequests || []).find((r) => r.submitted_by === user.id)
+    if ((existingRequests?.length || 0) > 0 && !priorOwn) {
+        return { success: false, error: 'Only the original submitter can resubmit this SOP' }
+    }
+
+    const inheritedType = (existingRequests?.[0]?.type as 'new' | 'update') || 'update'
     const submissionNumber = (existingRequests?.length || 0) + 1
     const versionLabel = submissionNumber === 1 ? 'Submission 1' : `Resubmission ${submissionNumber}`
 
@@ -320,8 +333,9 @@ export async function resubmitSop(
         .insert({
             sop_id: formData.sopId,
             submitted_by: user.id,
-            type: 'update',
+            type: inheritedType,
             status: 'pending',
+            approval_stage: approvalStage,
             file_url: formData.fileUrl,
             version_label: versionLabel,
             notes_to_qa: formData.notesToQa || null,
@@ -332,6 +346,11 @@ export async function resubmitSop(
     if (requestError) {
         return { success: false, error: requestError.message }
     }
+
+    await supabase
+        .from('sops')
+        .update({ status: reentryStatus, updated_at: new Date().toISOString() })
+        .eq('id', formData.sopId)
 
     const { data: sop } = await supabase
         .from('sops')
@@ -621,11 +640,30 @@ export async function endorseSopToQa(
     if (!request || request.approval_stage !== 'hod_review') {
         return { success: false, error: 'Request is not waiting for HOD review' }
     }
-    if (sop?.department !== profile.department) {
-        return { success: false, error: 'You can only endorse SOPs from your department' }
-    }
     if (request.submitted_by === user.id) {
         return { success: false, error: 'Managers cannot endorse their own HOD-stage submission' }
+    }
+
+    // §6.4 — HOD-is-submitter / no-eligible-HOD fallback. Normally only a same-department
+    // manager (≠ submitter) endorses. If the owning department has no eligible endorser
+    // (the only active manager is the submitter, or none exists), a QA manager may act as
+    // the fallback endorser so the request never stalls. The fallback is logged.
+    const sameDeptHod = sop?.department === profile.department
+    let viaFallback = false
+    if (!sameDeptHod) {
+        const { data: isQa } = await supabase.rpc('is_qa_manager', { user_id: user.id })
+        const { count: eligibleHods } = await supabase
+            .from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .eq('department', sop?.department)
+            .eq('role', 'manager')
+            .eq('is_active', true)
+            .neq('id', request.submitted_by)
+        if (isQa && (eligibleHods ?? 0) === 0) {
+            viaFallback = true
+        } else {
+            return { success: false, error: 'You can only endorse SOPs from your department' }
+        }
     }
 
     await supabase
@@ -668,10 +706,11 @@ export async function endorseSopToQa(
 
     await supabase.from('audit_log').insert({
         actor_id: user.id,
-        action: 'sop_hod_endorsed',
+        action: viaFallback ? 'sop_hod_endorsed_fallback' : 'sop_hod_endorsed',
         entity_type: 'sop_approval_request',
         entity_id: requestId,
-        metadata: { sop_id: request.sop_id, comment },
+        reason: viaFallback ? 'No eligible department HOD; QA acted as fallback endorser (§6.4)' : null,
+        metadata: { sop_id: request.sop_id, comment, via_fallback: viaFallback },
     })
 
     revalidatePath('/approvals')
@@ -764,6 +803,17 @@ export async function confirmChangeControlReconciliation(
 
     const { data: { user } } = await client.auth.getUser()
     if (!user) return { success: false, error: 'Not authenticated' }
+
+    // §7.9 — every issued controlled copy of the outgoing version must be accounted
+    // for (returned / destroyed / force-overridden) before the change can go effective.
+    // If the client is paperless this register is empty and the gate is a no-op.
+    const { data: outstanding } = await supabase.rpc('cc_copies_outstanding', { p_cc_id: changeControlId })
+    if (typeof outstanding === 'number' && outstanding > 0) {
+        return {
+            success: false,
+            error: `${outstanding} issued controlled cop${outstanding === 1 ? 'y' : 'ies'} of the outgoing version ${outstanding === 1 ? 'is' : 'are'} not yet reconciled. Reconcile or force-override them before confirming.`,
+        }
+    }
 
     const { error } = await supabase.rpc('confirm_cc_reconciliation', {
         p_cc_id: changeControlId,
@@ -1186,6 +1236,17 @@ export async function acknowledgeSop(
 
     if (!isOwnDept) {
         return { success: false, error: 'You can only acknowledge SOPs from your own department' }
+    }
+
+    // §6.5 / gap #12 — block (not merely flag) untrained users from acting on an
+    // effective SOP that requires training. The threshold lets the SOP go live before
+    // 100% are trained; this guard stops the stragglers from executing until they are.
+    const { data: trained } = await supabase.rpc('is_user_trained_on_sop', {
+        p_user_id: user.id,
+        p_sop_id: sopId,
+    })
+    if (trained === false) {
+        return { success: false, error: 'You must complete the required training for this SOP before you can acknowledge it.' }
     }
 
     // Idempotent — ignore duplicate key

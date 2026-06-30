@@ -19,6 +19,7 @@ import { ChangeControlStatusBadge } from "@/components/change-control/change-con
 import {
     screenChangeControlRequest, updateChangeControlStatus, reviewChangeControlDocument,
     setChangeControlDocumentDraft, releaseChangeControlDocumentTraining,
+    classifyChangeControl, approveChangeControlForWork, openEffectivenessReview, closeChangeControl,
 } from "@/actions/change-control"
 import { confirmChangeControlReconciliation } from "@/actions/sop"
 import type {
@@ -71,7 +72,7 @@ export function ChangeControlPackageClient({
             else setMessage({ type: "error", text: r.error || "Action failed" })
         })
 
-    const isScreening = status === "submitted" || status === "qa_screening"
+    const isScreening = status === "submitted" || status === "impact_pending" || status === "classified"
     const inDocWork = status === "approved_for_document_work" || status === "documents_in_review"
     const showSignatures = ["signatures_pending", "pending_reconciliation", "pending_training", "effective", "closed"].includes(status)
 
@@ -213,11 +214,20 @@ export function ChangeControlPackageClient({
                     </div>
                 )}
 
-                {/* Close */}
+                {/* Effectiveness review → close (§7.12). A change is not closed when it
+                    goes effective; an independent reviewer (≠ requester) confirms it met
+                    its objective. */}
                 {status === "effective" && canManage && (
-                    <div className="rounded-xl border bg-card p-5 flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">All documents are effective. Close this Change Control to complete the record.</p>
-                        <Button variant="outline" disabled={pending} onClick={() => run(() => updateChangeControlStatus(pkg.id, "closed"), "Change Control closed")}>Close Change Control</Button>
+                    <div className="rounded-xl border bg-card p-5 flex items-center justify-between gap-3">
+                        <p className="text-sm text-muted-foreground">All documents are effective. Open the effectiveness review to confirm the change met its objective before closing.</p>
+                        <Button variant="outline" disabled={pending} onClick={() => run(() => openEffectivenessReview(pkg.id), "Effectiveness review opened")}>Open effectiveness review</Button>
+                    </div>
+                )}
+                {status === "effectiveness_review" && canManage && (
+                    <div className="rounded-xl border bg-card p-5 space-y-3">
+                        <p className="text-sm text-muted-foreground">Effectiveness review — confirm the change achieved its objective. The reviewer must be independent of the requester.</p>
+                        <Textarea placeholder="Effectiveness outcome (required)…" value={note} onChange={(e) => setNote(e.target.value)} />
+                        <Button variant="outline" disabled={pending || note.trim().length < 5} onClick={() => run(() => closeChangeControl(pkg.id, note), "Change Control closed")}>Confirm & close Change Control</Button>
                     </div>
                 )}
             </div>
