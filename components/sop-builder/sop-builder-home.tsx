@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useMemo, useState } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { toast } from "sonner"
-import { Loader2, Plus, Search, Send, Sparkles } from "lucide-react"
+import { Loader2, Plus, Search, Send, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 
@@ -115,7 +115,7 @@ export function SopBuilderHome({
         <div className="w-full max-w-2xl">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-teal/10 text-brand-teal">
-              <Sparkles className="h-6 w-6" />
+              <Bot className="h-6 w-6" />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{getTimeGreeting()}, {firstName}.</h1>
             <p className="max-w-md text-sm text-muted-foreground">
