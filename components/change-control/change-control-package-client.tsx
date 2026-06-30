@@ -58,6 +58,22 @@ export function ChangeControlPackageClient({
     const [signOpen, setSignOpen] = useState(false)
     const [waiveTarget, setWaiveTarget] = useState<{ id: string; name: string } | null>(null)
     const [note, setNote] = useState("")
+    // QA screening: structured impact assessment + risk classification (§7.2 / §7.3)
+    const [classification, setClassification] = useState<"minor" | "major" | "critical">(pkg.classification || "minor")
+    const [impact, setImpact] = useState({
+        affected_documents: pkg.impact_assessment_structured?.affected_documents || "",
+        training_required: pkg.impact_assessment_structured?.training_required ?? false,
+        training_for: pkg.impact_assessment_structured?.training_for || "",
+        records_affected: pkg.impact_assessment_structured?.records_affected || "",
+        systems_equipment: pkg.impact_assessment_structured?.systems_equipment || "",
+        revalidation_needed: pkg.impact_assessment_structured?.revalidation_needed ?? false,
+        regulatory_notification: pkg.impact_assessment_structured?.regulatory_notification ?? false,
+        notes: pkg.impact_assessment_structured?.notes || "",
+    })
+    const impactComplete =
+        impact.affected_documents.trim().length > 0 &&
+        impact.records_affected.trim().length > 0 &&
+        impact.systems_equipment.trim().length > 0
     const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10))
 
     const status = pkg.status
@@ -100,9 +116,16 @@ export function ChangeControlPackageClient({
                                 {pkg.deadline && <>· Due {new Date(pkg.deadline).toLocaleDateString()}</>}
                             </p>
                         </div>
-                        <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-                            {pkg.origin === "sop_revision" ? "SOP Revision" : "Department Request"}
-                        </Badge>
+                        <div className="flex flex-col items-end gap-1.5">
+                            <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                                {pkg.origin === "sop_revision" ? "SOP Revision" : "Department Request"}
+                            </Badge>
+                            {pkg.classification && (
+                                <Badge variant="outline" className={`text-[10px] uppercase tracking-wider ${pkg.classification === "critical" ? "border-red-300 bg-red-50 text-red-700" : pkg.classification === "major" ? "border-orange-300 bg-orange-50 text-orange-700" : "border-slate-300 bg-slate-50 text-slate-700"}`}>
+                                    {pkg.classification} change
+                                </Badge>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -146,16 +169,93 @@ export function ChangeControlPackageClient({
                     </div>
                 </div>
 
-                {/* QA screening */}
+                {/* QA screening — submitted: triage; impact_pending/classified: impact + classify */}
                 {isScreening && canManage && (
-                    <div className="rounded-xl border bg-card p-5 space-y-3">
+                    <div className="rounded-xl border bg-card p-5 space-y-4">
                         <h3 className="text-sm font-bold flex items-center gap-2"><ShieldCheck className="h-4 w-4 text-brand-teal" /> QA Screening</h3>
-                        <Textarea placeholder="Note (required for clarification / rejection)" value={note} onChange={(e) => setNote(e.target.value)} />
-                        <div className="flex flex-wrap gap-2">
-                            <Button disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "approve"), "Approved for document work")}>Approve for document work</Button>
-                            <Button variant="outline" disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "clarification", note), "Clarification requested")}>Request clarification</Button>
-                            <Button variant="ghost" className="text-destructive" disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "reject", note), "Rejected")}>Reject</Button>
-                        </div>
+
+                        {status === "submitted" && (
+                            <div className="space-y-3">
+                                <p className="text-xs text-muted-foreground">Triage this request. Begin screening to complete the impact assessment and assign a risk classification, or send it back / reject it.</p>
+                                <Textarea placeholder="Note (required for clarification / rejection)" value={note} onChange={(e) => setNote(e.target.value)} />
+                                <div className="flex flex-wrap gap-2">
+                                    <Button disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "approve"), "Screening started — complete the impact assessment")}>Begin screening</Button>
+                                    <Button variant="outline" disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "clarification", note), "Clarification requested")}>Request clarification</Button>
+                                    <Button variant="ghost" className="text-destructive" disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "reject", note), "Rejected")}>Reject</Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {(status === "impact_pending" || status === "classified") && (
+                            <div className="space-y-4">
+                                <p className="text-xs text-muted-foreground">
+                                    Complete the impact assessment (all four fields required) and assign a risk class. The class determines the required signature set — there is no &quot;submit anyway&quot;.
+                                </p>
+                                <div className="grid sm:grid-cols-2 gap-3">
+                                    <label className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Affected documents *</span>
+                                        <Textarea value={impact.affected_documents} onChange={(e) => setImpact({ ...impact, affected_documents: e.target.value })} className="min-h-[60px]" />
+                                    </label>
+                                    <label className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Records / templates affected *</span>
+                                        <Textarea value={impact.records_affected} onChange={(e) => setImpact({ ...impact, records_affected: e.target.value })} className="min-h-[60px]" />
+                                    </label>
+                                    <label className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Systems / equipment touched *</span>
+                                        <Textarea value={impact.systems_equipment} onChange={(e) => setImpact({ ...impact, systems_equipment: e.target.value })} className="min-h-[60px]" />
+                                    </label>
+                                    <label className="space-y-1">
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Notes</span>
+                                        <Textarea value={impact.notes} onChange={(e) => setImpact({ ...impact, notes: e.target.value })} className="min-h-[60px]" />
+                                    </label>
+                                </div>
+                                <div className="flex flex-wrap gap-4 text-sm">
+                                    <label className="flex items-center gap-2"><input type="checkbox" checked={impact.training_required} onChange={(e) => setImpact({ ...impact, training_required: e.target.checked })} /> Training required</label>
+                                    <label className="flex items-center gap-2"><input type="checkbox" checked={impact.revalidation_needed} onChange={(e) => setImpact({ ...impact, revalidation_needed: e.target.checked })} /> Revalidation may be needed</label>
+                                    <label className="flex items-center gap-2"><input type="checkbox" checked={impact.regulatory_notification} onChange={(e) => setImpact({ ...impact, regulatory_notification: e.target.checked })} /> Regulatory notification</label>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Risk class</span>
+                                    {(["minor", "major", "critical"] as const).map((c) => (
+                                        <label key={c} className="flex items-center gap-1.5 text-sm capitalize">
+                                            <input type="radio" name="classification" checked={classification === c} onChange={() => setClassification(c)} /> {c}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    <Button disabled={pending || !impactComplete}
+                                        onClick={() => run(() => classifyChangeControl(pkg.id, classification, {
+                                            affected_documents: impact.affected_documents,
+                                            training_required: impact.training_required,
+                                            training_for: impact.training_for || undefined,
+                                            records_affected: impact.records_affected,
+                                            systems_equipment: impact.systems_equipment,
+                                            revalidation_needed: impact.revalidation_needed,
+                                            regulatory_notification: impact.regulatory_notification,
+                                            notes: impact.notes || undefined,
+                                        }), "Impact assessed and classified")}>
+                                        {status === "classified" ? "Update classification" : "Save impact & classify"}
+                                    </Button>
+                                    {status === "classified" && (
+                                        <Button variant="outline" disabled={pending}
+                                            onClick={() => run(() => approveChangeControlForWork(pkg.id), "Approved for document work")}>
+                                            Approve for document work
+                                        </Button>
+                                    )}
+                                    <Button variant="ghost" className="text-destructive" disabled={pending} onClick={() => run(() => screenChangeControlRequest(pkg.id, "reject", note), "Rejected")}>Reject</Button>
+                                </div>
+                                {!impactComplete && <p className="text-[11px] text-amber-600">All four impact fields (affected documents, records, systems, plus a class) must be completed before classification.</p>}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Queued — a document is locked under another open change control (§7.4) */}
+                {status === "queued" && canManage && (
+                    <div className="rounded-xl border border-yellow-300/50 bg-yellow-50 dark:bg-yellow-950/20 p-5 space-y-3">
+                        <h3 className="text-sm font-bold text-yellow-800 dark:text-yellow-300 flex items-center gap-2"><Clock className="h-4 w-4" /> Queued — lock conflict</h3>
+                        <p className="text-xs text-muted-foreground">An affected document is currently locked under another open Change Control. This change is queued and will be released automatically when the lock clears. You can also retry now.</p>
+                        <Button variant="outline" disabled={pending} onClick={() => run(() => approveChangeControlForWork(pkg.id), "Re-checked lock conflict")}>Retry approval for work</Button>
                     </div>
                 )}
 

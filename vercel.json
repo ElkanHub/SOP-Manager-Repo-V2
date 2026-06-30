@@ -1,3 +1,5 @@
 {
-  "crons": []
+  "crons": [
+    { "path": "/api/cron/scheduled-activation", "schedule": "0 1 * * *" }
+  ]
 }

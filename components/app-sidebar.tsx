@@ -17,7 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree, Bot } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree, Bot, Send, Archive, SlidersHorizontal } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
@@ -287,6 +287,12 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       icon: <BookOpen className="w-5 h-5" />,
       isActive: pathname.startsWith("/library"),
     },
+    {
+      title: "Start a Request",
+      url: "/intake",
+      icon: <Send className="w-5 h-5" />,
+      isActive: pathname.startsWith("/intake"),
+    },
     ...(isQa ? [{
       title: "Approvals",
       url: "/approvals",
@@ -348,7 +354,20 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       submenu: [
         { title: "Document Request Hub", url: "/requests/hub", badge: pendingHubSubmissions },
         { title: "Change Control Hub", url: "/requests/hub/change-control", badge: pendingHubChangeControls },
+        { title: "Retirements", url: "/requests/hub/retirements" },
       ],
+    }] : []),
+    ...(isQa ? [{
+      title: "Retirements",
+      url: "/requests/retirements",
+      icon: <Archive className="w-5 h-5" />,
+      isActive: pathname.startsWith("/requests/retirements") || pathname.startsWith("/requests/hub/retirements"),
+    }] : []),
+    ...(isQa ? [{
+      title: "Classification Matrix",
+      url: "/settings/classification-matrix",
+      icon: <SlidersHorizontal className="w-5 h-5" />,
+      isActive: pathname.startsWith("/settings/classification-matrix"),
     }] : []),
     {
       title: "Calendar",
