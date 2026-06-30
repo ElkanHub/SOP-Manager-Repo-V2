@@ -1,11 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { SopLibraryTable } from "@/components/library/sop-library-table"
 import { SopTabStrip } from "@/components/library/sop-tab-strip"
-import { SopUploadModal } from "@/components/approvals/sop-upload-modal"
 import type { ExistingSopOption } from "@/components/approvals/sop-upload-modal"
-import { Upload, BookOpen } from "lucide-react"
+import { Send, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Profile, Department } from "@/types/app.types"
 
@@ -21,14 +21,11 @@ interface LibraryPageClientProps {
 
 export function LibraryPageClient({
   profile,
-  departments,
-  existingSops,
   isManager,
   isAdmin,
   isQa,
   statusFilter,
 }: LibraryPageClientProps) {
-  const [uploadModalOpen, setUploadModalOpen] = useState(false)
   const [activeStatus, setActiveStatus] = useState(statusFilter)
 
   useEffect(() => {
@@ -61,12 +58,15 @@ export function LibraryPageClient({
           <h1 className="text-lg font-bold text-foreground">SOP Library</h1>
         </div>
         {isManager && (
+          // One door: new SOPs and revisions both start at the unified intake, which
+          // infers the request type. (Was a direct upload modal — removed to avoid a
+          // second entry point.)
           <Button
             className="bg-brand-teal hover:bg-teal-600 text-white"
-            onClick={() => setUploadModalOpen(true)}
+            render={<Link href="/intake" />}
           >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload SOP
+            <Send className="h-4 w-4 mr-2" />
+            Start a Request
           </Button>
         )}
       </div>
@@ -126,17 +126,6 @@ export function LibraryPageClient({
           statusFilter={activeStatus}
         />
       </div>
-
-      {isManager && (
-        <SopUploadModal
-          open={uploadModalOpen}
-          onOpenChange={setUploadModalOpen}
-          user={profile}
-          departments={departments}
-          existingSops={existingSops}
-          onSuccess={() => setUploadModalOpen(false)}
-        />
-      )}
     </div>
   )
 }
