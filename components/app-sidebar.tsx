@@ -149,13 +149,16 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
 
     const openChangeControlStatuses = [
       'submitted',
-      'qa_screening',
       'clarification_requested',
+      'impact_pending',
+      'classified',
+      'queued',
       'approved_for_document_work',
       'documents_in_review',
       'signatures_pending',
       'pending_reconciliation',
       'pending_training',
+      'effectiveness_review',
     ]
 
     // 4. Pending Requests badge (new + legacy tables + Change Control packages)

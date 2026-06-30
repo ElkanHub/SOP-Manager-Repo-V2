@@ -804,6 +804,13 @@ export async function confirmChangeControlReconciliation(
     const { data: { user } } = await client.auth.getUser()
     if (!user) return { success: false, error: 'Not authenticated' }
 
+    // Reconciliation activates the change now. A future effective date would desync the
+    // CC (effective) from the SOP (scheduled) — scheduling belongs to new-SOP approval,
+    // not reconciliation. Block future dates with a clear message.
+    if (effectiveDate && effectiveDate > new Date().toISOString().slice(0, 10)) {
+        return { success: false, error: 'Reconciliation activates the change immediately — the effective date cannot be in the future.' }
+    }
+
     // §7.9 — every issued controlled copy of the outgoing version must be accounted
     // for (returned / destroyed / force-overridden) before the change can go effective.
     // If the client is paperless this register is empty and the gate is a no-op.

@@ -523,6 +523,11 @@ export async function releaseChangeControlDocumentTraining(
   if (!(await isQaOrAdmin(user.id, !!profile.is_admin, service))) {
     return { success: false, error: 'Only QA can release training gates' }
   }
+  // Training release puts the document in force now; a future date would desync the
+  // CC from the SOP (which would go `scheduled`). Block future dates here.
+  if (effectiveDate && effectiveDate > new Date().toISOString().slice(0, 10)) {
+    return { success: false, error: 'Releasing a trained document makes it effective now — the effective date cannot be in the future.' }
+  }
 
   const { data: doc } = await service
     .from('change_control_documents')

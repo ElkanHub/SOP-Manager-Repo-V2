@@ -41,13 +41,16 @@ export default async function DashboardPage() {
   const sevenDaysAgo = subDays(todayObj, 7).toISOString()
   const openChangeControlStatuses = [
     'submitted',
-    'qa_screening',
     'clarification_requested',
+    'impact_pending',
+    'classified',
+    'queued',
     'approved_for_document_work',
     'documents_in_review',
     'signatures_pending',
     'pending_reconciliation',
     'pending_training',
+    'effectiveness_review',
   ]
   const startOfMonth = dfStartOfMonth(todayObj).toISOString()
   const startOfMonthDate = dfStartOfMonth(todayObj).toISOString().split('T')[0]

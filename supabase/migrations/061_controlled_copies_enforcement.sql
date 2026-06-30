@@ -42,7 +42,7 @@ RETURNS int LANGUAGE sql STABLE AS $$
   FROM controlled_copies cpy
   JOIN change_control_documents ccd
     ON ccd.document_id = cpy.document_id
-   AND ccd.document_version = cpy.document_version
+   AND ccd.old_revision = cpy.document_version
   WHERE ccd.change_control_id = p_cc_id
     AND cpy.status = 'issued';
 $$;

@@ -12,6 +12,11 @@
 
 -- 1. Final CC status set (§4.3): add impact/classified/queued/effectiveness_review,
 --    drop dead draft + qa_screening. -----------------------------------------
+-- Remap any rows still on the dropped statuses BEFORE swapping the constraint, so the
+-- ADD CONSTRAINT cannot fail on existing data (draft/qa_screening were dead but defensive).
+UPDATE change_controls SET status = 'submitted'      WHERE status = 'draft';
+UPDATE change_controls SET status = 'impact_pending' WHERE status = 'qa_screening';
+
 ALTER TABLE change_controls DROP CONSTRAINT IF EXISTS change_controls_status_check;
 ALTER TABLE change_controls ADD CONSTRAINT change_controls_status_check
   CHECK (status IN (

@@ -49,7 +49,8 @@ DELETE FROM sop_versions sv
 USING sop_versions dup
 WHERE sv.sop_id = dup.sop_id
   AND sv.version = dup.version
-  AND sv.created_at < dup.created_at;
+  AND (sv.created_at < dup.created_at
+       OR (sv.created_at = dup.created_at AND sv.id < dup.id));
 
 ALTER TABLE sop_versions
   ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'in_approval'
@@ -90,6 +91,7 @@ INSERT INTO sop_versions (sop_id, version, file_url, uploaded_by, status, effect
 SELECT s.id, s.version, s.file_url, s.approved_by, 'effective', s.effective_date, s.retention_expires_at
 FROM sops s
 WHERE s.status IN ('active','scheduled','superseded','pending_destruction','destroyed','retired')
+  AND s.file_url IS NOT NULL  -- sop_versions.file_url is NOT NULL
   AND NOT EXISTS (SELECT 1 FROM sop_versions sv WHERE sv.sop_id = s.id AND sv.version = s.version);
 
 -- 4. THE invariant: exactly one effective version per document --------------
@@ -136,7 +138,7 @@ BEGIN
 
     -- Version row is 'approved' (signed, not yet in force) while scheduled.
     INSERT INTO sop_versions (sop_id, version, file_url, uploaded_by, status, reason_for_change)
-    VALUES (p_sop_id, sop_rec.version, sop_rec.file_url, p_actor_id, 'approved', sop_rec.reason_for_change)
+    VALUES (p_sop_id, sop_rec.version, COALESCE(sop_rec.file_url, ''), p_actor_id, 'approved', sop_rec.reason_for_change)
     ON CONFLICT (sop_id, version)
     DO UPDATE SET status = 'approved', reason_for_change = COALESCE(EXCLUDED.reason_for_change, sop_versions.reason_for_change);
 
@@ -153,7 +155,7 @@ BEGIN
   WHERE sop_id = p_sop_id AND status = 'effective' AND version <> sop_rec.version;
 
   INSERT INTO sop_versions (sop_id, version, file_url, uploaded_by, status, effective_from, retention_until, reason_for_change)
-  VALUES (p_sop_id, sop_rec.version, sop_rec.file_url, p_actor_id, 'effective', v_eff, retention_due, sop_rec.reason_for_change)
+  VALUES (p_sop_id, sop_rec.version, COALESCE(sop_rec.file_url, ''), p_actor_id, 'effective', v_eff, retention_due, sop_rec.reason_for_change)
   ON CONFLICT (sop_id, version)
   DO UPDATE SET status = 'effective', effective_from = v_eff, retention_until = retention_due, superseded_at = NULL;
 
