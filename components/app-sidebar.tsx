@@ -17,7 +17,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree, Bot, Send, Archive, SlidersHorizontal } from "lucide-react"
+import { LayoutDashboard, BookOpen, Wrench, Calendar, FileBarChart, Settings, ClipboardCheck, MessageSquare, ClipboardList, GraduationCap, Dumbbell, Sparkles, ChevronDown, ListTree, Bot, Send } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
@@ -337,40 +337,32 @@ export function AppSidebar({ user, profile, isQa = false, ...props }: AppSidebar
       isActive: pathname.startsWith("/messages"),
       badge: unreadConversations,
     },
+    // TRACK — what this user has submitted (not a create entry; creation is /intake)
     {
-      title: "Requests",
-      url: "/requests",
+      title: "My Requests",
+      url: "/requests/change-control",
       icon: <ClipboardList className="w-5 h-5" />,
-      isActive: pathname === "/requests" || (pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub")),
+      isActive: pathname.startsWith("/requests") && !pathname.startsWith("/requests/hub"),
       badge: pendingRequests,
       submenu: [
-        { title: "Document Requests", url: "/requests", badge: Math.max(0, pendingRequests - pendingChangeControls) },
-        { title: "Change Control", url: "/requests/change-control", badge: pendingChangeControls },
+        { title: "Change Controls", url: "/requests/change-control", badge: pendingChangeControls },
+        { title: "Retirements", url: "/requests/retirements" },
+        { title: "Forms", url: "/requests", badge: Math.max(0, pendingRequests - pendingChangeControls) },
       ],
     },
+    // PROCESS — QA workstation for everything in flight
     ...(isQa ? [{
-      title: "Request Hub",
-      url: "/requests/hub",
+      title: "QA Hub",
+      url: "/requests/hub/change-control",
       icon: <Sparkles className="w-5 h-5" />,
-      isActive: pathname.startsWith("/requests/hub"),
+      isActive: pathname.startsWith("/requests/hub") || pathname.startsWith("/settings/classification-matrix"),
       badge: pendingHubSubmissions + pendingHubChangeControls,
       submenu: [
-        { title: "Document Request Hub", url: "/requests/hub", badge: pendingHubSubmissions },
-        { title: "Change Control Hub", url: "/requests/hub/change-control", badge: pendingHubChangeControls },
+        { title: "Change Control", url: "/requests/hub/change-control", badge: pendingHubChangeControls },
         { title: "Retirements", url: "/requests/hub/retirements" },
+        { title: "Forms", url: "/requests/hub", badge: pendingHubSubmissions },
+        { title: "Classification Matrix", url: "/settings/classification-matrix" },
       ],
-    }] : []),
-    ...(isQa ? [{
-      title: "Retirements",
-      url: "/requests/retirements",
-      icon: <Archive className="w-5 h-5" />,
-      isActive: pathname.startsWith("/requests/retirements") || pathname.startsWith("/requests/hub/retirements"),
-    }] : []),
-    ...(isQa ? [{
-      title: "Classification Matrix",
-      url: "/settings/classification-matrix",
-      icon: <SlidersHorizontal className="w-5 h-5" />,
-      isActive: pathname.startsWith("/settings/classification-matrix"),
     }] : []),
     {
       title: "Calendar",

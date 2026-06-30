@@ -68,7 +68,7 @@ export function NewRequestsClient({ profile, isQa, publishedForms, mySubmissions
                         <ClipboardList className="h-4 w-4" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-foreground">Requests</h1>
+                        <h1 className="text-lg font-bold text-foreground">Forms</h1>
                         <p className="text-muted-foreground text-sm">
                             Submit a request using a QA-approved form
                         </p>

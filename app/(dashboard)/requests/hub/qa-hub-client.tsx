@@ -132,8 +132,8 @@ export function QaHubClient({ profile, forms: initialForms, submissions: initial
                         <ClipboardList className="h-4 w-4" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-foreground">Request Hub</h1>
-                        <p className="text-muted-foreground text-sm">Design forms and review incoming requests</p>
+                        <h1 className="text-lg font-bold text-foreground">Forms Hub</h1>
+                        <p className="text-muted-foreground text-sm">Design request forms and review incoming submissions</p>
                     </div>
                 </div>
                 <Link href="/requests">
