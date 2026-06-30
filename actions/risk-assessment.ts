@@ -232,18 +232,24 @@ async function generateAndStore(
 
   try {
     const prompt = [
-      `You are writing executive risk insights for a pharmaceutical QA team.`,
+      `You are advising the QA lead of a pharmaceutical quality system.`,
       `Scope: ${scope === "org" ? "whole organization" : `department "${scope}"`}.`,
-      `Heuristic risk level has already been computed as "${level}" (score ${score}/100).`,
+      `The risk level "${level}" (score ${score}/100) and the signals below were already computed deterministically. The UI already lists these signals, so do NOT simply restate them.`,
       ``,
-      `Pre-aggregated signals (do NOT invent other signals or counts):`,
+      `Signals (do NOT invent other signals or counts):`,
       signals.length === 0
         ? `- No elevated signals. The workspace is operating within normal ranges.`
         : signals
             .map((s) => `- [${s.severity}] ${s.name}: ${s.count} — ${s.blurb}`)
             .join("\n"),
       ``,
-      `Write 3 short, action-oriented insights (one sentence each). Reference only the signals above.`,
+      `Write EXACTLY 3 insights (one sentence each) that ADD value beyond the raw signals:`,
+      `1. The single most urgent action to take first, and why it outranks the others.`,
+      `2. Any correlation or compounding risk between signals (e.g. SOPs under-acknowledged AND change controls pending suggests a training/communication gap), or "No compounding risk between current signals." if none.`,
+      `3. What to monitor next, or what "good" looks like once these are resolved.`,
+      signals.length === 0
+        ? `If there are no elevated signals, confirm the workspace is healthy and name one preventive habit worth maintaining.`
+        : ``,
       `Return ONLY JSON: { "insights": ["...", "...", "..."] }`,
     ].join("\n")
 

@@ -3,6 +3,8 @@
 import { createServiceClient, createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { sendPulseEmail } from './email'
+import { computeDeltaSummary } from '@/lib/change-control/delta-summary'
+import { friendlyAiMessage } from '@/lib/ai/client'
 
 type SupabaseServiceClient = Awaited<ReturnType<typeof createServiceClient>>
 type RelatedSop = {
@@ -1106,6 +1108,16 @@ export async function generateDeltaSummary(changeControlId: string): Promise<{ s
         return { success: false, error: 'Not authenticated' }
     }
 
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_active')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_active) {
+        return { success: false, error: 'User is inactive' }
+    }
+
     const { data: changeControl } = await supabase
         .from('change_controls')
         .select('old_file_url, new_file_url, sops(title)')
@@ -1117,29 +1129,24 @@ export async function generateDeltaSummary(changeControlId: string): Promise<{ s
     }
 
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/gemini/delta-summary`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ old_file_url: changeControl.old_file_url, new_file_url: changeControl.new_file_url }),
+        // Direct call — no internal HTTP hop. The summary is grounded in the real
+        // computed diff (see lib/change-control/delta-summary.ts).
+        const summary = await computeDeltaSummary({
+            oldFileUrl: changeControl.old_file_url,
+            newFileUrl: changeControl.new_file_url,
+            actorId: user.id,
         })
-
-        if (!response.ok) {
-            const error = await response.json() as { message?: string }
-            return { success: false, error: error.message || 'Failed to generate summary' }
-        }
-
-        const data = await response.json()
 
         await supabase
             .from('change_controls')
-            .update({ delta_summary: data.summary })
+            .update({ delta_summary: summary })
             .eq('id', changeControlId)
 
         revalidatePath('/change-control')
-        return { success: true, summary: data.summary }
+        return { success: true, summary }
 
     } catch (error: unknown) {
-        return { success: false, error: getErrorMessage(error, 'Failed to generate summary') }
+        return { success: false, error: friendlyAiMessage(error) }
     }
 }
 

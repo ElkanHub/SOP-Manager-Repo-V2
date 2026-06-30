@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 // @ts-ignore
 import * as mammoth from 'mammoth'
+import { sanitizeHtml } from '@/lib/utils/sanitize-html'
 
 export async function GET(
     _request: NextRequest,
@@ -41,19 +42,8 @@ export async function GET(
     try {
         const buffer = Buffer.from(await dl.data.arrayBuffer())
         const result = await mammoth.convertToHtml({ buffer }, { ignoreEmptyParagraphs: false })
-        return NextResponse.json({ html: sanitize(result.value) })
+        return NextResponse.json({ html: sanitizeHtml(result.value) })
     } catch (err: any) {
         return NextResponse.json({ error: err.message || 'Failed to convert document' }, { status: 500 })
     }
-}
-
-function sanitize(html: string): string {
-    return html
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
-        .replace(/<style[\s\S]*?<\/style>/gi, '')
-        .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
-        .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
-        .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
-        .replace(/javascript:/gi, '')
 }

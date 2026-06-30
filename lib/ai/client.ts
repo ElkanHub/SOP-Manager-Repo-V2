@@ -24,7 +24,7 @@ export type AIModelTier = "fast" | "quality"
 
 const MODEL_DEFAULTS: Record<AIModelTier, string> = {
   fast: "gemini-2.5-flash",
-  quality: "gemini-2.5-flash",
+  quality: "gemini-2.5-pro",
 }
 
 function resolveModel(tier: AIModelTier): string {

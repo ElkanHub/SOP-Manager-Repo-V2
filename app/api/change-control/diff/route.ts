@@ -4,6 +4,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import * as mammoth from 'mammoth'
 // @ts-ignore
 import HtmlDiff from 'htmldiff-js'
+import { sanitizeHtml } from '@/lib/utils/sanitize-html'
 
 export async function POST(request: NextRequest) {
     const client = await createClient()
@@ -21,6 +22,32 @@ export async function POST(request: NextRequest) {
     }
 
     const serviceClient = await createServiceClient()
+
+    // Caller must be an active user.
+    const { data: profile } = await serviceClient
+        .from('profiles')
+        .select('is_active')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile?.is_active) {
+        return NextResponse.json({ error: 'User is inactive' }, { status: 403 })
+    }
+
+    // The two URLs must belong to a real change control — this endpoint downloads
+    // with the service role, so without this binding any authenticated user could
+    // diff arbitrary storage paths. Access to the change control page itself is
+    // already gated server-side; here we just refuse off-record file pairs.
+    const { data: ccRows } = await serviceClient
+        .from('change_controls')
+        .select('id')
+        .eq('old_file_url', old_file_url)
+        .eq('new_file_url', new_file_url)
+        .limit(1)
+
+    if (!ccRows || ccRows.length === 0) {
+        return NextResponse.json({ error: 'Documents are not part of a known change control' }, { status: 403 })
+    }
 
     try {
         // Fetch files directly from the secure storage bucket
@@ -43,8 +70,11 @@ export async function POST(request: NextRequest) {
             mammoth.convertToHtml({ buffer: newBuffer }, mammothOptions)
         ])
 
-        const oldHtml = oldHtmlResult.value
-        const newHtml = newHtmlResult.value
+        // Sanitize each side BEFORE diffing so the rendered diff (injected via
+        // dangerouslySetInnerHTML on the client) can never carry script/handlers
+        // from a crafted .docx.
+        const oldHtml = sanitizeHtml(oldHtmlResult.value)
+        const newHtml = sanitizeHtml(newHtmlResult.value)
 
         // Use precise HTML diffing to protect tables, links, and bold/italic elements
         const diffHtml = HtmlDiff.execute(oldHtml, newHtml)
